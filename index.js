@@ -17,7 +17,8 @@ const UniversitySchema = new mongoose.Schema({
     currency: String, tutionFee: Number, scholarship: String,
     minGPA: Number, minCGPA: Number, maxStudyGap: Number,
     requiredBankAmount: Number, bankType: String,
-    languageType: String, minLangScore: Number
+    languageType: String, minLangScore: Number,
+    maritalStatus: String // Spouse facility check
 });
 const University = mongoose.model('University', UniversitySchema);
 
