@@ -2,84 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal - Assessment</title>
+    <title>Partner Portal - Smart Assessment</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; }
-        .container { max-width: 750px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
         button { background: #0052cc; color: white; border: none; font-weight: bold; cursor: pointer; }
         .uni-card { border-left: 6px solid #0052cc; padding: 20px; margin-top: 20px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 4px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Student Assessment Tool</h2>
+        <h2 style="text-align:center; color:#003366;">Assessment Tool</h2>
         <div class="grid">
+            <select id="sCountry">
+                <option value="All">All Preferred Countries</option>
+                <option value="UK">UK</option>
+                <option value="Australia">Australia</option>
+                <option value="Canada">Canada</option>
+                <option value="USA">USA</option>
+            </select>
             <select id="sDegree">
                 <option value="UG">Undergraduate (UG)</option>
                 <option value="PG">Postgraduate (PG)</option>
+                <option value="Diploma">Diploma</option>
+                <option value="PhD">PhD</option>
+                <option value="Research">Research</option>
             </select>
-            <select id="sBank">
+        </div>
+        <div class="grid">
+            <select id="sBankType">
                 <option value="Any">Any Bank Type</option>
                 <option value="FDR">FDR</option>
                 <option value="Savings">Savings</option>
             </select>
+            <input type="number" id="sBankAmt" placeholder="Student's Bank Amount">
         </div>
         <div class="grid">
             <input type="number" step="0.01" id="sScore" placeholder="GPA/CGPA Score">
             <input type="number" id="sGap" placeholder="Study Gap (Years)">
         </div>
         <div class="grid">
-            <select id="sLType">
-                <option value="IELTS">IELTS</option>
-                <option value="PTE">PTE</option>
-            </select>
+            <select id="sLType"><option value="IELTS">IELTS</option><option value="PTE">PTE</option></select>
             <input type="number" step="0.1" id="sLScore" placeholder="Lang Score">
         </div>
-        <button onclick="search()">Find Best Match</button>
+        <button onclick="search()">Find Universities</button>
         <div id="results"></div>
     </div>
 
     <script>
         async function search() {
             const resDiv = document.getElementById('results');
-            resDiv.innerHTML = "<p>Searching...</p>";
-            
+            resDiv.innerHTML = "<p>Searching matching programs...</p>";
             const response = await fetch("https://study-abroad-crm.onrender.com/api/universities");
             const unis = await response.json();
             
             const matches = unis.filter(u => {
+                const country = document.getElementById('sCountry').value;
                 const degree = document.getElementById('sDegree').value;
-                const bank = document.getElementById('sBank').value;
+                const bankType = document.getElementById('sBankType').value;
+                const bankAmt = document.getElementById('sBankAmt').value;
                 const score = document.getElementById('sScore').value;
                 const gap = document.getElementById('sGap').value;
                 const lScore = document.getElementById('sLScore').value;
 
-                // 🔴 BUG FIX: Strict Degree Matching
-                let degreeMatch = (u.degreeLevel === degree); 
-                
-                // Bank Type Matching
-                let bankMatch = (bank === "Any" || u.bankType === bank);
-                
-                // Score Matching
-                let scoreMatch = (degree === 'UG') ? (score >= u.minGPA) : (score >= u.minCGPA);
-                
-                // Other Matches
-                let gapMatch = (gap <= u.maxStudyGap);
-                let langMatch = (lScore >= u.minLangScore);
+                let cMatch = (country === "All" || u.country === country);
+                let dMatch = (u.degreeLevel === degree); 
+                let bTypeMatch = (bankType === "Any" || u.bankType === bankType);
+                let bAmtMatch = (!bankAmt || u.requiredBankAmount <= bankAmt);
+                let sMatch = (degree === 'UG' || degree === 'Diploma') ? (score >= u.minGPA) : (score >= u.minCGPA);
+                let gMatch = (gap <= u.maxStudyGap);
+                let lMatch = (lScore >= u.minLangScore);
 
-                return degreeMatch && bankMatch && scoreMatch && gapMatch && langMatch;
+                return cMatch && dMatch && bTypeMatch && bAmtMatch && sMatch && gMatch && lMatch;
             });
 
             resDiv.innerHTML = matches.length ? matches.map(u => `
                 <div class="uni-card">
-                    <h3>${u.name} - ${u.country}</h3>
-                    <p><strong>Course:</strong> ${u.courseName} (${u.degreeLevel})</p>
-                    <p><strong>Fee:</strong> ${u.currency} ${u.tutionFee} | <strong>Bank:</strong> ${u.requiredBankAmount} (${u.bankType})</p>
-                    <p style="color: green;"><strong>Scholarship:</strong> ${u.scholarship || 'N/A'}</p>
+                    <h3>${u.name}</h3>
+                    <div class="info-grid">
+                        <span>📍 ${u.location}, ${u.country}</span>
+                        <span>🎓 ${u.degreeLevel} - ${u.courseName}</span>
+                        <span>💰 Fee: ${u.currency} ${u.tutionFee}</span>
+                        <span>🏦 Bank: ${u.requiredBankAmount} (${u.bankType})</span>
+                        <span>🌐 Lang: ${u.languageType} ${u.minLangScore}</span>
+                        <span>⏳ Gap: ${u.maxStudyGap} Yrs</span>
+                    </div>
+                    <p style="color:green; font-weight:bold; margin-top:10px;">🎁 Scholarship: ${u.scholarship || 'N/A'}</p>
                 </div>
-            `).join('') : "<p style='color:red;'>No matching university found for " + document.getElementById('sDegree').value + ".</p>";
+            `).join('') : "<p style='color:red;'>No matching university found.</p>";
         }
     </script>
 </body>

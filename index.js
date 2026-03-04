@@ -13,7 +13,7 @@ mongoose.connect(process.env.MONGO_URI || "mongodb+srv://ADMIN:Gorun2026@cluster
 
 const UniversitySchema = new mongoose.Schema({
     name: String, country: String, location: String,
-    courseName: String, degreeLevel: String, intake: String,
+    courseName: String, degreeLevel: String, // UG, PG, Diploma, PhD, Research
     currency: String, tutionFee: Number, scholarship: String,
     minGPA: Number, minCGPA: Number, maxStudyGap: Number,
     requiredBankAmount: Number, bankType: String,

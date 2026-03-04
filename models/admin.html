@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Data Management</title>
+    <title>Admin - Full Entry</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
         .box { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -15,17 +15,20 @@
 </head>
 <body>
     <div class="box">
-        <h2>Add/Manage University Data</h2>
+        <h2>Add University Data</h2>
         <form id="uForm">
             <input type="text" id="name" placeholder="University Name" required>
             <div class="grid">
-                <input type="text" id="country" placeholder="Country" required>
+                <input type="text" id="country" placeholder="Country (e.g. UK)" required>
                 <input type="text" id="loc" placeholder="City/Campus">
             </div>
             <div class="grid">
                 <select id="degree">
                     <option value="UG">Undergraduate (UG)</option>
                     <option value="PG">Postgraduate (PG)</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="PhD">PhD</option>
+                    <option value="Research">Research</option>
                 </select>
                 <input type="text" id="course" placeholder="Course Name" required>
             </div>
@@ -34,36 +37,28 @@
                     <option value="USD">USD ($)</option>
                     <option value="AUD">AUD (A$)</option>
                     <option value="GBP">GBP (£)</option>
+                    <option value="CAD">CAD (C$)</option>
                 </select>
                 <input type="number" id="fee" placeholder="Tuition Fee">
             </div>
             <div class="grid">
-                <select id="bType">
-                    <option value="FDR">FDR</option>
-                    <option value="Savings">Savings</option>
-                </select>
-                <input type="number" id="bAmt" placeholder="Bank Amount">
+                <select id="bType"><option value="FDR">FDR</option><option value="Savings">Savings</option></select>
+                <input type="number" id="bAmt" placeholder="Required Bank Amount">
             </div>
             <div class="grid">
-                <select id="marital">
-                    <option value="Allowed">Spouse Allowed</option>
-                    <option value="Not Allowed">Single Only</option>
-                </select>
-                <input type="text" id="scholar" placeholder="Scholarship Info">
+                <select id="marital"><option value="Allowed">Spouse Allowed</option><option value="Not Allowed">Single Only</option></select>
+                <input type="text" id="scholar" placeholder="Scholarship">
             </div>
             <div class="grid">
                 <input type="number" step="0.01" id="mGPA" placeholder="Min GPA">
                 <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA">
             </div>
             <div class="grid">
-                <select id="lType">
-                    <option value="IELTS">IELTS</option>
-                    <option value="PTE">PTE</option>
-                </select>
-                <input type="number" step="0.1" id="lScore" placeholder="Min Lang Score">
+                <select id="lType"><option value="IELTS">IELTS</option><option value="PTE">PTE</option></select>
+                <input type="number" step="0.1" id="lScore" placeholder="Min Score">
             </div>
-            <input type="number" id="gap" placeholder="Max Gap (Years)">
-            <button type="submit">Save University</button>
+            <input type="number" id="gap" placeholder="Max Study Gap">
+            <button type="submit">Save</button>
         </form>
         <div id="uniList" style="margin-top:20px;"></div>
     </div>
@@ -72,32 +67,22 @@
         async function load() {
             const r = await fetch(API); const d = await r.json();
             document.getElementById('uniList').innerHTML = d.map(u => `
-                <div class="uni-item">
-                    <span>${u.name} (${u.degreeLevel})</span>
-                    <button class="del-btn" onclick="del('${u._id}')">Delete</button>
-                </div>
+                <div class="uni-item"><span>${u.name} - ${u.degreeLevel}</span>
+                <button class="del-btn" onclick="del('${u._id}')">Delete</button></div>
             `).join('');
         }
         async function del(id) { if(confirm("Delete?")) { await fetch(`${API}/${id}`, {method:'DELETE'}); load(); } }
         document.getElementById('uForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
-                name: document.getElementById('name').value,
-                country: document.getElementById('country').value,
-                location: document.getElementById('loc').value,
-                degreeLevel: document.getElementById('degree').value,
-                courseName: document.getElementById('course').value,
-                currency: document.getElementById('curr').value,
-                tutionFee: document.getElementById('fee').value,
-                bankType: document.getElementById('bType').value,
-                requiredBankAmount: document.getElementById('bAmt').value,
-                maritalStatus: document.getElementById('marital').value,
-                scholarship: document.getElementById('scholar').value,
-                minGPA: document.getElementById('mGPA').value,
-                minCGPA: document.getElementById('mCGPA').value,
-                languageType: document.getElementById('lType').value,
-                minLangScore: document.getElementById('lScore').value,
-                maxStudyGap: document.getElementById('gap').value
+                name: document.getElementById('name').value, country: document.getElementById('country').value,
+                location: document.getElementById('loc').value, degreeLevel: document.getElementById('degree').value,
+                courseName: document.getElementById('course').value, currency: document.getElementById('curr').value,
+                tutionFee: document.getElementById('fee').value, bankType: document.getElementById('bType').value,
+                requiredBankAmount: document.getElementById('bAmt').value, maritalStatus: document.getElementById('marital').value,
+                scholarship: document.getElementById('scholar').value, minGPA: document.getElementById('mGPA').value,
+                minCGPA: document.getElementById('mCGPA').value, languageType: document.getElementById('lType').value,
+                minLangScore: document.getElementById('lScore').value, maxStudyGap: document.getElementById('gap').value
             };
             await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
             load(); e.target.reset();
