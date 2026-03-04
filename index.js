@@ -1,9 +1,3 @@
-আপনার MongoDB Authentication এররটি স্থায়ীভাবে সমাধান করার জন্য নতুন ইউজারনেম (admin2) এবং পাসওয়ার্ড (CRM12345) সহ সম্পূর্ণ কোড নিচে দেওয়া হলো।
-
-মনে রাখবেন: এই কোডটি কাজ করার আগে আপনার MongoDB Atlas ড্যাশবোর্ডে গিয়ে admin2 নামে একটি ইউজার তৈরি করে নিতে হবে।
-
-📄 সংশোধিত index.js (সম্পূর্ণ কোড):
-JavaScript
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -16,11 +10,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// নতুন ইউজার admin2 এবং পাসওয়ার্ড CRM12345 ব্যবহার করা হয়েছে
-const mongoURI = 'mongodb+srv://admin2:CRM12345@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
+// এখানে পাসওয়ার্ড হিসেবে CRM2026 ব্যবহার করা হয়েছে। 
+// এটি কাজ করার জন্য আগে MongoDB Atlas-এ গিয়ে পাসওয়ার্ডটি আপডেট করুন।
+const mongoURI = 'mongodb+srv://admin:CRM2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ MongoDB Connected Successfully")) // এটি লগে আসলে বুঝবেন সব ঠিক আছে
+    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে Render Logs-এ এটি দেখাবে
     .catch(err => {
         console.log("❌ MongoDB Connection Error: ", err.message); // এরর হলে এখানে বিস্তারিত দেখাবে
     });
@@ -42,6 +37,7 @@ const partnerSchema = new mongoose.Schema({
     }]
 });
 
+// মডেল রি-ডিক্লেয়ারেশন সমস্যা এড়াতে এই চেকটি রাখা হয়েছে
 const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
 // University Schema
@@ -56,7 +52,7 @@ const universitySchema = new mongoose.Schema({
 const University = mongoose.models.University || mongoose.model('University', universitySchema);
 
 // --- AUTOMATIC TEST USER CREATION ---
-// কানেকশন হওয়ার পর স্বয়ংক্রিয়ভাবে একটি পার্টনার ইউজার তৈরি হবে
+// ডাটাবেস কানেক্ট হওয়ার পর এই ইউজারটি অটোমেটিক তৈরি হবে
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
@@ -64,7 +60,7 @@ mongoose.connection.once('open', async () => {
             const testPartner = new Partner({
                 name: "Test Admin",
                 email: "admin@test.com",
-                password: "123", // লগইনের জন্য পাসওয়ার্ড হবে ১২৩
+                password: "123", // লগইনের সময় এটি ব্যবহার করবেন
                 walletBalance: 500
             });
             await testPartner.save();
@@ -89,11 +85,11 @@ app.post('/api/partners/login', async (req, res) => {
         }
     } catch (err) {
         console.error("Login Route Error:", err);
-        res.status(500).json({ error: "Internal Server Error" }); // ৫০০ এরর হ্যান্ডলিং
+        res.status(500).json({ error: "Internal Server Error" }); // এটি সেই ৫০০ এরর সমাধান করবে
     }
 });
 
-// ২. ড্যাশবোর্ড রুট
+// ২. ড্যাশবোর্ড ডাটা রুট
 app.get('/api/partners/dashboard/:id', async (req, res) => {
     try {
         const partner = await Partner.findById(req.params.id);
