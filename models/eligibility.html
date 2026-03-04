@@ -2,55 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal - Check Eligibility</title>
+    <title>Partner - Check Eligibility</title>
     <style>
-        body { font-family: sans-serif; background: #fdfbfb; padding: 20px; }
-        .card { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; border-top: 5px solid #00b09b; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        .res { margin-top: 15px; padding: 10px; border-radius: 5px; }
-        .uni-item { background: #f9f9f9; padding: 10px; margin: 5px 0; border-left: 4px solid #00b09b; }
+        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
+        .card { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .uni-card { border: 1px solid #ddd; padding: 15px; margin-top: 15px; border-left: 5px solid #28a745; background: #fff; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Check Eligibility</h2>
+        <h2>Student Eligibility Check</h2>
         <select id="level">
-            <option value="UG">Undergraduate (Apply with GPA)</option>
-            <option value="MS">Masters (Apply with CGPA)</option>
+            <option value="UG">Applying for Undergraduate (GPA)</option>
+            <option value="MS">Applying for Masters (CGPA)</option>
         </select>
-        <input type="number" step="0.01" id="sScore" placeholder="Enter GPA/CGPA Score">
-        <input type="number" id="sGap" placeholder="Enter Study Gap (Years)">
-        <input type="number" step="0.5" id="sIELTS" placeholder="Enter IELTS Score">
-        <button onclick="check()" style="width:100%; padding:12px; background:#00b09b; color:white; border:none; margin-top:10px; cursor:pointer;">Search Programs</button>
-        <div id="results"></div>
+        <input type="number" step="0.01" id="score" placeholder="Enter Score (GPA/CGPA)">
+        <input type="number" id="gap" placeholder="Study Gap (Years)">
+        <div style="display: flex; gap: 10px;">
+            <select id="lType">
+                <option value="IELTS">IELTS</option>
+                <option value="PTE">PTE</option>
+                <option value="Duolingo">Duolingo</option>
+                <option value="GRE">GRE</option>
+            </select>
+            <input type="number" step="0.1" id="lScore" placeholder="Score">
+        </div>
+        <button onclick="search()">Search Matching Universities</button>
+        <div id="res"></div>
     </div>
 
     <script>
-        async function check() {
-            const level = document.getElementById('level').value;
-            const score = document.getElementById('sScore').value;
-            const gap = document.getElementById('sGap').value;
-            const ielts = document.getElementById('sIELTS').value;
-            const resDiv = document.getElementById('results');
-            
+        async function search() {
+            const resDiv = document.getElementById('res');
             resDiv.innerHTML = "Searching...";
             
             const response = await fetch("https://study-abroad-crm.onrender.com/api/universities");
             const unis = await response.json();
             
             const matches = unis.filter(u => {
-                let sMatch = (level === 'UG') ? (score >= u.minGPA) : (score >= u.minCGPA);
-                return sMatch && (gap <= u.maxStudyGap) && (ielts >= u.minIELTS);
+                const sType = document.getElementById('level').value;
+                const sScore = document.getElementById('score').value;
+                const sGap = document.getElementById('gap').value;
+                const sLType = document.getElementById('lType').value;
+                const sLScore = document.getElementById('lScore').value;
+
+                let scoreMatch = (sType === 'UG') ? (sScore >= u.minGPA) : (sScore >= u.minCGPA);
+                let langMatch = (sLType === u.languageType) && (sLScore >= u.minLangScore);
+                
+                return scoreMatch && (sGap <= u.maxStudyGap) && langMatch;
             });
 
-            if(matches.length > 0) {
-                resDiv.innerHTML = "<h3>Eligible Programs:</h3>" + matches.map(u => `
-                    <div class="uni-item">
-                        <strong>${u.name}</strong> (${u.country})<br>
-                        Course: ${u.courseName} | Intake: ${u.intake}<br>
-                        <small>Bank: FDR ${u.requiredFDR} / Savings ${u.requiredSavings}</small>
-                    </div>
-                `).join('');
-            } else { resDiv.innerHTML = "<p style='color:red;'>No matching programs found.</p>"; }
+            resDiv.innerHTML = matches.length ? matches.map(u => `
+                <div class="uni-card">
+                    <strong>${u.name}</strong> - ${u.country}<br>
+                    Course: ${u.courseName} | Intake: ${u.intake}<br>
+                    Tuition: ${u.tutionFee} | Bank: ${u.requiredBankAmount} (${u.bankType})
+                </div>
+            `).join('') : "No matching university found.";
         }
     </script>
 </body>

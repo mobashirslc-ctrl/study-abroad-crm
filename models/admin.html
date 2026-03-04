@@ -2,53 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel - Data Entry</title>
+    <title>Admin - Study Abroad CRM</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #ececec; padding: 20px; }
-        .box { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { background: #1a2a6c; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .row { display: flex; gap: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .box { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: #1a2a6c; color: white; border: none; cursor: pointer; font-size: 16px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     </style>
 </head>
 <body>
-    <div id="loginBox" class="box">
-        <h2>Admin Security</h2>
-        <input type="password" id="pass" placeholder="Enter Password">
-        <button onclick="login()">Enter Admin Panel</button>
+    <div id="login" class="box">
+        <h2>Admin Access</h2>
+        <input type="password" id="p" placeholder="Enter Password">
+        <button onclick="auth()">Login</button>
     </div>
 
-    <div id="formBox" class="box" style="display:none;">
-        <h2>Add University Info</h2>
+    <div id="admin" class="box" style="display:none;">
+        <h2>Add University Details</h2>
         <form id="uForm">
             <input type="text" id="name" placeholder="University Name" required>
             <div class="row">
                 <input type="text" id="country" placeholder="Country" required>
                 <input type="text" id="course" placeholder="Course Name" required>
             </div>
-            <input type="text" id="intake" placeholder="Intake (e.g. Sept 2026)">
+            <div class="row">
+                <input type="text" id="tution" placeholder="Tuition Fee (e.g. $15k/Year)">
+                <input type="text" id="intake" placeholder="Intake (e.g. Sept 2026)">
+            </div>
             <div class="row">
                 <input type="number" step="0.01" id="mGPA" placeholder="Min GPA (UG)">
                 <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA (Masters)">
             </div>
             <div class="row">
-                <input type="number" id="gap" placeholder="Max Gap (Years)">
-                <input type="number" step="0.1" id="ielts" placeholder="Min IELTS">
+                <input type="number" id="gap" placeholder="Max Study Gap (Years)">
+                <select id="lType">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="Duolingo">Duolingo</option>
+                    <option value="GRE">GRE</option>
+                </select>
             </div>
             <div class="row">
-                <input type="number" id="fdr" placeholder="Required FDR">
-                <input type="number" id="savings" placeholder="Required Savings">
+                <input type="number" step="0.1" id="lScore" placeholder="Min Language Score">
+                <select id="bType">
+                    <option value="FDR">FDR Required</option>
+                    <option value="Savings">Savings Required</option>
+                </select>
             </div>
-            <button type="submit">Submit Data</button>
+            <input type="number" id="bAmt" placeholder="Required Bank Amount">
+            <button type="submit">Add to Database</button>
         </form>
     </div>
 
     <script>
-        function login() {
-            if(document.getElementById('pass').value === "admin123") {
-                document.getElementById('loginBox').style.display='none';
-                document.getElementById('formBox').style.display='block';
-            } else { alert("Wrong!"); }
+        function auth() {
+            if(document.getElementById('p').value === "admin123") {
+                document.getElementById('login').style.display='none';
+                document.getElementById('admin').style.display='block';
+            } else { alert("Wrong Password!"); }
         }
 
         document.getElementById('uForm').addEventListener('submit', async (e) => {
@@ -58,19 +70,21 @@
                 country: document.getElementById('country').value,
                 courseName: document.getElementById('course').value,
                 intake: document.getElementById('intake').value,
+                tutionFee: document.getElementById('tution').value,
                 minGPA: document.getElementById('mGPA').value,
                 minCGPA: document.getElementById('mCGPA').value,
                 maxStudyGap: document.getElementById('gap').value,
-                minIELTS: document.getElementById('ielts').value,
-                requiredFDR: document.getElementById('fdr').value,
-                requiredSavings: document.getElementById('savings').value
+                languageType: document.getElementById('lType').value,
+                minLangScore: document.getElementById('lScore').value,
+                bankType: document.getElementById('bType').value,
+                requiredBankAmount: document.getElementById('bAmt').value
             };
             const res = await fetch("https://study-abroad-crm.onrender.com/api/universities", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            if(res.ok) { alert("University Added!"); e.target.reset(); }
+            if(res.ok) { alert("Successfully Added!"); e.target.reset(); }
         });
     </script>
 </body>
