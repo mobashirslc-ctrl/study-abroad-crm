@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Data Input</title>
+    <style>
+        body { font-family: sans-serif; padding: 30px; background: #eef2f3; }
+        .container { max-width: 500px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { background: #2c3e50; color: white; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Admin Panel: Add University</h2>
+        <form id="uniForm">
+            <input type="text" id="uniName" placeholder="University Name" required>
+            <input type="text" id="country" placeholder="Country" required>
+            <input type="number" step="0.1" id="minCGPA" placeholder="Minimum CGPA (e.g. 3.0)" required>
+            <input type="number" id="minIELTS" placeholder="Minimum IELTS (e.g. 6)" required>
+            <button type="submit">Save University Data</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = "https://study-abroad-crm.onrender.com";
+        document.getElementById('uniForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('uniName').value,
+                country: document.getElementById('country').value,
+                minCGPA: document.getElementById('minCGPA').value,
+                minIELTS: document.getElementById('minIELTS').value
+            };
+            try {
+                const res = await fetch(`${API_URL}/api/universities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if(res.ok) alert("Data saved to database!");
+            } catch(err) { alert("Error saving data!"); }
+        });
+    </script>
+</body>
+</html>
