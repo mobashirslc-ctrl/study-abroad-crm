@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose'); // Mongoose ইমপোর্ট নিশ্চিত করা হয়েছে
+const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
@@ -8,12 +8,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// আপনার দেওয়া পাসওয়ার্ড 'Gorun2026' এখানে ব্যবহার করা হয়েছে
+// এখানে আপনার ইউজারনেম 'admin' এবং পাসওয়ার্ড 'Gorun2026' ব্যবহার করা হয়েছে।
+// আপনার স্ক্রিনশটে থাকা Cluster0 এবং crm_database নামটিও এখানে যুক্ত আছে।
 const mongoURI = 'mongodb+srv://admin:Gorun2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ MongoDB Connected Successfully"))
-    .catch(err => console.log("❌ MongoDB Connection Error: ", err));
+    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে এই মেসেজটি Logs-এ দেখাবে
+    .catch(err => console.log("❌ MongoDB Connection Error: ", err)); // ব্যর্থ হলে এরর দেখাবে
 
 // --- SCHEMAS ---
 
@@ -32,7 +33,8 @@ const partnerSchema = new mongoose.Schema({
     }]
 });
 
-const Partner = mongoose.model('Partner', partnerSchema);
+// মডেলটি একবার চেক করে তৈরি করা হচ্ছে যাতে ৫00 এরর না আসে
+const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
 // University Schema
 const universitySchema = new mongoose.Schema({
@@ -43,10 +45,10 @@ const universitySchema = new mongoose.Schema({
     commission: Number
 });
 
-const University = mongoose.model('University', universitySchema);
+const University = mongoose.models.University || mongoose.model('University', universitySchema);
 
 // --- AUTOMATIC TEST USER CREATION ---
-// সার্ভার চালু হওয়ার সাথে সাথে এই ইউজারটি তৈরি হবে যাতে আপনি লগইন করতে পারেন
+// সার্ভার চালু হওয়ার সাথে সাথে এই ইউজারটি ডাটাবেসে তৈরি হবে
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
@@ -78,7 +80,8 @@ app.post('/api/partners/login', async (req, res) => {
             res.status(401).json({ success: false, message: "Invalid email or password" });
         }
     } catch (err) {
-        res.status(500).json({ error: "Server error" });
+        console.error("Login Error:", err);
+        res.status(500).json({ error: "Internal Server Error" }); // এটিই সেই ৫০০ এরর
     }
 });
 
@@ -107,7 +110,7 @@ app.get('/api/universities', async (req, res) => {
 });
 
 // সার্ভার পোর্ট কনফিগারেশন
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000; // রেন্ডারের জন্য ডিফল্ট পোর্ট
 app.listen(PORT, () => {
     console.log(`📡 Server is running on port ${PORT}`);
 });
