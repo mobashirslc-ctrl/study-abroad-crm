@@ -8,12 +8,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// এখানে ইউজার 'admin' এবং পাসওয়ার্ড 'CRM2026' ব্যবহার করা হয়েছে।
-const mongoURI = 'mongodb+srv://admin:CRM2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
+// এখানে ইউজারনেম 'admin2' এবং পাসওয়ার্ড 'CRM2026' ব্যবহার করা হয়েছে।
+const mongoURI = 'mongodb+srv://admin2:CRM2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ MongoDB Connected Successfully")) 
-    .catch(err => console.log("❌ MongoDB Connection Error: ", err.message));
+    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে এটি লগে আসবে
+    .catch(err => console.log("❌ MongoDB Connection Error: ", err.message)); // ব্যর্থ হলে এরর দেখাবে
 
 // --- SCHEMAS ---
 const partnerSchema = new mongoose.Schema({
@@ -33,6 +33,7 @@ const partnerSchema = new mongoose.Schema({
 const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
 // --- TEST USER CREATION ---
+// ডাটাবেস কানেক্ট হওয়ার পর admin@test.com ইউজারটি অটোমেটিক তৈরি হবে
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
@@ -40,7 +41,7 @@ mongoose.connection.once('open', async () => {
             await new Partner({
                 name: "Test Admin",
                 email: "admin@test.com",
-                password: "123", 
+                password: "123", // লগইন করার সময় এটি ব্যবহার করবেন
                 walletBalance: 500
             }).save();
             console.log("🚀 Test Partner Created: admin@test.com / 123");
@@ -61,7 +62,8 @@ app.post('/api/partners/login', async (req, res) => {
             res.status(401).json({ success: false, message: "Invalid email or password" });
         }
     } catch (err) {
-        res.status(500).json({ error: "Internal Server Error" });
+        console.error("Login Error:", err);
+        res.status(500).json({ error: "Internal Server Error" }); // ৫০০ এরর হ্যান্ডলিং
     }
 });
 
