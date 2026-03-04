@@ -21,7 +21,6 @@ const UniversitySchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniversitySchema);
 
-// API Routes
 app.get('/api/universities', async (req, res) => {
     const unis = await University.find();
     res.json(unis);
@@ -33,7 +32,6 @@ app.post('/api/universities', async (req, res) => {
     res.json({ message: "Saved!" });
 });
 
-// Delete Route (নতুন যোগ করা হয়েছে)
 app.delete('/api/universities/:id', async (req, res) => {
     await University.findByIdAndDelete(req.params.id);
     res.json({ message: "Deleted!" });

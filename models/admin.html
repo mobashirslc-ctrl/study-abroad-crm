@@ -7,15 +7,15 @@
         body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
         .box { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #003366; color: white; cursor: pointer; border: none; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #003366; color: white; cursor: pointer; border: none; font-weight: bold; }
         .uni-item { border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { background: #cc0000; width: auto; padding: 5px 10px; font-size: 12px; }
+        .del-btn { background: #cc0000; width: auto; padding: 5px 10px; }
     </style>
 </head>
 <body>
-    <div id="admin" class="box">
-        <h2>Add University</h2>
+    <div class="box">
+        <h2>Add University Full Details</h2>
         <form id="uForm">
             <input type="text" id="name" placeholder="University Name" required>
             <div class="grid">
@@ -30,37 +30,54 @@
                 <input type="text" id="course" placeholder="Course Name" required>
             </div>
             <div class="grid">
-                <input type="number" id="fee" placeholder="Tuition Fee (Total Amount)">
-                <input type="text" id="scholar" placeholder="Scholarship (e.g. 20%)">
+                <input type="number" id="fee" placeholder="Tuition Fee (Total)">
+                <input type="text" id="scholar" placeholder="Scholarship (e.g. 20% Off)">
             </div>
-            <button type="submit">Add University</button>
+            <div class="grid">
+                <input type="number" step="0.01" id="mGPA" placeholder="Min GPA (SSC/HSC)">
+                <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA (Honours)">
+            </div>
+            <div class="grid">
+                <select id="lType">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="Duolingo">Duolingo</option>
+                </select>
+                <input type="number" step="0.1" id="lScore" placeholder="Min Score Required">
+            </div>
+            <div class="grid">
+                <select id="bType">
+                    <option value="FDR">FDR</option>
+                    <option value="Savings">Savings</option>
+                </select>
+                <input type="number" id="bAmt" placeholder="Required Bank Amount">
+            </div>
+            <input type="number" id="gap" placeholder="Max Study Gap (Years)">
+            <button type="submit">Add to Database</button>
         </form>
         <hr>
-        <h3>Existing Universities</h3>
+        <h3>University List (Manage)</h3>
         <div id="uniList"></div>
     </div>
 
     <script>
         const API = "https://study-abroad-crm.onrender.com/api/universities";
-
         async function loadUnis() {
             const res = await fetch(API);
             const data = await res.json();
             document.getElementById('uniList').innerHTML = data.map(u => `
                 <div class="uni-item">
-                    <span><strong>${u.name}</strong> - ${u.courseName} (${u.country})</span>
+                    <span><strong>${u.name}</strong> - ${u.courseName}</span>
                     <button class="del-btn" onclick="deleteUni('${u._id}')">Delete</button>
                 </div>
             `).join('');
         }
-
         async function deleteUni(id) {
-            if(confirm("Are you sure?")) {
+            if(confirm("Delete this university?")) {
                 await fetch(`${API}/${id}`, { method: 'DELETE' });
                 loadUnis();
             }
         }
-
         document.getElementById('uForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
@@ -70,17 +87,22 @@
                 degreeLevel: document.getElementById('degree').value,
                 courseName: document.getElementById('course').value,
                 tutionFee: document.getElementById('fee').value,
-                scholarship: document.getElementById('scholar').value
+                scholarship: document.getElementById('scholar').value,
+                minGPA: document.getElementById('mGPA').value,
+                minCGPA: document.getElementById('mCGPA').value,
+                languageType: document.getElementById('lType').value,
+                minLangScore: document.getElementById('lScore').value,
+                bankType: document.getElementById('bType').value,
+                requiredBankAmount: document.getElementById('bAmt').value,
+                maxStudyGap: document.getElementById('gap').value
             };
             await fetch(API, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            loadUnis();
-            e.target.reset();
+            loadUnis(); e.target.reset();
         });
-
         loadUnis();
     </script>
 </body>
