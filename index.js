@@ -1,5 +1,5 @@
 const express = require('express');
-const mongoose = require('mongoose'); // Mongoose defined here
+const mongoose = require('mongoose'); // Mongoose ইমপোর্ট নিশ্চিত করা হয়েছে
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
@@ -8,7 +8,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// আপনার দেওয়া পাসওয়ার্ড 'Gorun2026' এখানে সেট করা হয়েছে
+// আপনার দেওয়া পাসওয়ার্ড 'Gorun2026' এখানে ব্যবহার করা হয়েছে
 const mongoURI = 'mongodb+srv://admin:Gorun2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
@@ -45,20 +45,29 @@ const universitySchema = new mongoose.Schema({
 
 const University = mongoose.model('University', universitySchema);
 
-// --- ROUTES ---
-
-// ১. নতুন পার্টনার রেজিস্ট্রেশন
-app.post('/api/partners/register', async (req, res) => {
+// --- AUTOMATIC TEST USER CREATION ---
+// সার্ভার চালু হওয়ার সাথে সাথে এই ইউজারটি তৈরি হবে যাতে আপনি লগইন করতে পারেন
+mongoose.connection.once('open', async () => {
     try {
-        const newPartner = new Partner(req.body);
-        await newPartner.save();
-        res.status(201).json({ message: "Partner Registered Successfully" });
+        const checkUser = await Partner.findOne({ email: 'admin@test.com' });
+        if (!checkUser) {
+            const testPartner = new Partner({
+                name: "Test Admin",
+                email: "admin@test.com",
+                password: "123", // লগইনের জন্য এই পাসওয়ার্ডটি ব্যবহার করবেন
+                walletBalance: 500
+            });
+            await testPartner.save();
+            console.log("🚀 Test Partner Created: admin@test.com / 123");
+        }
     } catch (err) {
-        res.status(400).json({ error: "Email already exists or invalid data" });
+        console.log("Error creating test user:", err);
     }
 });
 
-// ২. পার্টনার লগইন
+// --- ROUTES ---
+
+// ১. পার্টনার লগইন রুট
 app.post('/api/partners/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -73,7 +82,7 @@ app.post('/api/partners/login', async (req, res) => {
     }
 });
 
-// ৩. ড্যাশবোর্ড ডাটা দেখা
+// ২. ড্যাশবোর্ড ডাটা রুট
 app.get('/api/partners/dashboard/:id', async (req, res) => {
     try {
         const partner = await Partner.findById(req.params.id);
@@ -87,7 +96,7 @@ app.get('/api/partners/dashboard/:id', async (req, res) => {
     }
 });
 
-// ৪. সব ইউনিভার্সিটির লিস্ট দেখা
+// ৩. ইউনিভার্সিটি লিস্ট রুট
 app.get('/api/universities', async (req, res) => {
     try {
         const universities = await University.find();
@@ -97,8 +106,8 @@ app.get('/api/universities', async (req, res) => {
     }
 });
 
-// সার্ভার পোর্ট সেটিংস
+// সার্ভার পোর্ট কনফিগারেশন
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📡 Server is running on port ${PORT}`);
 });
