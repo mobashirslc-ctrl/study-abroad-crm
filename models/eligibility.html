@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal - Smart Assessment</title>
+    <title>Partner Portal - Expert Assessment</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; }
         .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background: #0052cc; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button { background: #0052cc; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; }
         .uni-card { border-left: 6px solid #0052cc; padding: 20px; margin-top: 20px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-radius: 4px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; margin-top: 10px; }
+        .info-item { font-size: 14px; margin: 5px 0; color: #444; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
+        .badge-spouse { background: #e3f2fd; color: #0d47a1; }
+        .badge-scholar { background: #e8f5e9; color: #2e7d32; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 style="text-align:center; color:#003366;">Assessment Tool</h2>
+        <h2 style="text-align:center; color:#003366; margin-bottom: 25px;">Student Assessment Tool</h2>
+        
         <div class="grid">
             <select id="sCountry">
                 <option value="All">All Preferred Countries</option>
@@ -24,6 +28,13 @@
                 <option value="Canada">Canada</option>
                 <option value="USA">USA</option>
             </select>
+            <select id="sMarital">
+                <option value="Single">Single Student</option>
+                <option value="Married">Married (Spouse Included)</option>
+            </select>
+        </div>
+
+        <div class="grid">
             <select id="sDegree">
                 <option value="UG">Undergraduate (UG)</option>
                 <option value="PG">Postgraduate (PG)</option>
@@ -31,68 +42,74 @@
                 <option value="PhD">PhD</option>
                 <option value="Research">Research</option>
             </select>
-        </div>
-        <div class="grid">
-            <select id="sBankType">
-                <option value="Any">Any Bank Type</option>
-                <option value="FDR">FDR</option>
-                <option value="Savings">Savings</option>
-            </select>
-            <input type="number" id="sBankAmt" placeholder="Student's Bank Amount">
-        </div>
-        <div class="grid">
             <input type="number" step="0.01" id="sScore" placeholder="GPA/CGPA Score">
+        </div>
+
+        <div class="grid">
+            <select id="sLType">
+                <option value="IELTS">IELTS</option>
+                <option value="PTE">PTE</option>
+                <option value="Duolingo">Duolingo</option>
+            </select>
+            <input type="number" step="0.1" id="sLScore" placeholder="Language Score">
+        </div>
+
+        <div class="grid">
+            <input type="number" id="sGre" placeholder="GRE Score (if any)">
             <input type="number" id="sGap" placeholder="Study Gap (Years)">
         </div>
-        <div class="grid">
-            <select id="sLType"><option value="IELTS">IELTS</option><option value="PTE">PTE</option></select>
-            <input type="number" step="0.1" id="sLScore" placeholder="Lang Score">
-        </div>
-        <button onclick="search()">Find Universities</button>
+
+        <button onclick="search()">Find Best Matching Universities</button>
         <div id="results"></div>
     </div>
 
     <script>
         async function search() {
             const resDiv = document.getElementById('results');
-            resDiv.innerHTML = "<p>Searching matching programs...</p>";
+            resDiv.innerHTML = "<p style='text-align:center;'>Searching database...</p>";
+            
             const response = await fetch("https://study-abroad-crm.onrender.com/api/universities");
             const unis = await response.json();
             
             const matches = unis.filter(u => {
                 const country = document.getElementById('sCountry').value;
+                const marital = document.getElementById('sMarital').value;
                 const degree = document.getElementById('sDegree').value;
-                const bankType = document.getElementById('sBankType').value;
-                const bankAmt = document.getElementById('sBankAmt').value;
                 const score = document.getElementById('sScore').value;
+                const langScore = document.getElementById('sLScore').value;
+                const langType = document.getElementById('sLType').value;
+                const gre = document.getElementById('sGre').value;
                 const gap = document.getElementById('sGap').value;
-                const lScore = document.getElementById('sLScore').value;
 
                 let cMatch = (country === "All" || u.country === country);
+                let mMatch = (marital === "Single" || u.maritalStatus === "Allowed");
                 let dMatch = (u.degreeLevel === degree); 
-                let bTypeMatch = (bankType === "Any" || u.bankType === bankType);
-                let bAmtMatch = (!bankAmt || u.requiredBankAmount <= bankAmt);
                 let sMatch = (degree === 'UG' || degree === 'Diploma') ? (score >= u.minGPA) : (score >= u.minCGPA);
+                let lMatch = (langType === u.languageType && langScore >= u.minLangScore);
                 let gMatch = (gap <= u.maxStudyGap);
-                let lMatch = (lScore >= u.minLangScore);
+                let greMatch = (!u.greScore || gre >= u.greScore);
 
-                return cMatch && dMatch && bTypeMatch && bAmtMatch && sMatch && gMatch && lMatch;
+                return cMatch && mMatch && dMatch && sMatch && lMatch && gMatch && greMatch;
             });
 
             resDiv.innerHTML = matches.length ? matches.map(u => `
                 <div class="uni-card">
-                    <h3>${u.name}</h3>
-                    <div class="info-grid">
-                        <span>📍 ${u.location}, ${u.country}</span>
-                        <span>🎓 ${u.degreeLevel} - ${u.courseName}</span>
-                        <span>💰 Fee: ${u.currency} ${u.tutionFee}</span>
-                        <span>🏦 Bank: ${u.requiredBankAmount} (${u.bankType})</span>
-                        <span>🌐 Lang: ${u.languageType} ${u.minLangScore}</span>
-                        <span>⏳ Gap: ${u.maxStudyGap} Yrs</span>
+                    <span class="badge badge-spouse">Spouse: ${u.maritalStatus}</span>
+                    <h3 style="margin:0; color:#003366;">${u.name}</h3>
+                    <p style="color:#666; margin:5px 0;">📍 ${u.location}, ${u.country}</p>
+                    
+                    <div class="grid" style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                        <div class="info-item">🎓 <strong>${u.degreeLevel}:</strong> ${u.courseName}</div>
+                        <div class="info-item">💰 <strong>Fee:</strong> ${u.currency} ${u.tutionFee}</div>
+                        <div class="info-item">🌐 <strong>Lang:</strong> ${u.languageType} ${u.minLangScore}</div>
+                        <div class="info-item">🏦 <strong>Bank:</strong> ${u.requiredBankAmount} (${u.bankType})</div>
+                        <div class="info-item">⏳ <strong>Gap:</strong> Max ${u.maxStudyGap} Yrs</div>
+                        <div class="info-item">📝 <strong>GRE:</strong> ${u.greScore || 'Not Required'}</div>
                     </div>
-                    <p style="color:green; font-weight:bold; margin-top:10px;">🎁 Scholarship: ${u.scholarship || 'N/A'}</p>
+                    
+                    <div class="badge badge-scholar" style="margin-top:10px;">🎁 Scholarship: ${u.scholarship || 'Standard'}</div>
                 </div>
-            `).join('') : "<p style='color:red;'>No matching university found.</p>";
+            `).join('') : "<p style='color:red; text-align:center;'>No matching university found.</p>";
         }
     </script>
 </body>

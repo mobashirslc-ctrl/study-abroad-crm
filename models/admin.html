@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Full Entry</title>
+    <title>Admin - Full Management</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .box { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .box { max-width: 850px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
         button { background: #003366; color: white; border: none; font-weight: bold; cursor: pointer; }
         .uni-item { border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { background: #d9534f; width: auto; padding: 5px 15px; }
+        .del-btn { background: #d9534f; width: auto; padding: 6px 15px; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>Add University Data</h2>
+        <h2>Add University Details</h2>
         <form id="uForm">
             <input type="text" id="name" placeholder="University Name" required>
             <div class="grid">
-                <input type="text" id="country" placeholder="Country (e.g. UK)" required>
+                <input type="text" id="country" placeholder="Country (e.g. Canada)" required>
                 <input type="text" id="loc" placeholder="City/Campus">
             </div>
             <div class="grid">
@@ -42,23 +42,30 @@
                 <input type="number" id="fee" placeholder="Tuition Fee">
             </div>
             <div class="grid">
-                <select id="bType"><option value="FDR">FDR</option><option value="Savings">Savings</option></select>
-                <input type="number" id="bAmt" placeholder="Required Bank Amount">
-            </div>
-            <div class="grid">
                 <select id="marital"><option value="Allowed">Spouse Allowed</option><option value="Not Allowed">Single Only</option></select>
-                <input type="text" id="scholar" placeholder="Scholarship">
+                <input type="text" id="scholar" placeholder="Scholarship Details">
             </div>
             <div class="grid">
                 <input type="number" step="0.01" id="mGPA" placeholder="Min GPA">
                 <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA">
             </div>
             <div class="grid">
-                <select id="lType"><option value="IELTS">IELTS</option><option value="PTE">PTE</option></select>
-                <input type="number" step="0.1" id="lScore" placeholder="Min Score">
+                <select id="lType">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="Duolingo">Duolingo</option>
+                </select>
+                <input type="number" step="0.1" id="lScore" placeholder="Min Lang Score">
             </div>
-            <input type="number" id="gap" placeholder="Max Study Gap">
-            <button type="submit">Save</button>
+            <div class="grid">
+                <input type="number" id="gre" placeholder="Min GRE Score (if any)">
+                <input type="number" id="gap" placeholder="Max Gap (Years)">
+            </div>
+            <div class="grid">
+                <select id="bType"><option value="FDR">FDR</option><option value="Savings">Savings</option></select>
+                <input type="number" id="bAmt" placeholder="Required Bank Amount">
+            </div>
+            <button type="submit">Add to Database</button>
         </form>
         <div id="uniList" style="margin-top:20px;"></div>
     </div>
@@ -67,7 +74,7 @@
         async function load() {
             const r = await fetch(API); const d = await r.json();
             document.getElementById('uniList').innerHTML = d.map(u => `
-                <div class="uni-item"><span>${u.name} - ${u.degreeLevel}</span>
+                <div class="uni-item"><span><strong>${u.name}</strong> (${u.degreeLevel})</span>
                 <button class="del-btn" onclick="del('${u._id}')">Delete</button></div>
             `).join('');
         }
@@ -78,11 +85,12 @@
                 name: document.getElementById('name').value, country: document.getElementById('country').value,
                 location: document.getElementById('loc').value, degreeLevel: document.getElementById('degree').value,
                 courseName: document.getElementById('course').value, currency: document.getElementById('curr').value,
-                tutionFee: document.getElementById('fee').value, bankType: document.getElementById('bType').value,
-                requiredBankAmount: document.getElementById('bAmt').value, maritalStatus: document.getElementById('marital').value,
+                tutionFee: document.getElementById('fee').value, maritalStatus: document.getElementById('marital').value,
                 scholarship: document.getElementById('scholar').value, minGPA: document.getElementById('mGPA').value,
                 minCGPA: document.getElementById('mCGPA').value, languageType: document.getElementById('lType').value,
-                minLangScore: document.getElementById('lScore').value, maxStudyGap: document.getElementById('gap').value
+                minLangScore: document.getElementById('lScore').value, greScore: document.getElementById('gre').value,
+                maxStudyGap: document.getElementById('gap').value, bankType: document.getElementById('bType').value,
+                requiredBankAmount: document.getElementById('bAmt').value
             };
             await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
             load(); e.target.reset();
