@@ -1,33 +1,27 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
-<title>Student Data Entry</title>
+    <meta charset="UTF-8">
+    <title>Server Test</title>
 </head>
-<body style="font-family: Arial; margin: 50px;">
-<h2>Add New Student</h2>
-<form action="http://localhost:5000/add-student" method="POST" style="width: 300px;">
-<input type="text" name="name" placeholder="Full Name" required style="width: 100%; margin: 5px 0; padding: 10px;">
+<body>
+    <h2>Server Connection Test</h2>
+    <button onclick="testConnection()">Check Server Status</button>
+    <p id="status"></p>
 
-
-
-<input type="email" name="email" placeholder="Email" required style="width: 100%; margin: 5px 0; padding: 10px;">
-
-
-
-<input type="text" name="phone" placeholder="Phone" required style="width: 100%; margin: 5px 0; padding: 10px;">
-
-
-
-<input type="text" name="course" placeholder="Course" required style="width: 100%; margin: 5px 0; padding: 10px;">
-
-
-
-<input type="text" name="country" placeholder="Country" required style="width: 100%; margin: 5px 0; padding: 10px;">
-
-
-
-<button type="submit" style="width: 100%; padding: 10px; background: green; color: white; border: none; cursor: pointer;">Save Student</button>
-</form>
+    <script>
+        async function testConnection() {
+            const statusText = document.getElementById('status');
+            statusText.innerText = "Checking...";
+            
+            try {
+                const res = await fetch("https://study-abroad-crm.onrender.com/");
+                const data = await res.text();
+                statusText.innerHTML = `<b style="color: green;">Response: ${data}</b>`;
+            } catch (err) {
+                statusText.innerHTML = `<b style="color: red;">Error: Server is offline.</b>`;
+            }
+        }
+    </script>
 </body>
 </html>

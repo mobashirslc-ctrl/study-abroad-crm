@@ -2,65 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Add New University</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add University</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+        form { max-width: 400px; background: white; padding: 20px; border-radius: 8px; }
+        input, button { width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+    </style>
 </head>
-<body style="font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; padding: 40px;">
+<body>
+    <h2>Add New University</h2>
+    <form id="universityForm">
+        <input type="text" id="uniName" placeholder="University Name" required>
+        <input type="text" id="country" placeholder="Country" required>
+        <button type="submit" style="background: green; color: white;">Add University</button>
+    </form>
 
-    <div style="max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h2 style="text-align: center; color: #343a40;">Add University (Admin Panel)</h2>
-        <p style="text-align: center; color: #6c757d;">Enter full details for the assessment engine</p>
-        
-        <form action="http://localhost:5000/add-university" method="POST">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div style="grid-column: span 2;">
-                    <label>University Name:</label>
-                    <input type="text" name="universityName" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-                
-                <div>
-                    <label>Country:</label>
-                    <input type="text" name="country" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
+    <script>
+        const API_URL = "https://study-abroad-crm.onrender.com";
 
-                <div>
-                    <label>Course Name:</label>
-                    <input type="text" name="courseName" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
+        document.getElementById('universityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('uniName').value,
+                country: document.getElementById('country').value
+            };
 
-                <div>
-                    <label>GPA Requirement:</label>
-                    <input type="number" name="gpaRequirement" step="0.01" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-
-                <div>
-                    <label>IELTS/English:</label>
-                    <input type="number" name="ieltsRequirement" step="0.1" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-
-                <div style="background: #fff3cd; padding: 10px; border-radius: 5px;">
-                    <label>Max Study Gap (Years):</label>
-                    <input type="number" name="maxStudyGap" placeholder="e.g. 5" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-
-                <div style="background: #fff3cd; padding: 10px; border-radius: 5px;">
-                    <label>Min Bank Balance:</label>
-                    <input type="number" name="minBankBalance" placeholder="e.g. 3000000" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-
-                <div>
-                    <label>Tuition Fees:</label>
-                    <input type="text" name="tuitionFees" placeholder="e.g. $25,000" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-
-                <div>
-                    <label>Intake:</label>
-                    <input type="text" name="intake" placeholder="e.g. Sep, Jan" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ced4da; border-radius:4px;">
-                </div>
-            </div>
-
-            <button type="submit" style="width:100%; margin-top:25px; padding:15px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px; font-weight:bold;">SAVE UNIVERSITY TO DATABASE</button>
-        </form>
-    </div>
-
+            try {
+                const res = await fetch(`${API_URL}/api/universities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) alert("University Added Successfully!");
+                else alert("Failed to add university.");
+            } catch (err) {
+                alert("Could not connect to server.");
+            }
+        });
+    </script>
 </body>
 </html>
