@@ -2,73 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Eligibility Check</title>
+    <title>Partner Portal - Assessment</title>
     <style>
         body { font-family: sans-serif; background: #f0f4f8; padding: 20px; }
-        .card { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        .uni-res { border-left: 6px solid #0052cc; background: #fff; padding: 15px; margin-top: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; }
+        .uni-card { border-left: 5px solid #0052cc; padding: 15px; margin-top: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; }
-        button { background: #0052cc; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .scholar { color: #28a745; font-weight: bold; }
+        button { background: #0052cc; color: white; border: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Partner Portal - Search Universities</h2>
-        <select id="sDegree">
-            <option value="UG">Undergraduate (UG)</option>
-            <option value="PG">Postgraduate (PG)</option>
-            <option value="PhD">PhD</option>
-            <option value="Diploma">Diploma</option>
-        </select>
-        <div style="display: flex; gap: 10px;">
+        <h2>Student Assessment Tool</h2>
+        <div class="grid">
+            <select id="sCountry">
+                <option value="All">All Countries</option>
+                <option value="UK">United Kingdom</option>
+                <option value="USA">USA</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+            </select>
+            <select id="marital">
+                <option value="Single">Single</option>
+                <option value="Married">Married (With Spouse)</option>
+            </select>
+        </div>
+        <div class="grid">
+            <select id="sDegree">
+                <option value="UG">Undergraduate (UG)</option>
+                <option value="PG">Postgraduate (PG)</option>
+            </select>
+            <input type="number" id="budget" placeholder="Max Tuition Fee Budget">
+        </div>
+        <div class="grid">
             <input type="number" step="0.01" id="sScore" placeholder="GPA/CGPA">
             <input type="number" id="sGap" placeholder="Study Gap">
         </div>
-        <div style="display: flex; gap: 10px;">
-            <select id="sLType">
-                <option value="IELTS">IELTS</option>
-                <option value="PTE">PTE</option>
-                <option value="Duolingo">Duolingo</option>
-            </select>
-            <input type="number" step="0.1" id="sLScore" placeholder="Lang Score">
-        </div>
-        <button onclick="find()">Search Programs</button>
-        <div id="display"></div>
+        <button onclick="search()">Find Best Match</button>
+        <div id="results"></div>
     </div>
 
     <script>
-        async function find() {
-            const disp = document.getElementById('display');
-            disp.innerHTML = "Processing...";
+        async function search() {
+            const resDiv = document.getElementById('results');
+            resDiv.innerHTML = "Searching...";
             
             const response = await fetch("https://study-abroad-crm.onrender.com/api/universities");
             const unis = await response.json();
             
             const matches = unis.filter(u => {
+                const country = document.getElementById('sCountry').value;
+                const budget = document.getElementById('budget').value;
                 const degree = document.getElementById('sDegree').value;
                 const score = document.getElementById('sScore').value;
-                const gap = document.getElementById('sGap').value;
-                const lType = document.getElementById('sLType').value;
-                const lScore = document.getElementById('sLScore').value;
 
-                let sMatch = (degree === 'UG') ? (score >= u.minGPA) : (score >= u.minCGPA);
-                let dMatch = (degree === u.degreeLevel);
-                let lMatch = (lType === u.languageType) && (lScore >= u.minLangScore);
-                
-                return dMatch && sMatch && (gap <= u.maxStudyGap) && lMatch;
+                let countryMatch = (country === "All" || country === u.country);
+                let budgetMatch = (!budget || u.tutionFee <= budget);
+                let degreeMatch = (degree === u.degreeLevel);
+                let scoreMatch = (degree === 'UG') ? (score >= u.minGPA) : (score >= u.minCGPA);
+
+                return countryMatch && budgetMatch && degreeMatch && scoreMatch;
             });
 
-            disp.innerHTML = matches.length ? matches.map(u => `
-                <div class="uni-res">
-                    <h3>${u.name}</h3>
-                    <p><strong>Location:</strong> ${u.location}, ${u.country}</p>
-                    <p><strong>Course:</strong> ${u.courseName} (${u.degreeLevel})</p>
-                    <p><strong>Fee:</strong> ${u.currency} ${u.tutionFee} | <strong>Intake:</strong> ${u.intake}</p>
-                    <p class="scholar">Scholarship: ${u.scholarship || 'N/A'}</p>
-                    <p><small>Bank: ${u.requiredBankAmount} (${u.bankType})</small></p>
+            resDiv.innerHTML = matches.length ? matches.map(u => `
+                <div class="uni-card">
+                    <h3>${u.name} - ${u.country}</h3>
+                    <p>Course: ${u.courseName} | Fee: ${u.tutionFee}</p>
+                    <p style="color: green;">Scholarship: ${u.scholarship || 'None'}</p>
                 </div>
-            `).join('') : "No matching programs found for this criteria.";
+            `).join('') : "No matching university found.";
         }
     </script>
 </body>

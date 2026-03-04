@@ -4,53 +4,39 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://ADMIN:Gorun2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM?retryWrites=true&w=majority&appName=Cluster0";
+mongoose.connect(process.env.MONGO_URI || "mongodb+srv://ADMIN:Gorun2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM")
+    .then(() => console.log("Database Connected"))
+    .catch(err => console.log(err));
 
-mongoose.connect(MONGO_URI)
-    .then(() => console.log("OK: Connected to Atlas"))
-    .catch(err => console.error(err));
-
-// Updated University Schema with Scholarship & Degree Level
 const UniversitySchema = new mongoose.Schema({
-    name: String,
-    country: String,
-    location: String,
-    courseName: String,
-    degreeLevel: String,
-    intake: String,
-    currency: String,
-    tutionFee: String,
-    scholarship: String,
-    minGPA: Number,
-    minCGPA: Number,
-    maxStudyGap: Number,
-    requiredBankAmount: Number,
-    bankType: String,
-    languageType: String,
-    minLangScore: Number
+    name: String, country: String, location: String,
+    courseName: String, degreeLevel: String, intake: String,
+    currency: String, tutionFee: Number, scholarship: String,
+    minGPA: Number, minCGPA: Number, maxStudyGap: Number,
+    requiredBankAmount: Number, bankType: String,
+    languageType: String, minLangScore: Number
 });
 const University = mongoose.model('University', UniversitySchema);
 
-// Routes
-app.post('/api/universities', async (req, res) => {
-    try {
-        const newUni = new University(req.body);
-        await newUni.save();
-        res.status(201).json({ message: "Data Saved!" });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
+// API Routes
 app.get('/api/universities', async (req, res) => {
-    try {
-        const unis = await University.find();
-        res.json(unis);
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    const unis = await University.find();
+    res.json(unis);
 });
 
-app.listen(PORT, () => console.log(`Running on ${PORT}`));
+app.post('/api/universities', async (req, res) => {
+    const newUni = new University(req.body);
+    await newUni.save();
+    res.json({ message: "Saved!" });
+});
+
+// Delete Route (নতুন যোগ করা হয়েছে)
+app.delete('/api/universities/:id', async (req, res) => {
+    await University.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted!" });
+});
+
+app.listen(process.env.PORT || 10000);
