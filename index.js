@@ -4,19 +4,22 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// এখানে আপনার ইউজারনেম 'admin' এবং পাসওয়ার্ড 'Gorun2026' ব্যবহার করা হয়েছে।
-// আপনার স্ক্রিনশটে থাকা Cluster0 এবং crm_database নামটিও এখানে যুক্ত আছে।
+// আপনার MongoDB ইউজারনেম 'admin' এবং পাসওয়ার্ড 'Gorun2026' এখানে যুক্ত করা হয়েছে।
 const mongoURI = 'mongodb+srv://admin:Gorun2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে এই মেসেজটি Logs-এ দেখাবে
-    .catch(err => console.log("❌ MongoDB Connection Error: ", err)); // ব্যর্থ হলে এরর দেখাবে
+    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে এই মেসেজটি রেন্ডার লগে দেখাবে
+    .catch(err => {
+        console.log("❌ MongoDB Connection Error: ", err.message); // এরর হলে এখানে বিস্তারিত দেখাবে
+    });
 
-// --- SCHEMAS ---
+// --- SCHEMAS & MODELS ---
 
 // Partner Schema
 const partnerSchema = new mongoose.Schema({
@@ -33,7 +36,7 @@ const partnerSchema = new mongoose.Schema({
     }]
 });
 
-// মডেলটি একবার চেক করে তৈরি করা হচ্ছে যাতে ৫00 এরর না আসে
+// মডেল রি-ডিক্লেয়ারেশন সমস্যা এড়াতে এই চেকটি রাখা হয়েছে
 const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
 // University Schema
@@ -48,7 +51,7 @@ const universitySchema = new mongoose.Schema({
 const University = mongoose.models.University || mongoose.model('University', universitySchema);
 
 // --- AUTOMATIC TEST USER CREATION ---
-// সার্ভার চালু হওয়ার সাথে সাথে এই ইউজারটি ডাটাবেসে তৈরি হবে
+// ডাটাবেস কানেক্ট হওয়ার পর স্বয়ংক্রিয়ভাবে একটি ইউজার তৈরি হবে
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
@@ -56,14 +59,14 @@ mongoose.connection.once('open', async () => {
             const testPartner = new Partner({
                 name: "Test Admin",
                 email: "admin@test.com",
-                password: "123", // লগইনের জন্য এই পাসওয়ার্ডটি ব্যবহার করবেন
+                password: "123", // লগইনের জন্য পাসওয়ার্ড
                 walletBalance: 500
             });
             await testPartner.save();
             console.log("🚀 Test Partner Created: admin@test.com / 123");
         }
     } catch (err) {
-        console.log("Error creating test user:", err);
+        console.log("Error during test user setup:", err);
     }
 });
 
@@ -80,8 +83,8 @@ app.post('/api/partners/login', async (req, res) => {
             res.status(401).json({ success: false, message: "Invalid email or password" });
         }
     } catch (err) {
-        console.error("Login Error:", err);
-        res.status(500).json({ error: "Internal Server Error" }); // এটিই সেই ৫০০ এরর
+        console.error("Login Route Error:", err);
+        res.status(500).json({ error: "Internal Server Error" }); // ৫০০ এরর হ্যান্ডলিং
     }
 });
 
@@ -109,8 +112,8 @@ app.get('/api/universities', async (req, res) => {
     }
 });
 
-// সার্ভার পোর্ট কনফিগারেশন
-const PORT = process.env.PORT || 10000; // রেন্ডারের জন্য ডিফল্ট পোর্ট
+// রেন্ডারের জন্য পোর্ট কনফিগারেশন
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`📡 Server is running on port ${PORT}`);
 });
