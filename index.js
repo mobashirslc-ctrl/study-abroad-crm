@@ -16,19 +16,23 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("OK: Connected to Atlas"))
     .catch(err => console.error(err));
 
-// Updated University Schema
+// Updated University Schema with Scholarship & Degree Level
 const UniversitySchema = new mongoose.Schema({
     name: String,
     country: String,
+    location: String,
     courseName: String,
+    degreeLevel: String,
     intake: String,
+    currency: String,
     tutionFee: String,
+    scholarship: String,
     minGPA: Number,
     minCGPA: Number,
     maxStudyGap: Number,
     requiredBankAmount: Number,
-    bankType: String, // FDR or Savings
-    languageType: String, // IELTS/PTE/Duolingo/GRE
+    bankType: String,
+    languageType: String,
     minLangScore: Number
 });
 const University = mongoose.model('University', UniversitySchema);
@@ -38,7 +42,7 @@ app.post('/api/universities', async (req, res) => {
     try {
         const newUni = new University(req.body);
         await newUni.save();
-        res.status(201).json({ message: "Saved Successfully!" });
+        res.status(201).json({ message: "Data Saved!" });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -49,4 +53,4 @@ app.get('/api/universities', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`Running on ${PORT}`));

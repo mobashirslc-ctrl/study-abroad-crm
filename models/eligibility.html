@@ -2,65 +2,73 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner - Check Eligibility</title>
+    <title>Eligibility Check</title>
     <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; }
-        .card { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .uni-card { border: 1px solid #ddd; padding: 15px; margin-top: 15px; border-left: 5px solid #28a745; background: #fff; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
-        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        body { font-family: sans-serif; background: #f0f4f8; padding: 20px; }
+        .card { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .uni-res { border-left: 6px solid #0052cc; background: #fff; padding: 15px; margin-top: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid #ccc; }
+        button { background: #0052cc; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .scholar { color: #28a745; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Student Eligibility Check</h2>
-        <select id="level">
-            <option value="UG">Applying for Undergraduate (GPA)</option>
-            <option value="MS">Applying for Masters (CGPA)</option>
+        <h2>Partner Portal - Search Universities</h2>
+        <select id="sDegree">
+            <option value="UG">Undergraduate (UG)</option>
+            <option value="PG">Postgraduate (PG)</option>
+            <option value="PhD">PhD</option>
+            <option value="Diploma">Diploma</option>
         </select>
-        <input type="number" step="0.01" id="score" placeholder="Enter Score (GPA/CGPA)">
-        <input type="number" id="gap" placeholder="Study Gap (Years)">
         <div style="display: flex; gap: 10px;">
-            <select id="lType">
+            <input type="number" step="0.01" id="sScore" placeholder="GPA/CGPA">
+            <input type="number" id="sGap" placeholder="Study Gap">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <select id="sLType">
                 <option value="IELTS">IELTS</option>
                 <option value="PTE">PTE</option>
                 <option value="Duolingo">Duolingo</option>
-                <option value="GRE">GRE</option>
             </select>
-            <input type="number" step="0.1" id="lScore" placeholder="Score">
+            <input type="number" step="0.1" id="sLScore" placeholder="Lang Score">
         </div>
-        <button onclick="search()">Search Matching Universities</button>
-        <div id="res"></div>
+        <button onclick="find()">Search Programs</button>
+        <div id="display"></div>
     </div>
 
     <script>
-        async function search() {
-            const resDiv = document.getElementById('res');
-            resDiv.innerHTML = "Searching...";
+        async function find() {
+            const disp = document.getElementById('display');
+            disp.innerHTML = "Processing...";
             
             const response = await fetch("https://study-abroad-crm.onrender.com/api/universities");
             const unis = await response.json();
             
             const matches = unis.filter(u => {
-                const sType = document.getElementById('level').value;
-                const sScore = document.getElementById('score').value;
-                const sGap = document.getElementById('gap').value;
-                const sLType = document.getElementById('lType').value;
-                const sLScore = document.getElementById('lScore').value;
+                const degree = document.getElementById('sDegree').value;
+                const score = document.getElementById('sScore').value;
+                const gap = document.getElementById('sGap').value;
+                const lType = document.getElementById('sLType').value;
+                const lScore = document.getElementById('sLScore').value;
 
-                let scoreMatch = (sType === 'UG') ? (sScore >= u.minGPA) : (sScore >= u.minCGPA);
-                let langMatch = (sLType === u.languageType) && (sLScore >= u.minLangScore);
+                let sMatch = (degree === 'UG') ? (score >= u.minGPA) : (score >= u.minCGPA);
+                let dMatch = (degree === u.degreeLevel);
+                let lMatch = (lType === u.languageType) && (lScore >= u.minLangScore);
                 
-                return scoreMatch && (sGap <= u.maxStudyGap) && langMatch;
+                return dMatch && sMatch && (gap <= u.maxStudyGap) && lMatch;
             });
 
-            resDiv.innerHTML = matches.length ? matches.map(u => `
-                <div class="uni-card">
-                    <strong>${u.name}</strong> - ${u.country}<br>
-                    Course: ${u.courseName} | Intake: ${u.intake}<br>
-                    Tuition: ${u.tutionFee} | Bank: ${u.requiredBankAmount} (${u.bankType})
+            disp.innerHTML = matches.length ? matches.map(u => `
+                <div class="uni-res">
+                    <h3>${u.name}</h3>
+                    <p><strong>Location:</strong> ${u.location}, ${u.country}</p>
+                    <p><strong>Course:</strong> ${u.courseName} (${u.degreeLevel})</p>
+                    <p><strong>Fee:</strong> ${u.currency} ${u.tutionFee} | <strong>Intake:</strong> ${u.intake}</p>
+                    <p class="scholar">Scholarship: ${u.scholarship || 'N/A'}</p>
+                    <p><small>Bank: ${u.requiredBankAmount} (${u.bankType})</small></p>
                 </div>
-            `).join('') : "No matching university found.";
+            `).join('') : "No matching programs found for this criteria.";
         }
     </script>
 </body>

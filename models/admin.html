@@ -2,39 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Study Abroad CRM</title>
+    <title>Admin - Data Management</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
-        .box { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { background: #1a2a6c; color: white; border: none; cursor: pointer; font-size: 16px; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .box { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: #003366; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     </style>
 </head>
 <body>
     <div id="login" class="box">
-        <h2>Admin Access</h2>
-        <input type="password" id="p" placeholder="Enter Password">
-        <button onclick="auth()">Login</button>
+        <h2>Admin Login</h2>
+        <input type="password" id="pass" placeholder="Enter Password">
+        <button onclick="check()">Enter</button>
     </div>
 
-    <div id="admin" class="box" style="display:none;">
+    <div id="main" class="box" style="display:none;">
         <h2>Add University Details</h2>
-        <form id="uForm">
-            <input type="text" id="name" placeholder="University Name" required>
-            <div class="row">
+        <form id="uniForm">
+            <input type="text" id="uName" placeholder="University Name" required>
+            <div class="grid">
                 <input type="text" id="country" placeholder="Country" required>
+                <input type="text" id="loc" placeholder="City/Campus Location">
+            </div>
+            <div class="grid">
+                <select id="degree">
+                    <option value="UG">Undergraduate (UG)</option>
+                    <option value="PG">Postgraduate (PG)</option>
+                    <option value="PhD">PhD</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Research">Research</option>
+                </select>
                 <input type="text" id="course" placeholder="Course Name" required>
             </div>
-            <div class="row">
-                <input type="text" id="tution" placeholder="Tuition Fee (e.g. $15k/Year)">
-                <input type="text" id="intake" placeholder="Intake (e.g. Sept 2026)">
+            <div class="grid">
+                <select id="curr">
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="AUD">AUD (A$)</option>
+                    <option value="CAD">CAD (C$)</option>
+                    <option value="EUR">EUR (€)</option>
+                </select>
+                <input type="text" id="fee" placeholder="Tuition Fee Amount">
             </div>
-            <div class="row">
-                <input type="number" step="0.01" id="mGPA" placeholder="Min GPA (UG)">
-                <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA (Masters)">
+            <input type="text" id="scholar" placeholder="Scholarship Details (e.g. 20% or $5000)">
+            <input type="text" id="intake" placeholder="Intakes (e.g. Jan, Sept)">
+            <div class="grid">
+                <input type="number" step="0.01" id="mGPA" placeholder="Min GPA (SSC/HSC)">
+                <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA (Honours)">
             </div>
-            <div class="row">
+            <div class="grid">
                 <input type="number" id="gap" placeholder="Max Study Gap (Years)">
                 <select id="lType">
                     <option value="IELTS">IELTS</option>
@@ -43,34 +61,38 @@
                     <option value="GRE">GRE</option>
                 </select>
             </div>
-            <div class="row">
-                <input type="number" step="0.1" id="lScore" placeholder="Min Language Score">
+            <div class="grid">
+                <input type="number" step="0.1" id="lScore" placeholder="Min Lang Score">
                 <select id="bType">
                     <option value="FDR">FDR Required</option>
                     <option value="Savings">Savings Required</option>
                 </select>
             </div>
             <input type="number" id="bAmt" placeholder="Required Bank Amount">
-            <button type="submit">Add to Database</button>
+            <button type="submit">Save Information</button>
         </form>
     </div>
 
     <script>
-        function auth() {
-            if(document.getElementById('p').value === "admin123") {
+        function check() {
+            if(document.getElementById('pass').value === "admin123") {
                 document.getElementById('login').style.display='none';
-                document.getElementById('admin').style.display='block';
-            } else { alert("Wrong Password!"); }
+                document.getElementById('main').style.display='block';
+            } else { alert("Access Denied"); }
         }
 
-        document.getElementById('uForm').addEventListener('submit', async (e) => {
+        document.getElementById('uniForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
-                name: document.getElementById('name').value,
+                name: document.getElementById('uName').value,
                 country: document.getElementById('country').value,
+                location: document.getElementById('loc').value,
                 courseName: document.getElementById('course').value,
+                degreeLevel: document.getElementById('degree').value,
+                currency: document.getElementById('curr').value,
+                tutionFee: document.getElementById('fee').value,
+                scholarship: document.getElementById('scholar').value,
                 intake: document.getElementById('intake').value,
-                tutionFee: document.getElementById('tution').value,
                 minGPA: document.getElementById('mGPA').value,
                 minCGPA: document.getElementById('mCGPA').value,
                 maxStudyGap: document.getElementById('gap').value,
@@ -84,7 +106,7 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            if(res.ok) { alert("Successfully Added!"); e.target.reset(); }
+            if(res.ok) { alert("Successfully Saved!"); e.target.reset(); }
         });
     </script>
 </body>
