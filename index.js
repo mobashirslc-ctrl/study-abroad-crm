@@ -10,19 +10,17 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// এখানে পাসওয়ার্ড হিসেবে CRM2026 ব্যবহার করা হয়েছে। 
-// এটি কাজ করার জন্য আগে MongoDB Atlas-এ গিয়ে পাসওয়ার্ডটি আপডেট করুন।
+// Password CRM2026 ব্যবহার করা হয়েছে। নিশ্চিত করুন আপনি এটি Atlas-এ সেট করেছেন।
 const mongoURI = 'mongodb+srv://admin:CRM2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ MongoDB Connected Successfully")) // সফল হলে Render Logs-এ এটি দেখাবে
+    .then(() => console.log("✅ MongoDB Connected Successfully")) 
     .catch(err => {
-        console.log("❌ MongoDB Connection Error: ", err.message); // এরর হলে এখানে বিস্তারিত দেখাবে
+        console.log("❌ MongoDB Connection Error: ", err.message); 
     });
 
 // --- SCHEMAS & MODELS ---
 
-// Partner Schema
 const partnerSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true },
@@ -37,10 +35,8 @@ const partnerSchema = new mongoose.Schema({
     }]
 });
 
-// মডেল রি-ডিক্লেয়ারেশন সমস্যা এড়াতে এই চেকটি রাখা হয়েছে
 const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
-// University Schema
 const universitySchema = new mongoose.Schema({
     name: String,
     country: String,
@@ -52,7 +48,6 @@ const universitySchema = new mongoose.Schema({
 const University = mongoose.models.University || mongoose.model('University', universitySchema);
 
 // --- AUTOMATIC TEST USER CREATION ---
-// ডাটাবেস কানেক্ট হওয়ার পর এই ইউজারটি অটোমেটিক তৈরি হবে
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
@@ -60,7 +55,7 @@ mongoose.connection.once('open', async () => {
             const testPartner = new Partner({
                 name: "Test Admin",
                 email: "admin@test.com",
-                password: "123", // লগইনের সময় এটি ব্যবহার করবেন
+                password: "123", 
                 walletBalance: 500
             });
             await testPartner.save();
@@ -73,7 +68,6 @@ mongoose.connection.once('open', async () => {
 
 // --- ROUTES ---
 
-// ১. লগইন রুট
 app.post('/api/partners/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -85,11 +79,10 @@ app.post('/api/partners/login', async (req, res) => {
         }
     } catch (err) {
         console.error("Login Route Error:", err);
-        res.status(500).json({ error: "Internal Server Error" }); // এটি সেই ৫০০ এরর সমাধান করবে
+        res.status(500).json({ error: "Internal Server Error" }); 
     }
 });
 
-// ২. ড্যাশবোর্ড ডাটা রুট
 app.get('/api/partners/dashboard/:id', async (req, res) => {
     try {
         const partner = await Partner.findById(req.params.id);
@@ -103,7 +96,6 @@ app.get('/api/partners/dashboard/:id', async (req, res) => {
     }
 });
 
-// ৩. ইউনিভার্সিটি লিস্ট রুট
 app.get('/api/universities', async (req, res) => {
     try {
         const universities = await University.find();
@@ -113,7 +105,6 @@ app.get('/api/universities', async (req, res) => {
     }
 });
 
-// Render Port Configuration
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`📡 Server is running on port ${PORT}`);
