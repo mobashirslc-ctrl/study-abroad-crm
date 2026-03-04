@@ -4,23 +4,18 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
 // --- MONGODB CONNECTION ---
-// Password CRM2026 ব্যবহার করা হয়েছে। নিশ্চিত করুন আপনি এটি Atlas-এ সেট করেছেন।
+// এখানে ইউজার 'admin' এবং পাসওয়ার্ড 'CRM2026' ব্যবহার করা হয়েছে।
 const mongoURI = 'mongodb+srv://admin:CRM2026@cluster0.8qewhkr.mongodb.net/crm_database?retryWrites=true&w=majority&appName=Cluster0';
 
 mongoose.connect(mongoURI)
     .then(() => console.log("✅ MongoDB Connected Successfully")) 
-    .catch(err => {
-        console.log("❌ MongoDB Connection Error: ", err.message); 
-    });
+    .catch(err => console.log("❌ MongoDB Connection Error: ", err.message));
 
-// --- SCHEMAS & MODELS ---
-
+// --- SCHEMAS ---
 const partnerSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true },
@@ -37,37 +32,25 @@ const partnerSchema = new mongoose.Schema({
 
 const Partner = mongoose.models.Partner || mongoose.model('Partner', partnerSchema);
 
-const universitySchema = new mongoose.Schema({
-    name: String,
-    country: String,
-    course: String,
-    tuitionFee: String,
-    commission: Number
-});
-
-const University = mongoose.models.University || mongoose.model('University', universitySchema);
-
-// --- AUTOMATIC TEST USER CREATION ---
+// --- TEST USER CREATION ---
 mongoose.connection.once('open', async () => {
     try {
         const checkUser = await Partner.findOne({ email: 'admin@test.com' });
         if (!checkUser) {
-            const testPartner = new Partner({
+            await new Partner({
                 name: "Test Admin",
                 email: "admin@test.com",
                 password: "123", 
                 walletBalance: 500
-            });
-            await testPartner.save();
+            }).save();
             console.log("🚀 Test Partner Created: admin@test.com / 123");
         }
     } catch (err) {
-        console.log("Error during test user setup:", err);
+        console.log("Error creating test user:", err);
     }
 });
 
 // --- ROUTES ---
-
 app.post('/api/partners/login', async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -78,34 +61,9 @@ app.post('/api/partners/login', async (req, res) => {
             res.status(401).json({ success: false, message: "Invalid email or password" });
         }
     } catch (err) {
-        console.error("Login Route Error:", err);
-        res.status(500).json({ error: "Internal Server Error" }); 
-    }
-});
-
-app.get('/api/partners/dashboard/:id', async (req, res) => {
-    try {
-        const partner = await Partner.findById(req.params.id);
-        if (partner) {
-            res.json(partner);
-        } else {
-            res.status(404).json({ message: "Partner not found" });
-        }
-    } catch (err) {
-        res.status(500).json({ error: "Invalid ID format" });
-    }
-});
-
-app.get('/api/universities', async (req, res) => {
-    try {
-        const universities = await University.find();
-        res.json(universities);
-    } catch (err) {
-        res.status(500).json({ error: "Could not fetch universities" });
+        res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log(`📡 Server is running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`📡 Server running on port ${PORT}`));
