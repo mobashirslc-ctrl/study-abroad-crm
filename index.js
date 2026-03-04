@@ -1,4 +1,3 @@
-JavaScript
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -8,12 +7,10 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://ADMIN:Gorun2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM")
-    .then(() => console.log("Database Connected Successfully"))
+    .then(() => console.log("Database Connected"))
     .catch(err => console.log(err));
 
-// Comprehensive Schema
 const UniversitySchema = new mongoose.Schema({
     name: String, country: String, location: String,
     courseName: String, degreeLevel: String, intake: String,
@@ -25,7 +22,6 @@ const UniversitySchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniversitySchema);
 
-// API Routes
 app.get('/api/universities', async (req, res) => {
     const unis = await University.find();
     res.json(unis);
@@ -34,7 +30,7 @@ app.get('/api/universities', async (req, res) => {
 app.post('/api/universities', async (req, res) => {
     const newUni = new University(req.body);
     await newUni.save();
-    res.json({ message: "Saved Successfully!" });
+    res.json({ message: "Saved!" });
 });
 
 app.delete('/api/universities/:id', async (req, res) => {
