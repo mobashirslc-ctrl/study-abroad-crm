@@ -1,42 +1,48 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
-
-const app = express();
-app.use(cors({ origin: "*" }));
-app.use(express.json());
-
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://ADMIN:Gorun2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM")
-    .then(() => console.log("Database Connected"))
-    .catch(err => console.log(err));
-
-const UniversitySchema = new mongoose.Schema({
-    name: String, country: String, location: String,
-    courseName: String, degreeLevel: String, 
-    currency: String, tutionFee: Number, scholarship: String,
-    minGPA: Number, minCGPA: Number, maxStudyGap: Number,
-    requiredBankAmount: Number, bankType: String,
-    languageType: String, minLangScore: Number,
-    greScore: Number, // New Field for GRE
-    maritalStatus: String // Spouse Allowed/Not Allowed
-});
-const University = mongoose.model('University', UniversitySchema);
-
-app.get('/api/universities', async (req, res) => {
-    const unis = await University.find();
-    res.json(unis);
+// Partner Schema Definition
+const partnerSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, unique: true, required: true },
+    password: { type: String, required: true },
+    walletBalance: { type: Number, default: 0 },
+    files: [{
+        studentName: String,
+        university: String,
+        status: { type: String, default: "Pending" },
+        commission: { type: Number, default: 0 },
+        lastUpdate: { type: Date, default: Date.now }
+    }]
 });
 
-app.post('/api/universities', async (req, res) => {
-    const newUni = new University(req.body);
-    await newUni.save();
-    res.json({ message: "Saved!" });
+const Partner = mongoose.model('Partner', partnerSchema);
+
+// Partner Registration API
+app.post('/api/partners/register', async (req, res) => {
+    try {
+        const newPartner = new Partner(req.body);
+        await newPartner.save();
+        res.status(201).json({ message: "Partner Registered" });
+    } catch (err) {
+        res.status(400).json({ error: "Email already exists" });
+    }
 });
 
-app.delete('/api/universities/:id', async (req, res) => {
-    await University.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted!" });
+// Partner Login API
+app.post('/api/partners/login', async (req, res) => {
+    const { email, password } = req.body;
+    const partner = await Partner.findOne({ email, password });
+    if (partner) {
+        res.json({ success: true, partnerId: partner._id, name: partner.name });
+    } else {
+        res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
 });
 
-app.listen(process.env.PORT || 10000);
+// Get Dashboard Data API
+app.get('/api/partners/dashboard/:id', async (req, res) => {
+    try {
+        const partner = await Partner.findById(req.params.id);
+        res.json(partner);
+    } catch (err) {
+        res.status(404).send("Partner not found");
+    }
+});
