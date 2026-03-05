@@ -2,116 +2,111 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Add University</title>
+    <title>Admin Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 10px; }
-        label { display: block; font-weight: bold; font-size: 13px; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #1a252f; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px; }
-        #status { margin-top: 15px; text-align: center; display: none; padding: 10px; border-radius: 8px; }
+        body { font-family: 'Inter', sans-serif; background: #f0f4f8; padding: 40px; }
+        .form-card { background: white; max-width: 700px; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        label { font-weight: 600; font-size: 13px; color: #444; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #1a252f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        #status { margin-top: 20px; text-align: center; display: none; padding: 10px; border-radius: 8px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2 style="text-align:center;">Add University Details</h2>
+    <div class="form-card">
+        <h2 style="text-align: center; color: #1a252f;">Add New University</h2>
         <form id="uniForm">
             <label>University Name</label>
             <input type="text" id="name" required>
-
+            
             <div class="grid">
                 <div><label>Country</label><input type="text" id="country" required></div>
                 <div><label>Location</label><input type="text" id="location" required></div>
             </div>
 
             <div class="grid">
-                <div><label>Course</label><input type="text" id="course" required></div>
+                <div><label>Course Name</label><input type="text" id="course" required></div>
                 <div><label>Degree</label>
                     <select id="degree">
                         <option value="Undergraduate (UG)">Undergraduate (UG)</option>
                         <option value="Postgraduate (PG)">Postgraduate (PG)</option>
                         <option value="Diploma">Diploma</option>
+                        <option value="PhD">PhD</option>
                         <option value="Research">Research</option>
                     </select>
                 </div>
             </div>
 
             <div class="grid">
-                <div><label>Semester Fee</label><input type="number" id="semesterFee" required></div>
+                <div><label>Semester Fee</label><input type="number" id="fee" required></div>
                 <div><label>Currency</label>
                     <select id="currency">
-                        <option value="GBP (£)">GBP (£)</option>
                         <option value="USD ($)">USD ($)</option>
+                        <option value="GBP (£)">GBP (£)</option>
                         <option value="CAD ($)">CAD ($)</option>
-                        <option value="EURO (€)">EURO (€)</option>
                     </select>
                 </div>
             </div>
 
             <div class="grid">
-                <div><label>Partner Commission</label><input type="number" id="partnerCommission" required></div>
-                <div><label>Marital Status</label>
-                    <select id="maritalStatus">
-                        <option value="Single Only">Single Only</option>
-                        <option value="Both Allowed">Both Allowed</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="grid">
-                <div><label>Required Bank Amount</label><input type="number" id="bankAmount" placeholder="e.g. 2500000" required></div>
+                <div><label>Bank Amount</label><input type="number" id="bank" required></div>
                 <div><label>Account Type</label>
-                    <select id="accountType">
+                    <select id="accType">
                         <option value="Savings">Savings</option>
                         <option value="FDR">FDR</option>
-                        <option value="Both">Both (Savings/FDR)</option>
+                        <option value="Both">Both</option>
                     </select>
                 </div>
             </div>
 
             <div class="grid">
-                <div><label>Min GPA</label><input type="number" step="0.01" id="minGPA" required></div>
-                <div><label>Intake</label><input type="text" id="intake" placeholder="e.g. Sep, Jan" required></div>
+                <div><label>Language Type</label>
+                    <select id="lType">
+                        <option value="IELTS">IELTS</option>
+                        <option value="PTE">PTE</option>
+                        <option value="Duolingo">Duolingo</option>
+                        <option value="MOI">MOI</option>
+                    </select>
+                </div>
+                <div><label>Min Score</label><input type="number" step="0.1" id="lScore" required></div>
             </div>
 
-            <button type="submit" id="submitBtn">Save to Database</button>
+            <div class="grid">
+                <div><label>Min GPA</label><input type="number" step="0.01" id="gpa" required></div>
+                <div><label>Partner Commission</label><input type="number" id="comm" required></div>
+            </div>
+
+            <button type="submit">Publish University</button>
         </form>
         <div id="status"></div>
     </div>
 
     <script>
-        const API_URL = "https://study-abroad-crm.onrender.com";
+        const API = "https://study-abroad-crm.onrender.com";
         document.getElementById('uniForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            
             const data = {
                 name: document.getElementById('name').value,
                 country: document.getElementById('country').value,
                 location: document.getElementById('location').value,
                 course: document.getElementById('course').value,
                 degree: document.getElementById('degree').value,
-                semesterFee: parseFloat(document.getElementById('semesterFee').value),
+                semesterFee: document.getElementById('fee').value,
                 currency: document.getElementById('currency').value,
-                partnerCommission: parseFloat(document.getElementById('partnerCommission').value),
-                maritalStatus: document.getElementById('maritalStatus').value,
-                bankAmount: parseFloat(document.getElementById('bankAmount').value),
-                accountType: document.getElementById('accountType').value,
-                minGPA: parseFloat(document.getElementById('minGPA').value),
-                intake: document.getElementById('intake').value
+                bankAmount: document.getElementById('bank').value,
+                accountType: document.getElementById('accType').value,
+                languageType: document.getElementById('lType').value,
+                minLanguageScore: document.getElementById('lScore').value,
+                minGPA: document.getElementById('gpa').value,
+                partnerCommission: document.getElementById('comm').value,
+                intake: "Jan, Sep, Oct"
             };
-
-            try {
-                const res = await fetch(`${API_URL}/api/universities`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                if(res.ok) { alert("✅ Success!"); e.target.reset(); }
-            } catch (err) { alert("❌ Error!"); }
-            finally { btn.disabled = false; }
+            const res = await fetch(`${API}/api/universities`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if(res.ok) { alert("✅ Added!"); e.target.reset(); }
         });
     </script>
 </body>
