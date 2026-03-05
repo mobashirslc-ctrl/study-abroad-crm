@@ -2,143 +2,122 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>IHP CRM | Partner</title>
+    <title>IHP CRM | Partner Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-        .sidebar { width: 250px; background: #0f172a; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 290px; padding: 40px; width: 100%; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; background: #f1f5f9; font-size: 12px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; }
+        .content { margin-left: 320px; padding: 40px; width: calc(100% - 360px); }
+        .wallet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .wallet-card { padding: 25px; border-radius: 20px; color: white; position: relative; }
+        .btn-withdraw { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; margin-top: 10px; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 20px; width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.2); }
+        select, input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; }
+        .btn-submit { background: var(--primary); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP CRM</h2>
-    <div onclick="show('search')" style="cursor:pointer; margin-bottom:15px;"><i class="fas fa-search"></i> University Search</div>
-    <div onclick="show('files')" style="cursor:pointer;"><i class="fas fa-folder"></i> Student Files</div>
+    <h2 style="color:var(--primary);"><i class="fas fa-shield-alt"></i> IHP CRM</h2>
+    <nav style="margin-top:40px;">
+        <div onclick="show('search')" style="cursor:pointer; padding:15px 0;"><i class="fas fa-search"></i> Search University</div>
+        <div onclick="show('files')" style="cursor:pointer; padding:15px 0;"><i class="fas fa-history"></i> Track Applications</div>
+    </nav>
 </div>
 
-<div class="main">
-    <h1>Partner Portal</h1>
-    
-    <div id="searchBox" class="card">
-        <h3><i class="fas fa-filter"></i> Search Universities</h3>
-        <form id="sForm" class="grid">
-            <input type="text" id="sCountry" placeholder="Country (e.g. Australia)">
-            <select id="sDegree">
-                <option value="UG">Undergraduate (UG)</option>
-                <option value="PG">Postgraduate (PG)</option>
-                <option value="Diploma">Diploma</option>
-            </select>
-            <select id="sLang">
-                <option value="IELTS">IELTS</option>
-                <option value="PTE">PTE</option>
-                <option value="Duolingo">Duolingo</option>
-            </select>
-            <input type="number" step="0.1" id="sScore" placeholder="Score (e.g. 6.0)">
-            <input type="number" step="0.01" id="sGPA" placeholder="Student GPA">
-            <button type="submit" class="btn">Search</button>
-        </form>
+<div class="content">
+    <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+        <h1>Dashboard <small style="font-size:14px; color:#64748b;" id="clock"></small></h1>
+        <div style="background:white; padding:10px; border-radius:10px;"><i class="fas fa-user"></i> Demo Partner</div>
+    </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>University & Location</th>
-                    <th>Intake</th>
-                    <th>Scholarship</th>
-                    <th>Commission</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+    <div class="wallet-grid">
+        <div class="wallet-card" style="background: #2563eb;">
+            <small>Total Earnings</small>
+            <div id="wTotal" style="font-size:24px; font-weight:800;">৳ 0</div>
+        </div>
+        <div class="wallet-card" style="background: #10b981;">
+            <small>Withdrawn</small>
+            <div id="wOut" style="font-size:24px; font-weight:800;">৳ 0</div>
+        </div>
+        <div class="wallet-card" style="background: #f59e0b;">
+            <small>Pending Balance</small>
+            <div id="wPending" style="font-size:24px; font-weight:800;">৳ 0</div>
+            <button class="btn-withdraw" onclick="openWithdrawModal()">Withdraw Now</button>
+        </div>
+    </div>
+
+    <div id="searchBox" style="background:white; padding:25px; border-radius:20px;">
+        <h3>Find & Apply</h3>
+        <table style="width:100%; border-collapse:collapse;">
+            <thead><tr style="text-align:left; color:#64748b; font-size:12px;"><th>University</th><th>Commission</th><th>Action</th></tr></thead>
             <tbody id="uniResults"></tbody>
         </table>
     </div>
+</div>
 
-    <div id="fileBox" class="card" style="display:none;">
-        <h3>My Files</h3>
-        <table id="fileTable">
-            <thead>
-                <tr><th>Date</th><th>Student Name</th><th>Status</th><th>Action</th></tr>
-            </thead>
-            <tbody id="fileResults"></tbody>
-        </table>
+<div id="withdrawModal" class="modal">
+    <div class="modal-content">
+        <h3>Withdraw Request</h3>
+        <label>Select Source:</label>
+        <select id="payMethod">
+            <option value="bKash">bKash</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Bank">Bank Details</option>
+        </select>
+        <input type="number" id="payAmount" placeholder="Amount (৳)">
+        <input type="text" id="payDetails" placeholder="Number or Bank Account Info">
+        <button class="btn-submit" onclick="submitWithdraw()">Submit Request</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
 <script>
-    const API = "https://study-abroad-crm.onrender.com"; // আপনার রেন্ডার ইউআরএল
+    const API = "https://study-abroad-crm.onrender.com";
     const partnerName = "Demo Partner";
 
-    function show(id) {
-        document.getElementById('searchBox').style.display = id === 'search' ? 'block' : 'none';
-        document.getElementById('fileBox').style.display = id === 'files' ? 'block' : 'none';
-        if(id === 'files') loadFiles();
-    }
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
 
-    document.getElementById('sForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const body = document.getElementById('uniResults');
-        body.innerHTML = 'Searching...';
-
-        const res = await fetch(`${API}/api/check-eligibility`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                country: document.getElementById('sCountry').value,
-                degree: document.getElementById('sDegree').value,
-                language: document.getElementById('sLang').value,
-                langScore: document.getElementById('sScore').value,
-                gpa: document.getElementById('sGPA').value
-            })
-        });
-        const json = await res.json();
-        body.innerHTML = '';
-        if(json.data.length === 0) body.innerHTML = 'No University Found.';
-        
-        json.data.forEach(u => {
-            body.innerHTML += `<tr>
-                <td><b>${u.name}</b><br><small>${u.location}, ${u.country}</small></td>
-                <td>${u.intake}</td>
-                <td><span style="background:#fef3c7; padding:4px; border-radius:5px;">${u.scholarship}</span></td>
-                <td style="color:green; font-weight:bold;">৳ ${u.partnerCommission}</td>
-                <td><button onclick="openFile('${u.name}', ${u.partnerCommission})" class="btn" style="padding:5px 10px;">Open File</button></td>
-            </tr>`;
-        });
-    });
-
-    async function openFile(uni, comm) {
-        const student = prompt("Enter Student Name:");
-        if(!student) return;
-        await fetch(`${API}/api/applications`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ partnerName, studentName: student, universityName: uni, commission: comm })
-        });
-        alert("Submitted!");
-    }
-
-    async function loadFiles() {
-        const res = await fetch(`${API}/api/applications/${partnerName}`);
+    async function loadWallet() {
+        const res = await fetch(`${API}/api/partner/wallet/${partnerName}`);
         const data = await res.json();
-        const body = document.getElementById('fileResults');
-        body.innerHTML = '';
-        data.forEach(f => {
-            body.innerHTML += `<tr>
-                <td>${new Date(f.createdAt).toLocaleDateString()}</td>
-                <td>${f.studentName}</td>
-                <td style="color:blue;">${f.status}</td>
-                <td><button class="btn" style="padding:5px;">Chat</button></td>
-            </tr>`;
-        });
+        document.getElementById('wTotal').innerText = `৳ ${data.wallet.totalEarnings}`;
+        document.getElementById('wOut').innerText = `৳ ${data.wallet.withdrawn}`;
+        document.getElementById('wPending').innerText = `৳ ${data.wallet.totalEarnings - data.wallet.withdrawn}`;
     }
+
+    function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'block'; }
+    function closeModal() { document.getElementById('withdrawModal').style.display = 'none'; }
+
+    async function submitWithdraw() {
+        const amount = document.getElementById('payAmount').value;
+        const method = document.getElementById('payMethod').value;
+        const details = document.getElementById('payDetails').value;
+
+        if(!amount || !details) return alert("Fill all fields!");
+
+        await fetch(`${API}/api/partner/withdraw`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ partnerName, amount, method, details })
+        });
+
+        alert(`Request for ${amount} via ${method} sent to admin!`);
+        closeModal();
+    }
+
+    // Initial Search Load for Demo
+    async function loadSampleUni() {
+        const body = document.getElementById('uniResults');
+        body.innerHTML = `<tr><td><b>University of Sydney</b><br><small>Australia</small></td><td>৳ 25,000</td><td><button onclick="alert('Student Name logic here')" class="btn-submit" style="padding:5px;">Apply</button></td></tr>`;
+    }
+
+    window.onload = () => { loadWallet(); loadSampleUni(); };
 </script>
 </body>
 </html>
