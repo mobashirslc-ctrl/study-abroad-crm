@@ -1,236 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP CRM | Partner Premium Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); display: flex; color: var(--dark); }
-        
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; box-sizing: border-box; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--primary); margin-bottom: 50px; display: flex; align-items: center; gap: 12px; }
-        .nav-item { padding: 15px; border-radius: 12px; cursor: pointer; margin-bottom: 10px; transition: 0.3s; color: #94a3b8; display: flex; align-items: center; gap: 12px; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
-
-        /* Main Content */
-        .content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-        #clock { color: var(--primary); font-weight: 600; font-size: 14px; background: white; padding: 8px 20px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-
-        /* Wallet Section */
-        .wallet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .wallet-card { padding: 25px; border-radius: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
-        .wallet-card small { opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .wallet-card h2 { margin: 10px 0; font-size: 28px; font-weight: 800; }
-        .btn-withdraw { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.3s; }
-        .btn-withdraw:hover { background: white; color: var(--warning); }
-
-        /* Table Card */
-        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-        td { padding: 20px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .status-badge { background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 8% auto; padding: 35px; border-radius: 24px; width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); position: relative; }
-        .modal-content h3 { margin-top: 0; color: var(--dark); }
-        select, input { width: 100%; padding: 14px; margin: 12px 0; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
-        .btn-submit { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 15px; }
-
-        /* Compliance Box */
-        .compliance-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; background: #f1f5f9; color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-    </style>
-</head>
-<body>
-
-<div class="sidebar">
-    <div class="logo"><i class="fas fa-rocket"></i> IHP CRM</div>
-    <div class="nav-item active" onclick="show('search')"><i class="fas fa-search"></i> University Search</div>
-    <div class="nav-item" onclick="show('files')"><i class="fas fa-folder-open"></i> Student Tracking</div>
-</div>
+<style>
+    /* নতুন অ্যাসেসমেন্ট সেকশনের জন্য স্টাইল */
+    .assessment-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .support-card {
+        background: #eff6ff;
+        border-left: 5px solid var(--primary);
+        padding: 15px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-top: 20px;
+    }
+</style>
 
 <div class="content">
-    <div class="header">
-        <div>
-            <h1 style="margin:0;">Partner Dashboard</h1>
-            <p style="color:#64748b; margin:5px 0;">Welcome to IHP CRM Management</p>
-        </div>
-        <div id="clock"><i class="far fa-clock"></i> Loading...</div>
-    </div>
-
-    <div class="wallet-grid">
-        <div class="wallet-card" style="background: linear-gradient(135deg, #2563eb, #1e40af);">
-            <small>Total Earnings</small>
-            <h2 id="wTotal">৳ 0</h2>
-        </div>
-        <div class="wallet-card" style="background: linear-gradient(135deg, #10b981, #065f46);">
-            <small>Withdrawn</small>
-            <h2 id="wOut">৳ 0</h2>
-        </div>
-        <div class="wallet-card" style="background: linear-gradient(135deg, #f59e0b, #b45309);">
-            <small>Pending Balance</small>
-            <h2 id="wPending">৳ 0</h2>
-            <button class="btn-withdraw" onclick="openWithdrawModal()">Withdraw Fund</button>
-        </div>
-    </div>
-
     <div id="searchBox" class="card">
-        <h3 style="margin-top:0;"><i class="fas fa-university"></i> Quick University Finder</h3>
-        <p style="color: #64748b; font-size: 14px;">(This area is for University Search - Full Integration with Database)</p>
+        <h3 style="margin-top:0;"><i class="fas fa-file-signature"></i> Student Eligibility Assessment</h3>
+        <form id="assessmentForm">
+            <div class="assessment-grid">
+                <div>
+                    <label style="font-size: 12px; font-weight: 600;">Preferred Country</label>
+                    <input type="text" id="sCountry" placeholder="e.g. UK, Canada">
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600;">Degree Level</label>
+                    <select id="sDegree">
+                        <option value="UG">Undergraduate (UG)</option>
+                        <option value="PG">Postgraduate (PG)</option>
+                        <option value="DIPLOMA">Diploma</option>
+                        <option value="PHD">PhD</option>
+                        <option value="RESEARCH">Research</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600;">Language Proficiency</label>
+                    <select id="sLangType">
+                        <option value="IELTS">IELTS</option>
+                        <option value="PTE">PTE</option>
+                        <option value="DUOLINGO">Duolingo</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600;">Language Score</label>
+                    <input type="number" step="0.1" id="sLangScore" placeholder="e.g. 6.5">
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600;">GPA / CGPA</label>
+                    <input type="number" step="0.01" id="sGPA" placeholder="e.g. 3.50">
+                </div>
+            </div>
+            <button type="submit" class="btn-submit" style="width: auto; padding: 12px 40px;">Check Eligibility</button>
+        </form>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+
         <table id="uniTable">
             <thead>
                 <tr><th>University</th><th>Scholarship</th><th>Commission</th><th>Action</th></tr>
             </thead>
             <tbody id="uniResults">
-                <tr>
-                    <td><b>University of Sydney</b><br><small>Sydney, Australia</small></td>
-                    <td><span style="color:var(--warning); font-weight:700;">20% Guaranteed</span></td>
-                    <td style="color:var(--success); font-weight:800;">৳ 28,000</td>
-                    <td><button class="btn-submit" style="padding: 8px 15px; font-size: 12px; width: auto;" onclick="alert('Student Application Logic Loaded')">Apply Now</button></td>
-                </tr>
-            </tbody>
+                </tbody>
         </table>
     </div>
 
-    <div id="fileBox" class="card" style="display:none;">
-        <h3 style="margin-top:0;"><i class="fas fa-history"></i> File Submission & Compliance</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Date & Exact Time</th>
-                    <th>Student Name</th>
-                    <th>Status</th>
-                    <th>Compliance Team</th>
-                </tr>
-            </thead>
-            <tbody id="fileResults"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="withdrawModal" class="modal">
-    <div class="modal-content">
-        <h3>Request Withdrawal</h3>
-        <label>Select Payment Source:</label>
-        <select id="payMethod">
-            <option value="bKash">bKash (Personal/Agent)</option>
-            <option value="Nagad">Nagad (Personal)</option>
-            <option value="Bank">Bank Account (EFT/Wire)</option>
-        </select>
-        <input type="number" id="payAmount" placeholder="Enter Amount (৳)">
-        <input type="text" id="payDetails" placeholder="Account No / bKash No / Bank Info">
-        <button class="btn-submit" onclick="submitWithdraw()">Confirm Request</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:#64748b; cursor:pointer; width:100%; margin-top:15px; font-weight:600;">Cancel & Close</button>
+    <div class="support-card">
+        <div class="avatar" style="background: var(--primary); color: white; width: 50px; height: 50px;">
+            <i class="fas fa-headset fa-lg"></i>
+        </div>
+        <div>
+            <h4 style="margin: 0; color: var(--dark);">Team Support</h4>
+            <p style="margin: 2px 0; font-size: 14px; color: #64748b;">For any queries, contact our customer care: <b>+880 1XXX XXXXXX</b></p>
+        </div>
     </div>
 </div>
 
 <script>
-    // আপনার অরিজিনাল API ইউআরএল এখানে দিন
-    const API = "https://study-abroad-crm.onrender.com"; 
-    const partnerName = "Demo Partner"; // এটি পরবর্তীতে লগইন থেকে আসবে
+    // সার্চ ফাংশনালিটি ফিক্স
+    document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultsBody = document.getElementById('uniResults');
+        resultsBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Searching Universities...</td></tr>';
 
-    // ১. ঘড়ি আপডেট
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerHTML = `<i class="far fa-clock"></i> ${now.toLocaleString()}`;
-    }
-    setInterval(updateClock, 1000);
-
-    // ২. শো/হাইড ফাংশন
-    function show(id) {
-        document.getElementById('searchBox').style.display = id === 'search' ? 'block' : 'none';
-        document.getElementById('fileBox').style.display = id === 'files' ? 'block' : 'none';
-        
-        // বাটন এক্টিভ করা
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-
-        if(id === 'files') loadFiles();
-    }
-
-    // ৩. ওয়ালেট ডেটা ফেচ
-    async function loadWallet() {
-        try {
-            const res = await fetch(`${API}/api/partner/wallet/${partnerName}`);
-            const data = await res.json();
-            
-            document.getElementById('wTotal').innerText = `৳ ${data.wallet.totalEarnings}`;
-            document.getElementById('wOut').innerText = `৳ ${data.wallet.withdrawn}`;
-            document.getElementById('wPending').innerText = `৳ ${data.wallet.totalEarnings - data.wallet.withdrawn}`;
-        } catch (err) { console.error("Wallet Fetch Error"); }
-    }
-
-    // ৪. উইথড্র মোডাল ফাংশন
-    function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'block'; }
-    function closeModal() { document.getElementById('withdrawModal').style.display = 'none'; }
-
-    async function submitWithdraw() {
-        const amount = document.getElementById('payAmount').value;
-        const method = document.getElementById('payMethod').value;
-        const details = document.getElementById('payDetails').value;
-
-        if(!amount || !details) return alert("Please fill all details!");
+        const searchData = {
+            country: document.getElementById('sCountry').value,
+            degree: document.getElementById('sDegree').value,
+            language: document.getElementById('sLangType').value,
+            langScore: document.getElementById('sLangScore').value,
+            gpa: document.getElementById('sGPA').value
+        };
 
         try {
-            const res = await fetch(`${API}/api/partner/withdraw`, {
+            const res = await fetch(`${API}/api/check-eligibility`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ partnerName, amount, method, details })
+                body: JSON.stringify(searchData)
             });
-            if(res.ok) {
-                alert(`Withdrawal request for ৳${amount} submitted!`);
-                closeModal();
-                loadWallet();
+            const json = await res.json();
+            
+            resultsBody.innerHTML = '';
+            if(json.data.length === 0) {
+                resultsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">No matching university found for this criteria.</td></tr>';
+                return;
             }
-        } catch (err) { alert("Server error!"); }
-    }
 
-    // ৫. স্টুডেন্ট ফাইল ট্র্যাকিং
-    async function loadFiles() {
-        const body = document.getElementById('fileResults');
-        body.innerHTML = '<tr><td colspan="4">Loading files...</td></tr>';
-        
-        try {
-            const res = await fetch(`${API}/api/applications/${partnerName}`);
-            const data = await res.json();
-            body.innerHTML = '';
-
-            data.forEach(f => {
-                const date = new Date(f.createdAt);
-                const exactTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                const exactDate = date.toLocaleDateString();
-
-                body.innerHTML += `
+            json.data.forEach(u => {
+                resultsBody.innerHTML += `
                     <tr>
-                        <td><b>${exactDate}</b><br><small style="color:#64748b;">${exactTime}</small></td>
-                        <td><b>${f.studentName}</b><br><small>${f.universityName}</small></td>
-                        <td><span class="status-badge">${f.status}</span></td>
-                        <td>
-                            <div class="compliance-info">
-                                <div class="avatar"><i class="fas fa-user-shield"></i></div>
-                                <div>
-                                    <div style="font-weight:600; font-size:13px;">${f.complianceOfficer.name}</div>
-                                    <div style="font-size:11px; color:#64748b;">${f.complianceOfficer.role}</div>
-                                </div>
-                            </div>
-                        </td>
+                        <td><b>${u.name}</b><br><small>${u.location}, ${u.country}</small></td>
+                        <td><span style="color:var(--warning); font-weight:700;">${u.scholarship}</span></td>
+                        <td style="color:var(--success); font-weight:800;">৳ ${u.partnerCommission}</td>
+                        <td><button class="btn-submit" style="padding: 8px 15px; font-size: 12px; width: auto;" onclick="openFile('${u.name}', ${u.partnerCommission})">Apply Now</button></td>
                     </tr>`;
             });
-        } catch (err) { body.innerHTML = '<tr><td colspan="4">No files found.</td></tr>'; }
-    }
-
-    // উইন্ডো লোড হলে রান হবে
-    window.onload = () => {
-        updateClock();
-        loadWallet();
-    };
+        } catch (err) {
+            resultsBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Connection Error!</td></tr>';
+        }
+    });
 </script>
-</body>
-</html>
