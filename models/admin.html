@@ -2,97 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>IHP Admin | Control</title>
+    <title>Admin Panel | IHP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; }
-        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; color: white; padding: 20px; }
-        .main { margin-left: 260px; padding: 40px; width: 100%; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
+        .sidebar { width: 250px; background: #0f172a; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 250px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; }
+        .btn-paid { background: #10b981; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
 <div class="sidebar">
     <h2>IHP Admin</h2>
-    <div style="cursor:pointer; margin-top:30px" onclick="showTab('uni')"><i class="fas fa-university"></i> Add University</div>
-    <div style="cursor:pointer; margin-top:20px" onclick="showTab('part')"><i class="fas fa-users"></i> Partner List</div>
+    <div onclick="loadSection('withdraws')" style="cursor:pointer; margin-top:20px;">Withdraw Requests</div>
+    <div onclick="loadSection('files')" style="cursor:pointer; margin-top:15px;">Student Files</div>
 </div>
 <div class="main">
-    <div id="uniTab" class="card">
-        <h1>Add New University</h1>
-        <div class="grid">
-            <input type="text" id="name" placeholder="University Name">
-            <input type="text" id="country" placeholder="Country">
-            <input type="text" id="intake" placeholder="Intake (e.g. Jan 2026)">
-            <input type="number" id="fee" placeholder="Semester Fee ($)">
-            <select id="langType">
-                <option value="IELTS">IELTS</option>
-                <option value="PTE">PTE</option>
-                <option value="DUOLINGO">Duolingo</option>
-            </select>
-            <input type="number" step="0.1" id="score" placeholder="Min Language Score">
-            <input type="number" step="0.1" id="gpa" placeholder="Min GPA">
-            <select id="spouse">
-                <option value="With Spouse">With Spouse</option>
-                <option value="Without Spouse">Without Spouse</option>
-            </select>
-            <input type="number" id="comm" placeholder="Commission (৳)">
-            <input type="text" id="scholar" placeholder="Scholarship Details">
-        </div>
-        <button onclick="saveUni()">Submit University</button>
-    </div>
-
-    <div id="partTab" class="card" style="display:none">
-        <h1>Partner Management</h1>
-        <table>
-            <thead><tr><th>Partner</th><th>Status</th><th>Sub. Amount (৳)</th><th>Action</th></tr></thead>
-            <tbody id="partnerList"></tbody>
-        </table>
-    </div>
+    <div id="contentArea"></div>
 </div>
+
 <script>
     const API = "https://study-abroad-crm.onrender.com/api/admin";
-    function showTab(t) {
-        document.getElementById('uniTab').style.display = t === 'uni' ? 'block' : 'none';
-        document.getElementById('partTab').style.display = t === 'part' ? 'block' : 'none';
-        if(t === 'part') loadPartners();
-    }
-    async function saveUni() {
-        const data = {
-            name: document.getElementById('name').value, country: document.getElementById('country').value,
-            intake: document.getElementById('intake').value, semesterFee: document.getElementById('fee').value,
-            languageType: document.getElementById('langType').value, langScore: document.getElementById('score').value,
-            minGPA: document.getElementById('gpa').value, spouseAllowed: document.getElementById('spouse').value,
-            partnerCommission: document.getElementById('comm').value, scholarship: document.getElementById('scholar').value
-        };
-        await fetch(`${API}/add-university`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-        alert("Saved!");
-    }
-    async function loadPartners() {
-        const res = await fetch(`${API}/partners`);
+
+    async function loadSection(type) {
+        const res = await fetch(`${API}/${type}`);
         const data = await res.json();
-        document.getElementById('partnerList').innerHTML = data.map(p => `
-            <tr>
-                <td>${p.name}<br><small>${p.email}</small></td>
-                <td><b>${p.subscriptionStatus}</b></td>
-                <td><input type="number" id="amt-${p._id}" value="${p.subscriptionAmount}" style="width:100px"></td>
-                <td>
-                    <button onclick="updateP('${p._id}', 'Active')" style="padding:5px; background:green; width:70px">Active</button>
-                    <button onclick="updateP('${p._id}', 'Inactive')" style="padding:5px; background:red; width:70px">Block</button>
-                </td>
-            </tr>
-        `).join('');
+        let html = `<h1>${type.toUpperCase()}</h1><div class="card"><table><thead>`;
+        
+        if(type === 'withdraws') {
+            html += `<tr><th>Partner</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+            html += data.map(w => `<tr><td>${w.partnerName}</td><td>${w.method} (${w.accountDetails})</td><td>৳${w.amount}</td><td>${w.status}</td><td><button class="btn-paid" onclick="updateStatus('${w._id}', 'withdraw', 'Paid')">Mark Paid</button></td></tr>`).join('');
+        } else {
+            html += `<tr><th>Student</th><th>University</th><th>Docs</th><th>Status</th><th>Action</th></tr></thead><tbody>`;
+            html += data.map(f => `<tr><td>${f.studentName}</td><td>${f.universityName}</td><td><button onclick="viewDoc('${f.documents.passport}')">Passport</button></td><td>${f.status}</td><td><button onclick="updateStatus('${f._id}', 'file', 'Approved')">Approve</button></td></tr>`).join('');
+        }
+        document.getElementById('contentArea').innerHTML = html + `</tbody></table></div>`;
     }
-    async function updateP(id, status) {
-        const amount = document.getElementById(`amt-${id}`).value;
-        await fetch(`${API}/update-subscription`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, status, amount}) });
-        alert("Updated!"); loadPartners();
+
+    function viewDoc(base64) {
+        const win = window.open();
+        win.document.write(`<iframe src="${base64}" frameborder="0" style="width:100%; height:100%;"></iframe>`);
+    }
+
+    async function updateStatus(id, type, status) {
+        await fetch(`${API}/update-status`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, type, status}) });
+        alert("Updated!");
+        location.reload();
     }
 </script>
 </body>
