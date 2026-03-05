@@ -7,36 +7,49 @@
     <style>
         :root { --primary: #0f172a; --accent: #3b82f6; --success: #10b981; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        
+        /* Sidebar */
         .sidebar { width: 260px; background: var(--primary); color: white; height: 100vh; position: fixed; padding: 25px; }
         .nav-link { padding: 14px; color: #94a3b8; cursor: pointer; display: block; text-decoration: none; border-radius: 10px; margin-bottom: 10px; transition: 0.3s; }
         .nav-link.active { background: rgba(255,255,255,0.1); color: white; border-left: 4px solid var(--accent); }
+        
+        /* Main Content */
         .main { margin-left: 290px; padding: 40px; width: calc(100% - 320px); }
         .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        
+        /* Search Grid */
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; align-items: end; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; background: #f1f5f9; color: #475569; font-size: 12px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .btn-action { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .chat-btn { background: #e2e8f0; color: #475569; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        th { text-align: left; padding: 15px; background: #f1f5f9; color: #475569; font-size: 12px; text-transform: uppercase; }
+        td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .comm-badge { color: var(--success); font-weight: 800; font-size: 16px; }
+        .btn-apply { background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 15px; width: 400px; box-shadow: 0 5px 30px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2 style="color:var(--accent);">StepUp CRM</h2>
-    <div class="nav-link active" onclick="show('search')"><i class="fas fa-search"></i> Eligibility Search</div>
-    <div class="nav-link" onclick="show('files')"><i class="fas fa-tasks"></i> My Student Files</div>
+    <div class="nav-link active" onclick="show('search')"><i class="fas fa-search"></i> University Search</div>
+    <div class="nav-link" onclick="show('files')"><i class="fas fa-folder-open"></i> Existing Files</div>
 </div>
 
 <div class="main">
     <div style="margin-bottom: 30px;">
         <h1>Welcome, <span id="pName" style="color:var(--accent);">Partner</span>!</h1>
-        <p id="date"></p>
+        <p style="color:#64748b;">Find the best matching universities for your students.</p>
     </div>
 
     <div id="searchBox" class="card">
-        <h3 style="margin-top:0;">University Eligibility Check</h3>
+        <h3><i class="fas fa-university"></i> Eligibility & Commission Check</h3>
         <form id="sForm" class="filter-grid">
             <div><label>Country</label><input type="text" id="sCountry" placeholder="Any"></div>
             <div><label>Degree</label>
@@ -49,36 +62,36 @@
             <div><label>Language</label>
                 <select id="sLang"><option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="Duolingo">Duolingo</option></select>
             </div>
-            <div><label>Score</label><input type="number" step="0.1" id="sScore" value="6.0"></div>
-            <div><label>GPA</label><input type="number" step="0.01" id="sGPA" value="3.5"></div>
-            <button type="submit" class="btn-action">Search</button>
+            <div><label>Score</label><input type="number" step="0.1" id="sScore" placeholder="e.g. 6.0"></div>
+            <div><label>GPA</label><input type="number" step="0.01" id="sGPA" placeholder="e.g. 3.50"></div>
+            <button type="submit" style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Search Results</button>
         </form>
 
-        <table id="resultTable">
+        <table>
             <thead>
                 <tr>
-                    <th>University</th>
-                    <th>Course</th>
+                    <th>University & Course</th>
                     <th>Intake</th>
-                    <th>Fee (BDT)</th>
+                    <th>Semester Fee</th>
+                    <th>Your Commission</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody id="uniResults">
-                <tr><td colspan="5" style="text-align:center; padding:20px;">No search results yet.</td></tr>
+                <tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">Use the filter to see matching universities and your earnings.</td></tr>
             </tbody>
         </table>
     </div>
 
     <div id="fileBox" class="card" style="display:none;">
-        <h3>My Student Applications</h3>
-        <table>
+        <h3>My Student Files</h3>
+        <table id="fileTable">
             <thead>
                 <tr>
                     <th>Student Name</th>
+                    <th>University</th>
                     <th>Status</th>
-                    <th>Compliance Officer</th>
-                    <th>Communication</th>
+                    <th>Upload Docs</th>
                 </tr>
             </thead>
             <tbody id="fileResults"></tbody>
@@ -86,11 +99,34 @@
     </div>
 </div>
 
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Apply for Student</h3>
+        <form id="applyForm">
+            <input type="hidden" id="targetUni">
+            <input type="hidden" id="targetComm">
+            
+            <div style="margin-bottom:15px;">
+                <label>Student Full Name</label>
+                <input type="text" id="studentName" required placeholder="As per Passport">
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label>Upload Documents (Zip/PDF)</label>
+                <input type="file" id="studentDoc" required style="border:none; padding:0;">
+                <small style="color:#ef4444;">*Include Passport, Academic & Language Certs.</small>
+            </div>
+
+            <button type="submit" class="btn-apply">Submit Application</button>
+            <button type="button" onclick="closeModal()" style="width:100%; background:none; border:none; margin-top:10px; color:#64748b; cursor:pointer;">Cancel</button>
+        </form>
+    </div>
+</div>
+
 <script>
     const API = "https://study-abroad-crm.onrender.com";
     const partnerName = localStorage.getItem('partnerName') || "Demo Partner";
     document.getElementById('pName').innerText = partnerName;
-    document.getElementById('date').innerText = new Date().toDateString();
 
     function show(id) {
         document.getElementById('searchBox').style.display = id === 'search' ? 'block' : 'none';
@@ -102,7 +138,7 @@
     document.getElementById('sForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const body = document.getElementById('uniResults');
-        body.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center;">Checking eligibility...</td></tr>';
 
         const payload = {
             country: document.getElementById('sCountry').value,
@@ -112,45 +148,67 @@
             gpa: document.getElementById('sGPA').value
         };
 
-        try {
-            const res = await fetch(`${API}/api/check-eligibility`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
-            const json = await res.json();
+        const res = await fetch(`${API}/api/check-eligibility`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
 
-            if(json.success && json.data.length > 0) {
-                body.innerHTML = '';
-                json.data.forEach(u => {
-                    body.innerHTML += `<tr>
-                        <td><b>${u.name}</b><br><small>${u.country}</small></td>
-                        <td>${u.course}</td>
-                        <td>${u.intake}</td>
-                        <td>৳${u.semesterFee}</td>
-                        <td><button onclick="openFile('${u.name}', ${u.partnerCommission})" style="background:var(--success); color:white; border:none; padding:8px; border-radius:5px; cursor:pointer;">Open File</button></td>
-                    </tr>`;
-                });
-            } else {
-                body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">No matching university found. Try lower GPA or Score.</td></tr>';
-            }
-        } catch (err) {
-            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Error!</td></tr>';
+        if(json.success && json.data.length > 0) {
+            body.innerHTML = '';
+            json.data.forEach(u => {
+                body.innerHTML += `<tr>
+                    <td><b>${u.name}</b><br><small style="color:var(--accent)">${u.course}</small></td>
+                    <td>${u.intake}</td>
+                    <td>৳ ${u.semesterFee}</td>
+                    <td><span class="comm-badge">৳ ${u.partnerCommission}</span></td>
+                    <td><button class="btn-apply" onclick="openUploadModal('${u.name}', ${u.partnerCommission})">Open File</button></td>
+                </tr>`;
+            });
+        } else {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">No university matches this profile.</td></tr>';
         }
     });
 
-    async function openFile(uni, comm) {
-        const student = prompt("Enter Student Name:");
-        if(!student) return;
+    // --- Modal Logic ---
+    function openUploadModal(uni, comm) {
+        document.getElementById('targetUni').value = uni;
+        document.getElementById('targetComm').value = comm;
+        document.getElementById('modalTitle').innerText = "Application for " + uni;
+        document.getElementById('uploadModal').style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById('uploadModal').style.display = "none";
+    }
+
+    // --- Application Submission ---
+    document.getElementById('applyForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const student = document.getElementById('studentName').value;
+        const uni = document.getElementById('targetUni').value;
+        const comm = document.getElementById('targetComm').value;
+
+        // Note: Real file uploading requires FormData, but for now we save the text info
+        const payload = {
+            partnerName: partnerName,
+            studentName: student,
+            universityName: uni,
+            commission: comm,
+            status: "File Received"
+        };
+
         await fetch(`${API}/api/applications`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ partnerName, studentName: student, universityName: uni, commission: comm })
+            body: JSON.stringify(payload)
         });
-        alert("Application Submitted!");
-    }
 
-    // --- Tracking & Chat Logic ---
+        alert("Application for " + student + " submitted successfully!");
+        closeModal();
+    });
+
     async function loadFiles() {
         const res = await fetch(`${API}/api/applications/${partnerName}`);
         const data = await res.json();
@@ -158,28 +216,12 @@
         body.innerHTML = '';
         data.forEach(f => {
             body.innerHTML += `<tr>
-                <td><b>${f.studentName}</b><br><small>${f.universityName}</small></td>
+                <td><b>${f.studentName}</b></td>
+                <td>${f.universityName}</td>
                 <td><span style="color:var(--accent)">${f.status}</span></td>
-                <td>${f.complianceOfficer.name}</td>
-                <td>
-                    <button class="chat-btn" onclick="chat('${f._id}')">
-                        <i class="fas fa-comment"></i> Message Admin
-                    </button>
-                </td>
+                <td><i class="fas fa-check-circle" style="color:var(--success)"></i> Document Uploaded</td>
             </tr>`;
         });
-    }
-
-    async function chat(id) {
-        const msg = prompt("Write your message to Compliance Team:");
-        if(msg) {
-            await fetch(`${API}/api/applications/message`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ appId: id, message: msg })
-            });
-            alert("Message Sent!");
-        }
     }
 </script>
 </body>
