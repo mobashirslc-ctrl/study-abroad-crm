@@ -2,120 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>IHP CRM | Partner Portal</title>
+    <title>IHP CRM | Partner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2563eb; --dark: #1e293b; --success: #22c55e; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--dark); display: flex; }
-        
-        /* Sidebar */
-        .sidebar { width: 260px; background: white; height: 100vh; position: fixed; border-right: 1px solid #e2e8f0; padding: 30px 20px; }
-        .logo { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 40px; }
-        .nav-link { padding: 12px 15px; cursor: pointer; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; color: #64748b; text-decoration: none; display: block; }
-        .nav-link:hover, .nav-link.active { background: #eff6ff; color: var(--primary); font-weight: 600; }
-
-        /* Main Content */
-        .main { margin-left: 260px; padding: 40px; width: calc(100% - 300px); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-
-        /* Glass Cards */
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 30px; }
-        
-        /* Advanced Search Grid */
-        .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
-        .input-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #94a3b8; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; font-size: 14px; }
-        .btn-search { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-top: 25px; transition: 0.3s; }
-        .btn-search:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37,99,235,0.3); }
-
-        /* Modern Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-        td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .scholar-tag { background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .btn-open { background: var(--dark); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        .sidebar { width: 250px; background: #0f172a; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 290px; padding: 40px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; background: #f1f5f9; font-size: 12px; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="logo"><i class="fas fa-graduation-cap"></i> IHP CRM</div>
-    <div class="nav-link active" onclick="show('search')"><i class="fas fa-search-location"></i> University Finder</div>
-    <div class="nav-link" onclick="show('files')"><i class="fas fa-folder-open"></i> Student Files</div>
+    <h2>IHP CRM</h2>
+    <div onclick="show('search')" style="cursor:pointer; margin-bottom:15px;"><i class="fas fa-search"></i> University Search</div>
+    <div onclick="show('files')" style="cursor:pointer;"><i class="fas fa-folder"></i> Student Files</div>
 </div>
 
 <div class="main">
-    <div class="header">
-        <div>
-            <h1 style="margin:0;">Partner Dashboard</h1>
-            <p style="color:#94a3b8;">Welcome to <b>IHP CRM</b> portal.</p>
-        </div>
-        <div id="currentTime" style="font-weight: 600; color: var(--primary);"></div>
-    </div>
-
+    <h1>Partner Portal</h1>
+    
     <div id="searchBox" class="card">
-        <h3 style="margin-top:0;"><i class="fas fa-filter"></i> Advanced Search Filters</h3>
-        <form id="sForm" class="search-grid">
-            <div class="input-group">
-                <label>COUNTRY</label>
-                <input type="text" id="sCountry" placeholder="e.g. Australia">
-            </div>
-            <div class="input-group">
-                <label>DEGREE LEVEL</label>
-                <select id="sDegree">
-                    <option value="UG">Undergraduate (UG)</option>
-                    <option value="PG">Postgraduate (PG)</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="PhD">PhD</option>
-                    <option value="Research">Research</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>LANGUAGE TEST</label>
-                <select id="sLang">
-                    <option value="IELTS">IELTS</option>
-                    <option value="PTE">PTE</option>
-                    <option value="Duolingo">Duolingo</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>MIN SCORE</label>
-                <input type="number" step="0.1" id="sScore" value="6.0">
-            </div>
-            <div class="input-group">
-                <label>STUDENT GPA</label>
-                <input type="number" step="0.01" id="sGPA" value="3.50">
-            </div>
-            <button type="submit" class="btn-search">Search Universities</button>
+        <h3><i class="fas fa-filter"></i> Search Universities</h3>
+        <form id="sForm" class="grid">
+            <input type="text" id="sCountry" placeholder="Country (e.g. Australia)">
+            <select id="sDegree">
+                <option value="UG">Undergraduate (UG)</option>
+                <option value="PG">Postgraduate (PG)</option>
+                <option value="Diploma">Diploma</option>
+            </select>
+            <select id="sLang">
+                <option value="IELTS">IELTS</option>
+                <option value="PTE">PTE</option>
+                <option value="Duolingo">Duolingo</option>
+            </select>
+            <input type="number" step="0.1" id="sScore" placeholder="Score (e.g. 6.0)">
+            <input type="number" step="0.01" id="sGPA" placeholder="Student GPA">
+            <button type="submit" class="btn">Search</button>
         </form>
 
         <table>
             <thead>
                 <tr>
                     <th>University & Location</th>
-                    <th>Course & Intake</th>
+                    <th>Intake</th>
                     <th>Scholarship</th>
-                    <th>Semester Fee</th>
                     <th>Commission</th>
                     <th>Action</th>
                 </tr>
             </thead>
-            <tbody id="uniResults">
-                </tbody>
+            <tbody id="uniResults"></tbody>
         </table>
     </div>
 
     <div id="fileBox" class="card" style="display:none;">
-        <h3 style="margin-top:0;"><i class="fas fa-history"></i> File Tracking Status</h3>
+        <h3>My Files</h3>
         <table id="fileTable">
             <thead>
-                <tr>
-                    <th>Submission Time</th>
-                    <th>Student Name</th>
-                    <th>Status</th>
-                    <th>Compliance Team</th>
-                    <th>Chat</th>
-                </tr>
+                <tr><th>Date</th><th>Student Name</th><th>Status</th><th>Action</th></tr>
             </thead>
             <tbody id="fileResults"></tbody>
         </table>
@@ -123,13 +74,8 @@
 </div>
 
 <script>
-    const API = "https://study-abroad-crm.onrender.com";
-    const partnerName = "Demo Partner"; // Use localStorage if you have login
-
-    // Date/Time Clock
-    setInterval(() => {
-        document.getElementById('currentTime').innerText = new Date().toLocaleString();
-    }, 1000);
+    const API = "https://study-abroad-crm.onrender.com"; // আপনার রেন্ডার ইউআরএল
+    const partnerName = "Demo Partner";
 
     function show(id) {
         document.getElementById('searchBox').style.display = id === 'search' ? 'block' : 'none';
@@ -137,56 +83,46 @@
         if(id === 'files') loadFiles();
     }
 
-    // Advanced Search Logic
     document.getElementById('sForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const payload = {
-            country: document.getElementById('sCountry').value,
-            degree: document.getElementById('sDegree').value,
-            language: document.getElementById('sLang').value,
-            langScore: document.getElementById('sScore').value,
-            gpa: document.getElementById('sGPA').value
-        };
+        const body = document.getElementById('uniResults');
+        body.innerHTML = 'Searching...';
 
         const res = await fetch(`${API}/api/check-eligibility`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                country: document.getElementById('sCountry').value,
+                degree: document.getElementById('sDegree').value,
+                language: document.getElementById('sLang').value,
+                langScore: document.getElementById('sScore').value,
+                gpa: document.getElementById('sGPA').value
+            })
         });
         const json = await res.json();
-        
-        const body = document.getElementById('uniResults');
         body.innerHTML = '';
+        if(json.data.length === 0) body.innerHTML = 'No University Found.';
         
         json.data.forEach(u => {
-            body.innerHTML += `
-                <tr>
-                    <td>
-                        <div style="font-weight:700; color:var(--dark);">${u.name}</div>
-                        <div style="font-size:12px; color:#64748b;"><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</div>
-                    </td>
-                    <td>
-                        <div style="font-weight:600;">${u.course}</div>
-                        <div style="font-size:11px; color:var(--primary);">Intake: ${u.intake}</div>
-                    </td>
-                    <td><span class="scholar-tag">${u.scholarship || "Up to 20%"}</span></td>
-                    <td><b style="color:var(--dark);">৳ ${u.semesterFee}</b></td>
-                    <td><b style="color:var(--success);">৳ ${u.partnerCommission}</b></td>
-                    <td><button class="btn-open" onclick="openFile('${u.name}', ${u.partnerCommission})">Open File</button></td>
-                </tr>
-            `;
+            body.innerHTML += `<tr>
+                <td><b>${u.name}</b><br><small>${u.location}, ${u.country}</small></td>
+                <td>${u.intake}</td>
+                <td><span style="background:#fef3c7; padding:4px; border-radius:5px;">${u.scholarship}</span></td>
+                <td style="color:green; font-weight:bold;">৳ ${u.partnerCommission}</td>
+                <td><button onclick="openFile('${u.name}', ${u.partnerCommission})" class="btn" style="padding:5px 10px;">Open File</button></td>
+            </tr>`;
         });
     });
 
     async function openFile(uni, comm) {
-        const student = prompt("Enter Student Full Name:");
+        const student = prompt("Enter Student Name:");
         if(!student) return;
         await fetch(`${API}/api/applications`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ partnerName, studentName: student, universityName: uni, commission: comm })
         });
-        alert("File Opened Successfully for IHP CRM!");
+        alert("Submitted!");
     }
 
     async function loadFiles() {
@@ -195,16 +131,12 @@
         const body = document.getElementById('fileResults');
         body.innerHTML = '';
         data.forEach(f => {
-            const time = new Date(f.createdAt).toLocaleString();
-            body.innerHTML += `
-                <tr>
-                    <td>${time}</td>
-                    <td><b>${f.studentName}</b></td>
-                    <td><span style="color:var(--primary); font-weight:700;">${f.status}</span></td>
-                    <td>${f.complianceOfficer.name}</td>
-                    <td><button style="border:none; background:#f1f5f9; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fas fa-comment"></i></button></td>
-                </tr>
-            `;
+            body.innerHTML += `<tr>
+                <td>${new Date(f.createdAt).toLocaleDateString()}</td>
+                <td>${f.studentName}</td>
+                <td style="color:blue;">${f.status}</td>
+                <td><button class="btn" style="padding:5px;">Chat</button></td>
+            </tr>`;
         });
     }
 </script>

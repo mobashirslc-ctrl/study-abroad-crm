@@ -8,18 +8,15 @@ app.use(cors());
 
 // MongoDB Connection
 const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
-mongoose.connect(mongoURI).then(() => console.log('✅ IHP CRM Engine Connected')).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log('✅ IHP CRM Connected')).catch(err => console.log(err));
 
-// University Schema (Updated with Scholarship & Advanced Fields)
+// Schemas
 const universitySchema = new mongoose.Schema({
     name: String, country: String, location: String, course: String, 
-    degree: { type: String, enum: ['UG', 'PG', 'Diploma', 'PhD', 'Research'] },
-    intake: String, minGPA: Number, 
-    languageType: { type: String, enum: ['IELTS', 'PTE', 'Duolingo'] },
-    minLanguageScore: Number,
+    degree: String, intake: String, minGPA: Number, 
+    languageType: String, minLanguageScore: Number,
     semesterFee: Number, partnerCommission: Number,
-    scholarship: { type: String, default: "No Scholarship" }, // Added for IHP CRM
-    maritalStatus: String
+    scholarship: String
 });
 
 const applicationSchema = new mongoose.Schema({
@@ -31,18 +28,32 @@ const applicationSchema = new mongoose.Schema({
 const University = mongoose.model('University', universitySchema);
 const Application = mongoose.model('Application', applicationSchema);
 
-// API: Eligibility Search (Enhanced Filter)
-app.post('/api/check-eligibility', async (req, res) => {
-    const { country, degree, language, langScore, gpa } = req.body;
-    let query = {};
-    if (country) query.country = new RegExp(country, 'i');
-    if (degree) query.degree = degree;
-    if (language) query.languageType = language;
-    if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
-    if (langScore) query.minLanguageScore = { $lte: parseFloat(langScore) };
+// --- API Endpoints ---
 
-    const results = await University.find(query);
-    res.json({ success: true, data: results });
+// ১. সার্চ লজিক (স্মার্ট ফিল্টার)
+app.post('/api/check-eligibility', async (req, res) => {
+    try {
+        const { country, degree, language, langScore, gpa } = req.body;
+        let query = {};
+        if (country) query.country = new RegExp(country, 'i');
+        if (degree) query.degree = degree;
+        if (language) query.languageType = language;
+        if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
+        if (langScore) query.minLanguageScore = { $lte: parseFloat(langScore) };
+
+        const results = await University.find(query);
+        res.json({ success: true, data: results });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// ২. স্যাম্পল ডেটা ইনজেকশন (যদি সার্চে কিছু না আসে, এটি একবার রান করবেন)
+app.get('/api/inject-sample', async (req, res) => {
+    await University.deleteMany({}); // আগের সব মুছে ফেলবে
+    await University.create([
+        { name: "University of Sydney", country: "Australia", location: "Sydney", course: "IT", degree: "UG", intake: "July 2026", minGPA: 3.0, languageType: "IELTS", minLanguageScore: 6.0, semesterFee: 500000, partnerCommission: 25000, scholarship: "20% Discount" },
+        { name: "Oxford University", country: "UK", location: "London", course: "Business", degree: "PG", intake: "Sep 2026", minGPA: 3.5, languageType: "PTE", minLanguageScore: 65, semesterFee: 800000, partnerCommission: 40000, scholarship: "Available" }
+    ]);
+    res.send("Sample Data Added! Now try searching with GPA 4.0 and Score 7.0");
 });
 
 app.post('/api/applications', async (req, res) => {
@@ -57,4 +68,4 @@ app.get('/api/applications/:name', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 IHP CRM on Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 IHP CRM running` ));
