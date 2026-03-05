@@ -2,79 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard - Global Edu CRM</title>
     <style>
-        body { display: flex; margin: 0; font-family: sans-serif; height: 100vh; }
-        .sidebar { width: 250px; background: #2c3e50; color: white; padding: 20px; }
-        .main { flex: 1; padding: 30px; background: #f9f9f9; overflow-y: auto; }
-        .card-row { display: flex; gap: 20px; margin-bottom: 30px; }
-        .card { background: white; padding: 20px; border-radius: 8px; flex: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn { padding: 10px; background: #3498db; color: white; border: none; cursor: pointer; margin-bottom: 10px; width: 100%; text-align: left; }
-        input { padding: 10px; margin-right: 10px; border: 1px solid #ddd; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main-content { margin-left: 270px; padding: 30px; width: 100%; }
+        .wallet-card { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .search-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-search { background: #3498db; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .uni-card { background: white; padding: 20px; border-radius: 10px; margin-top: 15px; border-left: 5px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .commission-tag { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; float: right; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>StudyCRM</h2>
-        <p>Welcome, <span id="partnerName">Partner</span></p>
-        <button class="btn" onclick="showSection('overview')">Overview</button>
-        <button class="btn" onclick="showSection('eligibility')">Eligibility Check</button>
-        <button class="btn" onclick="localStorage.clear(); location.href='login.html'">Logout</button>
+
+<div class="sidebar">
+    <h2>Edu CRM</h2>
+    <p id="userEmail">Loading...</p>
+    <hr>
+    <p>🏠 Dashboard</p>
+    <p>📁 My Applications</p>
+    <p>💰 Payments</p>
+    <p style="margin-top: 50px; cursor: pointer;" onclick="location.href='index.html'">Logout</p>
+</div>
+
+<div class="main-content">
+    <div class="wallet-card">
+        <p style="margin: 0; opacity: 0.8;">Available Balance</p>
+        <h1 id="walletBalance" style="margin: 10px 0;">BDT 0.00</h1>
+        <button style="background: white; color: #11998e; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Withdraw Request</button>
     </div>
 
-    <div class="main">
-        <div id="overview">
-            <h1>Partner Overview</h1>
-            <div class="card-row">
-                <div class="card"><h3>Wallet</h3><p id="wallet">$0.00</p></div>
-                <div class="card"><h3>Applications</h3><p id="appCount">0</p></div>
-            </div>
+    <div class="search-box">
+        <h3>Check Student Eligibility</h3>
+        <div class="grid-3">
+            <input type="number" step="0.01" id="sGPA" placeholder="Student GPA">
+            <input type="number" step="0.1" id="sIELTS" placeholder="IELTS Score">
+            <select id="sCountry">
+                <option value="UK">UK</option>
+                <option value="USA">USA</option>
+                <option value="Canada">Canada</option>
+            </select>
         </div>
-
-        <div id="eligibility" style="display:none;">
-            <h1>Eligibility Checker</h1>
-            <div class="card">
-                <input type="number" id="gpa" placeholder="Student GPA" step="0.1">
-                <input type="number" id="ielts" placeholder="IELTS Score" step="0.5">
-                <button onclick="checkNow()" style="padding: 10px; background: #27ae60; color: white; border: none;">Search Universities</button>
-                <div id="results" style="margin-top: 20px;"></div>
-            </div>
+        <div class="grid-3">
+            <select id="sIntake">
+                <option value="Sep 2026">Sep 2026</option>
+                <option value="Jan 2027">Jan 2027</option>
+            </select>
+            <select id="sMarital">
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+            </select>
+            <input type="number" id="sBank" placeholder="Family Bank Balance (BDT)">
         </div>
+        <button class="btn-search" onclick="checkEligibility()">Search Universities</button>
     </div>
 
-    <script>
-        // সেকশন পরিবর্তন করার ফাংশন
-        function showSection(id) {
-            document.getElementById('overview').style.display = id === 'overview' ? 'block' : 'none';
-            document.getElementById('eligibility').style.display = id === 'eligibility' ? 'block' : 'none';
-        }
+    <div id="results"></div>
+</div>
 
-        // এলিজিবিলিটি চেক করার ফাংশন
-        async function checkNow() {
-            const gpa = document.getElementById('gpa').value;
-            const ielts = document.getElementById('ielts').value;
-            const res = await fetch('https://study-abroad-crm.onrender.com/api/check-eligibility', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ gpa, ielts })
+<script>
+    const API_URL = "https://study-abroad-crm.onrender.com";
+    
+    // ১. পেজ লোড হলে পার্টনার ডাটা দেখানো (Wallet/Email)
+    window.onload = () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(!user) location.href = 'index.html';
+        document.getElementById('userEmail').innerText = user.email;
+        document.getElementById('walletBalance').innerText = `BDT ${user.walletBalance || 0}`;
+    };
+
+    // ২. সার্চ লজিক
+    async function checkEligibility() {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "Searching...";
+
+        const searchData = {
+            gpa: document.getElementById('sGPA').value,
+            ielts: document.getElementById('sIELTS').value,
+            country: document.getElementById('sCountry').value,
+            intake: document.getElementById('sIntake').value,
+            maritalStatus: document.getElementById('sMarital').value,
+            bankAmount: document.getElementById('sBank').value
+        };
+
+        const res = await fetch(`${API_URL}/api/check-eligibility`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(searchData)
+        });
+        const result = await res.json();
+
+        resultsDiv.innerHTML = "";
+        if(result.data.length === 0) {
+            resultsDiv.innerHTML = "<p>No matching universities found.</p>";
+        } else {
+            result.data.forEach(uni => {
+                resultsDiv.innerHTML += `
+                    <div class="uni-card">
+                        <span class="commission-tag">Commission: BDT ${uni.commissionAmount}</span>
+                        <h4>${uni.name}</h4>
+                        <p>📍 ${uni.country} | 📅 Intake: ${uni.intake}</p>
+                        <p>🎓 Min GPA: ${uni.minGPA} | 📝 Min IELTS: ${uni.minIELTS}</p>
+                        <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Apply Now</button>
+                    </div>
+                `;
             });
-            const data = await res.json();
-            let html = '<h3>Eligible Universities:</h3><ul>';
-            data.results.forEach(u => { html += `<li>${u.name}</li>`; });
-            html += '</ul>';
-            document.getElementById('results').innerHTML = data.results.length ? html : 'No universities match these scores.';
         }
+    }
+</script>
 
-        // ড্যাশবোর্ড ডাটা লোড করা
-        async function loadDashboard() {
-            const id = localStorage.getItem('partnerId');
-            if(!id) window.location.href = 'login.html';
-            const res = await fetch(`https://study-abroad-crm.onrender.com/api/partners/dashboard/${id}`);
-            const partner = await res.json();
-            document.getElementById('partnerName').innerText = partner.name;
-            document.getElementById('wallet').innerText = `$${partner.walletBalance.toFixed(2)}`;
-        }
-        loadDashboard();
-    </script>
 </body>
 </html>

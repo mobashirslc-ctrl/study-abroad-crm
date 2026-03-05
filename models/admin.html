@@ -2,100 +2,95 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Full Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Global Edu CRM</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .box { max-width: 850px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: #003366; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .uni-item { border-bottom: 1px solid #eee; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { background: #d9534f; width: auto; padding: 6px 15px; }
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #1557b0; }
+        #msg { text-align: center; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Add University Details</h2>
-        <form id="uForm">
-            <input type="text" id="name" placeholder="University Name" required>
-            <div class="grid">
-                <input type="text" id="country" placeholder="Country (e.g. Canada)" required>
-                <input type="text" id="loc" placeholder="City/Campus">
-            </div>
-            <div class="grid">
-                <select id="degree">
-                    <option value="UG">Undergraduate (UG)</option>
-                    <option value="PG">Postgraduate (PG)</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="PhD">PhD</option>
-                    <option value="Research">Research</option>
-                </select>
-                <input type="text" id="course" placeholder="Course Name" required>
-            </div>
-            <div class="grid">
-                <select id="curr">
-                    <option value="USD">USD ($)</option>
-                    <option value="AUD">AUD (A$)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="CAD">CAD (C$)</option>
-                </select>
-                <input type="number" id="fee" placeholder="Tuition Fee">
-            </div>
-            <div class="grid">
-                <select id="marital"><option value="Allowed">Spouse Allowed</option><option value="Not Allowed">Single Only</option></select>
-                <input type="text" id="scholar" placeholder="Scholarship Details">
-            </div>
-            <div class="grid">
-                <input type="number" step="0.01" id="mGPA" placeholder="Min GPA">
-                <input type="number" step="0.01" id="mCGPA" placeholder="Min CGPA">
-            </div>
-            <div class="grid">
-                <select id="lType">
-                    <option value="IELTS">IELTS</option>
-                    <option value="PTE">PTE</option>
-                    <option value="Duolingo">Duolingo</option>
-                </select>
-                <input type="number" step="0.1" id="lScore" placeholder="Min Lang Score">
-            </div>
-            <div class="grid">
-                <input type="number" id="gre" placeholder="Min GRE Score (if any)">
-                <input type="number" id="gap" placeholder="Max Gap (Years)">
-            </div>
-            <div class="grid">
-                <select id="bType"><option value="FDR">FDR</option><option value="Savings">Savings</option></select>
-                <input type="number" id="bAmt" placeholder="Required Bank Amount">
-            </div>
-            <button type="submit">Add to Database</button>
-        </form>
-        <div id="uniList" style="margin-top:20px;"></div>
-    </div>
-    <script>
-        const API = "https://study-abroad-crm.onrender.com/api/universities";
-        async function load() {
-            const r = await fetch(API); const d = await r.json();
-            document.getElementById('uniList').innerHTML = d.map(u => `
-                <div class="uni-item"><span><strong>${u.name}</strong> (${u.degreeLevel})</span>
-                <button class="del-btn" onclick="del('${u._id}')">Delete</button></div>
-            `).join('');
+
+<div class="container">
+    <h2>Add University Requirement</h2>
+    <form id="uniForm">
+        <input type="text" id="name" placeholder="University Name" required>
+        
+        <select id="country" required>
+            <option value="">Select Country</option>
+            <option value="UK">United Kingdom</option>
+            <option value="USA">USA</option>
+            <option value="Canada">Canada</option>
+            <option value="Australia">Australia</option>
+        </select>
+
+        <div style="display: flex; gap: 10px;">
+            <input type="number" step="0.01" id="minGPA" placeholder="Min GPA (e.g. 3.00)" required style="flex: 1;">
+            <input type="number" step="0.1" id="minIELTS" placeholder="Min IELTS (e.g. 6.0)" required style="flex: 1;">
+        </div>
+
+        <select id="intake" required>
+            <option value="Sep 2026">September 2026</option>
+            <option value="Jan 2027">January 2027</option>
+            <option value="May 2027">May 2027</option>
+        </select>
+
+        <select id="maritalStatus">
+            <option value="Both">Both Single & Married</option>
+            <option value="Single">Single Only</option>
+            <option value="Married">Married Only</option>
+        </select>
+
+        <input type="number" id="bankAmount" placeholder="Required Bank Balance (BDT)" required>
+        <input type="number" id="commission" placeholder="Partner Commission (BDT)" required>
+
+        <button type="submit">Save University Data</button>
+    </form>
+    <div id="msg"></div>
+</div>
+
+<script>
+    const API_URL = "https://study-abroad-crm.onrender.com"; // আপনার রেন্ডার ইউআরএল
+
+    document.getElementById('uniForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('msg');
+        msg.innerText = "Saving...";
+
+        const data = {
+            name: document.getElementById('name').value,
+            country: document.getElementById('country').value,
+            minGPA: parseFloat(document.getElementById('minGPA').value),
+            minIELTS: parseFloat(document.getElementById('minIELTS').value),
+            intake: document.getElementById('intake').value,
+            maritalStatus: document.getElementById('maritalStatus').value,
+            requiredBankAmount: parseInt(document.getElementById('bankAmount').value),
+            commissionAmount: parseInt(document.getElementById('commission').value)
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/api/admin/add-university`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if(result.success) {
+                msg.style.color = "green";
+                msg.innerText = "✅ University Added Successfully!";
+                document.getElementById('uniForm').reset();
+            }
+        } catch (err) {
+            msg.style.color = "red";
+            msg.innerText = "❌ Error saving data!";
         }
-        async function del(id) { if(confirm("Delete?")) { await fetch(`${API}/${id}`, {method:'DELETE'}); load(); } }
-        document.getElementById('uForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                name: document.getElementById('name').value, country: document.getElementById('country').value,
-                location: document.getElementById('loc').value, degreeLevel: document.getElementById('degree').value,
-                courseName: document.getElementById('course').value, currency: document.getElementById('curr').value,
-                tutionFee: document.getElementById('fee').value, maritalStatus: document.getElementById('marital').value,
-                scholarship: document.getElementById('scholar').value, minGPA: document.getElementById('mGPA').value,
-                minCGPA: document.getElementById('mCGPA').value, languageType: document.getElementById('lType').value,
-                minLangScore: document.getElementById('lScore').value, greScore: document.getElementById('gre').value,
-                maxStudyGap: document.getElementById('gap').value, bankType: document.getElementById('bType').value,
-                requiredBankAmount: document.getElementById('bAmt').value
-            };
-            await fetch(API, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-            load(); e.target.reset();
-        });
-        load();
-    </script>
+    });
+</script>
+
 </body>
 </html>
