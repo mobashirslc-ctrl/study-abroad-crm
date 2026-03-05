@@ -2,68 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>IHP Admin | Control Panel</title>
+    <title>IHP Admin | Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
         body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; }
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; color: white; padding: 20px; }
-        .main { margin-left: 260px; padding: 30px; width: 100%; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .main { margin-left: 260px; padding: 40px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; }
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
 <div class="sidebar">
     <h2>IHP Admin</h2>
-    <p onclick="showTab('uni')" style="cursor:pointer"><i class="fas fa-plus"></i> Add University</p>
-    <p onclick="showTab('partners')" style="cursor:pointer"><i class="fas fa-users"></i> Partner Management</p>
+    <div style="cursor:pointer; margin-top:30px" onclick="showTab('uni')"><i class="fas fa-university"></i> Add University</div>
+    <div style="cursor:pointer; margin-top:20px" onclick="showTab('part')"><i class="fas fa-users"></i> Partner List</div>
 </div>
-
 <div class="main">
     <div id="uniTab" class="card">
-        <h2>Add New University</h2>
+        <h1>Add New University</h1>
         <div class="grid">
             <input type="text" id="name" placeholder="University Name">
             <input type="text" id="country" placeholder="Country">
-            <input type="text" id="intake" placeholder="Intake (e.g. Sept 2026)">
+            <input type="text" id="intake" placeholder="Intake (e.g. Jan 2026)">
             <input type="number" id="fee" placeholder="Semester Fee ($)">
             <select id="langType">
                 <option value="IELTS">IELTS</option>
                 <option value="PTE">PTE</option>
                 <option value="DUOLINGO">Duolingo</option>
             </select>
-            <input type="number" step="0.1" id="score" placeholder="Min. Lang Score">
-            <input type="number" step="0.1" id="gpa" placeholder="Min. GPA">
+            <input type="number" step="0.1" id="score" placeholder="Min Language Score">
+            <input type="number" step="0.1" id="gpa" placeholder="Min GPA">
             <select id="spouse">
                 <option value="With Spouse">With Spouse</option>
                 <option value="Without Spouse">Without Spouse</option>
             </select>
             <input type="number" id="comm" placeholder="Commission (৳)">
-            <input type="text" id="scholarship" placeholder="Scholarship Details">
+            <input type="text" id="scholar" placeholder="Scholarship Details">
         </div>
-        <button onclick="saveUni()" style="margin-top:20px">Submit to Database</button>
+        <button onclick="saveUni()">Submit University</button>
     </div>
 
-    <div id="partnerTab" class="card" style="display:none">
-        <h2>Registered Partners</h2>
+    <div id="partTab" class="card" style="display:none">
+        <h1>Partner Management</h1>
         <table>
-            <thead><tr><th>Name</th><th>Email</th><th>Subscription</th><th>Status</th></tr></thead>
-            <tbody id="pList"></tbody>
+            <thead><tr><th>Partner</th><th>Status</th><th>Sub. Amount (৳)</th><th>Action</th></tr></thead>
+            <tbody id="partnerList"></tbody>
         </table>
     </div>
 </div>
-
 <script>
     const API = "https://study-abroad-crm.onrender.com/api/admin";
     function showTab(t) {
         document.getElementById('uniTab').style.display = t === 'uni' ? 'block' : 'none';
-        document.getElementById('partnerTab').style.display = t === 'partners' ? 'block' : 'none';
-        if(t === 'partners') loadPartners();
+        document.getElementById('partTab').style.display = t === 'part' ? 'block' : 'none';
+        if(t === 'part') loadPartners();
     }
     async function saveUni() {
         const data = {
@@ -71,19 +69,30 @@
             intake: document.getElementById('intake').value, semesterFee: document.getElementById('fee').value,
             languageType: document.getElementById('langType').value, langScore: document.getElementById('score').value,
             minGPA: document.getElementById('gpa').value, spouseAllowed: document.getElementById('spouse').value,
-            partnerCommission: document.getElementById('comm').value, scholarship: document.getElementById('scholarship').value
+            partnerCommission: document.getElementById('comm').value, scholarship: document.getElementById('scholar').value
         };
-        await fetch(`${API}/add-university`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
-        });
+        await fetch(`${API}/add-university`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
         alert("Saved!");
     }
     async function loadPartners() {
         const res = await fetch(`${API}/partners`);
         const data = await res.json();
-        document.getElementById('pList').innerHTML = data.map(p => `
-            <tr><td>${p.name}</td><td>${p.email}</td><td>${p.subscriptionType}</td><td>${p.subscriptionStatus}</td></tr>
+        document.getElementById('partnerList').innerHTML = data.map(p => `
+            <tr>
+                <td>${p.name}<br><small>${p.email}</small></td>
+                <td><b>${p.subscriptionStatus}</b></td>
+                <td><input type="number" id="amt-${p._id}" value="${p.subscriptionAmount}" style="width:100px"></td>
+                <td>
+                    <button onclick="updateP('${p._id}', 'Active')" style="padding:5px; background:green; width:70px">Active</button>
+                    <button onclick="updateP('${p._id}', 'Inactive')" style="padding:5px; background:red; width:70px">Block</button>
+                </td>
+            </tr>
         `).join('');
+    }
+    async function updateP(id, status) {
+        const amount = document.getElementById(`amt-${id}`).value;
+        await fetch(`${API}/update-subscription`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, status, amount}) });
+        alert("Updated!"); loadPartners();
     }
 </script>
 </body>

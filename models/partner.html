@@ -2,60 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal | IHP CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); display: flex; color: var(--dark); }
-        
-        /* Sidebar */
-        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; box-sizing: border-box; }
-        .logo { font-size: 26px; font-weight: 800; color: var(--primary); margin-bottom: 50px; display: flex; align-items: center; gap: 12px; }
-        .nav-item { padding: 15px; border-radius: 12px; cursor: pointer; margin-bottom: 10px; transition: 0.3s; color: #94a3b8; display: flex; align-items: center; gap: 12px; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
-
-        /* Main Content */
-        .content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-        #clock { color: var(--primary); font-weight: 600; font-size: 14px; background: white; padding: 8px 20px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-
-        /* Wallet Section */
-        .wallet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .wallet-card { padding: 25px; border-radius: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; }
-        .wallet-card small { opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
-        .wallet-card h2 { margin: 10px 0; font-size: 28px; font-weight: 800; }
-        
-        /* Assessment Card */
-        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; margin-bottom: 30px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
-        .btn-search { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 15px; width: 100%; transition: 0.3s; }
-        .btn-search:hover { background: #1e40af; transform: translateY(-2px); }
-
-        /* Table Style */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
-        .status-tag { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #f1f5f9; }
-
-        /* Support Box */
-        .support-card { background: #eff6ff; padding: 25px; border-radius: 20px; display: flex; align-items: center; gap: 20px; border: 1px dashed var(--primary); }
+        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; }
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; color: white; padding: 25px; }
+        .content { margin-left: 260px; padding: 30px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
     </style>
 </head>
 <body>
-
 <div class="sidebar">
-    <div class="logo"><i class="fas fa-graduation-cap"></i> IHP CRM</div>
-    <div class="nav-item active" onclick="showTab('search')"><i class="fas fa-university"></i> Assessment</div>
-    <div class="nav-item" onclick="showTab('files')"><i class="fas fa-file-invoice"></i> Student Files</div>
-    <div class="nav-item" onclick="showTab('withdraw')"><i class="fas fa-wallet"></i> Wallet</div>
+    <h2>IHP CRM</h2>
+    <div style="margin-top:30px"><i class="fas fa-search"></i> Assessment</div>
+    <div style="margin-top:20px; color:gray"><i class="fas fa-file"></i> Student Files</div>
 </div>
-
 <div class="content">
-    <div class="header">
-        <div>
-            <h1 style="margin:0;">
+    <div class="card">
+        <h3>Student Eligibility Assessment</h3>
+        <form id="searchForm">
+            <div class="form-grid">
+                <input type="text" id="sCountry" placeholder="Country">
+                <select id="sDegree">
+                    <option value="Undergraduate (UG)">UG</option>
+                    <option value="Postgraduate (PG)">PG</option>
+                </select>
+                <select id="sLangType">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="DUOLINGO">Duolingo</option>
+                </select>
+                <input type="number" step="0.1" id="sScore" placeholder="Score">
+                <input type="number" step="0.1" id="sGPA" placeholder="GPA">
+            </div>
+            <button type="submit" class="btn">Check Eligibility</button>
+        </form>
+        <table style="margin-top:30px">
+            <thead><tr><th>University</th><th>Intake</th><th>Scholarship</th><th>Commission</th><th>Spouse</th><th>Action</th></tr></thead>
+            <tbody id="results"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resDiv = document.getElementById('results');
+        resDiv.innerHTML = "<tr><td colspan='6' style='text-align:center'>Searching...</td></tr>";
+
+        const params = {
+            country: document.getElementById('sCountry').value,
+            degree: document.getElementById('sDegree').value,
+            languageType: document.getElementById('sLangType').value,
+            langScore: parseFloat(document.getElementById('sScore').value) || 0,
+            gpa: parseFloat(document.getElementById('sGPA').value) || 0
+        };
+
+        const res = await fetch('https://study-abroad-crm.onrender.com/api/check-eligibility', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(params)
+        });
+        const json = await res.json();
+        resDiv.innerHTML = json.data.map(u => `
+            <tr>
+                <td><b>${u.name}</b><br><small>${u.location}</small></td>
+                <td>${u.intake}</td>
+                <td style="color:orange">${u.scholarship}</td>
+                <td style="color:green; font-weight:bold">৳ ${u.partnerCommission}</td>
+                <td>${u.spouseAllowed}</td>
+                <td><button class="btn" style="padding:5px 10px; font-size:12px">Apply</button></td>
+            </tr>
+        `).join('') || "<tr><td colspan='6' style='text-align:center'>No results found</td></tr>";
+    });
+</script>
+</body>
+</html>
