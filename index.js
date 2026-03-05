@@ -6,17 +6,15 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// সঠিক কানেকশন স্ট্রিং (admin:Stepup1234 ব্যবহার করে)
+// MongoDB Connection
 const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
 
-mongoose.connect(mongoURI, {
-    serverSelectionTimeoutMS: 5000 // ৫ সেকেন্ডের মধ্যে কানেক্ট না হলে এরর দেবে
-})
-.then(() => console.log('✅ Connected to MongoDB Atlas Successfully!'))
-.catch(err => console.error('❌ MongoDB Connection Error:', err.message));
+mongoose.connect(mongoURI)
+.then(() => console.log('✅ Connected to MongoDB Atlas'))
+.catch(err => console.error('❌ DB Connection Error:', err.message));
 
-// ইউনিভার্সিটি মডেল
-const University = mongoose.model('University', new mongoose.Schema({
+// Updated Schema with Bank Info
+const universitySchema = new mongoose.Schema({
     name: String,
     location: String,
     country: String,
@@ -26,20 +24,42 @@ const University = mongoose.model('University', new mongoose.Schema({
     minGPA: Number,
     languageType: String,
     minLanguageScore: Number,
-    commissionAmount: Number
-}, { strict: false }));
+    semesterFee: Number,
+    currency: String,
+    maritalStatus: String,
+    partnerCommission: Number,
+    bankAmount: Number,         // নতুন ফিল্ড
+    accountType: String         // নতুন ফিল্ড (FDR/Savings)
+}, { strict: false });
 
-// ইউনিভার্সিটি অ্যাড করার API
+const University = mongoose.model('University', universitySchema);
+
+// API: Add University
 app.post('/api/universities', async (req, res) => {
     try {
         const university = new University(req.body);
         await university.save();
         res.status(201).json({ success: true, message: "University added!" });
     } catch (err) {
-        console.error("Save Error:", err.message);
-        res.status(400).json({ success: false, message: "Database Error: " + err.message });
+        res.status(400).json({ success: false, message: err.message });
     }
 });
 
-const PORT = process.env.PORT || 10000; // রেন্ডারের জন্য ডিফল্ট ১০০০০
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// API: Partner Search (Eligibility)
+app.post('/api/check-eligibility', async (req, res) => {
+    try {
+        const { gpa, country, degree } = req.body;
+        let query = {};
+        if (country) query.country = new RegExp(country, 'i'); // Case-insensitive search
+        if (degree) query.degree = degree;
+        if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
+
+        const results = await University.find(query);
+        res.json({ success: true, data: results });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error fetching data" });
+    }
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
