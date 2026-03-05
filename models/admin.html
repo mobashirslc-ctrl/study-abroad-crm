@@ -2,161 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | IHP CRM</title>
+    <title>IHP Admin | Master Control</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); color: var(--dark); display: flex; }
-        
-        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; box-sizing: border-box; }
-        .logo { font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 40px; }
-        
-        .content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
-        
-        .card { background: white; padding: 35px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
-        
-        .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #64748b; }
-        
-        input, select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
-        
-        .btn-submit { background: var(--primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 20px; transition: 0.3s; }
-        .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
-        
-        .header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .status-msg { margin-top: 15px; text-align: center; font-size: 14px; display: none; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; }
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; color: white; padding: 20px; }
+        .main { margin-left: 260px; padding: 40px; width: 100%; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; margin-top: 5px; }
+        button { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; }
+        .active { background: #dcfce7; color: #166534; }
+        .inactive { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="logo"><i class="fas fa-user-shield"></i> IHP ADMIN</div>
-    <div style="color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">Management</div>
-    <div style="color: white; padding: 12px 0; cursor: pointer;"><i class="fas fa-plus-circle"></i> Add University</div>
-    <div style="color: #94a3b8; padding: 12px 0; cursor: pointer;"><i class="fas fa-list"></i> Manage Files</div>
+    <h2>IHP Admin</h2>
+    <hr>
+    <p onclick="showTab('uni')"><i class="fas fa-university"></i> Add University</p>
+    <p onclick="showTab('partners')"><i class="fas fa-users"></i> Partner Management</p>
 </div>
 
-<div class="content">
-    <div class="header">
+<div class="main">
+    <div id="uniTab" class="card">
         <h1>Add New University</h1>
-        <div id="date" style="color: var(--primary); font-weight: 600;"></div>
+        <div class="grid">
+            <div><label>University Name</label><input type="text" id="name"></div>
+            <div><label>Country</label><input type="text" id="country"></div>
+            <div><label>Intake</label><input type="text" id="intake" placeholder="Jan/Sept 2026"></div>
+            <div><label>Semester Fee ($)</label><input type="number" id="fee"></div>
+            <div><label>Language Type</label>
+                <select id="langType">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="DUOLINGO">Duolingo</option>
+                </select>
+            </div>
+            <div><label>Min. Lang Score</label><input type="number" step="0.1" id="score"></div>
+            <div><label>Min. GPA</label><input type="number" step="0.1" id="gpa"></div>
+            <div><label>Spouse Support</label>
+                <select id="spouse">
+                    <option value="With Spouse">With Spouse</option>
+                    <option value="Without Spouse">Without Spouse</option>
+                </select>
+            </div>
+            <div><label>Commission (৳)</label><input type="number" id="comm"></div>
+            <div><label>Scholarship</label><input type="text" id="scholarship"></div>
+        </div>
+        <br>
+        <button onclick="saveUniversity()">Submit University</button>
     </div>
 
-    <div class="card">
-        <form id="uniForm">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>University Name</label>
-                    <input type="text" id="uniName" placeholder="e.g. University of Oxford" required>
-                </div>
-                <div class="form-group">
-                    <label>Country</label>
-                    <input type="text" id="uniCountry" placeholder="e.g. United Kingdom" required>
-                </div>
-                <div class="form-group">
-                    <label>Location (City)</label>
-                    <input type="text" id="uniLocation" placeholder="e.g. London" required>
-                </div>
-                <div class="form-group">
-                    <label>Degree Level</label>
-                    <select id="uniDegree">
-                        <option value="Undergraduate (UG)">Undergraduate (UG)</option>
-                        <option value="Postgraduate (PG)">Postgraduate (PG)</option>
-                        <option value="Diploma">Diploma</option>
-                        <option value="PhD">PhD</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Scholarship Details</label>
-                    <input type="text" id="uniScholarship" placeholder="e.g. 20% Guaranteed" required>
-                </div>
-                <div class="form-group">
-                    <label>Partner Commission (৳)</label>
-                    <input type="number" id="uniComm" placeholder="e.g. 25000" required>
-                </div>
-                <div class="form-group">
-                    <label>Minimum GPA</label>
-                    <input type="number" step="0.01" id="uniGPA" placeholder="e.g. 3.00" required>
-                </div>
-                <div class="form-group">
-                    <label>Minimum Language Score</label>
-                    <input type="number" step="0.1" id="uniLangScore" placeholder="e.g. 6.0" required>
-                </div>
-            </div>
-            
-            <button type="button" class="btn-submit" id="submitBtn" onclick="submitUniversity()">Submit University</button>
-            <div id="statusMsg" class="status-msg"></div>
-        </form>
+    <div id="partnerTab" class="card" style="display:none;">
+        <h1>Partner List & Subscription</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Partner Name</th>
+                    <th>Status</th>
+                    <th>Sub. Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="partnerList"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // তারিখ প্রদর্শন
-    document.getElementById('date').innerText = new Date().toLocaleDateString();
+    const API = "https://study-abroad-crm.onrender.com/api/admin";
 
-    const API = "https://study-abroad-crm.onrender.com"; // নিশ্চিত করুন এটি আপনার Render URL
+    function showTab(tab) {
+        document.getElementById('uniTab').style.display = tab === 'uni' ? 'block' : 'none';
+        document.getElementById('partnerTab').style.display = tab === 'partners' ? 'block' : 'none';
+        if(tab === 'partners') loadPartners();
+    }
 
-    async function submitUniversity() {
-        const btn = document.getElementById('submitBtn');
-        const statusMsg = document.getElementById('statusMsg');
-        
-        // বাটন লোডিং স্টেট
-        btn.innerText = "Processing Submission...";
-        btn.disabled = true;
-        statusMsg.style.display = "none";
-
-        const uniData = {
-            name: document.getElementById('uniName').value,
-            country: document.getElementById('uniCountry').value,
-            location: document.getElementById('uniLocation').value,
-            degree: document.getElementById('uniDegree').value,
-            partnerCommission: parseInt(document.getElementById('uniComm').value),
-            scholarship: document.getElementById('uniScholarship').value,
-            minGPA: parseFloat(document.getElementById('uniGPA').value),
-            minLanguageScore: parseFloat(document.getElementById('uniLangScore').value)
+    async function saveUniversity() {
+        const data = {
+            name: document.getElementById('name').value,
+            country: document.getElementById('country').value,
+            intake: document.getElementById('intake').value,
+            semesterFee: document.getElementById('fee').value,
+            languageType: document.getElementById('langType').value,
+            langScore: document.getElementById('score').value,
+            minGPA: document.getElementById('gpa').value,
+            spouseAllowed: document.getElementById('spouse').value,
+            partnerCommission: document.getElementById('comm').value,
+            scholarship: document.getElementById('scholarship').value
         };
 
-        // সব ফিল্ড চেক করা
-        if (!uniData.name || !uniData.country || isNaN(uniData.partnerCommission)) {
-            alert("Please fill all required fields correctly!");
-            btn.innerText = "Submit University";
-            btn.disabled = false;
-            return;
-        }
+        const res = await fetch(`${API}/add-university`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if(res.ok) alert("University Added Successfully!");
+    }
 
-        try {
-            const res = await fetch(`${API}/api/admin/add-university`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(uniData)
-            });
+    async function loadPartners() {
+        const res = await fetch(`${API}/partners`);
+        const data = await res.json();
+        const list = document.getElementById('partnerList');
+        list.innerHTML = '';
+        data.forEach(p => {
+            list.innerHTML += `
+                <tr>
+                    <td>${p.name}</td>
+                    <td><span class="badge ${p.subscriptionStatus.toLowerCase()}">${p.subscriptionStatus}</span></td>
+                    <td><input type="number" value="${p.subscriptionAmount}" id="amt-${p._id}" style="width:100px"></td>
+                    <td>
+                        <button onclick="updateSub('${p._id}', 'Active')" style="width:auto; padding:5px 10px; background:green">Active</button>
+                        <button onclick="updateSub('${p._id}', 'Inactive')" style="width:auto; padding:5px 10px; background:red">Inactive</button>
+                    </td>
+                </tr>`;
+        });
+    }
 
-            const result = await res.json();
-            
-            if (result.success) {
-                statusMsg.innerText = "✅ Success: University added to database!";
-                statusMsg.style.color = "green";
-                statusMsg.style.display = "block";
-                document.getElementById('uniForm').reset();
-                alert("University Added Successfully!");
-            } else {
-                throw new Error(result.error || "Submission failed");
-            }
-        } catch (err) {
-            console.error(err);
-            statusMsg.innerText = "❌ Error: Could not connect to server.";
-            statusMsg.style.color = "red";
-            statusMsg.style.display = "block";
-            alert("Server Error! Check console for details.");
-        } finally {
-            btn.innerText = "Submit University";
-            btn.disabled = false;
-        }
+    async function updateSub(id, status) {
+        const amount = document.getElementById(`amt-${id}`).value;
+        await fetch(`${API}/update-subscription`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, status, amount })
+        });
+        alert("Updated!");
+        loadPartners();
     }
 </script>
-
 </body>
 </html>

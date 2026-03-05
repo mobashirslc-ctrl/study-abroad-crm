@@ -6,51 +6,50 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
 const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
-mongoose.connect(mongoURI).then(() => console.log('✅ MongoDB Connected')).catch(err => console.error(err));
+mongoose.connect(mongoURI).then(() => console.log('✅ IHP CRM Engine Connected'));
 
-// University Schema
+// --- University Schema ---
 const universitySchema = new mongoose.Schema({
-    name: String,
-    country: String,
-    location: String,
-    degree: String,
-    partnerCommission: Number,
-    scholarship: String,
-    minGPA: Number,
-    minLanguageScore: Number
+    name: String, country: String, location: String, degree: String,
+    intake: String, semesterFee: Number, languageType: String,
+    langScore: Number, minGPA: Number, spouseAllowed: String,
+    partnerCommission: Number, scholarship: String
+});
+
+// --- Partner Schema ---
+const partnerSchema = new mongoose.Schema({
+    name: String, subscriptionStatus: { type: String, default: 'Inactive' },
+    subscriptionAmount: { type: Number, default: 0 },
+    wallet: { totalEarnings: { type: Number, default: 0 }, withdrawn: { type: Number, default: 0 } }
 });
 
 const University = mongoose.model('University', universitySchema);
+const Partner = mongoose.model('Partner', partnerSchema);
 
-// --- API Endpoints ---
+// --- Admin Endpoints ---
 
-// অ্যাডমিন প্যানেল থেকে ইউনিভার্সিটি অ্যাড করার রুট
+// ১. ইউনিভার্সিটি অ্যাড করা (Fixing the 404 error)
 app.post('/api/admin/add-university', async (req, res) => {
     try {
-        const newUni = new University(req.body);
-        await newUni.save();
-        res.status(200).json({ success: true, message: "University added successfully!" });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+        const uni = new University(req.body);
+        await uni.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ success: false }); }
 });
 
-// পার্টনার পোর্টালের জন্য সার্চ রুট
-app.post('/api/check-eligibility', async (req, res) => {
-    try {
-        const { country, gpa } = req.body;
-        let query = {};
-        if (country) query.country = new RegExp(country, 'i');
-        if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
+// ২. সব পার্টনার লিস্ট দেখা
+app.get('/api/admin/partners', async (req, res) => {
+    const partners = await Partner.find();
+    res.json(partners);
+});
 
-        const results = await University.find(query);
-        res.json({ success: true, data: results });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+// ৩. সাবস্ক্রিপশন আপডেট করা
+app.post('/api/admin/update-subscription', async (req, res) => {
+    const { id, status, amount } = req.body;
+    await Partner.findByIdAndUpdate(id, { subscriptionStatus: status, subscriptionAmount: amount });
+    res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Admin Engine Running`));
