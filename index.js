@@ -1,10 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// HTML ফাইলগুলো পাবলিকলি এক্সেস করার জন্য
+app.use(express.static(path.join(__dirname, './')));
 
 // Database Connection
 mongoose.connect("mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority")
@@ -19,42 +23,21 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
 
 const University = mongoose.model('University', new mongoose.Schema({
     name: String, country: String, degree: String, intake: String, 
-    semesterFee: String, currency: String, languageType: String, 
-    langScore: Number, academicScore: Number, partnerCommission: Number, bankReq: String
+    semesterFee: String, currency: String, bankReq: String,
+    langScore: Number, academicScore: Number, partnerCommission: Number
 }));
 
-const Withdraw = mongoose.model('Withdraw', new mongoose.Schema({
-    partnerName: String, amount: Number, method: String, account: String, 
-    status: { type: String, default: 'Pending' }, date: { type: Date, default: Date.now }
-}));
-
-const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
-    studentName: String, university: String, partnerName: String, 
-    status: { type: String, default: 'In Review' }, date: { type: Date, default: Date.now }
-}));
+// --- Routes for serving HTML Files ---
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'partner.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 // --- Admin API Routes ---
 app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
-
 app.post('/api/admin/update-partner-status', async (req, res) => {
     const { id, status } = req.body;
-    try {
-        await Partner.findByIdAndUpdate(id, { status });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
+    await Partner.findByIdAndUpdate(id, { status });
+    res.json({ success: true });
 });
-
-app.post('/api/admin/custom-sub', async (req, res) => {
-    const { id, amount } = req.body;
-    try {
-        await Partner.findByIdAndUpdate(id, { subAmount: amount });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-
-app.get('/api/admin/all-files', async (req, res) => res.json(await StudentFile.find().sort({_id:-1})));
-app.get('/api/admin/withdrawals', async (req, res) => res.json(await Withdraw.find().sort({_id:-1})));
-
 app.post('/api/admin/add-university', async (req, res) => {
     await (new University(req.body)).save();
     res.json({ success: true });
@@ -62,14 +45,13 @@ app.post('/api/admin/add-university', async (req, res) => {
 
 // --- Partner API Routes ---
 app.post('/api/check-eligibility', async (req, res) => {
-    const { country, degree, languageType, langScore, academicScore } = req.body;
+    const { country, degree, langScore, academicScore } = req.body;
     let query = {};
     if (country) query.country = { $regex: new RegExp(country, 'i') };
-    if (degree && degree !== "Select Degree") query.degree = degree;
-    if (langScore) query.langScore = { $lte: parseFloat(langScore) };
-    if (academicScore) query.academicScore = { $lte: parseFloat(academicScore) };
+    if (degree) query.degree = degree;
     const data = await University.find(query);
     res.json({ success: true, data });
 });
 
-app.listen(10000, () => console.log('🚀 Server active on 10000'));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
