@@ -2,105 +2,199 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal | IHP CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard | IHP CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; }
-        .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); display: flex; flex-direction: column; align-items: center; }
-        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
-        .nav-item.active { background: #1e293b; color: white; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; box-sizing: border-box; }
+        .sidebar h2 { color: var(--primary); font-size: 24px; margin-bottom: 30px; }
+        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; }
+
+        /* Main Content Styles */
+        .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
+        
+        /* Stats Grid - Centered */
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1100px; margin-bottom: 30px; }
-        .stat-card { padding: 25px; border-radius: 20px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; }
-        .page { display: none; width: 100%; } .page.active { display: block; }
-        .search-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
+        .stat-card { padding: 25px; border-radius: 20px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; }
+        
+        /* Card Layout */
+        .card { background: white; padding: 35px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; box-sizing: border-box; margin-bottom: 20px; }
+        .page { display: none; width: 100%; max-width: 1100px; }
+        .page.active { display: block; }
+
+        /* Assessment Form */
+        .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        input, select { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.3s; }
+        .btn:hover { background: #1d4ed8; }
+
+        /* Table Styles */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { text-align: left; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 13px; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-size: 14px; }
+        
+        /* Wallet/Sub Styles */
+        .sub-badge { background: #dcfce7; color: #166534; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2 style="color:var(--primary);"><i class="fas fa-rocket"></i> IHP CRM</h2>
-    <div class="nav-item active" onclick="show('search', this)"><i class="fas fa-search"></i> University Search</div>
-    <div class="nav-item" onclick="show('tracking', this)"><i class="fas fa-file-invoice"></i> Student Tracking</div>
-    <div class="nav-item" onclick="show('wallet', this)"><i class="fas fa-wallet"></i> Wallet & Sub</div>
+    <h2><i class="fas fa-rocket"></i> IHP CRM</h2>
+    <div class="nav-item active" onclick="showPage('search', this)"><i class="fas fa-search"></i> University Search</div>
+    <div class="nav-item" onclick="showPage('tracking', this)"><i class="fas fa-file-invoice"></i> Student Tracking</div>
+    <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i> Wallet & Sub</div>
 </div>
 
 <div class="main">
     <div class="stat-grid">
-        <div class="stat-card" style="background: #2563eb;">EARNINGS<br><h2>৳ 0</h2></div>
-        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 0</h2></div>
-        <div class="stat-card" style="background: #d97706;">PENDING<br><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background: #2563eb;">TOTAL EARNINGS<br><h2>৳ <span id="eTotal">0</span></h2></div>
+        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ <span id="wTotal">0</span></h2></div>
+        <div class="stat-card" style="background: #d97706;">PENDING BALANCE<br><h2>৳ <span id="pTotal">0</span></h2></div>
     </div>
 
     <div id="searchPage" class="page active">
         <div class="card">
-            <h3>Eligibility Assessment</h3>
-            <div class="search-row">
-                <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDegree"><option>UG</option><option>PG</option><option>Diploma</option></select>
-                <select id="sLangType"><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
-                <input type="number" id="sLangScore" placeholder="Score">
-                <button class="btn" onclick="performSearch()">Search</button>
+            <h3><i class="fas fa-graduation-cap"></i> Eligibility Assessment</h3>
+            <div class="search-grid">
+                <input type="text" id="sCountry" placeholder="Target Country">
+                <select id="sDegree">
+                    <option value="">Select Degree</option>
+                    <option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option>
+                </select>
+                <select id="sLangType">
+                    <option value="">Language</option>
+                    <option>IELTS</option><option>PTE</option><option>Duolingo</option>
+                </select>
+                <input type="number" id="sLangScore" placeholder="Lang Score">
+                <input type="number" id="sAcademic" placeholder="Academic Score (GPA)">
             </div>
-            <table id="resTable">
-                <thead><tr><th>University</th><th>Intake</th><th>Fee</th><th>Commission</th></tr></thead>
-                <tbody id="resBody"></tbody>
+            <button class="btn" onclick="performAssessment()">Check Eligibility</button>
+            
+            <table id="resultTable">
+                <thead>
+                    <tr><th>University</th><th>Intake</th><th>Fee</th><th>Commission</th><th>Action</th></tr>
+                </thead>
+                <tbody id="uniResults">
+                    </tbody>
             </table>
         </div>
     </div>
 
     <div id="trackingPage" class="page">
         <div class="card">
-            <h3>Student Application Progress</h3>
-            <table><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="trackData"></tbody></table>
+            <h3><i class="fas fa-tasks"></i> Student Application Progress</h3>
+            <table>
+                <thead>
+                    <tr><th>Student Name</th><th>University</th><th>Status</th><th>Date</th></tr>
+                </thead>
+                <tbody id="trackingResults">
+                    </tbody>
+            </table>
         </div>
     </div>
 
     <div id="walletPage" class="page">
         <div class="card">
-            <h3>Subscription & Wallet</h3>
-            <p><b>Current Plan:</b> Professional Plan (Lifetime)</p>
-            <hr>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3><i class="fas fa-wallet"></i> My Wallet</h3>
+                <div>Plan: <span class="sub-badge">Professional Lifetime</span></div>
+            </div>
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+            
             <h4>Request Withdrawal</h4>
-            <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Bank Transfer</option></select>
-            <input type="number" id="wAmt" placeholder="Amount">
-            <input type="text" id="wAcc" placeholder="Account/Phone Number">
-            <button class="btn" onclick="submitWithdraw()">Withdraw Now</button>
+            <div class="search-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <select id="wMethod">
+                    <option value="bKash">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Bank">Bank Transfer</option>
+                </select>
+                <input type="number" id="wAmount" placeholder="Amount (৳)">
+                <input type="text" id="wAccount" placeholder="Account/Mobile Number">
+            </div>
+            <button class="btn" style="background:#0f172a;" onclick="handleWithdraw()">Submit Withdrawal Request</button>
         </div>
     </div>
 </div>
 
 <script>
-    const API = "https://study-abroad-crm.onrender.com/api";
-    function show(p, el) {
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    const API_BASE = "https://study-abroad-crm.onrender.com/api";
+
+    // Tab Switching Logic
+    function showPage(pageId, element) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(p + 'Page').classList.add('active');
-        el.classList.add('active');
-        if(p === 'tracking') loadTracking();
+        document.getElementById(pageId + 'Page').classList.add('active');
+        element.classList.add('active');
     }
 
-    async function performSearch() {
-        const res = await fetch(`${API}/check-eligibility`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: document.getElementById('sLangType').value, langScore: document.getElementById('sLangScore').value })
-        });
-        const json = await res.json();
-        document.getElementById('resBody').innerHTML = json.data.map(u => `<tr><td>${u.name}</td><td>${u.intake}</td><td>${u.currency} ${u.semesterFee}</td><td>৳${u.partnerCommission}</td></tr>`).join('');
+    // Eligibility Assessment Logic
+    async function performAssessment() {
+        const query = {
+            country: document.getElementById('sCountry').value,
+            degree: document.getElementById('sDegree').value,
+            languageType: document.getElementById('sLangType').value,
+            langScore: document.getElementById('sLangScore').value,
+            academicScore: document.getElementById('sAcademic').value
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/check-eligibility`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(query)
+            });
+            const result = await res.json();
+            
+            const tbody = document.getElementById('uniResults');
+            tbody.innerHTML = result.data.map(u => `
+                <tr>
+                    <td><b>${u.name}</b><br><small>${u.country}</small></td>
+                    <td>${u.intake}</td>
+                    <td>${u.currency} ${u.semesterFee}</td>
+                    <td style="color:#10b981; font-weight:bold;">৳ ${u.partnerCommission}</td>
+                    <td><button class="btn" style="padding:8px; font-size:12px;">Apply</button></td>
+                </tr>
+            `).join('');
+            
+            if(result.data.length === 0) tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No University Found</td></tr>";
+        } catch (err) {
+            alert("Error connecting to server");
+        }
     }
 
-    async function submitWithdraw() {
-        const data = { partnerName: "Test Partner", amount: document.getElementById('wAmt').value, method: document.getElementById('wMethod').value, account: document.getElementById('wAcc').value };
-        await fetch(`${API}/partner/withdraw`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-        alert("Withdrawal Request Sent!");
+    // Withdrawal Logic
+    async function handleWithdraw() {
+        const data = {
+            partnerName: "IHP Partner", // Replace with actual logged-in partner name
+            amount: document.getElementById('wAmount').value,
+            method: document.getElementById('wMethod').value,
+            account: document.getElementById('wAccount').value
+        };
+
+        if(!data.amount || !data.account) return alert("Please fill all fields");
+
+        try {
+            const res = await fetch(`${API_BASE}/partner/withdraw`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if(res.ok) {
+                alert("Withdrawal Request Submitted Successfully!");
+                document.getElementById('wAmount').value = "";
+                document.getElementById('wAccount').value = "";
+            }
+        } catch (err) {
+            alert("Failed to submit request");
+        }
     }
 </script>
+
 </body>
 </html>
