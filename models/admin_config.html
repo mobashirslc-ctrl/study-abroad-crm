@@ -1,0 +1,18 @@
+<div class="card" style="padding: 30px; background: white; border-radius: 12px; max-width: 400px; margin: auto;">
+    <h3>Subscription Settings</h3>
+    <label>Set Monthly Partner Fee (BDT)</label>
+    <input type="number" id="subFee" value="5000" style="width: 100%; padding: 10px; margin: 10px 0;">
+    <button onclick="updateSub()" style="width:100%; padding:12px; background:#1e293b; color:white; border:none; border-radius:8px;">Update Monthly Fee</button>
+</div>
+
+<script>
+    async function updateSub() {
+        const fee = document.getElementById('subFee').value;
+        await fetch("https://study-abroad-crm.onrender.com/api/admin/config-sub", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ fee: fee })
+        });
+        alert("Subscription Fee Updated to ৳" + fee);
+    }
+</script>
