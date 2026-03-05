@@ -2,72 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal - Result View</title>
+    <title>Partner Portal - Eligibility Engine</title>
     <style>
         :root { --primary: #1a252f; --accent: #3498db; --success: #27ae60; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; display: flex; }
         
-        /* Sidebar Design */
         .sidebar { width: 260px; background: var(--primary); color: white; height: 100vh; padding: 25px; position: fixed; }
         .main-content { margin-left: 310px; padding: 40px; width: calc(100% - 350px); }
 
-        /* Search Section */
         .search-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: end; }
         label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 13px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
 
-        /* Table Design */
         table { width: 100%; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         th { background: var(--primary); color: white; padding: 15px; text-align: left; font-size: 14px; }
-        td { padding: 18px 15px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+        td { padding: 18px 15px; border-bottom: 1px solid #eee; font-size: 14px; }
         
-        /* Specific Result Tags */
-        .uni-name { font-weight: bold; color: var(--primary); font-size: 15px; }
-        .loc-tag { color: #666; font-size: 13px; }
-        .comm-tag { color: var(--success); font-weight: bold; font-size: 16px; }
-        
-        /* Action Button */
-        .btn-open { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn-open:hover { background: #2980b9; transform: translateY(-2px); }
+        .uni-name { font-weight: bold; color: var(--primary); }
+        .comm-tag { color: var(--success); font-weight: bold; }
+        .btn-open { background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
 
-        /* Modal Structure for File Opening */
+        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 500px; position: relative; }
-        .close { position: absolute; right: 20px; top: 15px; font-size: 24px; cursor: pointer; }
+        .modal-content { background: white; margin: 5% auto; padding: 30px; border-radius: 12px; width: 450px; position: relative; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>CRM Partner</h2>
-    <p style="opacity: 0.7;">Verified Agent Portal</p>
     <nav style="margin-top: 40px;">
-        <div style="padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;">🔍 Search University</div>
-        <div style="padding: 12px; margin-top: 10px; cursor: pointer;">📂 Active Files</div>
+        <div style="padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;">🔍 Search University</div>
+        <div style="padding: 12px; margin-top: 10px;">📂 My Applications</div>
     </nav>
 </div>
 
 <div class="main-content">
     <div class="search-card">
-        <h3>Eligibility Check</h3>
+        <h3>Eligibility Check Engine</h3>
         <form id="searchForm" class="filter-grid">
-            <div><label>Country Preference</label><input type="text" id="sCountry" placeholder="e.g. UK"></div>
-            <div><label>Degree</label>
+            <div>
+                <label>Preferred Country</label>
+                <input type="text" id="sCountry" placeholder="e.g. UK">
+            </div>
+            <div>
+                <label>Degree</label>
                 <select id="sDegree">
                     <option value="">All</option>
                     <option value="Undergraduate (UG)">UG</option>
                     <option value="Postgraduate (PG)">PG</option>
+                    <option value="Diploma">Diploma</option>
                 </select>
             </div>
-            <div><label>Language Test</label>
+            <div>
+                <label>Language Test</label>
                 <select id="sLang">
                     <option value="IELTS">IELTS</option>
                     <option value="PTE">PTE</option>
                     <option value="Duolingo">Duolingo</option>
                 </select>
             </div>
-            <div><label>Student GPA</label><input type="number" step="0.01" id="sGPA" required></div>
+            <div>
+                <label>Language Score</label>
+                <input type="number" step="0.1" id="sLangScore" placeholder="Score" required>
+            </div>
+            <div>
+                <label>Student GPA</label>
+                <input type="number" step="0.01" id="sGPA" placeholder="GPA" required>
+            </div>
             <button type="submit" style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">Search Results</button>
         </form>
     </div>
@@ -83,21 +86,19 @@
             </tr>
         </thead>
         <tbody id="resultsBody">
-            <tr><td colspan="5" style="text-align:center; color:#999; padding: 40px;">Start searching to see matching universities...</td></tr>
+            <tr><td colspan="5" style="text-align:center; padding: 40px; color:#999;">Apply filters to find universities.</td></tr>
         </tbody>
     </table>
 </div>
 
 <div id="fileModal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h3 id="modalUniTitle">Open Direct File</h3>
-        <form id="fileForm">
-            <label>Student Full Name</label>
-            <input type="text" placeholder="Enter name" required style="margin-bottom: 15px;">
-            <label>Upload Passport (Scan Copy)</label>
-            <input type="file" required style="margin-bottom: 15px;">
-            <button type="submit" style="width:100%; padding:12px; background:var(--success); color:white; border:none; border-radius:8px; font-weight:bold;">Submit Application</button>
+        <h3 id="modalUniTitle">Apply Now</h3>
+        <form id="applyForm">
+            <input type="text" placeholder="Student Name" required style="width:100%; margin-bottom:10px; padding:10px; border:1px solid #ddd; border-radius:5px;">
+            <input type="file" required style="width:100%; margin-bottom:10px;">
+            <button type="submit" style="width:100%; padding:10px; background:var(--success); color:white; border:none; border-radius:5px;">Submit File</button>
+            <button type="button" onclick="closeModal()" style="width:100%; margin-top:5px; background:none; border:none; color:red; cursor:pointer;">Cancel</button>
         </form>
     </div>
 </div>
@@ -108,12 +109,13 @@
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const resultsBody = document.getElementById('resultsBody');
-        resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching Data...</td></tr>';
+        resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
 
         const payload = {
             country: document.getElementById('sCountry').value,
             degree: document.getElementById('sDegree').value,
             language: document.getElementById('sLang').value,
+            langScore: document.getElementById('sLangScore').value,
             gpa: document.getElementById('sGPA').value
         };
 
@@ -128,29 +130,29 @@
             if (result.success && result.data.length > 0) {
                 resultsBody.innerHTML = '';
                 result.data.forEach(uni => {
+                    // Score check logic on frontend or backend
                     resultsBody.innerHTML += `
                         <tr>
-                            <td><span style="color:var(--accent); font-weight:600;">${uni.course}</span></td>
+                            <td style="color:var(--accent); font-weight:600;">${uni.course}</td>
                             <td class="uni-name">${uni.name}</td>
-                            <td class="loc-tag">${uni.location}, ${uni.country}</td>
+                            <td>${uni.location}, ${uni.country}</td>
                             <td class="comm-tag">${uni.partnerCommission || '0'}</td>
                             <td><button class="btn-open" onclick="openFileModal('${uni.name}')">Direct File Opening</button></td>
                         </tr>
                     `;
                 });
             } else {
-                resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">No results found for this criteria.</td></tr>';
+                resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">No university matches these scores.</td></tr>';
             }
         } catch (err) {
-            resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Error!</td></tr>';
+            resultsBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Server connection error.</td></tr>';
         }
     });
 
-    function openFileModal(uniName) {
-        document.getElementById('modalUniTitle').innerText = "Apply for: " + uniName;
+    function openFileModal(name) {
+        document.getElementById('modalUniTitle').innerText = name;
         document.getElementById('fileModal').style.display = "block";
     }
-
     function closeModal() {
         document.getElementById('fileModal').style.display = "none";
     }
