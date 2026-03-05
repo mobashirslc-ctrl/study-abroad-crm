@@ -2,160 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Dashboard | IHP CRM</title>
+    <title>Partner Portal | IHP CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-        
-        /* Sidebar Design */
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); }
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; box-sizing: border-box; }
-        .sidebar h2 { color: white; font-size: 22px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .nav-item { padding: 12px 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; }
-        .nav-item.active { background: #1e293b; color: white; }
-
-        /* Content Area */
         .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
-        
-        /* The 3 Colorful Cards */
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .stat-card { padding: 30px; border-radius: 20px; color: white; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .stat-card span { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-card h2 { margin: 15px 0 0; font-size: 32px; }
-
-        /* Card Container */
-        .card { background: white; padding: 35px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .page { display: none; }
-        .page.active { display: block; }
-
-        /* 5-Column Search Grid */
-        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 25px; }
-        input, select { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; width: 100%; box-sizing: border-box; outline: none; }
-        .btn-search { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; width: 100%; grid-column: span 5; font-size: 15px; }
-
-        /* Table */
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { padding: 25px; border-radius: 15px; color: white; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; }
+        .btn-search { grid-column: span 5; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 18px; background: #f8fafc; color: #64748b; font-size: 13px; text-transform: uppercase; }
-        td { padding: 18px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; }
-        .apply-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
-
-        /* Wallet Section */
-        .sub-box { background: #eff6ff; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; border: 1px dashed #3b82f6; max-width: 400px; margin: 0 auto 25px auto; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
-
 <div class="sidebar">
-    <h2><i class="fas fa-graduation-cap"></i> IHP CRM</h2>
-    <div class="nav-item active" onclick="showPage('search', this)"><i class="fas fa-university"></i> University Search</div>
-    <div class="nav-item" onclick="showPage('tracking', this)"><i class="fas fa-folder-open"></i> Student Tracking</div>
-    <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i> Wallet & Sub</div>
+    <h2>IHP CRM</h2>
+    <div style="padding:10px; color:#94a3b8;"><i class="fas fa-university"></i> Assessment</div>
+    <div style="padding:10px; color:#94a3b8;"><i class="fas fa-wallet"></i> Wallet</div>
 </div>
-
 <div class="main">
-    <div class="header">
-        <h1 style="margin:0; font-size: 28px;">Partner Dashboard</h1>
-        <p style="color:#64748b; margin-top:5px;">Welcome to IHP CRM Management</p>
-    </div>
-
     <div class="stat-grid">
-        <div class="stat-card" style="background: #3b82f6;"><span>TOTAL EARNINGS</span><h2 id="eTotal">৳ 0</h2></div>
-        <div class="stat-card" style="background: #10b981;"><span>WITHDRAWN</span><h2 id="wTotal">৳ 0</h2></div>
-        <div class="stat-card" style="background: #f59e0b;"><span>PENDING</span><h2 id="pTotal">৳ 0</h2></div>
+        <div class="stat-card" style="background:#3b82f6;"><span>EARNINGS</span><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background:#10b981;"><span>WITHDRAWN</span><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background:#f59e0b;"><span>PENDING</span><h2>৳ 0</h2></div>
     </div>
-
-    <div id="searchPage" class="page active">
-        <div class="card">
-            <h3>Assessment / Eligibility Check</h3>
-            <div class="search-grid">
-                <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDegree"><option value="">Degree</option><option>UG</option><option>PG</option></select>
-                <select id="sLang"><option value="">Language</option><option>IELTS</option><option>PTE</option></select>
-                <input type="number" step="0.1" id="sLangScore" placeholder="Lang. Score">
-                <input type="number" step="0.01" id="sGPA" placeholder="GPA">
-                <button class="btn-search" onclick="performSearch()">Search Now</button>
-            </div>
-            <table>
-                <thead><tr><th>University</th><th>Fee</th><th>Bank Req.</th><th>Commission</th><th>Action</th></tr></thead>
-                <tbody id="uniResults">
-                    <tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:40px;">Please search to see universities</td></tr>
-                </tbody>
-            </table>
+    <div class="card">
+        <h3>Search Universities</h3>
+        <div class="search-grid">
+            <input type="text" id="sCountry" placeholder="Country">
+            <select id="sDegree"><option value="">Degree</option><option>UG</option><option>PG</option></select>
+            <input type="text" placeholder="Language">
+            <input type="number" id="sLScore" placeholder="Lang. Score">
+            <input type="number" id="sGPA" placeholder="GPA">
+            <button class="btn-search" onclick="performSearch()">Search Now</button>
         </div>
-    </div>
-
-    <div id="walletPage" class="page">
-        <div class="card">
-            <h3 style="text-align:center;">Wallet & Subscription</h3>
-            <div class="sub-box">
-                <p style="margin:0; font-weight:600; color:#1e40af;">Monthly Subscription</p>
-                <h2 style="margin:10px 0;">৳ <span id="mySub">500</span></h2>
-                <span style="font-size:12px; color:#2563eb; background:#dbeafe; padding:4px 10px; border-radius:15px;">Status: Active</span>
-            </div>
-            <div style="max-width:400px; margin: 0 auto; display:flex; flex-direction:column; gap:15px;">
-                <select id="wMethod">
-                    <option>bKash (Personal)</option>
-                    <option>Nagad (Personal)</option>
-                    <option>Bank Account</option>
-                </select>
-                <input type="text" id="wAcc" placeholder="Account Number / Bank Details">
-                <input type="number" id="wAmt" placeholder="Amount (৳)">
-                <button class="btn-search" style="grid-column: auto;" onclick="submitWithdraw()">Request Withdrawal</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="trackingPage" class="page">
-        <div class="card"><h3>Student Tracking</h3><table><thead><tr><th>Name</th><th>University</th><th>Status</th></tr></thead><tbody id="trackResults"></tbody></table></div>
+        <table>
+            <thead><tr><th>University</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
+            <tbody id="uniResults"></tbody>
+        </table>
     </div>
 </div>
-
 <script>
-    const API = "https://study-abroad-crm.onrender.com/api";
-
-    function showPage(pageId, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(pageId + 'Page').classList.add('active');
-        if(el) el.classList.add('active');
-    }
-
     async function performSearch() {
-        const query = {
-            country: document.getElementById('sCountry').value,
-            degree: document.getElementById('sDegree').value,
-            langScore: document.getElementById('sLangScore').value,
-            academicScore: document.getElementById('sGPA').value
-        };
-        const tbody = document.getElementById('uniResults');
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Searching...</td></tr>';
-
-        try {
-            const res = await fetch(`${API}/check-eligibility`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(query)
-            });
-            const result = await res.json();
-            const unis = result.data || [];
-            
-            if(unis.length > 0) {
-                tbody.innerHTML = unis.map(u => `
-                    <tr>
-                        <td><strong>${u.name}</strong><br><small>${u.country}</small></td>
-                        <td>$ ${u.semesterFee || 'N/A'}</td>
-                        <td>${u.bankReq || 'N/A'}</td>
-                        <td style="color:#10b981; font-weight:bold;">৳ ${u.partnerCommission || '0'}</td>
-                        <td><button class="apply-btn">Apply Now</button></td>
-                    </tr>
-                `).join('');
-            } else {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">No matching found</td></tr>';
-            }
-        } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Connection Error</td></tr>';
-        }
+        const query = { country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value };
+        const res = await fetch(`https://study-abroad-crm.onrender.com/api/check-eligibility`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(query)
+        });
+        const result = await res.json();
+        document.getElementById('uniResults').innerHTML = result.data.map(u => `
+            <tr><td><strong>${u.name}</strong><br><small>${u.country}</small></td><td>${u.semesterFee}</td><td style="color:#10b981; font-weight:bold;">৳ ${u.partnerCommission}</td><td><button>Apply</button></td></tr>
+        `).join('');
     }
 </script>
 </body>

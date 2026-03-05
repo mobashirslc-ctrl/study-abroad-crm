@@ -2,188 +2,93 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP Admin | Professional CRM</title>
+    <title>IHP Admin | Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; --success: #10b981; --danger: #ef4444; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-        
+        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; background: var(--bg); }
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; box-sizing: border-box; }
-        .sidebar h2 { font-size: 22px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .nav-item { padding: 12px 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; }
+        .nav-item { padding: 12px 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 10px; margin-bottom: 8px; }
         .nav-item.active { background: var(--primary); color: white; }
-
         .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
         .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        
-        /* Grid for Assessment Form */
         .grid-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
-        input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; font-size: 14px; width: 100%; box-sizing: border-box; }
-        input:focus { border-color: var(--primary); }
-
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; transition: 0.3s; }
-        .btn-main:hover { background: #1d4ed8; }
-
-        /* Toggle Switch Styling */
+        input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; width: 100%; box-sizing: border-box; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: 600; width: 100%; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        .page { display: none; } .active { display: block; }
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--success); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 20px; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
+        input:checked + .slider { background: #10b981; }
         input:checked + .slider:before { transform: translateX(20px); }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 12px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        
-        .page { display: none; }
-        .page.active { display: block; }
     </style>
 </head>
 <body>
-
 <div class="sidebar">
-    <h2><i class="fas fa-user-shield"></i> IHP Admin</h2>
-    <div class="nav-item active" onclick="showPage('addUni', this)"><i class="fas fa-plus-circle"></i> Assessment Setup</div>
-    <div class="nav-item" onclick="showPage('partners', this)"><i class="fas fa-users"></i> Partner List</div>
-    <div class="nav-item" onclick="showPage('files', this)"><i class="fas fa-file-alt"></i> Existing Files</div>
-    <div class="nav-item" onclick="showPage('withdraw', this)"><i class="fas fa-money-check-alt"></i> Withdrawals</div>
+    <h2>IHP Admin</h2>
+    <div class="nav-item active" onclick="showPage('addUni', this)">Assessment Setup</div>
+    <div class="nav-item" onclick="showPage('partners', this)">Partner List</div>
 </div>
-
 <div class="main">
     <div id="addUniPage" class="page active">
         <div class="card">
-            <h3>Add New University Details</h3>
+            <h3>Add University Details</h3>
             <div class="grid-form">
                 <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCountry" placeholder="Country Name">
-                <input type="text" id="uIntake" placeholder="Intake (e.g. Sept 2026)">
-                
-                <select id="uDegree">
-                    <option value="">Select Degree</option>
-                    <option>UG</option><option>PG</option><option>PhD</option><option>Research</option>
-                </select>
-
-                <select id="uLang">
-                    <option value="">Language Requirement</option>
-                    <option>IELTS</option><option>PTE</option><option>Duolingo</option>
-                </select>
-
-                <input type="number" step="0.1" id="uLScore" placeholder="Min. Lang Score">
+                <input type="text" id="uCountry" placeholder="Country">
+                <input type="text" id="uIntake" placeholder="Intake (Sept 2026)">
+                <select id="uDegree"><option value="">Degree</option><option>UG</option><option>PG</option><option>PhD</option></select>
+                <select id="uLang"><option value="">Language</option><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
+                <input type="number" step="0.1" id="uLScore" placeholder="Min Lang Score">
                 <input type="text" id="uCourse" placeholder="Course Name">
-                <input type="text" id="uFee" placeholder="Semester Fee (e.g. $6000)">
-                <input type="text" id="uBank" placeholder="Bank Req. (e.g. 30 Lakh)">
-                <input type="number" id="uComm" placeholder="Partner Commission (৳)">
-                <input type="number" step="0.01" id="uGPA" placeholder="Min. GPA">
+                <input type="text" id="uFee" placeholder="Semester Fee">
+                <input type="text" id="uBank" placeholder="Bank Req.">
+                <input type="number" id="uComm" placeholder="Commission (৳)">
+                <input type="number" step="0.01" id="uGPA" placeholder="Min GPA">
             </div>
-            <button class="btn-main" onclick="saveUniversity()">Add to Assessment Database</button>
+            <button class="btn-main" onclick="saveUniversity()">Save to Database</button>
         </div>
     </div>
-
     <div id="partnersPage" class="page">
         <div class="card">
-            <h3>Partner List & Subscription Control</h3>
+            <h3>Partner Management</h3>
             <table>
-                <thead>
-                    <tr>
-                        <th>Partner Name</th>
-                        <th>Sub. Amount (৳)</th>
-                        <th>Status (Active/Inactive)</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="partnerTable">
-                    </tbody>
+                <thead><tr><th>Name</th><th>Subscription (৳)</th><th>Status</th></tr></thead>
+                <tbody id="partnerTable"></tbody>
             </table>
         </div>
     </div>
-
-    <div id="filesPage" class="page"><div class="card"><h3>Existing Files</h3><table id="fileTable"></table></div></div>
-    <div id="withdrawPage" class="page"><div class="card"><h3>Withdrawal Requests</h3><table id="withdrawTable"></table></div></div>
 </div>
-
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
-
-    function showPage(pageId, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    function showPage(p, el) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(pageId + 'Page').classList.add('active');
-        if(el) el.classList.add('active');
-        if(pageId === 'partners') loadPartners();
+        document.getElementById(p + 'Page').classList.add('active');
+        el.classList.add('active');
+        if(p === 'partners') loadPartners();
     }
-
     async function saveUniversity() {
-        const data = {
-            name: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            intake: document.getElementById('uIntake').value,
-            degree: document.getElementById('uDegree').value,
-            languageType: document.getElementById('uLang').value,
-            langScore: document.getElementById('uLScore').value,
-            courseName: document.getElementById('uCourse').value,
-            semesterFee: document.getElementById('uFee').value,
-            bankReq: document.getElementById('uBank').value,
-            partnerCommission: document.getElementById('uComm').value,
-            academicScore: document.getElementById('uGPA').value
-        };
-
-        if(!data.name || !data.country) return alert("Please fill University and Country name!");
-
-        try {
-            const res = await fetch(`${API}/admin/add-university`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if(res.ok) {
-                alert("✅ University Successfully Added!");
-                location.reload();
-            }
-        } catch(e) { alert("Error saving university"); }
+        const data = { name: document.getElementById('uName').value, country: document.getElementById('uCountry').value, intake: document.getElementById('uIntake').value, degree: document.getElementById('uDegree').value, languageType: document.getElementById('uLang').value, langScore: document.getElementById('uLScore').value, courseName: document.getElementById('uCourse').value, semesterFee: document.getElementById('uFee').value, bankReq: document.getElementById('uBank').value, partnerCommission: document.getElementById('uComm').value, academicScore: document.getElementById('uGPA').value };
+        await fetch(`${API}/admin/add-university`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        alert("Saved!");
     }
-
     async function loadPartners() {
         const res = await fetch(`${API}/admin/partners`);
         const data = await res.json();
-        const tbody = document.getElementById('partnerTable');
-        tbody.innerHTML = data.map(p => `
+        document.getElementById('partnerTable').innerHTML = data.map(p => `
             <tr>
-                <td><strong>${p.name}</strong></td>
-                <td>
-                    <input type="number" value="${p.subAmount || 500}" 
-                    style="width:80px; padding:5px;" 
-                    onchange="updateSubAmount('${p._id}', this.value)">
-                </td>
-                <td>
-                    <label class="switch">
-                        <input type="checkbox" ${p.status === 'Active' ? 'checked' : ''} 
-                        onchange="togglePartnerStatus('${p._id}', this.checked)">
-                        <span class="slider"></span>
-                    </label>
-                </td>
-                <td><small style="color:#64748b;">Auto-saved on change</small></td>
+                <td>${p.name}</td>
+                <td><input type="number" value="${p.subAmount}" onchange="updateSub('${p._id}', this.value)" style="width:80px;"></td>
+                <td><label class="switch"><input type="checkbox" ${p.status === 'Active' ? 'checked' : ''} onchange="toggleStatus('${p._id}', this.checked)"><span class="slider"></span></label></td>
             </tr>
         `).join('');
     }
-
-    async function updateSubAmount(id, amount) {
-        await fetch(`${API}/admin/update-partner-sub`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id, subAmount: amount })
-        });
-    }
-
-    async function togglePartnerStatus(id, isChecked) {
-        const status = isChecked ? 'Active' : 'Inactive';
-        await fetch(`${API}/admin/update-partner-status`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id, status })
-        });
-    }
+    async function updateSub(id, val) { await fetch(`${API}/admin/update-partner-sub`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, subAmount: val}) }); }
+    async function toggleStatus(id, chk) { await fetch(`${API}/admin/update-partner-status`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id, status: chk ? 'Active' : 'Inactive'}) }); }
 </script>
 </body>
 </html>
