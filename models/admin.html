@@ -1,48 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Panel - Add University</title>
+    <title>Admin - Add University</title>
     <style>
-        body { font-family: Arial; padding: 40px; background: #f4f4f4; }
-        .box { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 5px; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .form-card { max-width: 450px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #1a252f; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; padding: 10px; border-radius: 5px; display: none; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Add New University</h2>
+    <div class="form-card">
+        <h2 style="text-align:center;">Add University</h2>
         <form id="uniForm">
             <input type="text" id="name" placeholder="University Name" required>
-            <input type="text" id="location" placeholder="Location/City" required>
+            <input type="text" id="location" placeholder="City" required>
             <select id="country">
                 <option value="United Kingdom">United Kingdom</option>
-                <option value="USA">USA</option>
                 <option value="Canada">Canada</option>
+                <option value="USA">USA</option>
             </select>
-            <input type="text" id="course" placeholder="Course Name" required>
+            <input type="text" id="course" placeholder="Course" required>
             <select id="degree">
                 <option value="UG">Undergraduate (UG)</option>
                 <option value="PG">Postgraduate (PG)</option>
-                <option value="Diploma">Diploma</option>
             </select>
             <input type="text" id="intake" placeholder="Intake (e.g. Sep 2026)" required>
-            <input type="number" step="0.01" id="minGPA" placeholder="Minimum GPA" required>
+            <input type="number" step="0.1" id="minGPA" placeholder="Min GPA" required>
             <select id="languageType">
                 <option value="IELTS">IELTS</option>
                 <option value="PTE">PTE</option>
                 <option value="DUOLINGO">DUOLINGO</option>
             </select>
-            <input type="number" step="0.1" id="minScore" placeholder="Min Test Score" required>
+            <input type="number" step="0.1" id="minScore" placeholder="Min Score" required>
             <input type="number" id="commission" placeholder="Commission (BDT)" required>
             <button type="submit">Submit University</button>
         </form>
+        <div id="status"></div>
     </div>
 
     <script>
         const API_URL = "https://study-abroad-crm.onrender.com";
+        const statusDiv = document.getElementById('status');
+
         document.getElementById('uniForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            statusDiv.style.display = "block";
+            statusDiv.style.background = "#eee";
+            statusDiv.innerText = "Sending data...";
+
             const data = {
                 name: document.getElementById('name').value,
                 location: document.getElementById('location').value,
@@ -56,12 +63,28 @@
                 commissionAmount: parseInt(document.getElementById('commission').value)
             };
 
-            const res = await fetch(`${API_URL}/api/universities`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if(res.ok) { alert("✅ University Added!"); e.target.reset(); }
+            try {
+                const res = await fetch(`${API_URL}/api/universities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if(res.ok) {
+                    statusDiv.style.background = "#d4edda";
+                    statusDiv.style.color = "#155724";
+                    statusDiv.innerText = "✅ Success! University added to database.";
+                    e.target.reset();
+                } else {
+                    const error = await res.json();
+                    statusDiv.style.background = "#f8d7da";
+                    statusDiv.style.color = "#721c24";
+                    statusDiv.innerText = "❌ Error: " + (error.message || "Failed to add");
+                }
+            } catch (err) {
+                statusDiv.style.background = "#f8d7da";
+                statusDiv.innerText = "❌ Server Connection Error";
+            }
         });
     </script>
 </body>
