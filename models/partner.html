@@ -2,125 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal | IHP CRM</title>
+    <title>Partner Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; }
-        body { font-family: sans-serif; margin: 0; background: var(--bg); display: flex; }
-        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; color: white; padding: 25px; }
-        .content { margin-left: 260px; padding: 30px; width: 100%; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .nav-item { padding: 12px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
-        .nav-item.active { color: white; background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
-        .page { display: none; } .page.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        body { font-family: sans-serif; display: flex; margin: 0; background: #f8fafc; }
+        .sidebar { width: 260px; background: #0f172a; color: white; height: 100vh; position: fixed; padding: 25px; }
+        .main { margin-left: 260px; padding: 40px; width: 100%; box-sizing: border-box; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 30px; }
+        input, select { padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; flex: 1; }
+        .btn-search { background: #2563eb; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .logo { font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 40px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP CRM</h2>
-    <div class="nav-item active" onclick="showPage('search')"><i class="fas fa-search"></i> Assessment</div>
-    <div class="nav-item" onclick="showPage('files')"><i class="fas fa-file-upload"></i> Student Files</div>
-    <div class="nav-item" onclick="showPage('wallet')"><i class="fas fa-wallet"></i> Wallet</div>
+    <div class="logo"><i class="fas fa-graduation-cap"></i> IHP CRM</div>
+    <div style="color:#94a3b8; padding:10px;"><i class="fas fa-search"></i> Assessment</div>
+    <div style="color:#94a3b8; padding:10px;"><i class="fas fa-file-upload"></i> Student Files</div>
+    <div style="color:#94a3b8; padding:10px;"><i class="fas fa-wallet"></i> Wallet</div>
 </div>
 
-<div class="content">
-    <div id="searchPage" class="page active">
-        <div class="card">
-            <h3>University Eligibility Search</h3>
-            <form id="searchForm" class="form-grid">
-                <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDegree"><option value="Undergraduate (UG)">UG</option><option value="Postgraduate (PG)">PG</option></select>
-                <input type="number" step="0.1" id="sGPA" placeholder="Your GPA">
-                <input type="number" step="0.1" id="sScore" placeholder="IELTS/PTE Score">
-                <button type="submit" class="btn">Search</button>
-            </form>
-            <table>
-                <thead><tr><th>University</th><th>Intake</th><th>Commission</th><th>Action</th></tr></thead>
-                <tbody id="uniResults"></tbody>
-            </table>
+<div class="main">
+    <div class="card">
+        <h3>University Eligibility Search</h3>
+        <div class="search-bar">
+            <input type="text" id="sCountry" placeholder="Country">
+            <input type="number" step="0.1" id="sGPA" placeholder="Your GPA">
+            <input type="number" step="0.1" id="sScore" placeholder="Language Score">
+            <button class="btn-search" onclick="searchUni()">Search</button>
         </div>
-    </div>
-
-    <div id="filesPage" class="page">
-        <div class="card">
-            <h3>Apply for Student</h3>
-            <div class="form-grid">
-                <input type="text" id="stuName" placeholder="Student Name">
-                <input type="text" id="stuUni" placeholder="University Name">
-                <input type="file" onchange="encodeFile(this, 'passport')" id="f1"> <small>Passport</small>
-                <input type="file" onchange="encodeFile(this, 'academic')" id="f2"> <small>Academic</small>
-            </div>
-            <button class="btn" onclick="uploadStudent()">Submit Application</button>
-        </div>
-    </div>
-
-    <div id="walletPage" class="page">
-        <div class="card" style="background:var(--primary); color:white;">
-            <p>Available Balance</p>
-            <h1>৳ 5,000</h1>
-        </div>
-        <div class="card">
-            <h3>Withdraw Funds</h3>
-            <select id="wMethod"><option value="bKash">bKash</option><option value="Nagad">Nagad</option><option value="Bank">Bank</option></select>
-            <input type="text" id="wAcc" placeholder="Account Number" style="margin: 10px 0;">
-            <input type="number" id="wAmt" placeholder="Amount">
-            <button class="btn" onclick="requestWithdraw()" style="margin-top:10px">Send Request</button>
-        </div>
+        <table>
+            <thead><tr><th>University</th><th>Location</th><th>Intake</th><th>Commission</th><th>Action</th></tr></thead>
+            <tbody id="results"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
-    let docs = { passport: "", academic: "" };
 
-    function showPage(p) {
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        document.getElementById(p + 'Page').classList.add('active');
-    }
+    async function searchUni() {
+        const res = document.getElementById('results');
+        res.innerHTML = "Searching...";
+        const data = {
+            country: document.getElementById('sCountry').value,
+            gpa: document.getElementById('sGPA').value,
+            langScore: document.getElementById('sScore').value
+        };
 
-    function encodeFile(input, type) {
-        const reader = new FileReader();
-        reader.onload = () => { docs[type] = reader.result; };
-        reader.readAsDataURL(input.files[0]);
-    }
-
-    // Search Logic
-    document.getElementById('searchForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const res = await fetch(`${API}/check-eligibility`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                country: document.getElementById('sCountry').value,
-                gpa: document.getElementById('sGPA').value,
-                langScore: document.getElementById('sScore').value
-            })
-        });
-        const json = await res.json();
-        document.getElementById('uniResults').innerHTML = json.data.map(u => `
-            <tr><td>${u.name}</td><td>${u.intake}</td><td>৳${u.partnerCommission}</td><td><button onclick="showPage('files')" class="btn" style="padding:5px">Apply</button></td></tr>
-        `).join('');
-    };
-
-    async function uploadStudent() {
-        await fetch(`${API}/partner/upload-file`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ studentName: document.getElementById('stuName').value, universityName: document.getElementById('stuUni').value, documents: docs, partnerName: "Stepup Partner" })
-        });
-        alert("Submitted!");
-    }
-
-    async function requestWithdraw() {
-        await fetch(`${API}/partner/withdraw`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ partnerName: "Stepup Partner", method: document.getElementById('wMethod').value, accountDetails: document.getElementById('wAcc').value, amount: document.getElementById('wAmt').value })
-        });
-        alert("Request Sent!");
+        try {
+            const response = await fetch(`${API}/check-eligibility`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            const json = await response.json();
+            res.innerHTML = json.data.map(u => `
+                <tr>
+                    <td><b>${u.name}</b></td>
+                    <td>${u.location}, ${u.country}</td>
+                    <td>${u.intake || 'Jan/Sept'}</td>
+                    <td style="color:green; font-weight:bold">৳ ${u.partnerCommission}</td>
+                    <td><button class="btn-search" style="padding:5px 10px">Apply</button></td>
+                </tr>
+            `).join('') || "<tr><td colspan='5' style='text-align:center'>No match found.</td></tr>";
+        } catch (err) {
+            res.innerHTML = "Error loading data.";
+        }
     }
 </script>
 </body>
