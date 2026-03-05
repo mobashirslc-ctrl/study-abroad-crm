@@ -2,26 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Dashboard | IHP CRM</title>
+    <title>Partner Portal | IHP CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
         .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; }
         .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); display: flex; flex-direction: column; align-items: center; }
-        .nav-link { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; }
-        .nav-link.active { background: #1e293b; color: white; }
-        
-        /* Stats Box Middle Fix */
+        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .nav-item.active { background: #1e293b; color: white; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1100px; margin-bottom: 30px; }
-        .stat-card { padding: 25px; border-radius: 20px; color: white; min-width: 200px; }
-        
-        /* Search Card Middle Fix */
+        .stat-card { padding: 25px; border-radius: 20px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; box-sizing: border-box; }
-        
-        .search-flex { display: flex; gap: 15px; margin-bottom: 25px; }
-        input, select { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; flex: 1; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        .page { display: none; width: 100%; max-width: 1100px; } .page.active { display: block; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; flex: 1; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { text-align: left; padding: 15px; border-bottom: 1px solid #f1f5f9; }
     </style>
@@ -30,57 +25,89 @@
 
 <div class="sidebar">
     <h2 style="color:var(--primary);"><i class="fas fa-rocket"></i> IHP CRM</h2>
-    <div class="nav-link active"><i class="fas fa-search"></i> University Search</div>
-    <div class="nav-link"><i class="fas fa-file-invoice"></i> Student Tracking</div>
-    <div class="nav-link"><i class="fas fa-wallet"></i> Wallet & Sub</div>
+    <div class="nav-item active" onclick="showPage('search', this)"><i class="fas fa-search"></i> University Search</div>
+    <div class="nav-item" onclick="showPage('tracking', this)"><i class="fas fa-file-invoice"></i> Student Tracking</div>
+    <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i> Wallet & Sub</div>
 </div>
 
 <div class="main">
     <div class="stat-grid">
-        <div class="stat-card" style="background: #2563eb;">TOTAL EARNINGS<br><h2>৳ 0</h2></div>
-        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 0</h2></div>
-        <div class="stat-card" style="background: #d97706;">PENDING BALANCE<br><h2>৳ 0</h2><button style="font-size:10px; cursor:pointer;">Withdraw Fund</button></div>
+        <div class="stat-card" style="background: #2563eb;">TOTAL EARNINGS<br><h2>৳ 12,500</h2></div>
+        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 5,000</h2></div>
+        <div class="stat-card" style="background: #d97706;">PENDING BALANCE<br><h2>৳ 7,500</h2></div>
     </div>
 
-    <div class="card">
-        <h3><i class="fas fa-graduation-cap"></i> Quick University Finder</h3>
-        <div class="search-flex">
-            <input type="text" id="sCountry" placeholder="Preferred Country">
-            <select id="sDegree"><option value="">Select Degree</option><option>UG</option><option>PG</option><option>Diploma</option></select>
-            <select id="sLang"><option value="">Language</option><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
-            <button class="btn" onclick="performSearch()">Search Now</button>
+    <div id="searchPage" class="page active">
+        <div class="card">
+            <h3>Quick University Finder</h3>
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="text" id="sCountry" placeholder="Country">
+                <select id="sDegree"><option>UG</option><option>PG</option></select>
+                <button class="btn" onclick="performSearch()">Search</button>
+            </div>
+            <table>
+                <thead><tr><th>UNIVERSITY</th><th>INTAKE</th><th>BANK REQ.</th><th>COMMISSION</th></tr></thead>
+                <tbody id="uniResults"></tbody>
+            </table>
         </div>
-        <table>
-            <thead style="background:#f8fafc;">
-                <tr><th>UNIVERSITY</th><th>INTAKE</th><th>BANK REQ.</th><th>COMMISSION</th><th>ACTION</th></tr>
-            </thead>
-            <tbody id="uniResults"></tbody>
-        </table>
+    </div>
+
+    <div id="trackingPage" class="page">
+        <div class="card">
+            <h3>Student Application Progress</h3>
+            <table id="trackTable">
+                <thead><tr><th>Student</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody id="trackData"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="walletPage" class="page">
+        <div class="card">
+            <h3>Request Withdrawal</h3>
+            <input type="number" id="wAmount" placeholder="Amount (৳)">
+            <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
+            <input type="text" id="wAcc" placeholder="Account Number">
+            <button class="btn" onclick="requestWithdraw()">Submit Request</button>
+        </div>
     </div>
 </div>
 
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
+
+    function showPage(pageId, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(pageId + 'Page').classList.add('active');
+        el.classList.add('active');
+        if(pageId === 'tracking') loadTracking();
+    }
+
     async function performSearch() {
         const res = await fetch(`${API}/check-eligibility`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                country: document.getElementById('sCountry').value,
-                degree: document.getElementById('sDegree').value,
-                language: document.getElementById('sLang').value
-            })
+            body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value })
         });
         const json = await res.json();
         document.getElementById('uniResults').innerHTML = json.data.map(u => `
-            <tr>
-                <td><b>${u.name}</b><br><small>${u.location}</small></td>
-                <td>${u.intake}</td>
-                <td>${u.bankBalance} (${u.bankType})</td>
-                <td style="color:#10b981; font-weight:bold;">৳ ${u.partnerCommission}</td>
-                <td><button class="btn" style="padding:8px 15px; font-size:12px;">Apply Now</button></td>
-            </tr>
+            <tr><td><b>${u.name}</b></td><td>${u.intake}</td><td>${u.bankBalance}</td><td style="color:green">৳${u.partnerCommission}</td></tr>
         `).join('');
+    }
+
+    async function loadTracking() {
+        const res = await fetch(`${API}/admin/files`);
+        const data = await res.json();
+        document.getElementById('trackData').innerHTML = data.map(f => `
+            <tr><td>${f.studentName}</td><td>${f.university}</td><td>${f.status}</td><td>${new Date(f.date).toLocaleDateString()}</td></tr>
+        `).join('');
+    }
+
+    async function requestWithdraw() {
+        const data = { partnerName: "Stepup Partner", amount: document.getElementById('wAmount').value, method: document.getElementById('wMethod').value, account: document.getElementById('wAcc').value };
+        await fetch(`${API}/partner/withdraw`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        alert("Request Sent!");
     }
 </script>
 </body>

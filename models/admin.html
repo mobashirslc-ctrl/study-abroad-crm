@@ -2,88 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel | IHP CRM</title>
+    <title>Admin Dashboard | IHP</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { font-family: sans-serif; display: flex; margin: 0; background: #f1f5f9; }
-        .sidebar { width: 260px; background: #0f172a; color: white; height: 100vh; position: fixed; padding: 25px; }
-        .main { margin-left: 260px; padding: 40px; width: 100%; }
-        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar { width: 260px; background: #0f172a; height: 100vh; position: fixed; padding: 25px; color: white; }
+        .main { margin-left: 260px; padding: 40px; width: 100%; box-sizing: border-box; }
+        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; border-radius: 10px; margin-bottom: 5px; }
         .nav-item.active { background: #2563eb; color: white; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); margin-bottom: 25px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box; }
-        .btn-save { background: #2563eb; color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 20px; }
-        .section { display: none; } .section.active { display: block; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .page { display: none; } .page.active { display: block; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2 style="color:#2563eb">IHP Admin</h2>
-    <div class="nav-item active" onclick="show('addUni')"><i class="fas fa-plus"></i> Assessment (Add Uni)</div>
-    <div class="nav-item" onclick="show('files')"><i class="fas fa-file-pdf"></i> Existing Files</div>
-    <div class="nav-item" onclick="show('partners')"><i class="fas fa-users"></i> Partner List</div>
-    <div class="nav-item" onclick="show('withdraw')"><i class="fas fa-wallet"></i> Withdraw Requests</div>
+    <h2>IHP Admin</h2>
+    <div class="nav-item active" onclick="show('addUni', this)"><i class="fas fa-plus"></i> Assessment</div>
+    <div class="nav-item" onclick="show('files', this)"><i class="fas fa-folder"></i> Existing Files</div>
+    <div class="nav-item" onclick="show('withdraw', this)"><i class="fas fa-wallet"></i> Withdraw Requests</div>
 </div>
 
 <div class="main">
-    <div id="addUni" class="section active">
+    <div id="addUniPage" class="page active">
         <div class="card">
-            <h2>Add University to Assessment</h2>
-            <div class="form-grid">
-                <input type="text" id="name" placeholder="University Name">
+            <h3>Add University</h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <input type="text" id="name" placeholder="Name">
                 <input type="text" id="country" placeholder="Country">
-                <select id="degree"><option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option></select>
-                <input type="text" id="intake" placeholder="Intake (Jan/Sept)">
-                <input type="text" id="fee" placeholder="Semester Fee">
-                <select id="currency"><option>USD</option><option>AUD</option><option>EURO</option><option>CAD</option></select>
-                <select id="lang"><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
-                <input type="number" id="score" placeholder="Min Score">
-                <input type="number" id="gpa" placeholder="Min GPA">
-                <select id="bankType"><option>FDR</option><option>Savings</option></select>
-                <input type="text" id="bankBal" placeholder="Bank Balance Req.">
-                <input type="number" id="comm" placeholder="Partner Commission (৳)">
+                <input type="text" id="intake" placeholder="Intake">
+                <input type="number" id="comm" placeholder="Commission (৳)">
             </div>
-            <button class="btn-save" onclick="saveUniversity()">Save to Database</button>
+            <button class="nav-item active" style="border:none; width:100%; margin-top:10px;" onclick="saveUni()">Save University</button>
         </div>
     </div>
 
-    <div id="files" class="section">
+    <div id="withdrawPage" class="page">
         <div class="card">
-            <h2>Existing Files (Downloadable)</h2>
-            <p>List of student applications will load here...</p>
+            <h3>Pending Withdrawals</h3>
+            <table>
+                <thead><tr><th>Partner</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+                <tbody id="withdrawData"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    function show(id) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const API = "https://study-abroad-crm.onrender.com/api/admin";
+
+    function show(pageId, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
+        document.getElementById(pageId + 'Page').classList.add('active');
+        el.classList.add('active');
+        if(pageId === 'withdraw') loadWithdraws();
     }
 
-    async function saveUniversity() {
-        const data = {
-            name: document.getElementById('name').value,
-            country: document.getElementById('country').value,
-            degree: document.getElementById('degree').value,
-            intake: document.getElementById('intake').value,
-            semesterFee: document.getElementById('fee').value,
-            currency: document.getElementById('currency').value,
-            languageType: document.getElementById('lang').value,
-            langScore: document.getElementById('score').value,
-            minGPA: document.getElementById('gpa').value,
-            bankType: document.getElementById('bankType').value,
-            bankBalance: document.getElementById('bankBal').value,
-            partnerCommission: document.getElementById('comm').value
-        };
-        const res = await fetch('https://study-abroad-crm.onrender.com/api/admin/add-university', {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
-        });
-        if(res.ok) alert("University Added!");
+    async function saveUni() {
+        const data = { name: document.getElementById('name').value, country: document.getElementById('country').value, intake: document.getElementById('intake').value, partnerCommission: document.getElementById('comm').value };
+        await fetch(`${API}/add-university`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        alert("University Saved!");
+    }
+
+    async function loadWithdraws() {
+        const res = await fetch(`${API}/withdraws`);
+        const data = await res.json();
+        document.getElementById('withdrawData').innerHTML = data.map(w => `
+            <tr><td>${w.partnerName}</td><td>৳${w.amount}</td><td>${w.method}</td><td>${w.status}</td></tr>
+        `).join('');
     }
 </script>
 </body>
