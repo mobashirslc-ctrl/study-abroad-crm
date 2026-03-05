@@ -3,27 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP Admin | Management</title>
+    <title>IHP Admin | CRM Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
+
+        /* Sidebar */
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; box-sizing: border-box; }
-        .sidebar h2 { font-size: 22px; color: white; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .sidebar h2 { font-size: 22px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
         .nav-item { padding: 12px 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 8px; margin-bottom: 8px; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
+
+        /* Main Content */
         .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .page { display: none; } .page.active { display: block; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Table & UI Elements */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         th { background: #f8fafc; color: #64748b; font-weight: 600; }
-        .status-badge { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
-        .active-status { background: #dcfce7; color: #166534; }
-        .inactive-status { background: #fee2e2; color: #991b1b; }
-        input[type="number"] { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 80px; text-align: center; }
-        .btn-toggle { background: #fee2e2; color: #991b1b; padding: 6px 12px; border-radius: 6px; border: 1px solid #fecaca; cursor: pointer; transition: 0.2s; }
-        .btn-toggle:hover { background: #fecaca; }
+        
+        .status-badge { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .active-bg { background: #dcfce7; color: #166534; }
+        .inactive-bg { background: #fee2e2; color: #991b1b; }
+        
+        input[type="number"], input[type="text"], select { padding: 10px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        .sub-input { width: 90px; text-align: center; }
+        
+        .btn-toggle { background: #fee2e2; color: #991b1b; padding: 6px 12px; border-radius: 6px; border: 1px solid #fecaca; cursor: pointer; font-weight: 600; }
+        .btn-save { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; }
+        
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
     </style>
 </head>
 <body>
@@ -37,6 +50,35 @@
 </div>
 
 <div class="main">
+    
+    <div id="addUniPage" class="page active">
+        <div class="card">
+            <h3>Assessment Setup (Add New University)</h3>
+            <div class="grid-3">
+                <input type="text" id="uName" placeholder="University Name">
+                <input type="text" id="uCountry" placeholder="Country">
+                <select id="uDegree"><option>UG</option><option>PG</option><option>Diploma</option></select>
+                <input type="text" id="uIntake" placeholder="Intake (e.g. Sept 2026)">
+                <input type="text" id="uFee" placeholder="Semester Fee">
+                <input type="text" id="uBank" placeholder="Bank Req. (e.g. 25-30 Lakh)">
+                <input type="number" id="uLScore" placeholder="Min Lang Score">
+                <input type="number" id="uAcademic" placeholder="Min Academic GPA">
+                <input type="number" id="uComm" placeholder="Partner Commission (৳)">
+            </div>
+            <button class="btn-save" onclick="saveUniversity()">Save to Database</button>
+        </div>
+    </div>
+
+    <div id="filesPage" class="page">
+        <div class="card">
+            <h3>Existing Student Files</h3>
+            <table>
+                <thead><tr><th>Student</th><th>University</th><th>Partner</th><th>Status</th></tr></thead>
+                <tbody id="fileBody"></tbody>
+            </table>
+        </div>
+    </div>
+
     <div id="partnersPage" class="page">
         <div class="card">
             <h3>Partner Management & Subscription</h3>
@@ -44,70 +86,111 @@
                 <thead>
                     <tr><th>Name</th><th>Subscription (৳)</th><th>Status</th><th>Action</th></tr>
                 </thead>
-                <tbody id="partnerBody">
-                    </tbody>
+                <tbody id="partnerBody"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="addUniPage" class="page active"><div class="card"><h3>Assessment Setup</h3></div></div>
-    <div id="filesPage" class="page"><div class="card"><h3>Student Files</h3><table id="fileBody"></table></div></div>
-    <div id="withdrawPage" class="page"><div class="card"><h3>Withdrawal Requests</h3><table id="withdrawBody"></table></div></div>
+    <div id="withdrawPage" class="page">
+        <div class="card">
+            <h3>Withdrawal Requests</h3>
+            <table>
+                <thead><tr><th>Partner</th><th>Amount</th><th>Method</th><th>Account</th><th>Action</th></tr></thead>
+                <tbody id="withdrawBody"></tbody>
+            </table>
+        </div>
+    </div>
+
 </div>
 
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
 
+    // Tab Navigation Logic
     function showPage(pageId, element) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(pageId + 'Page').classList.add('active');
         element.classList.add('active');
+
         if(pageId === 'partners') loadPartners();
+        if(pageId === 'files') loadFiles();
+        if(pageId === 'withdraw') loadWithdrawals();
     }
 
-    // LOAD PARTNERS
+    // --- Core Functions ---
+
     async function loadPartners() {
-        try {
-            const res = await fetch(`${API}/admin/partners`);
-            const data = await res.json();
-            const tbody = document.getElementById('partnerBody');
-            tbody.innerHTML = data.map(p => `
-                <tr>
-                    <td>${p.name}</td>
-                    <td><input type="number" value="${p.subAmount || 500}" onchange="updateSub('${p._id}', this.value)"></td>
-                    <td><span class="status-badge ${p.status === 'Active' ? 'active-status' : 'inactive-status'}">${p.status}</span></td>
-                    <td><button class="btn-toggle" onclick="togglePartner('${p._id}', '${p.status}')">Toggle Status</button></td>
-                </tr>
-            `).join('');
-        } catch (e) { console.error("Load failed", e); }
+        const res = await fetch(`${API}/admin/partners`);
+        const data = await res.json();
+        document.getElementById('partnerBody').innerHTML = data.map(p => `
+            <tr>
+                <td>${p.name}</td>
+                <td><input type="number" class="sub-input" value="${p.subAmount || 500}" onchange="updateSub('${p._id}', this.value)"></td>
+                <td><span class="status-badge ${p.status === 'Active' ? 'active-bg' : 'inactive-bg'}">${p.status}</span></td>
+                <td><button class="btn-toggle" onclick="toggleStatus('${p._id}', '${p.status}')">Toggle Status</button></td>
+            </tr>
+        `).join('');
     }
 
-    // TOGGLE PARTNER STATUS (FIXED)
-    async function togglePartner(id, currentStatus) {
-        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-        try {
-            const res = await fetch(`${API}/admin/update-partner-status`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, status: newStatus })
-            });
-            const result = await res.json();
-            if (result.success) {
-                loadPartners(); // Refresh table immediately
-            }
-        } catch (e) { alert("Server error"); }
+    async function toggleStatus(id, current) {
+        const status = current === 'Active' ? 'Inactive' : 'Active';
+        const res = await fetch(`${API}/admin/update-partner-status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, status })
+        });
+        if(res.ok) loadPartners(); 
     }
 
-    // UPDATE SUBSCRIPTION
     async function updateSub(id, amount) {
         await fetch(`${API}/admin/custom-sub`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ id, amount })
         });
-        alert("Subscription Updated");
+        console.log("Subscription updated for ID:", id);
+    }
+
+    async function saveUniversity() {
+        const data = {
+            name: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            degree: document.getElementById('uDegree').value,
+            intake: document.getElementById('uIntake').value,
+            semesterFee: document.getElementById('uFee').value,
+            bankReq: document.getElementById('uBank').value,
+            langScore: document.getElementById('uLScore').value,
+            academicScore: document.getElementById('uAcademic').value,
+            partnerCommission: document.getElementById('uComm').value
+        };
+        const res = await fetch(`${API}/admin/add-university`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if(res.ok) {
+            alert("University Added Successfully!");
+            location.reload();
+        }
+    }
+
+    async function loadFiles() {
+        const res = await fetch(`${API}/admin/all-files`);
+        const data = await res.json();
+        document.getElementById('fileBody').innerHTML = data.map(f => `
+            <tr><td>${f.studentName}</td><td>${f.university}</td><td>${f.partnerName}</td><td><b>${f.status}</b></td></tr>
+        `).join('');
+    }
+
+    async function loadWithdrawals() {
+        const res = await fetch(`${API}/admin/withdrawals`);
+        const data = await res.json();
+        document.getElementById('withdrawBody').innerHTML = data.map(w => `
+            <tr><td>${w.partnerName}</td><td>৳${w.amount}</td><td>${w.method}</td><td>${w.account}</td><td><button class="status-badge active-bg" style="border:none; cursor:pointer;">Approve</button></td></tr>
+        `).join('');
     }
 </script>
+
 </body>
 </html>
