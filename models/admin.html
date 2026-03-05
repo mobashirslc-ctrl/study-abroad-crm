@@ -1,45 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Admin - Manage Universities</title>
+    <title>Admin Panel - Add University</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 40px; }
-        .container { max-width: 600px; background: white; padding: 30px; border-radius: 12px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; background: #2c3e50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-        h2 { text-align: center; color: #2c3e50; }
+        body { font-family: Arial; padding: 40px; background: #f4f4f4; }
+        .box { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Add University Data</h2>
+    <div class="box">
+        <h2>Add New University</h2>
         <form id="uniForm">
             <input type="text" id="name" placeholder="University Name" required>
-            <input type="text" id="location" placeholder="City (e.g. London)" required>
+            <input type="text" id="location" placeholder="Location/City" required>
             <select id="country">
                 <option value="United Kingdom">United Kingdom</option>
                 <option value="USA">USA</option>
                 <option value="Canada">Canada</option>
-                <option value="Australia">Australia</option>
             </select>
-            <input type="text" id="course" placeholder="Course Name (e.g. MSc in Data Science)" required>
+            <input type="text" id="course" placeholder="Course Name" required>
             <select id="degree">
                 <option value="UG">Undergraduate (UG)</option>
                 <option value="PG">Postgraduate (PG)</option>
                 <option value="Diploma">Diploma</option>
-                <option value="PHD">PHD</option>
             </select>
             <input type="text" id="intake" placeholder="Intake (e.g. Sep 2026)" required>
-            <input type="number" step="0.01" id="minGPA" placeholder="Minimum GPA Required" required>
+            <input type="number" step="0.01" id="minGPA" placeholder="Minimum GPA" required>
             <select id="languageType">
                 <option value="IELTS">IELTS</option>
                 <option value="PTE">PTE</option>
                 <option value="DUOLINGO">DUOLINGO</option>
             </select>
             <input type="number" step="0.1" id="minScore" placeholder="Min Test Score" required>
-            <input type="number" id="commission" placeholder="Commission Amount (BDT)" required>
-            <button type="submit">Publish University</button>
+            <input type="number" id="commission" placeholder="Commission (BDT)" required>
+            <button type="submit">Submit University</button>
         </form>
     </div>
 
@@ -59,14 +55,13 @@
                 minLanguageScore: parseFloat(document.getElementById('minScore').value),
                 commissionAmount: parseInt(document.getElementById('commission').value)
             };
-            try {
-                const res = await fetch(`${API_URL}/api/universities`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                if(res.ok) { alert("Success! University added."); e.target.reset(); }
-            } catch (err) { alert("Error adding data."); }
+
+            const res = await fetch(`${API_URL}/api/universities`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if(res.ok) { alert("✅ University Added!"); e.target.reset(); }
         });
     </script>
 </body>

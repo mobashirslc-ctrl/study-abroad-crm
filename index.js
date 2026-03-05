@@ -7,12 +7,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// ১. ডাটাবেস কানেকশন (আপনার নিজের MongoDB URI ব্যবহার করুন)
-mongoose.connect('আপনার_MONGODB_URI_এখানে_বসান')
-    .then(() => console.log('MongoDB Connected'))
-    .catch(err => console.log(err));
+// ১. ডাটাবেস কানেকশন (এখানে আপনার নিজের MongoDB URI বসাবেন)
+mongoose.connect('your_mongodb_connection_string_here')
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error('❌ Connection Error:', err));
 
-// ২. ইউনিভার্সিটি মডেল (নতুন ফিল্ডসহ)
+// ২. ইউনিভার্সিটি মডেল
 const University = mongoose.model('University', new mongoose.Schema({
     name: String,
     country: String,
@@ -26,7 +26,7 @@ const University = mongoose.model('University', new mongoose.Schema({
     commissionAmount: Number
 }));
 
-// ৩. ইউনিভার্সিটি অ্যাড করার রাউট (Admin)
+// ৩. নতুন ইউনিভার্সিটি অ্যাড করার API (Admin)
 app.post('/api/universities', async (req, res) => {
     try {
         const university = new University(req.body);
@@ -37,27 +37,30 @@ app.post('/api/universities', async (req, res) => {
     }
 });
 
-// ৪. সার্চ এবং এলিজিবিলিটি চেক রাউট (Dashboard)
+// ৪. এলিজিবিলিটি চেক এবং সার্চ API (Dashboard)
 app.post('/api/check-eligibility', async (req, res) => {
     try {
-        const { gpa, languageType, languageScore, country, degree, intake } = req.body;
+        const { gpa, languageScore, country, degree, languageType } = req.body;
         let query = {};
 
-        // ফিল্টারিং লজিক
         if (country) query.country = country;
         if (degree) query.degree = degree;
-        if (intake) query.intake = { $regex: intake, $options: 'i' };
-        if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
         if (languageType) query.languageType = languageType;
-        if (languageScore) query.minLanguageScore = { $lte: parseFloat(languageScore) };
+
+        // নম্বরগুলো নির্ভুলভাবে চেক করা (যাতে ৫00 Error না আসে)
+        const userGPA = parseFloat(gpa) || 0;
+        const userScore = parseFloat(languageScore) || 0;
+
+        query.minGPA = { $lte: userGPA };
+        query.minLanguageScore = { $lte: userScore };
 
         const universities = await University.find(query);
         res.json({ success: true, data: universities });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Server Error" });
+        console.error("Search Error:", err);
+        res.status(500).json({ success: false, message: "Server encountered an error." });
     }
 });
 
-// ৫. সার্ভার পোর্ট
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

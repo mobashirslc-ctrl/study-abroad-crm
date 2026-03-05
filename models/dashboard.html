@@ -1,132 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Partner Dashboard - CRM</title>
+    <title>Partner Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f0f2f5; }
-        .sidebar { width: 260px; background: #1a252f; color: white; height: 100vh; padding: 25px; position: fixed; }
-        .main { margin-left: 280px; padding: 30px; width: 100%; }
-        .wallet-banner { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 30px; border-radius: 15px; margin-bottom: 25px; }
-        .search-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .btn-search { background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .uni-card { background: white; padding: 20px; margin-top: 20px; border-radius: 10px; border-left: 6px solid #11998e; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .comm-badge { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; display: flex; margin: 0; background: #f0f2f5; }
+        .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 270px; padding: 30px; width: 100%; }
+        .search-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .card { background: white; padding: 20px; margin-top: 20px; border-radius: 10px; border-left: 6px solid #11998e; position: relative; }
+        .comm { position: absolute; top: 15px; right: 15px; background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2>Global Edu</h2>
-        <p id="userEmail" style="opacity: 0.8; font-size: 14px;"></p>
-        <hr style="border: 0.5px solid #34495e; margin: 20px 0;">
-        <nav>
-            <p style="cursor:pointer;">📊 Dashboard</p>
-            <p style="cursor:pointer;">📂 Student Applications</p>
-            <p style="cursor:pointer;">💰 Withdrawals</p>
-        </nav>
-        <button onclick="logout()" style="margin-top: 40px; background:#e74c3c; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
+        <h2>Edu CRM</h2>
+        <p id="userMail"></p>
+        <hr>
+        <p>📊 Dashboard</p>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" style="background:red; color:white; border:none; padding:10px; width:100%; border-radius:5px; cursor:pointer;">Logout</button>
     </div>
 
     <div class="main">
-        <div class="wallet-banner">
-            <p style="margin:0; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Available Balance</p>
-            <h1 id="walletBalance" style="margin: 10px 0; font-size: 36px;">BDT 0.00</h1>
-        </div>
-
-        <div class="search-card">
-            <h3 style="margin-top:0;">🔍 Smart University Search</h3>
+        <div class="search-box">
+            <h3>🔍 Search University</h3>
             <div class="grid">
-                <input type="number" step="0.01" id="sGPA" placeholder="Student GPA">
-                <select id="sLangType">
+                <input type="number" step="0.01" id="gpa" placeholder="Student GPA">
+                <select id="lType">
                     <option value="IELTS">IELTS</option>
                     <option value="PTE">PTE</option>
                     <option value="DUOLINGO">DUOLINGO</option>
                 </select>
-                <input type="number" step="0.1" id="sLangScore" placeholder="Test Score">
+                <input type="number" step="0.1" id="lScore" placeholder="Test Score">
             </div>
             <div class="grid">
-                <select id="sCountry">
+                <select id="country">
                     <option value="United Kingdom">United Kingdom</option>
                     <option value="USA">USA</option>
                     <option value="Canada">Canada</option>
-                    <option value="Australia">Australia</option>
                 </select>
-                <select id="sDegree">
+                <select id="degree">
                     <option value="UG">Undergraduate (UG)</option>
                     <option value="PG">Postgraduate (PG)</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="PHD">PHD</option>
                 </select>
-                <input type="text" id="sIntake" placeholder="Preferred Intake (e.g. 2026)">
+                <input type="text" id="intake" placeholder="Intake (e.g. 2026)">
             </div>
-            <button class="btn-search" onclick="performSearch()">Check Eligibility</button>
+            <button class="btn" onclick="search()">Check Eligibility</button>
         </div>
-
         <div id="results"></div>
     </div>
 
     <script>
         const API_URL = "https://study-abroad-crm.onrender.com";
         const user = JSON.parse(localStorage.getItem('user'));
-        
         if(!user) window.location.href = "index.html";
-        document.getElementById('userEmail').innerText = user.email;
-        document.getElementById('walletBalance').innerText = `BDT ${user.walletBalance || 0}`;
+        document.getElementById('userMail').innerText = user.email;
 
-        async function performSearch() {
-            const resultsArea = document.getElementById('results');
-            resultsArea.innerHTML = "<p>Analyzing requirements...</p>";
+        async function search() {
+            const resDiv = document.getElementById('results');
+            resDiv.innerHTML = "Searching...";
 
-            const searchBody = {
-                gpa: document.getElementById('sGPA').value,
-                languageType: document.getElementById('sLangType').value,
-                languageScore: document.getElementById('sLangScore').value,
-                country: document.getElementById('sCountry').value,
-                degree: document.getElementById('sDegree').value,
-                intake: document.getElementById('sIntake').value
+            const body = {
+                gpa: document.getElementById('gpa').value,
+                languageScore: document.getElementById('lScore').value,
+                languageType: document.getElementById('lType').value,
+                country: document.getElementById('country').value,
+                degree: document.getElementById('degree').value
             };
 
             try {
                 const res = await fetch(`${API_URL}/api/check-eligibility`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(searchBody)
+                    body: JSON.stringify(body)
                 });
                 const result = await res.json();
+                resDiv.innerHTML = "";
                 
-                resultsArea.innerHTML = "";
-                if(result.data.length === 0) {
-                    resultsArea.innerHTML = "<div style='padding:20px; background:#fff; border-radius:10px;'>No universities match these criteria.</div>";
-                    return;
-                }
-
                 result.data.forEach(uni => {
-                    resultsArea.innerHTML += `
-                        <div class="uni-card">
-                            <span class="comm-badge">Comm: BDT ${uni.commissionAmount}</span>
-                            <h2 style="margin:0; color:#2c3e50;">${uni.name}</h2>
-                            <p style="color:#7f8c8d; margin: 5px 0;">📍 ${uni.location}, ${uni.country}</p>
-                            <div style="display:flex; gap:20px; margin-top:15px; font-size:14px; color:#34495e;">
-                                <span><strong>Degree:</strong> ${uni.degree}</span>
-                                <span><strong>Course:</strong> ${uni.course}</span>
-                                <span><strong>Intake:</strong> ${uni.intake}</span>
-                            </div>
-                            <div style="margin-top:10px; font-size:14px; color:#34495e;">
-                                <span><strong>Min GPA:</strong> ${uni.minGPA}</span> | 
-                                <span><strong>Min ${uni.languageType}:</strong> ${uni.minLanguageScore}</span>
-                            </div>
-                            <button onclick="alert('Form Opening...')" style="margin-top:15px; background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-weight:bold;">Apply Now</button>
+                    resDiv.innerHTML += `
+                        <div class="card">
+                            <span class="comm">Comm: BDT ${uni.commissionAmount}</span>
+                            <h2 style="margin:0;">${uni.name}</h2>
+                            <p>📍 ${uni.location}, ${uni.country} | 🎓 ${uni.degree} | 📚 ${uni.course}</p>
+                            <p>📅 Intake: ${uni.intake} | 📝 Min GPA: ${uni.minGPA} | 📖 ${uni.languageType}: ${uni.minLanguageScore}</p>
+                            <button style="background:#27ae60; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">Apply Now</button>
                         </div>
                     `;
                 });
-            } catch (err) {
-                resultsArea.innerHTML = "<p style='color:red;'>Connection lost. Please try again.</p>";
-            }
+            } catch (err) { resDiv.innerHTML = "Error connecting to server."; }
         }
-
-        function logout() { localStorage.clear(); window.location.href = "index.html"; }
     </script>
 </body>
 </html>
