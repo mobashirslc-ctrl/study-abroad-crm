@@ -8,11 +8,10 @@ app.use(cors());
 
 // MongoDB Connection
 const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
-mongoose.connect(mongoURI).then(() => console.log('✅ CRM Engine Connected')).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log('✅ DB Connected')).catch(err => console.log(err));
 
 // --- Schemas ---
 
-// ইউনিভার্সিটি ডেটাবেস
 const universitySchema = new mongoose.Schema({
     name: String, country: String, location: String, course: String, degree: String,
     intake: String, minGPA: Number, languageType: String, minLanguageScore: Number,
@@ -20,20 +19,19 @@ const universitySchema = new mongoose.Schema({
     bankAmount: Number, accountType: String, currency: { type: String, default: 'BDT' }
 });
 
-// স্টুডেন্ট অ্যাপ্লিকেশন ও ট্র্যাকিং
 const applicationSchema = new mongoose.Schema({
     partnerName: String,
     studentName: String,
     universityName: String, 
     commission: Number,
-    status: { type: String, default: 'Pending' }, // Pending, Under Review, Offer Issued, Success
-    paymentStatus: { type: String, default: 'Unpaid' }, // Unpaid, Withdrawable, Paid
+    status: { type: String, default: 'Pending' },
     complianceOfficer: {
-        name: { type: String, default: 'Assigning...' },
-        phone: { type: String, default: 'N/A' }
+        name: { type: String, default: 'Asif Rahman' }, // Default member
+        phone: { type: String, default: '+88017XXXXXXXX' },
+        email: { type: String, default: 'compliance@stepup.com' }
     },
-    remarks: [String]
-}, { timestamps: true });
+    messages: [{ sender: String, text: String, time: { type: Date, default: Date.now } }]
+}, { timestamps: true }); // এটি অটোমেটিক createdAt (Submission Date/Time) তৈরি করবে
 
 const University = mongoose.model('University', universitySchema);
 const Application = mongoose.model('Application', applicationSchema);
@@ -42,11 +40,9 @@ const Application = mongoose.model('Application', applicationSchema);
 
 // ১. এডমিন থেকে ইউনিভার্সিটি অ্যাড
 app.post('/api/universities', async (req, res) => {
-    try {
-        const uni = new University(req.body);
-        await uni.save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    const uni = new University(req.body);
+    await uni.save();
+    res.json({ success: true });
 });
 
 // ২. পার্টনার এলিজিবিলিটি চেক (সার্চ)
@@ -71,18 +67,20 @@ app.post('/api/applications', async (req, res) => {
     res.json({ success: true });
 });
 
-// ৪. পার্টনারের সব ফাইল ট্র্যাকিং করা
+// ৪. পার্টনারের সব ফাইল দেখা (Submission Time সহ)
 app.get('/api/applications/:name', async (req, res) => {
     const apps = await Application.find({ partnerName: req.params.name }).sort({ createdAt: -1 });
     res.json(apps);
 });
 
-// ৫. মেসেজ পাঠানো (Communication)
+// ৫. কমিউনিকেশন মেসেজ পাঠানো
 app.post('/api/applications/message', async (req, res) => {
-    const { appId, message } = req.body;
-    await Application.findByIdAndUpdate(appId, { $push: { remarks: `Partner: ${message}` } });
+    const { appId, message, sender } = req.body;
+    await Application.findByIdAndUpdate(appId, { 
+        $push: { messages: { sender: sender, text: message } } 
+    });
     res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
