@@ -2,55 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
+    <title>Admin Panel | StepUp CRM</title>
     <style>
-        body { font-family: 'Inter', sans-serif; background: #f0f4f8; padding: 40px; }
-        .form-card { background: white; max-width: 700px; margin: auto; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 40px; }
+        .form-container { background: white; max-width: 800px; margin: auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
-        label { font-weight: 600; font-size: 13px; color: #444; display: block; margin-bottom: 5px; }
+        label { font-weight: bold; font-size: 13px; color: #555; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #1a252f; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        #status { margin-top: 20px; text-align: center; display: none; padding: 10px; border-radius: 8px; }
+        button { width: 100%; padding: 15px; background: #1e293b; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #334155; }
     </style>
 </head>
 <body>
-    <div class="form-card">
-        <h2 style="text-align: center; color: #1a252f;">Add New University</h2>
+    <div class="form-container">
+        <h2 style="text-align:center; color:#1e293b;">University Data Management</h2>
         <form id="uniForm">
             <label>University Name</label>
-            <input type="text" id="name" required>
+            <input type="text" id="name" placeholder="e.g. University of Greenwich" required style="margin-bottom:15px;">
             
             <div class="grid">
                 <div><label>Country</label><input type="text" id="country" required></div>
-                <div><label>Location</label><input type="text" id="location" required></div>
+                <div><label>Location</label><input type="text" id="location"></div>
             </div>
 
             <div class="grid">
-                <div><label>Course Name</label><input type="text" id="course" required></div>
-                <div><label>Degree</label>
+                <div><label>Course</label><input type="text" id="course" required></div>
+                <div><label>Degree Level</label>
                     <select id="degree">
-                        <option value="Undergraduate (UG)">Undergraduate (UG)</option>
-                        <option value="Postgraduate (PG)">Postgraduate (PG)</option>
+                        <option value="Undergraduate (UG)">UG</option>
+                        <option value="Postgraduate (PG)">PG</option>
                         <option value="Diploma">Diploma</option>
                         <option value="PhD">PhD</option>
-                        <option value="Research">Research</option>
                     </select>
                 </div>
             </div>
 
             <div class="grid">
-                <div><label>Semester Fee</label><input type="number" id="fee" required></div>
-                <div><label>Currency</label>
-                    <select id="currency">
-                        <option value="USD ($)">USD ($)</option>
-                        <option value="GBP (£)">GBP (£)</option>
-                        <option value="CAD ($)">CAD ($)</option>
+                <div><label>Language Test</label>
+                    <select id="lType">
+                        <option value="IELTS">IELTS</option>
+                        <option value="PTE">PTE</option>
+                        <option value="Duolingo">Duolingo</option>
+                        <option value="MOI">MOI</option>
+                    </select>
+                </div>
+                <div><label>Min Score Required</label><input type="number" step="0.1" id="lScore" required></div>
+            </div>
+
+            <div class="grid">
+                <div><label>Semester Fee (BDT)</label><input type="number" id="fee" required></div>
+                <div><label>Partner Commission (BDT)</label><input type="number" id="comm" required></div>
+            </div>
+
+            <div class="grid">
+                <div><label>Min GPA</label><input type="number" step="0.01" id="gpa" required></div>
+                <div><label>Marital Status Allowed</label>
+                    <select id="marital">
+                        <option value="Single">Single Only</option>
+                        <option value="Both">Both (Single & Married)</option>
                     </select>
                 </div>
             </div>
 
             <div class="grid">
-                <div><label>Bank Amount</label><input type="number" id="bank" required></div>
+                <div><label>Bank Solvency (BDT)</label><input type="number" id="bank" required></div>
                 <div><label>Account Type</label>
                     <select id="accType">
                         <option value="Savings">Savings</option>
@@ -60,26 +75,11 @@
                 </div>
             </div>
 
-            <div class="grid">
-                <div><label>Language Type</label>
-                    <select id="lType">
-                        <option value="IELTS">IELTS</option>
-                        <option value="PTE">PTE</option>
-                        <option value="Duolingo">Duolingo</option>
-                        <option value="MOI">MOI</option>
-                    </select>
-                </div>
-                <div><label>Min Score</label><input type="number" step="0.1" id="lScore" required></div>
-            </div>
+            <label>Intake Period</label>
+            <input type="text" id="intake" placeholder="e.g. Sep 2026, Jan 2027" required>
 
-            <div class="grid">
-                <div><label>Min GPA</label><input type="number" step="0.01" id="gpa" required></div>
-                <div><label>Partner Commission</label><input type="number" id="comm" required></div>
-            </div>
-
-            <button type="submit">Publish University</button>
+            <button type="submit">Publish to Partner Portal</button>
         </form>
-        <div id="status"></div>
     </div>
 
     <script>
@@ -92,21 +92,21 @@
                 location: document.getElementById('location').value,
                 course: document.getElementById('course').value,
                 degree: document.getElementById('degree').value,
-                semesterFee: document.getElementById('fee').value,
-                currency: document.getElementById('currency').value,
-                bankAmount: document.getElementById('bank').value,
-                accountType: document.getElementById('accType').value,
                 languageType: document.getElementById('lType').value,
                 minLanguageScore: document.getElementById('lScore').value,
-                minGPA: document.getElementById('gpa').value,
+                semesterFee: document.getElementById('fee').value,
                 partnerCommission: document.getElementById('comm').value,
-                intake: "Jan, Sep, Oct"
+                minGPA: document.getElementById('gpa').value,
+                maritalStatus: document.getElementById('marital').value,
+                bankAmount: document.getElementById('bank').value,
+                accountType: document.getElementById('accType').value,
+                intake: document.getElementById('intake').value
             };
             const res = await fetch(`${API}/api/universities`, {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            if(res.ok) { alert("✅ Added!"); e.target.reset(); }
+            if(res.ok) { alert("University Data Live!"); e.target.reset(); }
         });
     </script>
 </body>

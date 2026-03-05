@@ -6,67 +6,83 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect("mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0");
+// MongoDB Connection
+const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
+mongoose.connect(mongoURI).then(() => console.log('✅ CRM Engine Connected')).catch(err => console.log(err));
 
-// ১. ইউনিভার্সিটি মডেল
+// --- Schemas ---
+
+// ইউনিভার্সিটি ডেটাবেস
 const universitySchema = new mongoose.Schema({
-    name: String, country: String, course: String, degree: String,
-    semesterFee: Number, partnerCommission: Number, intake: String,
-    minGPA: Number, languageType: String, minLanguageScore: Number
-}, { strict: false });
-const University = mongoose.model('University', universitySchema);
+    name: String, country: String, location: String, course: String, degree: String,
+    intake: String, minGPA: Number, languageType: String, minLanguageScore: Number,
+    semesterFee: Number, partnerCommission: Number, maritalStatus: String,
+    bankAmount: Number, accountType: String, currency: { type: String, default: 'BDT' }
+});
 
-// ২. স্টুডেন্ট অ্যাপ্লিকেশন মডেল (Existing Files)
+// স্টুডেন্ট অ্যাপ্লিকেশন ও ট্র্যাকিং
 const applicationSchema = new mongoose.Schema({
-    partnerId: String,
+    partnerName: String,
     studentName: String,
-    universityName: String,
-    status: { type: String, default: 'Pending' }, // Pending, Approved, Collected, Paid
-    commissionAmount: Number,
-    paymentStatus: { type: String, default: 'Unpaid' } // Unpaid, Requested, Withdrawn
+    universityName: String, 
+    commission: Number,
+    status: { type: String, default: 'Pending' }, // Pending, Under Review, Offer Issued, Success
+    paymentStatus: { type: String, default: 'Unpaid' }, // Unpaid, Withdrawable, Paid
+    complianceOfficer: {
+        name: { type: String, default: 'Assigning...' },
+        phone: { type: String, default: 'N/A' }
+    },
+    remarks: [String]
 }, { timestamps: true });
-const Application = mongoose.model('Application', applicationSchema);
 
-// ৩. সাবস্ক্রিপশন কনফিগ (Admin customise করতে পারবে)
-let subConfig = { monthlyFee: 5000, currency: 'BDT' };
+const University = mongoose.model('University', universitySchema);
+const Application = mongoose.model('Application', applicationSchema);
 
 // --- API Endpoints ---
 
-// সাবস্ক্রিপশন আপডেট (Admin Only)
-app.post('/api/admin/config-sub', (req, res) => {
-    subConfig.monthlyFee = req.body.fee;
-    res.json({ success: true, currentFee: subConfig.monthlyFee });
+// ১. এডমিন থেকে ইউনিভার্সিটি অ্যাড
+app.post('/api/universities', async (req, res) => {
+    try {
+        const uni = new University(req.body);
+        await uni.save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// অ্যাপ্লিকেশন সাবমিট করা
+// ২. পার্টনার এলিজিবিলিটি চেক (সার্চ)
+app.post('/api/check-eligibility', async (req, res) => {
+    const { gpa, country, degree, language, langScore, maritalStatus } = req.body;
+    let query = {};
+    if (country) query.country = new RegExp(country, 'i');
+    if (degree) query.degree = degree;
+    if (language) query.languageType = language;
+    if (maritalStatus) query.maritalStatus = maritalStatus;
+    if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
+    if (langScore) query.minLanguageScore = { $lte: parseFloat(langScore) };
+
+    const results = await University.find(query);
+    res.json({ success: true, data: results });
+});
+
+// ৩. নতুন ফাইল ওপেন করা
 app.post('/api/applications', async (req, res) => {
     const appData = new Application(req.body);
     await appData.save();
     res.json({ success: true });
 });
 
-// পার্টনারের সব ফাইল দেখা
-app.get('/api/partner/files/:id', async (req, res) => {
-    const files = await Application.find({ partnerId: req.params.id });
-    res.json(files);
+// ৪. পার্টনারের সব ফাইল ট্র্যাকিং করা
+app.get('/api/applications/:name', async (req, res) => {
+    const apps = await Application.find({ partnerName: req.params.name }).sort({ createdAt: -1 });
+    res.json(apps);
 });
 
-// ওয়ালেট লজিক: উইথড্র রিকোয়েস্ট
-app.post('/api/partner/withdraw', async (req, res) => {
-    const { partnerId, amount } = req.body;
-    // এখানে আপনার ডেটাবেসে উইথড্রাল রিকোয়েস্ট সেভ করার লজিক হবে
-    res.json({ success: true, message: "Withdrawal request sent to admin" });
+// ৫. মেসেজ পাঠানো (Communication)
+app.post('/api/applications/message', async (req, res) => {
+    const { appId, message } = req.body;
+    await Application.findByIdAndUpdate(appId, { $push: { remarks: `Partner: ${message}` } });
+    res.json({ success: true });
 });
 
-// সার্চ লজিক (আগের মতোই)
-app.post('/api/check-eligibility', async (req, res) => {
-    const { gpa, country, degree, language, langScore } = req.body;
-    let query = {};
-    if (country) query.country = new RegExp(country, 'i');
-    if (degree) query.degree = degree;
-    if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
-    const results = await University.find(query);
-    res.json({ success: true, data: results });
-});
-
-app.listen(10000, () => console.log("🚀 CRM Server running on 10000"));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
