@@ -1,126 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Admin - Add University</title>
+    <title>Admin Panel</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; display: flex; justify-content: center; padding: 40px; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { text-align: center; color: #333; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 14px; background: #1a252f; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:disabled { background: #ccc; }
-        #status { margin-top: 15px; padding: 12px; border-radius: 8px; display: none; text-align: center; font-weight: bold; }
-        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding-top: 50px; }
+        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 450px; }
+        h2 { text-align: center; color: #1a252f; margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; background: #1a252f; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #status { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; display: none; }
     </style>
 </head>
 <body>
+    <div class="form-card">
+        <h2>Add University</h2>
+        <form id="uniForm">
+            <input type="text" id="name" placeholder="University Name" required>
+            <input type="text" id="location" placeholder="City" required>
+            <select id="country">
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="USA">USA</option>
+                <option value="Canada">Canada</option>
+            </select>
+            <input type="text" id="course" placeholder="Course" required>
+            <select id="degree">
+                <option value="Undergraduate (UG)">Undergraduate (UG)</option>
+                <option value="Postgraduate (PG)">Postgraduate (PG)</option>
+            </select>
+            <input type="text" id="intake" placeholder="Intake (e.g. Sep, Jan)" required>
+            <input type="number" step="0.01" id="minGPA" placeholder="Min GPA" required>
+            <select id="languageType">
+                <option value="IELTS">IELTS</option>
+                <option value="PTE">PTE</option>
+                <option value="DUOLINGO">DUOLINGO</option>
+            </select>
+            <input type="number" step="0.1" id="minScore" placeholder="Min Language Score" required>
+            <input type="number" id="commission" placeholder="Commission (BDT)" required>
+            <button type="submit">Submit University</button>
+        </form>
+        <div id="status"></div>
+    </div>
 
-<div class="card">
-    <h2>Add University</h2>
-    <form id="uniForm">
-        <label>University Name</label>
-        <input type="text" id="name" placeholder="e.g. University of London" required>
+    <script>
+        const API_URL = "https://study-abroad-crm.onrender.com";
+        const form = document.getElementById('uniForm');
+        const statusBox = document.getElementById('status');
 
-        <label>Location (City)</label>
-        <input type="text" id="location" placeholder="e.g. London" required>
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            statusBox.style.display = "block";
+            statusBox.style.background = "#eee";
+            statusBox.innerText = "Adding... please wait.";
 
-        <label>Country</label>
-        <select id="country">
-            <option value="United Kingdom">United Kingdom</option>
-            <option value="USA">USA</option>
-            <option value="Canada">Canada</option>
-        </select>
+            const data = {
+                name: document.getElementById('name').value,
+                location: document.getElementById('location').value,
+                country: document.getElementById('country').value,
+                course: document.getElementById('course').value,
+                degree: document.getElementById('degree').value,
+                intake: document.getElementById('intake').value,
+                minGPA: parseFloat(document.getElementById('minGPA').value),
+                languageType: document.getElementById('languageType').value,
+                minLanguageScore: parseFloat(document.getElementById('minScore').value),
+                commissionAmount: parseInt(document.getElementById('commission').value)
+            };
 
-        <label>Course</label>
-        <input type="text" id="course" placeholder="e.g. Computer Science" required>
-
-        <label>Degree</label>
-        <select id="degree">
-            <option value="Undergraduate (UG)">Undergraduate (UG)</option>
-            <option value="Postgraduate (PG)">Postgraduate (PG)</option>
-        </select>
-
-        <label>Intake</label>
-        <input type="text" id="intake" placeholder="e.g. Jan, Sep" required>
-
-        <label>Min GPA</label>
-        <input type="number" step="0.01" id="minGPA" placeholder="e.g. 3.5" required>
-
-        <label>Language Test</label>
-        <select id="languageType">
-            <option value="IELTS">IELTS</option>
-            <option value="PTE">PTE</option>
-            <option value="DUOLINGO">DUOLINGO</option>
-        </select>
-
-        <label>Min Language Score</label>
-        <input type="number" step="0.1" id="minScore" placeholder="e.g. 6.5" required>
-
-        <label>Commission Amount (BDT)</label>
-        <input type="number" id="commission" placeholder="e.g. 20000" required>
-
-        <button type="submit" id="submitBtn">Submit University</button>
-    </form>
-    <div id="status"></div>
-</div>
-
-<script>
-    const API_URL = "https://study-abroad-crm.onrender.com"; // আপনার রেন্ডার ইউআরএল
-    const form = document.getElementById('uniForm');
-    const statusBox = document.getElementById('status');
-    const btn = document.getElementById('submitBtn');
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // ইউজার ফিডব্যাক
-        btn.disabled = true;
-        statusBox.style.display = "block";
-        statusBox.className = ""; 
-        statusBox.innerText = "⏳ Adding university... please wait.";
-
-        // ডেটা ফরম্যাট করা (String থেকে Number এ কনভার্ট নিশ্চিত করা)
-        const payload = {
-            name: document.getElementById('name').value,
-            location: document.getElementById('location').value,
-            country: document.getElementById('country').value,
-            course: document.getElementById('course').value,
-            degree: document.getElementById('degree').value,
-            intake: document.getElementById('intake').value,
-            minGPA: parseFloat(document.getElementById('minGPA').value),
-            languageType: document.getElementById('languageType').value,
-            minLanguageScore: parseFloat(document.getElementById('minScore').value),
-            commissionAmount: parseInt(document.getElementById('commission').value)
-        };
-
-        try {
-            const response = await fetch(`${API_URL}/api/universities`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                statusBox.className = "success";
-                statusBox.innerText = "✅ Success! University added to database.";
-                form.reset();
-            } else {
-                statusBox.className = "error";
-                statusBox.innerText = "❌ Error: " + (result.message || "Failed to add.");
+            try {
+                const res = await fetch(`${API_URL}/api/universities`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await res.json();
+                if(res.ok) {
+                    statusBox.style.background = "#d4edda";
+                    statusBox.innerText = "✅ Success! University added.";
+                    form.reset();
+                } else {
+                    statusBox.style.background = "#f8d7da";
+                    statusBox.innerText = "❌ Error: " + result.message;
+                }
+            } catch (err) {
+                statusBox.style.background = "#f8d7da";
+                statusBox.innerText = "❌ Server Connection Failed!";
             }
-        } catch (err) {
-            statusBox.className = "error";
-            statusBox.innerText = "❌ Connection Failed! Check if the server is online.";
-        } finally {
-            btn.disabled = false;
-        }
-    });
-</script>
-
+        });
+    </script>
 </body>
 </html>
