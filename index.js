@@ -6,13 +6,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// স্ট্যাটিক ফাইল এবং রাউটিং ফিক্স
 app.use(express.static(path.join(__dirname, './')));
 
 // MongoDB Connection
-const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority";
-mongoose.connect(mongoURI).then(() => console.log('✅ Connected to MongoDB'));
+mongoose.connect("mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority")
+    .then(() => console.log('✅ Connected to MongoDB'));
 
 // Schemas
 const Partner = mongoose.model('Partner', new mongoose.Schema({
@@ -25,7 +23,7 @@ const University = mongoose.model('University', new mongoose.Schema({
     semesterFee: String, bankReq: String, partnerCommission: Number, academicScore: Number
 }));
 
-// Routes to serve HTML
+// --- Routes to serve HTML (এই অংশটি লিঙ্ক ঠিক করবে) ---
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'partner.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
