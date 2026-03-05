@@ -3,51 +3,54 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
-// আগের মতোই সব কনফিগারেশন
 app.use(cors());
 app.use(express.json());
 
+// MongoDB Connection
 const mongoURI = "mongodb+srv://admin:Stepup1234@cluster0.8qewhkr.mongodb.net/studyAbroad?retryWrites=true&w=majority&appName=Cluster0";
-mongoose.connect(mongoURI).then(() => console.log('✅ IHP CRM Connected')).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log('✅ MongoDB Connected')).catch(err => console.error(err));
 
-// --- Schemas (আপনার আগের সব ফিল্ড ঠিক রাখা হয়েছে) ---
-const applicationSchema = new mongoose.Schema({
-    partnerName: String, studentName: String, universityName: String, commission: Number,
-    status: { type: String, default: 'File Received' },
-    complianceOfficer: { name: { type: String, default: 'Sarah Jenkins' }, role: { type: String, default: 'Compliance Manager' } }
-}, { timestamps: true });
-
-const partnerSchema = new mongoose.Schema({
-    name: { type: String, unique: true },
-    wallet: { totalEarnings: { type: Number, default: 0 }, withdrawn: { type: Number, default: 0 } },
-    withdrawRequests: [{ amount: Number, method: String, details: String, status: { type: String, default: 'Pending' }, date: { type: Date, default: Date.now } }]
+// University Schema
+const universitySchema = new mongoose.Schema({
+    name: String,
+    country: String,
+    location: String,
+    degree: String,
+    partnerCommission: Number,
+    scholarship: String,
+    minGPA: Number,
+    minLanguageScore: Number
 });
 
-const Application = mongoose.model('Application', applicationSchema);
-const Partner = mongoose.model('Partner', partnerSchema);
+const University = mongoose.model('University', universitySchema);
 
-// --- API Endpoints (আগের সব রুট অক্ষত আছে) ---
+// --- API Endpoints ---
 
-app.get('/api/partner/wallet/:name', async (req, res) => {
+// অ্যাডমিন প্যানেল থেকে ইউনিভার্সিটি অ্যাড করার রুট
+app.post('/api/admin/add-university', async (req, res) => {
     try {
-        let partner = await Partner.findOne({ name: req.params.name });
-        if (!partner) partner = await Partner.create({ name: req.params.name });
-        res.json(partner);
-    } catch (e) { res.status(500).send(e); }
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.status(200).json({ success: true, message: "University added successfully!" });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
-app.post('/api/partner/withdraw', async (req, res) => {
+// পার্টনার পোর্টালের জন্য সার্চ রুট
+app.post('/api/check-eligibility', async (req, res) => {
     try {
-        const { partnerName, amount, method, details } = req.body;
-        await Partner.findOneAndUpdate({ name: partnerName }, { $push: { withdrawRequests: { amount, method, details } } });
-        res.json({ success: true });
-    } catch (e) { res.status(500).send(e); }
-});
+        const { country, gpa } = req.body;
+        let query = {};
+        if (country) query.country = new RegExp(country, 'i');
+        if (gpa) query.minGPA = { $lte: parseFloat(gpa) };
 
-app.get('/api/applications/:name', async (req, res) => {
-    const apps = await Application.find({ partnerName: req.params.name }).sort({ createdAt: -1 });
-    res.json(apps);
+        const results = await University.find(query);
+        res.json({ success: true, data: results });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 IHP Server Running`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
