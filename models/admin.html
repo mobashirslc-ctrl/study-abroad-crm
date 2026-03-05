@@ -3,183 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | IHP CRM</title>
+    <title>IHP Admin | Management</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f1f5f9; }
+        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-
         .sidebar { width: 260px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; box-sizing: border-box; }
-        .sidebar h2 { color: var(--primary); margin-bottom: 30px; font-size: 22px; }
-        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 10px; margin-bottom: 5px; transition: 0.3s; }
-        .nav-item.active { background: var(--primary); color: white; }
-
+        .sidebar h2 { font-size: 22px; color: white; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 8px; margin-bottom: 8px; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; }
         .main { margin-left: 260px; padding: 40px; width: calc(100% - 260px); box-sizing: border-box; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        
-        .page { display: none; }
-        .page.active { display: block; }
-
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box; }
-        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .page { display: none; } .page.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
         th { background: #f8fafc; color: #64748b; font-weight: 600; }
-
-        .status-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; border: none; }
-        .active-bg { background: #dcfce7; color: #166534; }
-        .inactive-bg { background: #fee2e2; color: #991b1b; }
-        .sub-input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 5px; text-align: center; }
+        .status-badge { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: none; cursor: pointer; }
+        .active-status { background: #dcfce7; color: #166534; }
+        .inactive-status { background: #fee2e2; color: #991b1b; }
+        input[type="number"] { padding: 8px; border: 1px solid #ddd; border-radius: 6px; width: 80px; text-align: center; }
+        .btn-toggle { background: #fee2e2; color: #991b1b; padding: 6px 12px; border-radius: 6px; border: 1px solid #fecaca; cursor: pointer; transition: 0.2s; }
+        .btn-toggle:hover { background: #fecaca; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP CRM Admin</h2>
-    <div class="nav-item active" onclick="showPage('addUni', this)"><i class="fas fa-university"></i> Assessment</div>
-    <div class="nav-item" onclick="showPage('files', this)"><i class="fas fa-file-alt"></i> Student Files</div>
-    <div class="nav-item" onclick="showPage('partners', this)"><i class="fas fa-users-cog"></i> Partner List</div>
-    <div class="nav-item" onclick="showPage('withdraw', this)"><i class="fas fa-hand-holding-usd"></i> Withdrawals</div>
+    <h2><i class="fas fa-user-shield"></i> IHP Admin</h2>
+    <div class="nav-item active" onclick="showPage('addUni', this)"><i class="fas fa-plus-circle"></i> Assessment (Add Uni)</div>
+    <div class="nav-item" onclick="showPage('files', this)"><i class="fas fa-file-alt"></i> Existing Files</div>
+    <div class="nav-item" onclick="showPage('partners', this)"><i class="fas fa-users"></i> Partner List</div>
+    <div class="nav-item" onclick="showPage('withdraw', this)"><i class="fas fa-wallet"></i> Withdraw Requests</div>
 </div>
 
 <div class="main">
-    
-    <div id="addUniPage" class="page active">
-        <div class="card">
-            <h3>Add University for Assessment</h3>
-            <div class="grid">
-                <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCountry" placeholder="Country">
-                <select id="uDegree"><option>UG</option><option>PG</option><option>Diploma</option></select>
-                <input type="text" id="uIntake" placeholder="Intake">
-                <input type="text" id="uFee" placeholder="Semester Fee">
-                <select id="uLang"><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
-                <input type="number" id="uLScore" placeholder="Min Lang Score">
-                <input type="number" id="uAcademic" placeholder="Min GPA">
-                <input type="number" id="uComm" placeholder="Commission (৳)">
-            </div>
-            <button class="btn-primary" style="width:100%; margin-top:15px;" onclick="saveUniversity()">Save to Database</button>
-        </div>
-    </div>
-
-    <div id="filesPage" class="page">
-        <div class="card">
-            <h3>Student Application Tracking</h3>
-            <table id="fileTable">
-                <thead><tr><th>Student</th><th>University</th><th>Partner</th><th>Status</th></tr></thead>
-                <tbody id="fileBody"></tbody>
-            </table>
-        </div>
-    </div>
-
     <div id="partnersPage" class="page">
         <div class="card">
             <h3>Partner Management & Subscription</h3>
-            <table id="partnerTable">
-                <thead><tr><th>Name</th><th>Subscription (৳)</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody id="partnerBody"></tbody>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Subscription (৳)</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="partnerBody">
+                    </tbody>
             </table>
         </div>
     </div>
 
-    <div id="withdrawPage" class="page">
-        <div class="card">
-            <h3>Withdrawal Requests</h3>
-            <table id="withdrawTable">
-                <thead><tr><th>Partner</th><th>Amount</th><th>Method</th><th>Account</th><th>Action</th></tr></thead>
-                <tbody id="withdrawBody"></tbody>
-            </table>
-        </div>
-    </div>
-
+    <div id="addUniPage" class="page active"><div class="card"><h3>Assessment Setup</h3></div></div>
+    <div id="filesPage" class="page"><div class="card"><h3>Student Files</h3><table id="fileBody"></table></div></div>
+    <div id="withdrawPage" class="page"><div class="card"><h3>Withdrawal Requests</h3><table id="withdrawBody"></table></div></div>
 </div>
 
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
 
-    // Tab Switcher with Data Loading
-    async function showPage(pageId, element) {
+    function showPage(pageId, element) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(pageId + 'Page').classList.add('active');
         element.classList.add('active');
-
-        // Logic based on tab click
-        if(pageId === 'files') loadFiles();
         if(pageId === 'partners') loadPartners();
-        if(pageId === 'withdraw') loadWithdrawals();
     }
 
-    // 1. Save University
-    async function saveUniversity() {
-        const data = {
-            name: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            degree: document.getElementById('uDegree').value,
-            intake: document.getElementById('uIntake').value,
-            semesterFee: document.getElementById('uFee').value,
-            languageType: document.getElementById('uLang').value,
-            langScore: document.getElementById('uLScore').value,
-            academicScore: document.getElementById('uAcademic').value,
-            partnerCommission: document.getElementById('uComm').value
-        };
-        const res = await fetch(`${API}/admin/add-university`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
-        });
-        if(res.ok) alert("University Added!");
-    }
-
-    // 2. Load Student Files
-    async function loadFiles() {
-        const res = await fetch(`${API}/admin/all-files`);
-        const data = await res.json();
-        document.getElementById('fileBody').innerHTML = data.length ? data.map(f => `
-            <tr><td>${f.studentName}</td><td>${f.university}</td><td>${f.partnerName}</td><td><b>${f.status}</b></td></tr>
-        `).join('') : '<tr><td colspan="4">No files found.</td></tr>';
-    }
-
-    // 3. Load Partners & Subscription Management
+    // LOAD PARTNERS
     async function loadPartners() {
-        const res = await fetch(`${API}/admin/partners`);
-        const data = await res.json();
-        document.getElementById('partnerBody').innerHTML = data.length ? data.map(p => `
-            <tr>
-                <td>${p.name}</td>
-                <td><input type="number" class="sub-input" value="${p.subAmount || 500}" onchange="updateSub('${p._id}', this.value)"></td>
-                <td><span class="status-badge ${p.status === 'Active' ? 'active-bg' : 'inactive-bg'}">${p.status}</span></td>
-                <td><button class="status-badge inactive-bg" onclick="togglePartner('${p._id}', '${p.status}')">Toggle Status</button></td>
-            </tr>
-        `).join('') : '<tr><td colspan="4">No partners registered.</td></tr>';
+        try {
+            const res = await fetch(`${API}/admin/partners`);
+            const data = await res.json();
+            const tbody = document.getElementById('partnerBody');
+            tbody.innerHTML = data.map(p => `
+                <tr>
+                    <td>${p.name}</td>
+                    <td><input type="number" value="${p.subAmount || 500}" onchange="updateSub('${p._id}', this.value)"></td>
+                    <td><span class="status-badge ${p.status === 'Active' ? 'active-status' : 'inactive-status'}">${p.status}</span></td>
+                    <td><button class="btn-toggle" onclick="togglePartner('${p._id}', '${p.status}')">Toggle Status</button></td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error("Load failed", e); }
     }
 
-    // 4. Load Withdrawals
-    async function loadWithdrawals() {
-        const res = await fetch(`${API}/admin/withdrawals`);
-        const data = await res.json();
-        document.getElementById('withdrawBody').innerHTML = data.length ? data.map(w => `
-            <tr><td>${w.partnerName}</td><td>৳${w.amount}</td><td>${w.method}</td><td>${w.account}</td><td><button class="status-badge active-bg">Approve</button></td></tr>
-        `).join('') : '<tr><td colspan="5">No pending requests.</td></tr>';
-    }
-
-    // Update Subscription Amount
-    async function updateSub(id, amount) {
-        await fetch(`${API}/admin/custom-sub`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, amount })
-        });
-        alert("Subscription Amount Updated!");
-    }
-
-    // Toggle Active/Inactive
+    // TOGGLE PARTNER STATUS (FIXED)
     async function togglePartner(id, currentStatus) {
         const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-        await fetch(`${API}/admin/update-partner-status`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, status: newStatus })
+        try {
+            const res = await fetch(`${API}/admin/update-partner-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status: newStatus })
+            });
+            const result = await res.json();
+            if (result.success) {
+                loadPartners(); // Refresh table immediately
+            }
+        } catch (e) { alert("Server error"); }
+    }
+
+    // UPDATE SUBSCRIPTION
+    async function updateSub(id, amount) {
+        await fetch(`${API}/admin/custom-sub`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, amount })
         });
-        loadPartners(); // Refresh list
+        alert("Subscription Updated");
     }
 </script>
-
 </body>
 </html>
