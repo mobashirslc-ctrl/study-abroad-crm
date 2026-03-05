@@ -3,227 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP CRM | Premium Partner Portal</title>
+    <title>Partner Portal | IHP CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); display: flex; color: var(--dark); overflow-x: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg); display: flex; color: var(--dark); }
         
         /* Sidebar */
-        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; box-sizing: border-box; z-index: 100; }
+        .sidebar { width: 280px; background: var(--dark); height: 100vh; position: fixed; padding: 30px; color: white; box-sizing: border-box; }
         .logo { font-size: 26px; font-weight: 800; color: var(--primary); margin-bottom: 50px; display: flex; align-items: center; gap: 12px; }
         .nav-item { padding: 15px; border-radius: 12px; cursor: pointer; margin-bottom: 10px; transition: 0.3s; color: #94a3b8; display: flex; align-items: center; gap: 12px; }
         .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; }
 
         /* Main Content */
-        .content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; min-height: 100vh; }
+        .content { margin-left: 280px; padding: 40px; width: calc(100% - 280px); box-sizing: border-box; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
         #clock { color: var(--primary); font-weight: 600; font-size: 14px; background: white; padding: 8px 20px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
 
-        /* Wallet Cards */
+        /* Wallet Section */
         .wallet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
-        .wallet-card { padding: 25px; border-radius: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .wallet-card { padding: 25px; border-radius: 24px; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; }
+        .wallet-card small { opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .wallet-card h2 { margin: 10px 0; font-size: 28px; font-weight: 800; }
-        .btn-withdraw { background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 15px; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; margin-top: 5px; }
-        .btn-withdraw:hover { background: white; color: var(--warning); }
-
-        /* Forms & Cards */
+        
+        /* Assessment Card */
         .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; margin-bottom: 30px; }
-        .assessment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; margin-top: 5px; box-sizing: border-box; }
-        .btn-primary { background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 8px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
+        .btn-search { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 15px; width: 100%; transition: 0.3s; }
+        .btn-search:hover { background: #1e40af; transform: translateY(-2px); }
 
-        /* Tables */
+        /* Table Style */
+        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 15px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .status-badge { background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
+        .status-tag { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #f1f5f9; }
 
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(5px); }
-        .modal-content { background: white; margin: 10% auto; padding: 30px; border-radius: 20px; width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-
-        /* Support */
-        .support-card { background: #eff6ff; border-left: 5px solid var(--primary); padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; }
+        /* Support Box */
+        .support-card { background: #eff6ff; padding: 25px; border-radius: 20px; display: flex; align-items: center; gap: 20px; border: 1px dashed var(--primary); }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="logo"><i class="fas fa-shield-alt"></i> IHP CRM</div>
-    <div class="nav-item active" onclick="show('search')"><i class="fas fa-search"></i> Eligibility Assessment</div>
-    <div class="nav-item" onclick="show('files')"><i class="fas fa-folder-open"></i> My Student Files</div>
+    <div class="logo"><i class="fas fa-graduation-cap"></i> IHP CRM</div>
+    <div class="nav-item active" onclick="showTab('search')"><i class="fas fa-university"></i> Assessment</div>
+    <div class="nav-item" onclick="showTab('files')"><i class="fas fa-file-invoice"></i> Student Files</div>
+    <div class="nav-item" onclick="showTab('withdraw')"><i class="fas fa-wallet"></i> Wallet</div>
 </div>
 
 <div class="content">
     <div class="header">
-        <h1 style="margin:0;">Welcome, <span style="color:var(--primary);">Demo Partner</span>!</h1>
-        <div id="clock"><i class="far fa-clock"></i> Loading...</div>
-    </div>
-
-    <div class="wallet-grid">
-        <div class="wallet-card" style="background: linear-gradient(135deg, #2563eb, #1e40af);">
-            <small>Total Earnings</small>
-            <h2 id="wTotal">৳ 0</h2>
-        </div>
-        <div class="wallet-card" style="background: linear-gradient(135deg, #10b981, #065f46);">
-            <small>Withdrawn</small>
-            <h2 id="wOut">৳ 0</h2>
-        </div>
-        <div class="wallet-card" style="background: linear-gradient(135deg, #f59e0b, #b45309);">
-            <small>Pending Balance</small>
-            <h2 id="wPending">৳ 0</h2>
-            <button class="btn-withdraw" onclick="openWithdrawModal()">Withdraw Now</button>
-        </div>
-    </div>
-
-    <div id="searchBox" class="card">
-        <h3 style="margin-top:0;"><i class="fas fa-university"></i> Student Eligibility Assessment</h3>
-        <form id="assessmentForm">
-            <div class="assessment-grid">
-                <div><label>Country</label><input type="text" id="sCountry" placeholder="UK, Canada..."></div>
-                <div><label>Degree</label>
-                    <select id="sDegree">
-                        <option value="UG">Undergraduate (UG)</option>
-                        <option value="PG">Postgraduate (PG)</option>
-                        <option value="DIPLOMA">Diploma</option>
-                        <option value="PHD">PhD</option>
-                    </select>
-                </div>
-                <div><label>Language</label>
-                    <select id="sLangType">
-                        <option value="IELTS">IELTS</option>
-                        <option value="PTE">PTE</option>
-                        <option value="DUOLINGO">Duolingo</option>
-                    </select>
-                </div>
-                <div><label>Score</label><input type="number" step="0.1" id="sLangScore" placeholder="6.5"></div>
-                <div><label>GPA</label><input type="number" step="0.01" id="sGPA" placeholder="3.50"></div>
-            </div>
-            <button type="submit" class="btn-primary">Check Eligibility</button>
-        </form>
-        
-        <table style="margin-top:30px;">
-            <thead><tr><th>University</th><th>Scholarship</th><th>Commission</th><th>Action</th></tr></thead>
-            <tbody id="uniResults"></tbody>
-        </table>
-    </div>
-
-    <div id="fileBox" class="card" style="display:none;">
-        <h3><i class="fas fa-history"></i> My Student Files</h3>
-        <table>
-            <thead><tr><th>Date & Time</th><th>Student Name</th><th>Status</th><th>Compliance Team</th></tr></thead>
-            <tbody id="fileResults"></tbody>
-        </table>
-    </div>
-
-    <div class="support-card">
-        <i class="fas fa-headset fa-2x" style="color:var(--primary);"></i>
         <div>
-            <h4 style="margin:0;">Team Support</h4>
-            <p style="margin:0; font-size:14px;">Contact customer care: <b>+880 1XXX XXXXXX</b></p>
-        </div>
-    </div>
-</div>
-
-<div id="withdrawModal" class="modal">
-    <div class="modal-content">
-        <h3>Withdrawal Request</h3>
-        <select id="payMethod">
-            <option value="bKash">bKash</option>
-            <option value="Nagad">Nagad</option>
-            <option value="Bank">Bank Details</option>
-        </select>
-        <input type="number" id="payAmount" placeholder="Amount (৳)">
-        <input type="text" id="payDetails" placeholder="Account/Number Info">
-        <button class="btn-primary" style="width:100%;" onclick="submitWithdraw()">Submit</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:red; cursor:pointer; width:100%; margin-top:10px;">Cancel</button>
-    </div>
-</div>
-
-<script>
-    const API = "https://study-abroad-crm.onrender.com"; 
-    const partnerName = "Demo Partner";
-
-    function updateClock() {
-        document.getElementById('clock').innerHTML = `<i class="far fa-clock"></i> ${new Date().toLocaleString()}`;
-    }
-    setInterval(updateClock, 1000);
-
-    function show(id) {
-        document.getElementById('searchBox').style.display = id === 'search' ? 'block' : 'none';
-        document.getElementById('fileBox').style.display = id === 'files' ? 'block' : 'none';
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        if(id === 'files') loadFiles();
-    }
-
-    async function loadWallet() {
-        try {
-            const res = await fetch(`${API}/api/partner/wallet/${partnerName}`);
-            const data = await res.json();
-            document.getElementById('wTotal').innerText = `৳ ${data.wallet.totalEarnings}`;
-            document.getElementById('wOut').innerText = `৳ ${data.wallet.withdrawn}`;
-            document.getElementById('wPending').innerText = `৳ ${data.wallet.totalEarnings - data.wallet.withdrawn}`;
-        } catch (e) { console.log(e); }
-    }
-
-    function openWithdrawModal() { document.getElementById('withdrawModal').style.display = 'block'; }
-    function closeModal() { document.getElementById('withdrawModal').style.display = 'none'; }
-
-    async function submitWithdraw() {
-        const amount = document.getElementById('payAmount').value;
-        const method = document.getElementById('payMethod').value;
-        const details = document.getElementById('payDetails').value;
-        if(!amount || !details) return alert("Fill all info");
-        
-        await fetch(`${API}/api/partner/withdraw`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ partnerName, amount, method, details })
-        });
-        alert("Request Sent!"); closeModal(); loadWallet();
-    }
-
-    document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const results = document.getElementById('uniResults');
-        results.innerHTML = 'Searching...';
-        
-        const res = await fetch(`${API}/api/check-eligibility`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ country: document.getElementById('sCountry').value, gpa: document.getElementById('sGPA').value })
-        });
-        const json = await res.json();
-        results.innerHTML = '';
-        json.data.forEach(u => {
-            results.innerHTML += `<tr>
-                <td><b>${u.name}</b><br><small>${u.location}</small></td>
-                <td><span style="color:var(--warning); font-weight:700;">${u.scholarship}</span></td>
-                <td style="color:var(--success); font-weight:800;">৳ ${u.partnerCommission}</td>
-                <td><button class="btn-primary" style="padding:5px 15px;" onclick="openFile('${u.name}', ${u.partnerCommission})">Apply</button></td>
-            </tr>`;
-        });
-    });
-
-    async function loadFiles() {
-        const res = await fetch(`${API}/api/applications/${partnerName}`);
-        const data = await res.json();
-        const body = document.getElementById('fileResults');
-        body.innerHTML = '';
-        data.forEach(f => {
-            body.innerHTML += `<tr>
-                <td>${new Date(f.createdAt).toLocaleString()}</td>
-                <td><b>${f.studentName}</b></td>
-                <td><span class="status-badge">${f.status}</span></td>
-                <td>${f.complianceOfficer.name}</td>
-            </tr>`;
-        });
-    }
-
-    window.onload = () => { updateClock(); loadWallet(); };
-</script>
-</body>
-</html>
+            <h1 style="margin:0;">
