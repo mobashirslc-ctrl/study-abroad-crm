@@ -9,15 +9,16 @@
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
         .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; }
         .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); display: flex; flex-direction: column; align-items: center; }
-        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .nav-item { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; width: 100%; }
         .nav-item.active { background: #1e293b; color: white; }
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1100px; margin-bottom: 30px; }
-        .stat-card { padding: 25px; border-radius: 20px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card { padding: 25px; border-radius: 20px; color: white; text-align: center; }
         .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; box-sizing: border-box; }
         .page { display: none; width: 100%; max-width: 1100px; } .page.active { display: block; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; flex: 1; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .search-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 15px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
@@ -27,87 +28,67 @@
     <h2 style="color:var(--primary);"><i class="fas fa-rocket"></i> IHP CRM</h2>
     <div class="nav-item active" onclick="showPage('search', this)"><i class="fas fa-search"></i> University Search</div>
     <div class="nav-item" onclick="showPage('tracking', this)"><i class="fas fa-file-invoice"></i> Student Tracking</div>
-    <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i> Wallet & Sub</div>
+    <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i> Wallet</div>
 </div>
 
 <div class="main">
     <div class="stat-grid">
-        <div class="stat-card" style="background: #2563eb;">TOTAL EARNINGS<br><h2>৳ 12,500</h2></div>
-        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 5,000</h2></div>
-        <div class="stat-card" style="background: #d97706;">PENDING BALANCE<br><h2>৳ 7,500</h2></div>
+        <div class="stat-card" style="background: #2563eb;">EARNINGS<br><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background: #d97706;">PENDING<br><h2>৳ 0</h2></div>
     </div>
 
     <div id="searchPage" class="page active">
         <div class="card">
-            <h3>Quick University Finder</h3>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
+            <h3>Assessment / Eligibility Check</h3>
+            <div class="search-grid">
                 <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDegree"><option>UG</option><option>PG</option></select>
-                <button class="btn" onclick="performSearch()">Search</button>
+                <select id="sDegree">
+                    <option value="">Degree</option><option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option>
+                </select>
+                <select id="sLang">
+                    <option value="">Language</option><option>IELTS</option><option>PTE</option><option>Duolingo</option>
+                </select>
+                <input type="number" id="sGPA" placeholder="Your GPA" step="0.1">
             </div>
+            <button class="btn" style="width:100%" onclick="checkEligibility()">Search Now</button>
             <table>
-                <thead><tr><th>UNIVERSITY</th><th>INTAKE</th><th>BANK REQ.</th><th>COMMISSION</th></tr></thead>
-                <tbody id="uniResults"></tbody>
+                <thead><tr><th>University</th><th>Fee</th><th>Bank Req.</th><th>Commission</th></tr></thead>
+                <tbody id="results"></tbody>
             </table>
         </div>
     </div>
 
     <div id="trackingPage" class="page">
-        <div class="card">
-            <h3>Student Application Progress</h3>
-            <table id="trackTable">
-                <thead><tr><th>Student</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                <tbody id="trackData"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="walletPage" class="page">
-        <div class="card">
-            <h3>Request Withdrawal</h3>
-            <input type="number" id="wAmount" placeholder="Amount (৳)">
-            <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="text" id="wAcc" placeholder="Account Number">
-            <button class="btn" onclick="requestWithdraw()">Submit Request</button>
-        </div>
+        <div class="card"><h3>Student Tracking</h3><table id="trackTable"><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="trackData"></tbody></table></div>
     </div>
 </div>
 
 <script>
-    const API = "https://study-abroad-crm.onrender.com/api";
-
-    function showPage(pageId, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(pageId + 'Page').classList.add('active');
+    function showPage(p, el) {
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        document.getElementById(p + 'Page').classList.add('active');
         el.classList.add('active');
-        if(pageId === 'tracking') loadTracking();
+        if(p === 'tracking') loadTracking();
     }
 
-    async function performSearch() {
-        const res = await fetch(`${API}/check-eligibility`, {
+    async function checkEligibility() {
+        const res = await fetch('https://study-abroad-crm.onrender.com/api/check-eligibility', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value })
+            body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, language: document.getElementById('sLang').value, gpa: document.getElementById('sGPA').value })
         });
         const json = await res.json();
-        document.getElementById('uniResults').innerHTML = json.data.map(u => `
-            <tr><td><b>${u.name}</b></td><td>${u.intake}</td><td>${u.bankBalance}</td><td style="color:green">৳${u.partnerCommission}</td></tr>
+        document.getElementById('results').innerHTML = json.data.map(u => `
+            <tr><td><b>${u.name}</b><br><small>${u.country}</small></td><td>${u.currency} ${u.semesterFee}</td><td>${u.bankBalance}</td><td style="color:green">৳${u.partnerCommission}</td></tr>
         `).join('');
     }
 
     async function loadTracking() {
-        const res = await fetch(`${API}/admin/files`);
+        const res = await fetch('https://study-abroad-crm.onrender.com/api/admin/files');
         const data = await res.json();
-        document.getElementById('trackData').innerHTML = data.map(f => `
-            <tr><td>${f.studentName}</td><td>${f.university}</td><td>${f.status}</td><td>${new Date(f.date).toLocaleDateString()}</td></tr>
-        `).join('');
-    }
-
-    async function requestWithdraw() {
-        const data = { partnerName: "Stepup Partner", amount: document.getElementById('wAmount').value, method: document.getElementById('wMethod').value, account: document.getElementById('wAcc').value };
-        await fetch(`${API}/partner/withdraw`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-        alert("Request Sent!");
+        document.getElementById('trackData').innerHTML = data.map(f => `<tr><td>${f.studentName}</td><td>${f.university}</td><td>${f.status}</td></tr>`).join('');
     }
 </script>
 </body>
