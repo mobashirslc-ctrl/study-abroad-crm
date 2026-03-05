@@ -7,78 +7,113 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; display: flex; }
         .sidebar { width: 250px; background: #2c3e50; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .main-content { margin-left: 270px; padding: 30px; width: 100%; }
+        .main-content { margin-left: 270px; padding: 30px; width: calc(100% - 270px); }
         .wallet-card { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .search-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-search { background: #3498db; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .uni-card { background: white; padding: 20px; border-radius: 10px; margin-top: 15px; border-left: 5px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .commission-tag { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; float: right; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-search { background: #3498db; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+        .btn-search:hover { background: #2980b9; }
+        .uni-card { background: white; padding: 20px; border-radius: 10px; margin-top: 15px; border-left: 5px solid #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
+        .commission-tag { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; position: absolute; top: 15px; right: 15px; }
+        #results { margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>Edu CRM</h2>
-    <p id="userEmail">Loading...</p>
-    <hr>
-    <p>🏠 Dashboard</p>
-    <p>📁 My Applications</p>
-    <p>💰 Payments</p>
-    <p style="margin-top: 50px; cursor: pointer;" onclick="location.href='index.html'">Logout</p>
+    <p>Logged in as:</p>
+    <strong id="userEmail">Loading...</strong>
+    <hr style="margin: 20px 0; border: 0.5px solid #555;">
+    <p style="cursor: pointer;">🏠 Dashboard</p>
+    <p style="cursor: pointer;">📁 My Applications</p>
+    <p style="cursor: pointer;">💰 Payments</p>
+    <button onclick="logout()" style="margin-top: 50px; background: #e74c3c; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer;">Logout</button>
 </div>
 
 <div class="main-content">
     <div class="wallet-card">
-        <p style="margin: 0; opacity: 0.8;">Available Balance</p>
-        <h1 id="walletBalance" style="margin: 10px 0;">BDT 0.00</h1>
-        <button style="background: white; color: #11998e; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Withdraw Request</button>
+        <p style="margin: 0; opacity: 0.9;">Available Balance</p>
+        <h1 id="walletBalance" style="margin: 10px 0; font-size: 36px;">BDT 0.00</h1>
+        <button style="background: white; color: #11998e; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Withdraw Request</button>
     </div>
 
     <div class="search-box">
-        <h3>Check Student Eligibility</h3>
+        <h3 style="margin-top: 0;">🔍 Smart Eligibility Checker</h3>
         <div class="grid-3">
-            <input type="number" step="0.01" id="sGPA" placeholder="Student GPA">
-            <input type="number" step="0.1" id="sIELTS" placeholder="IELTS Score">
-            <select id="sCountry">
-                <option value="UK">UK</option>
-                <option value="USA">USA</option>
-                <option value="Canada">Canada</option>
-            </select>
+            <div>
+                <label>Student GPA</label>
+                <input type="number" step="0.01" id="sGPA" placeholder="e.g. 3.50">
+            </div>
+            <div>
+                <label>IELTS Score</label>
+                <input type="number" step="0.1" id="sIELTS" placeholder="e.g. 6.5">
+            </div>
+            <div>
+                <label>Country</label>
+                <select id="sCountry">
+                    <option value="UK">United Kingdom</option>
+                    <option value="USA">USA</option>
+                    <option value="Canada">Canada</option>
+                    <option value="Australia">Australia</option>
+                </select>
+            </div>
         </div>
         <div class="grid-3">
-            <select id="sIntake">
-                <option value="Sep 2026">Sep 2026</option>
-                <option value="Jan 2027">Jan 2027</option>
-            </select>
-            <select id="sMarital">
-                <option value="Single">Single</option>
-                <option value="Married">Married</option>
-            </select>
-            <input type="number" id="sBank" placeholder="Family Bank Balance (BDT)">
+            <div>
+                <label>Target Intake</label>
+                <select id="sIntake">
+                    <option value="Sep 2026">September 2026</option>
+                    <option value="Jan 2027">January 2027</option>
+                </select>
+            </div>
+            <div>
+                <label>Marital Status</label>
+                <select id="sMarital">
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                </select>
+            </div>
+            <div>
+                <label>Bank Balance (BDT)</label>
+                <input type="number" id="sBank" placeholder="e.g. 2500000">
+            </div>
         </div>
-        <button class="btn-search" onclick="checkEligibility()">Search Universities</button>
+        <button class="btn-search" onclick="checkEligibility()">Search Matching Universities</button>
     </div>
 
     <div id="results"></div>
 </div>
 
 <script>
+    // ১. ডিবাগিং এরর হ্যান্ডলার (Dashboard না আসলে এটি মেসেজ দিবে)
+    window.onerror = function(msg, url, linenumber) {
+        alert('Debug Info:\nMessage: ' + msg + '\nLine: ' + linenumber);
+        return true;
+    };
+
     const API_URL = "https://study-abroad-crm.onrender.com";
     
-    // ১. পেজ লোড হলে পার্টনার ডাটা দেখানো (Wallet/Email)
+    // ২. পেজ লোড হলে ডাটা রেন্ডার করা
     window.onload = () => {
         const user = JSON.parse(localStorage.getItem('user'));
-        if(!user) location.href = 'index.html';
+        
+        // ইউজার লগইন না থাকলে ইনডেক্স পেজে পাঠিয়ে দিবে
+        if(!user) {
+            alert("Please login first!");
+            location.href = 'index.html';
+            return;
+        }
+
         document.getElementById('userEmail').innerText = user.email;
         document.getElementById('walletBalance').innerText = `BDT ${user.walletBalance || 0}`;
     };
 
-    // ২. সার্চ লজিক
+    // ৩. ইউনিভার্সিটি সার্চ লজিক
     async function checkEligibility() {
         const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = "Searching...";
+        resultsDiv.innerHTML = "<p>Searching for best matches...</p>";
 
         const searchData = {
             gpa: document.getElementById('sGPA').value,
@@ -89,29 +124,41 @@
             bankAmount: document.getElementById('sBank').value
         };
 
-        const res = await fetch(`${API_URL}/api/check-eligibility`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(searchData)
-        });
-        const result = await res.json();
-
-        resultsDiv.innerHTML = "";
-        if(result.data.length === 0) {
-            resultsDiv.innerHTML = "<p>No matching universities found.</p>";
-        } else {
-            result.data.forEach(uni => {
-                resultsDiv.innerHTML += `
-                    <div class="uni-card">
-                        <span class="commission-tag">Commission: BDT ${uni.commissionAmount}</span>
-                        <h4>${uni.name}</h4>
-                        <p>📍 ${uni.country} | 📅 Intake: ${uni.intake}</p>
-                        <p>🎓 Min GPA: ${uni.minGPA} | 📝 Min IELTS: ${uni.minIELTS}</p>
-                        <button style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Apply Now</button>
-                    </div>
-                `;
+        try {
+            const res = await fetch(`${API_URL}/api/check-eligibility`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(searchData)
             });
+            const result = await res.json();
+
+            resultsDiv.innerHTML = "";
+            if(!result.data || result.data.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div style="text-align:center; padding: 20px; background: #fff; border-radius: 10px;">
+                        <p>❌ No universities found matching these criteria.</p>
+                    </div>`;
+            } else {
+                result.data.forEach(uni => {
+                    resultsDiv.innerHTML += `
+                        <div class="uni-card">
+                            <span class="commission-tag">Commission: BDT ${uni.commissionAmount}</span>
+                            <h4 style="margin: 0; color: #2c3e50;">${uni.name}</h4>
+                            <p style="margin: 10px 0; color: #7f8c8d;">📍 ${uni.country} | 📅 Intake: ${uni.intake} | 💍 Status: ${uni.maritalStatus}</p>
+                            <p style="font-size: 14px;"><strong>Requirements:</strong> GPA ${uni.minGPA} | IELTS ${uni.minIELTS}</p>
+                            <button style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">Apply for Student</button>
+                        </div>
+                    `;
+                });
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = "<p style='color:red;'>Connection Error! Please check if your server is running.</p>";
         }
+    }
+
+    function logout() {
+        localStorage.removeItem('user');
+        location.href = 'index.html';
     }
 </script>
 
