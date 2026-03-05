@@ -7,89 +7,74 @@
     <style>
         :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; }
-        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 30px; color: white; }
-        .main { margin-left: 280px; padding: 40px; width: 100%; }
-        .nav-link { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; transition: 0.3s; }
-        .nav-link.active { background: #1e293b; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
-        .stat-card { padding: 30px; border-radius: 24px; color: white; position: relative; overflow: hidden; }
-        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; }
-        input, select { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; width: 100%; margin-bottom: 15px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 14px 28px; border-radius: 12px; cursor: pointer; font-weight: 600; }
-        .page { display: none; } .page.active { display: block; }
+        .sidebar { width: 280px; background: var(--sidebar); height: 100vh; position: fixed; padding: 25px; color: white; }
+        .main { margin-left: 280px; padding: 40px; width: calc(100% - 280px); display: flex; flex-direction: column; align-items: center; }
+        .nav-link { padding: 15px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; gap: 12px; border-radius: 12px; margin-bottom: 5px; }
+        .nav-link.active { background: #1e293b; color: white; }
+        
+        /* Stats Box Middle Fix */
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; max-width: 1100px; margin-bottom: 30px; }
+        .stat-card { padding: 25px; border-radius: 20px; color: white; min-width: 200px; }
+        
+        /* Search Card Middle Fix */
+        .card { background: white; padding: 30px; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); width: 100%; max-width: 1100px; box-sizing: border-box; }
+        
+        .search-flex { display: flex; gap: 15px; margin-bottom: 25px; }
+        input, select { padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; flex: 1; }
+        .btn { background: var(--primary); color: white; border: none; padding: 14px 25px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 15px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2 style="color:var(--primary);"><i class="fas fa-rocket"></i> IHP CRM</h2>
-    <div class="nav-link active" onclick="showPage('search')"><i class="fas fa-search"></i> University Search</div>
-    <div class="nav-link" onclick="showPage('tracking')"><i class="fas fa-folder-open"></i> Student Tracking</div>
-    <div class="nav-link" onclick="showPage('wallet')"><i class="fas fa-wallet"></i> Wallet & Sub</div>
+    <div class="nav-link active"><i class="fas fa-search"></i> University Search</div>
+    <div class="nav-link"><i class="fas fa-file-invoice"></i> Student Tracking</div>
+    <div class="nav-link"><i class="fas fa-wallet"></i> Wallet & Sub</div>
 </div>
 
 <div class="main">
-    <div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <h1>Partner Dashboard</h1>
-        <div id="time" style="color:#64748b; font-weight:600;"></div>
-    </div>
-
     <div class="stat-grid">
-        <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-            <small>TOTAL EARNINGS</small><h2>৳ 0</h2>
-        </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #047857);">
-            <small>WITHDRAWN</small><h2>৳ 0</h2>
-        </div>
-        <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #b45309);">
-            <small>PENDING BALANCE</small><h2>৳ 0</h2>
-            <button onclick="openWithdraw()" style="background:rgba(255,255,255,0.2); border:1px solid white; color:white; border-radius:8px; cursor:pointer;">Withdraw Fund</button>
-        </div>
+        <div class="stat-card" style="background: #2563eb;">TOTAL EARNINGS<br><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background: #10b981;">WITHDRAWN<br><h2>৳ 0</h2></div>
+        <div class="stat-card" style="background: #d97706;">PENDING BALANCE<br><h2>৳ 0</h2><button style="font-size:10px; cursor:pointer;">Withdraw Fund</button></div>
     </div>
 
-    <div id="searchPage" class="page active">
-        <div class="card">
-            <h3><i class="fas fa-graduation-cap"></i> Quick University Finder</h3>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px;">
-                <input type="text" id="sCountry" placeholder="Preferred Country">
-                <select id="sDegree">
-                    <option value="">Select Degree</option>
-                    <option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option>
-                </select>
-                <select id="sLang">
-                    <option value="">Language</option>
-                    <option>IELTS</option><option>PTE</option><option>Duolingo</option>
-                </select>
-                <button class="btn" onclick="performSearch()">Search Now</button>
-            </div>
-            <table style="width:100%; margin-top:30px; border-collapse:collapse;">
-                <thead style="text-align:left; color:#64748b; font-size:12px;">
-                    <tr><th>UNIVERSITY</th><th>INTAKE</th><th>BANK REQ.</th><th>COMMISSION</th><th>ACTION</th></tr>
-                </thead>
-                <tbody id="uniResults"></tbody>
-            </table>
+    <div class="card">
+        <h3><i class="fas fa-graduation-cap"></i> Quick University Finder</h3>
+        <div class="search-flex">
+            <input type="text" id="sCountry" placeholder="Preferred Country">
+            <select id="sDegree"><option value="">Select Degree</option><option>UG</option><option>PG</option><option>Diploma</option></select>
+            <select id="sLang"><option value="">Language</option><option>IELTS</option><option>PTE</option><option>Duolingo</option></select>
+            <button class="btn" onclick="performSearch()">Search Now</button>
         </div>
+        <table>
+            <thead style="background:#f8fafc;">
+                <tr><th>UNIVERSITY</th><th>INTAKE</th><th>BANK REQ.</th><th>COMMISSION</th><th>ACTION</th></tr>
+            </thead>
+            <tbody id="uniResults"></tbody>
+        </table>
     </div>
 </div>
 
 <script>
     const API = "https://study-abroad-crm.onrender.com/api";
-    function showPage(p) {
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-        document.getElementById(p + 'Page').classList.add('active');
-    }
-    setInterval(() => { document.getElementById('time').innerText = new Date().toLocaleString(); }, 1000);
-
     async function performSearch() {
         const res = await fetch(`${API}/check-eligibility`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, language: document.getElementById('sLang').value })
+            body: JSON.stringify({
+                country: document.getElementById('sCountry').value,
+                degree: document.getElementById('sDegree').value,
+                language: document.getElementById('sLang').value
+            })
         });
         const json = await res.json();
         document.getElementById('uniResults').innerHTML = json.data.map(u => `
-            <tr style="border-bottom:1px solid #f1f5f9;">
-                <td style="padding:20px;"><b>${u.name}</b><br><small>${u.location}, ${u.country}</small></td>
+            <tr>
+                <td><b>${u.name}</b><br><small>${u.location}</small></td>
                 <td>${u.intake}</td>
                 <td>${u.bankBalance} (${u.bankType})</td>
                 <td style="color:#10b981; font-weight:bold;">৳ ${u.partnerCommission}</td>
