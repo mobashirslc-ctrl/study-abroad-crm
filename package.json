@@ -1,7 +1,6 @@
 {
   "name": "study-abroad-crm",
   "version": "1.0.0",
-  "description": "Study Abroad CRM System",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
