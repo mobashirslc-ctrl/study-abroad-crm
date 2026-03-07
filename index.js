@@ -7,68 +7,66 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 
-// --- ১. Cloudinary Configuration ---
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+// Cloudinary Configuration (সরাসরি কি ব্যবহার করা হয়েছে)
 cloudinary.config({
   cloud_name: 'ddziennkh',
   api_key: '698924766176623',
-  api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs' // আপনার স্ক্রিনশট থেকে সংগৃহীত
+  api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
 });
 
-// --- ২. Cloudinary Storage Setup ---
+// Storage Setup
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'student_documents',
-    resource_type: 'auto',
+    folder: 'crm-uploads',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'pdf'],
   },
 });
+
 const upload = multer({ storage: storage });
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// MongoDB Connection (সরাসরি লিঙ্ক)
+mongoose.connect('mongodb+srv://shuvo:abc12345@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority')
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// --- ৩. Database Schemas ---
-const studentSchema = new mongoose.Schema({
-    partnerEmail: String,
-    studentName: String,
-    studentPhone: String,
-    appliedUniversity: String,
-    files: [String], // এখানে Cloudinary URL সেভ হবে
-    status: { type: String, default: 'Pending' },
-    submittedAt: { type: Date, default: Date.now }
-});
-const Student = mongoose.model('Student', studentSchema);
-
-// --- ৪. API Routes ---
-
-// ফাইল সাবমিশন (রেন্ডার-এ ফাইল হারানোর ভয় নেই)
-app.post('/api/partner/submit-file', upload.array('docs', 5), async (req, res) => {
-    try {
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ success: false, message: "No files uploaded" });
-        }
-        const fileUrls = req.files.map(f => f.path);
-        const newSubmission = new Student({
-            partnerEmail: req.body.partnerEmail,
-            studentName: req.body.studentName,
-            studentPhone: req.body.studentPhone,
-            appliedUniversity: req.body.appliedUniversity,
-            files: fileUrls
-        });
-        await newSubmission.save();
-        res.json({ success: true, message: "Successfully Uploaded to Cloudinary! ✅" });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
+// Database Schema
+const partnerSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  phone: String,
+  documentUrl: String,
+  createdAt: { type: Date, default: Date.now }
 });
 
-// --- ৫. Database & Server ---
-const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/IHP_CRM?retryWrites=true&w=majority`;
+const Partner = mongoose.model('Partner', partnerSchema);
 
-mongoose.connect(dbURI)
-    .then(() => {
-        app.listen(process.env.PORT || 3000, () => {
-            console.log("🚀 Server Live with Cloudinary Storage!");
-        });
-    })
-    .catch(err => console.log("❌ DB Error:", err));
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.post('/submit-partner', upload.single('document'), async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    const newPartner = new Partner({
+      name, email, phone,
+      documentUrl: req.file ? req.file.path : null
+    });
+    await newPartner.save();
+    res.status(200).send('✅ Data Submitted Successfully!');
+  } catch (error) {
+    console.error('Submission Error:', error);
+    res.status(500).send('❌ Something went wrong!');
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+});
