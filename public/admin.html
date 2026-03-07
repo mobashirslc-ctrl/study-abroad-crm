@@ -12,18 +12,19 @@
         .input-group { display: flex; flex-direction: column; }
         label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
         input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        button { padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; border: none; }
+        button { padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; border: none; transition: 0.3s; }
         .save-btn { grid-column: span 2; background: #007bff; color: white; margin-top: 20px; font-size: 16px; }
         .save-btn:hover { background: #0056b3; }
         
         /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
         th { background: #333; color: white; }
-        .badge { padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-        .status-pending { background: #ffc107; color: black; }
+        .badge { padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: capitalize; }
+        .status-inactive { background: #ffc107; color: black; }
         .status-active { background: #28a745; color: white; }
-        .action-btn { font-size: 12px; padding: 5px 8px; margin: 2px; color: white; }
+        .action-btn { font-size: 12px; padding: 6px 12px; margin: 2px; color: white; }
+        .action-btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -78,7 +79,7 @@
             <button type="submit" class="save-btn">Save University Assessment</button>
         </div>
     </form>
-    <p id="msg" style="color: green; text-align: center; display: none; margin-top: 15px;">Data Saved Successfully! ✅</p>
+    <p id="msg" style="color: green; text-align: center; display: none; margin-top: 15px; font-weight: bold;">Data Saved Successfully! ✅</p>
 </div>
 
 <div class="container" style="max-width: 1000px;">
@@ -123,54 +124,70 @@
             maritalCondition: document.getElementById('maritalCondition').value
         };
 
-        const res = await fetch('/api/admin/add-university', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        });
+        try {
+            const res = await fetch('/api/admin/add-university', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
 
-        if(res.ok) {
-            document.getElementById('msg').style.display = 'block';
-            document.getElementById('uniForm').reset();
-            setTimeout(() => document.getElementById('msg').style.display = 'none', 3000);
-        }
+            if(res.ok) {
+                document.getElementById('msg').style.display = 'block';
+                document.getElementById('uniForm').reset();
+                setTimeout(() => document.getElementById('msg').style.display = 'none', 3000);
+            }
+        } catch (err) { alert("Error saving university data."); }
     });
 
-    // --- ২. ইউজার ম্যানেজমেন্ট লজিক ---
+    // --- ২. ইউজার ম্যানেজমেন্ট লজিক (Fixed with Response & Auto-Refresh) ---
     async function loadUsers() {
-        const res = await fetch('/api/admin/users');
-        const users = await res.json();
-        const tbody = document.getElementById('userTableBody');
-        tbody.innerHTML = '';
+        try {
+            const res = await fetch('/api/admin/users');
+            const users = await res.json();
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = '';
 
-        users.forEach(user => {
-            const statusClass = user.status === 'active' ? 'status-active' : 'status-pending';
-            const row = `
-                <tr>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td><span class="badge" style="background:#eee; color:#333;">${user.role.toUpperCase()}</span></td>
-                    <td><span class="badge ${statusClass}">${user.status}</span></td>
-                    <td>
-                        <button class="action-btn" style="background:#28a745;" onclick="updateStatus('${user._id}', 'active')">Activate</button>
-                        <button class="action-btn" style="background:#dc3545;" onclick="updateStatus('${user._id}', 'inactive')">Deactivate</button>
-                    </td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        });
+            users.forEach(user => {
+                const statusClass = user.status === 'active' ? 'status-active' : 'status-inactive';
+                const row = `
+                    <tr>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td><span class="badge" style="background:#eee; color:#333;">${user.role}</span></td>
+                        <td><span class="badge ${statusClass}">${user.status}</span></td>
+                        <td>
+                            <button class="action-btn" style="background:#28a745;" onclick="updateStatus('${user._id}', 'active')">Activate</button>
+                            <button class="action-btn" style="background:#dc3545;" onclick="updateStatus('${user._id}', 'inactive')">Deactivate</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        } catch (err) { console.error("Error loading users:", err); }
     }
 
     async function updateStatus(userId, newStatus) {
-        await fetch('/api/admin/update-user-status', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ userId, status: newStatus })
-        });
-        loadUsers();
+        try {
+            const res = await fetch('/api/admin/update-user-status', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId, status: newStatus })
+            });
+            
+            const result = await res.json();
+            
+            if(result.success) {
+                alert(`Success: User is now ${newStatus}! ✅`);
+                loadUsers(); // টেবিলটি তৎক্ষণাৎ রিফ্রেশ করবে
+            } else {
+                alert("Failed to update status.");
+            }
+        } catch (err) {
+            alert("Connection error! Please try again.");
+        }
     }
 
-    // পেজ লোড হলে সব ডাটা ফেচ করবে
+    // পেজ লোড হলে সব ইউজার লিস্ট ফেচ করবে
     window.onload = loadUsers;
 </script>
 
