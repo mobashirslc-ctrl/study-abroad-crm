@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// public ফোল্ডারটিকে স্ট্যাটিক হিসেবে ঘোষণা করা
+// ফাইলগুলো খুঁজে পাওয়ার জন্য স্ট্যাটিক পাথ সেট করা
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Cloudinary Configuration ---
@@ -32,11 +32,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// --- MongoDB Connection ---
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
+// --- MongoDB Connection (Using IHPCRM Credentials) ---
+// নিশ্চিত করুন MongoDB Atlas-এ IHPCRM ইউজারটি তৈরি করা আছে
+const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
 mongoose.connect(mongoURI)
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .then(() => console.log('✅ MongoDB Connected Successfully!'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // --- Database Schema ---
@@ -48,34 +49,44 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }));
 
-// --- 1. Home Page (Partner Link) ---
+// --- Routes ---
+
+// ১. পার্টনার ফর্ম (মেইন লিঙ্ক)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// --- 2. Data Submission ---
+// ২. ডাটা সাবমিট রাউট
 app.post('/submit-partner', upload.single('document'), async (req, res) => {
   try {
     const { name, email, phone } = req.body;
     const newPartner = new Partner({
-      name, email, phone,
+      name,
+      email,
+      phone,
       documentUrl: req.file ? req.file.path : null
     });
     await newPartner.save();
-    res.status(200).send('✅ Success! Data and file saved.');
+    res.status(200).send('✅ Success! Your data has been saved.');
   } catch (error) {
-    res.status(500).send('❌ Submission Failed.');
+    console.error('Submission Error:', error);
+    res.status(500).send('❌ Error saving data.');
   }
 });
 
-// --- 3. Admin Panel (Admin Link) ---
-// URL: https://study-abroad-crm.onrender.com/admin-panel?pass=CRM2026
+// ৩. অ্যাডমিন প্যানেল (গোপন লিঙ্ক)
+// লিঙ্ক: https://your-site.onrender.com/admin-panel?pass=CRM2026
 app.get('/admin-panel', async (req, res) => {
-  if (req.query.pass !== 'CRM2026') return res.status(401).send('<h1>Access Denied</h1>');
+  const adminPass = req.query.pass;
+
+  if (adminPass !== 'CRM2026') {
+    return res.status(401).send('<h1>🚫 Access Denied</h1>');
+  }
 
   try {
     const students = await Partner.find().sort({ createdAt: -1 });
-    let rows = students.map(s => `
+    
+    let tableRows = students.map(s => `
       <tr style="border-bottom: 1px solid #ddd;">
         <td style="padding:10px;">${s.name}</td>
         <td style="padding:10px;">${s.phone}</td>
@@ -85,19 +96,26 @@ app.get('/admin-panel', async (req, res) => {
     `).join('');
 
     res.send(`
-      <div style="font-family: sans-serif; padding: 20px;">
-        <h2>🎓 Admin Panel - Student List</h2>
+      <div style="font-family: Arial; padding: 20px;">
+        <h2>🎓 Admin Dashboard</h2>
         <table style="width:100%; border-collapse: collapse;">
-          <tr style="background:#f4f4f4; text-align:left;">
-            <th style="padding:10px;">Name</th><th style="padding:10px;">Phone</th>
-            <th style="padding:10px;">Document</th><th style="padding:10px;">Date</th>
+          <tr style="background:#007bff; color:white; text-align:left;">
+            <th style="padding:10px;">Name</th>
+            <th style="padding:10px;">Phone</th>
+            <th style="padding:10px;">Document</th>
+            <th style="padding:10px;">Date</th>
           </tr>
-          ${rows}
+          ${tableRows}
         </table>
       </div>
     `);
-  } catch (err) { res.status(500).send("Error"); }
+  } catch (err) {
+    res.status(500).send("Error loading admin data");
+  }
 });
 
+// --- Server Startup ---
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
