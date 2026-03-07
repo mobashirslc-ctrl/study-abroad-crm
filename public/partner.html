@@ -2,69 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal - Smart Assessment</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-        .header { background: #1a73e8; color: white; padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .search-section { background: white; padding: 20px; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .uni-card { background: white; padding: 15px; margin-top: 15px; border-radius: 8px; border-left: 5px solid #1a73e8; }
-        .logout-btn { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        .container { max-width: 1200px; margin: auto; }
+        .header { background: #1a73e8; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-text { font-size: 18px; font-weight: bold; }
+        
+        /* Assessment Section */
+        .search-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .grid-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        label { font-size: 12px; color: #666; font-weight: bold; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        
+        /* Result Cards */
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .uni-card { background: white; border-left: 5px solid #1a73e8; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .details { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; line-height: 1.8; color: #555; }
+        .bank-info { background: #fff9c4; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px dashed #fbc02d; font-size: 12px; }
+        .logout-btn { background: #ff4d4d; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .no-result { grid-column: 1/-1; text-align: center; padding: 40px; color: #888; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <h1 style="margin:0;">Partner Dashboard</h1>
-        <p id="welcomeMsg" style="margin:5px 0 0 0; font-weight:bold;">Welcome!</p>
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Partner Dashboard</h1>
+            <div class="welcome-text" id="welcomeMsg">Welcome! 👋</div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
-    <button class="logout-btn" onclick="logout()">Logout</button>
-</div>
 
-<div class="search-section">
-    <h3>🔍 Smart Assessment</h3>
-    <input type="text" id="search" placeholder="Search Country..." onkeyup="filter()" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ddd;">
-</div>
+    <div class="search-section">
+        <h3>🔍 Smart Assessment (Input Student Details)</h3>
+        <div class="grid-filters">
+            <div>
+                <label>Country</label>
+                <input type="text" id="searchCountry" placeholder="e.g. Australia" onkeyup="filterResults()">
+            </div>
+            <div>
+                <label>Degree</label>
+                <select id="filterDegree" onchange="filterResults()">
+                    <option value="">Select Degree</option>
+                    <option value="UG">Undergraduate (UG)</option>
+                    <option value="PG">Postgraduate (PG)</option>
+                    <option value="DIPLOMA">Diploma</option>
+                </select>
+            </div>
+            <div>
+                <label>Min GPA</label>
+                <input type="number" id="searchGpa" placeholder="Current GPA" onkeyup="filterResults()">
+            </div>
+            <div>
+                <label>Language Score</label>
+                <input type="text" id="searchLangScore" placeholder="Score (e.g. 6.5)" onkeyup="filterResults()">
+            </div>
+        </div>
+    </div>
 
-<div id="results"></div>
+    <div id="results" class="results-grid">
+        <div class="no-result">Please enter student details above to see eligible universities.</div>
+    </div>
+</div>
 
 <script>
-    // ১. নাম দেখানো এবং স্ট্যাটাস চেক
-    async function checkSecurity() {
+    let allUniversities = [];
+
+    async function checkAuthAndFetch() {
         const name = localStorage.getItem('userName');
-        const email = localStorage.getItem('userEmail');
         if(!name) return window.location.href = "/";
-        
         document.getElementById('welcomeMsg').innerText = `Welcome, ${name} 👋`;
 
-        // সার্ভার থেকে লেটেস্ট স্ট্যাটাস চেক (যদি ইনএকটিভ হয় তবে বের করে দেবে)
-        const res = await fetch('/api/admin/users');
-        const users = await res.json();
-        const me = users.find(u => u.email === email);
-        if(me && me.status !== 'active') {
-            alert("Your account is deactivated by Admin.");
-            logout();
-        }
+        // সার্ভার থেকে ডাটা আনা
+        const response = await fetch('/api/search-university');
+        allUniversities = await response.json();
     }
 
-    async function fetchUnis() {
-        const res = await fetch('/api/search-university');
-        const unis = await res.json();
+    function displayResults(data) {
         const container = document.getElementById('results');
-        container.innerHTML = unis.map(u => `
+        if (data.length === 0) {
+            container.innerHTML = '<div class="no-result">No matching universities found.</div>';
+            return;
+        }
+        
+        container.innerHTML = data.map(uni => `
             <div class="uni-card">
-                <h3>${u.name}</h3>
-                <p>📍 ${u.country} | Fee: ${u.semesterFee} ${u.currency}</p>
+                <h3>${uni.name}</h3>
+                <p>📍 <b>${uni.country}</b> | ${uni.location}</p>
+                <div class="details">
+                    <span>🎓 Degree: <b>${uni.degree}</b></span>
+                    <span>📅 Intake: <b>${uni.intake}</b></span>
+                    <span>💰 Fee: <b>${uni.semesterFee} ${uni.currency}</b></span>
+                    <span>📝 Lang: <b>${uni.languageRequired} (${uni.minLanguageScore})</b></span>
+                </div>
+                <div class="bank-info">
+                    🏦 <b>Bank Suggestion:</b> ${uni.bankName || 'N/A'}<br>
+                    💵 Required: ${uni.bankAmountRequired || 0} ${uni.currency}
+                </div>
+                <button style="width:100%; margin-top:10px; padding:10px; background:#1a73e8; color:white; border:none; border-radius:5px; cursor:pointer;">
+                    Submit Student File
+                </button>
             </div>
         `).join('');
     }
 
+    function filterResults() {
+        const country = document.getElementById('searchCountry').value.toLowerCase();
+        const degree = document.getElementById('filterDegree').value;
+        const gpa = document.getElementById('searchGpa').value;
+        const langScore = document.getElementById('searchLangScore').value;
+
+        // যদি কোনো ফিল্ডই ইনপুট না দেওয়া হয়, তবে রেজাল্ট খালি থাকবে
+        if (!country && !degree && !gpa && !langScore) {
+            document.getElementById('results').innerHTML = '<div class="no-result">Please enter student details above to see eligible universities.</div>';
+            return;
+        }
+
+        const filtered = allUniversities.filter(uni => {
+            return (uni.country.toLowerCase().includes(country)) &&
+                   (degree === "" || uni.degree === degree) &&
+                   (langScore === "" || uni.minLanguageScore.includes(langScore));
+        });
+        displayResults(filtered);
+    }
+
     function logout() { localStorage.clear(); window.location.href = "/"; }
 
-    window.onload = () => {
-        checkSecurity();
-        fetchUnis();
-    };
+    window.onload = checkAuthAndFetch;
 </script>
+
 </body>
 </html>
