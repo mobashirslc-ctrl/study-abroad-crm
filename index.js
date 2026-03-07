@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
-const fs = require('fs'); // ফাইল সিস্টেম মডিউল
+const fs = require('fs');
 const app = express();
 
 const __root = path.resolve();
@@ -11,15 +11,14 @@ const __root = path.resolve();
 app.use(express.json());
 app.use(express.static(path.join(__root, 'public')));
 
-// --- Render-এ Upload ফোল্ডার অটো-ফিক্স লজিক ---
-const uploadDir = path.join(__root, 'public/Upload');
+// --- Render-এর জন্য ফোল্ডার নিশ্চিতকরণ ---
+const uploadDir = path.join(__root, 'public', 'Upload');
 if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
-    console.log("📁 Created 'Upload' folder for Render.");
 }
 app.use('/Upload', express.static(uploadDir));
 
-// --- 1. MongoDB Schemas ---
+// --- Database Schemas ---
 const universitySchema = new mongoose.Schema({
     country: String, name: String, location: String, courses: String,
     degree: String, semesterFee: Number, currency: String,
@@ -50,19 +49,23 @@ const studentSchema = new mongoose.Schema({
 });
 const Student = mongoose.model('Student', studentSchema);
 
-// --- 2. Multer Setup ---
+// --- Multer Configuration with Absolute Path ---
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/Upload/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+    destination: (req, file, cb) => {
+        cb(null, uploadDir); 
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '_'));
+    }
 });
 const upload = multer({ storage: storage });
 
-// --- 3. API Routes ---
+// --- API Routes ---
+
 app.get('/api/auth/check-status', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.query.email });
-        if (user) res.json({ status: user.status });
-        else res.status(404).json({ message: "User not found" });
+        res.json({ status: user ? user.status : 'notfound' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -89,17 +92,6 @@ app.post('/api/admin/add-university', async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/admin/users', async (req, res) => {
-    const users = await User.find({}, '-password');
-    res.json(users);
-});
-
-app.post('/api/admin/update-user-status', async (req, res) => {
-    await User.findByIdAndUpdate(req.body.userId, { status: req.body.status });
-    res.json({ success: true });
-});
-
-// স্টুডেন্ট ফাইল সাবমিশন এপিআই (Fixed)
 app.post('/api/partner/submit-file', upload.array('docs', 5), async (req, res) => {
     try {
         const fileNames = req.files.map(f => f.filename);
@@ -111,14 +103,15 @@ app.post('/api/partner/submit-file', upload.array('docs', 5), async (req, res) =
             files: fileNames
         });
         await newSubmission.save();
-        res.json({ success: true, message: "Application Submitted Successfully! ✅" });
+        res.json({ success: true, message: "Submission Successful! ✅" });
     } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+        console.error("Upload Error:", err);
+        res.status(500).json({ success: false, message: "Server failed to save file." });
     }
 });
 
-// --- 4. Server ---
-const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+// --- Server Connection ---
+const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/IHP_CRM?retryWrites=true&w=majority&appName=Cluster0`;
 mongoose.connect(dbURI).then(() => {
-    app.listen(process.env.PORT || 3000, () => console.log("🚀 Server Live..."));
+    app.listen(process.env.PORT || 3000, () => console.log("🚀 Server Live on Port 3000"));
 });
