@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - IHP CRM</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
+        .login-card { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 350px; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .toggle-link { text-align: center; font-size: 14px; cursor: pointer; color: #1a73e8; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h2 id="formTitle">Login</h2>
+        <form id="authForm">
+            <input type="text" id="userName" placeholder="Full Name" style="display:none">
+            <input type="email" id="userEmail" placeholder="Email Address" required>
+            <input type="password" id="userPass" placeholder="Password" required>
+            <select id="userRole" style="display:none">
+                <option value="partner">Partner</option>
+                <option value="compliance">Compliance</option>
+                <option value="student">Student</option>
+            </select>
+            <button type="submit" id="submitBtn">Login</button>
+        </form>
+        <p class="toggle-link" onclick="toggleForm()" id="toggleText">Don't have an account? Register</p>
+    </div>
+
+    <script>
+        let isLogin = true;
+        function toggleForm() {
+            isLogin = !isLogin;
+            document.getElementById('formTitle').innerText = isLogin ? "Login" : "Register";
+            document.getElementById('userName').style.display = isLogin ? "none" : "block";
+            document.getElementById('userRole').style.display = isLogin ? "none" : "block";
+            document.getElementById('submitBtn').innerText = isLogin ? "Login" : "Register";
+            document.getElementById('toggleText').innerText = isLogin ? "Don't have an account? Register" : "Already have an account? Login";
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = isLogin ? '/api/auth/login' : '/api/auth/register';
+            const body = {
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPass').value
+            };
+            if(!isLogin) {
+                body.name = document.getElementById('userName').value;
+                body.role = document.getElementById('userRole').value;
+            }
+
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+
+            if(data.success) {
+                if(isLogin) {
+                    window.location.href = `/${data.role}`; // Redirect to role-based dashboard
+                } else {
+                    alert(data.message);
+                    toggleForm();
+                }
+            } else {
+                alert(data.message || data.error);
+            }
+        });
+    </script>
+</body>
+</html>
