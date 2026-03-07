@@ -3,18 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Add University Assessment</title>
+    <title>Admin Panel - IHP CRM</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 800px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: auto; }
+        .container { max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: auto; margin-bottom: 30px; }
         h2 { color: #333; text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
         .input-group { display: flex; flex-direction: column; }
         label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
         input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        button { grid-column: span 2; padding: 15px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
-        button:hover { background: #0056b3; }
-        .success-msg { color: green; text-align: center; display: none; margin-top: 15px; }
+        button { padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; border: none; }
+        .save-btn { grid-column: span 2; background: #007bff; color: white; margin-top: 20px; font-size: 16px; }
+        .save-btn:hover { background: #0056b3; }
+        
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
+        th { background: #333; color: white; }
+        .badge { padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .status-pending { background: #ffc107; color: black; }
+        .status-active { background: #28a745; color: white; }
+        .action-btn { font-size: 12px; padding: 5px 8px; margin: 2px; color: white; }
     </style>
 </head>
 <body>
@@ -27,7 +36,6 @@
             <div class="input-group"><label>University Name</label><input type="text" id="name" required></div>
             <div class="input-group"><label>Location/City</label><input type="text" id="location"></div>
             <div class="input-group"><label>Available Courses</label><input type="text" id="courses"></div>
-            
             <div class="input-group">
                 <label>Degree Level</label>
                 <select id="degree">
@@ -37,61 +45,63 @@
                     <option value="PHD">PHD</option>
                 </select>
             </div>
-
             <div class="input-group"><label>Semester Fee</label><input type="number" id="semesterFee"></div>
             <div class="input-group">
                 <label>Currency</label>
                 <select id="currency">
-                    <option value="USD">USD</option>
-                    <option value="AUD">AUD</option>
-                    <option value="CAD">CAD</option>
-                    <option value="GBP">GBP</option>
-                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option><option value="AUD">AUD</option><option value="CAD">CAD</option>
+                    <option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BDT">BDT</option>
                 </select>
             </div>
-            
             <div class="input-group">
                 <label>Language Requirement</label>
                 <select id="languageRequired">
-                    <option value="IELTS">IELTS</option>
-                    <option value="PTE">PTE</option>
-                    <option value="DUOLINGO">Duolingo</option>
+                    <option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="DUOLINGO">Duolingo</option>
                 </select>
             </div>
-            <div class="input-group"><label>Min Score (Band/Points)</label><input type="text" id="minLanguageScore"></div>
+            <div class="input-group"><label>Min Lang. Score</label><input type="text" id="minLanguageScore"></div>
             <div class="input-group"><label>Min GPA/CGPA</label><input type="text" id="minGPA"></div>
-            <div class="input-group"><label>Intake (e.g. Sep 2026)</label><input type="text" id="intake"></div>
-            <div class="input-group"><label>Scholarship Details</label><input type="text" id="scholarship"></div>
+            <div class="input-group"><label>Intake</label><input type="text" id="intake"></div>
+            <div class="input-group"><label>Scholarship</label><input type="text" id="scholarship"></div>
             <div class="input-group"><label>Partner Commission (BDT)</label><input type="number" id="partnerCommission"></div>
-
-            <div class="input-group"><label>Bank Name for Loan</label><input type="text" id="bankName"></div>
-            <div class="input-group"><label>Max Loan Amount</label><input type="number" id="loanAmount"></div>
-            <div class="input-group"><label>Bank Balance Required</label><input type="number" id="bankAmountRequired"></div>
+            <div class="input-group"><label>Bank Name</label><input type="text" id="bankName"></div>
+            <div class="input-group"><label>Max Loan</label><input type="number" id="loanAmount"></div>
+            <div class="input-group"><label>Bank Balance Req.</label><input type="number" id="bankAmountRequired"></div>
             <div class="input-group">
-                <label>Bank Deposit Type</label>
-                <select id="bankType">
-                    <option value="Savings">Savings</option>
-                    <option value="FDR">FDR</option>
-                </select>
+                <label>Bank Type</label>
+                <select id="bankType"><option value="Savings">Savings</option><option value="FDR">FDR</option></select>
             </div>
             <div class="input-group">
                 <label>Marital Condition</label>
-                <select id="maritalCondition">
-                    <option value="Single">Single</option>
-                    <option value="With Spouse">With Spouse</option>
-                </select>
+                <select id="maritalCondition"><option value="Single">Single</option><option value="With Spouse">With Spouse</option></select>
             </div>
-
-            <button type="submit">Save University Assessment</button>
+            <button type="submit" class="save-btn">Save University Assessment</button>
         </div>
     </form>
-    <p id="msg" class="success-msg">Data Saved Successfully! ✅</p>
+    <p id="msg" style="color: green; text-align: center; display: none; margin-top: 15px;">Data Saved Successfully! ✅</p>
+</div>
+
+<div class="container" style="max-width: 1000px;">
+    <h2>Partner & User Management</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="userTableBody">
+            </tbody>
+    </table>
 </div>
 
 <script>
+    // --- ১. ইউনিভার্সিটি ডাটা সেভ লজিক ---
     document.getElementById('uniForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
         const formData = {
             country: document.getElementById('country').value,
             name: document.getElementById('name').value,
@@ -113,20 +123,55 @@
             maritalCondition: document.getElementById('maritalCondition').value
         };
 
-        const response = await fetch('/api/admin/add-university', {
+        const res = await fetch('/api/admin/add-university', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData)
         });
 
-        const result = await response.json();
-        if(result.success) {
+        if(res.ok) {
             document.getElementById('msg').style.display = 'block';
             document.getElementById('uniForm').reset();
-        } else {
-            alert("Error saving data!");
+            setTimeout(() => document.getElementById('msg').style.display = 'none', 3000);
         }
     });
+
+    // --- ২. ইউজার ম্যানেজমেন্ট লজিক ---
+    async function loadUsers() {
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = '';
+
+        users.forEach(user => {
+            const statusClass = user.status === 'active' ? 'status-active' : 'status-pending';
+            const row = `
+                <tr>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge" style="background:#eee; color:#333;">${user.role.toUpperCase()}</span></td>
+                    <td><span class="badge ${statusClass}">${user.status}</span></td>
+                    <td>
+                        <button class="action-btn" style="background:#28a745;" onclick="updateStatus('${user._id}', 'active')">Activate</button>
+                        <button class="action-btn" style="background:#dc3545;" onclick="updateStatus('${user._id}', 'inactive')">Deactivate</button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+
+    async function updateStatus(userId, newStatus) {
+        await fetch('/api/admin/update-user-status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ userId, status: newStatus })
+        });
+        loadUsers();
+    }
+
+    // পেজ লোড হলে সব ডাটা ফেচ করবে
+    window.onload = loadUsers;
 </script>
 
 </body>
