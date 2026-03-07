@@ -11,17 +11,24 @@
         
         /* Smart Assessment Section */
         .search-section { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        .grid-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .grid-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        h3 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
+        input:focus, select:focus { border-color: #1a73e8; outline: none; box-shadow: 0 0 5px rgba(26,115,232,0.2); }
         
         /* Result Cards */
         .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
-        .uni-card { background: white; border-left: 5px solid #1a73e8; padding: 20px; border-radius: 8px; shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; }
+        .uni-card { background: white; border-left: 5px solid #1a73e8; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; }
         .uni-card:hover { transform: translateY(-5px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        .uni-card h3 { margin-top: 0; color: #1a73e8; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; line-height: 1.6; color: #555; }
-        .badge { background: #e8f0fe; color: #1a73e8; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
-        .bank-info { background: #fff9c4; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px dashed #fbc02d; }
+        .uni-card h3 { margin: 0 0 10px 0; color: #1a73e8; border: none; }
+        
+        .details { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; line-height: 1.8; color: #555; }
+        .badge { background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        
+        .bank-info { background: #fff9c4; padding: 12px; margin-top: 15px; border-radius: 6px; border: 1px dashed #fbc02d; font-size: 13px; }
+        .submit-btn { width: 100%; margin-top: 15px; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .submit-btn:hover { background: #1557b0; }
     </style>
 </head>
 <body>
@@ -29,26 +36,44 @@
 <div class="container">
     <div class="header">
         <h1>Partner Portal</h1>
-        <div>Status: <span id="partnerStatus" class="badge">Checking...</span></div>
+        <div>Status: <span id="partnerStatus" class="badge">Active</span></div>
     </div>
 
     <div class="search-section">
-        <h3>🔍 Smart Assessment & University Search</h3>
+        <h3>🔍 Smart Assessment (Filter Results)</h3>
         <div class="grid-filters">
-            <input type="text" id="searchCountry" placeholder="Preferred Country..." onkeyup="filterResults()">
-            <select id="filterDegree" onchange="filterResults()">
-                <option value="">All Degree Levels</option>
-                <option value="UG">Undergraduate (UG)</option>
-                <option value="PG">Postgraduate (PG)</option>
-                <option value="DIPLOMA">Diploma</option>
-            </select>
-            <input type="number" id="searchGpa" placeholder="Your CGPA/GPA..." onkeyup="filterResults()">
-            <select id="filterLanguage" onchange="filterResults()">
-                <option value="">Language Test</option>
-                <option value="IELTS">IELTS</option>
-                <option value="PTE">PTE</option>
-                <option value="DUOLINGO">Duolingo</option>
-            </select>
+            <div>
+                <label style="font-size: 12px; color: #666;">Country</label>
+                <input type="text" id="searchCountry" placeholder="e.g. Australia" onkeyup="filterResults()">
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #666;">Degree</label>
+                <select id="filterDegree" onchange="filterResults()">
+                    <option value="">All Degrees</option>
+                    <option value="UG">Undergraduate (UG)</option>
+                    <option value="PG">Postgraduate (PG)</option>
+                    <option value="DIPLOMA">Diploma</option>
+                    <option value="PHD">PHD</option>
+                    <option value="RESEARCH">Research</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #666;">Academic GPA</label>
+                <input type="number" id="searchGpa" placeholder="Min GPA..." step="0.01" onkeyup="filterResults()">
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #666;">Language Test</label>
+                <select id="filterLanguage" onchange="filterResults()">
+                    <option value="">Any Test</option>
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="DUOLINGO">Duolingo</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #666;">Lang. Score</label>
+                <input type="text" id="searchLangScore" placeholder="Min Score..." onkeyup="filterResults()">
+            </div>
         </div>
     </div>
 
@@ -59,7 +84,6 @@
 <script>
     let allUniversities = [];
 
-    // ১. ডাটাবেস থেকে ডাটা নিয়ে আসা
     async function fetchUniversities() {
         try {
             const response = await fetch('/api/search-university');
@@ -70,30 +94,30 @@
         }
     }
 
-    // ২. ডাটা ডিসপ্লে করা
     function displayResults(data) {
         const container = document.getElementById('results');
-        container.innerHTML = data.length === 0 ? '<p>No matching universities found.</p>' : '';
+        container.innerHTML = data.length === 0 ? '<p style="grid-column: 1/-1; text-align: center; padding: 20px;">No universities found matching your assessment.</p>' : '';
         
         data.forEach(uni => {
             const card = `
                 <div class="uni-card">
                     <h3>${uni.name}</h3>
-                    <p><b>${uni.country}</b> | ${uni.location}</p>
+                    <p style="margin-bottom: 15px;">📍 <b>${uni.country}</b> | ${uni.location}</p>
                     <div class="details">
                         <span>🎓 Degree: <b>${uni.degree}</b></span>
                         <span>📅 Intake: <b>${uni.intake}</b></span>
                         <span>💰 Fee: <b>${uni.semesterFee} ${uni.currency}</b></span>
                         <span>📝 Lang: <b>${uni.languageRequired} (${uni.minLanguageScore})</b></span>
-                        <span>🤝 Commission: <b style="color:green">${uni.partnerCommission} BDT</b></span>
+                        <span>🏫 GPA Req: <b>${uni.minGPA || 'N/A'}</b></span>
+                        <span>🤝 Comm: <b style="color:green">${uni.partnerCommission} BDT</b></span>
                         <span>👫 Marital: <b>${uni.maritalCondition}</b></span>
                     </div>
                     <div class="bank-info">
                         🏦 <b>Bank Suggestion:</b> ${uni.bankName || 'N/A'}<br>
-                        💰 Required Balance: ${uni.bankAmountRequired || 0} ${uni.currency}<br>
-                        💸 Max Loan: ${uni.loanAmount || 0}
+                        💵 Bal. Required: ${uni.bankAmountRequired || 0} ${uni.currency}<br>
+                        📉 Max Loan: ${uni.loanAmount || 0} (${uni.bankType})
                     </div>
-                    <button style="width:100%; margin-top:10px; padding:10px; background:#1a73e8; color:white; border:none; border-radius:5px; cursor:pointer;">
+                    <button class="submit-btn" onclick="alert('Student File Submission coming soon in Login Stage!')">
                         Submit Student File
                     </button>
                 </div>
@@ -102,21 +126,24 @@
         });
     }
 
-    // ৩. ফিল্টারিং লজিক (Smart Assessment)
     function filterResults() {
         const country = document.getElementById('searchCountry').value.toLowerCase();
         const degree = document.getElementById('filterDegree').value;
         const language = document.getElementById('filterLanguage').value;
+        const langScore = document.getElementById('searchLangScore').value.toLowerCase();
+        const gpa = document.getElementById('searchGpa').value;
 
         const filtered = allUniversities.filter(uni => {
+            // ফিল্টারিং লজিক (সবগুলো ম্যাচ করলে ট্রু হবে)
             return (uni.country.toLowerCase().includes(country)) &&
                    (degree === "" || uni.degree === degree) &&
-                   (language === "" || uni.languageRequired === language);
+                   (language === "" || uni.languageRequired === language) &&
+                   (langScore === "" || uni.minLanguageScore.toLowerCase().includes(langScore)) &&
+                   (gpa === "" || parseFloat(uni.minGPA) <= parseFloat(gpa));
         });
         displayResults(filtered);
     }
 
-    // পেজ লোড হলে ডাটা আনা
     window.onload = fetchUniversities;
 </script>
 
