@@ -7,9 +7,12 @@ const app = express();
 const __root = path.resolve();
 app.use(express.json());
 app.use(express.static(path.join(__root, 'public')));
-app.use('/uploads', express.static(path.join(__root, 'public/uploads'))); // আপলোড করা ফাইল অ্যাক্সেস করার জন্য
+// আপনার ফোল্ডারের নাম 'Upload' তাই স্ট্যাটিক পাথও সেভাবে দেওয়া হলো
+app.use('/Upload', express.static(path.join(__root, 'public/Upload')));
 
-// --- MongoDB Schemas ---
+// --- 1. MongoDB Schemas ---
+
+// ইউনিভার্সিটি স্কিমা
 const universitySchema = new mongoose.Schema({
     country: String, name: String, location: String, courses: String,
     degree: String, semesterFee: Number, currency: String,
@@ -20,6 +23,7 @@ const universitySchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', universitySchema);
 
+// ইউজার স্কিমা
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true },
@@ -35,56 +39,70 @@ const studentSchema = new mongoose.Schema({
     studentName: String,
     studentPhone: String,
     appliedUniversity: String,
-    files: [String], // ফাইলের নামগুলো এখানে থাকবে
+    files: [String], // ফাইলগুলোর নামের লিস্ট
     status: { type: String, default: 'Pending' },
     submittedAt: { type: Date, default: Date.now }
 });
 const Student = mongoose.model('Student', studentSchema);
 
-// --- Multer File Storage Setup ---
+// --- 2. Multer Configuration (Fixed for "Upload" folder) ---
+
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, 'public/uploads/'),
-    filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+    destination: (req, file, cb) => {
+        cb(null, 'public/Upload/'); // নিশ্চিত করুন এই ফোল্ডারটি আপনার public ফোল্ডারে আছে
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
 });
 const upload = multer({ storage: storage });
 
-// --- API Routes ---
+// --- 3. API Routes ---
 
-// ১. স্ট্যাটাস চেক এপিআই
+// ৩.১ ইউজার স্ট্যাটাস চেক (Security)
 app.get('/api/auth/check-status', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.query.email });
-        res.json({ status: user ? user.status : 'notfound' });
+        if (user) {
+            res.json({ status: user.status });
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ২. লগইন ও রেজিস্ট্রেশন
+// ৩.২ লগইন ও রেজিস্ট্রেশন
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email, password });
     if (!user) return res.status(401).json({ success: false, message: "Invalid credentials" });
-    if (user.role !== 'admin' && user.status !== 'active') return res.status(403).json({ success: false, message: "Account inactive." });
+    if (user.role !== 'admin' && user.status !== 'active') {
+        return res.status(403).json({ success: false, message: "Account inactive or pending." });
+    }
     res.json({ success: true, role: user.role, name: user.name, email: user.email });
 });
 
 app.post('/api/auth/register', async (req, res) => {
     try {
-        await new User(req.body).save();
-        res.json({ success: true });
-    } catch (err) { res.status(400).json({ success: false }); }
+        const newUser = new User(req.body);
+        await newUser.save();
+        res.json({ success: true, message: "Registered! Waiting for approval." });
+    } catch (err) { res.status(400).json({ success: false, error: "Email exists." }); }
 });
 
-// ৩. ইউনিভার্সিটি সার্চ (Timestamp ক্যাশ সমস্যা সমাধান)
+// ৩.৩ ইউনিভার্সিটি ডাটা
 app.get('/api/search-university', async (req, res) => {
     const unis = await University.find();
     res.json(unis);
 });
 
 app.post('/api/admin/add-university', async (req, res) => {
-    await new University(req.body).save();
+    const uni = new University(req.body);
+    await uni.save();
     res.json({ success: true });
 });
 
+// ৩.৪ এডমিন ইউজার ম্যানেজমেন্ট
 app.get('/api/admin/users', async (req, res) => {
     const users = await User.find({}, '-password');
     res.json(users);
@@ -95,8 +113,7 @@ app.post('/api/admin/update-user-status', async (req, res) => {
     res.json({ success: true });
 });
 
-// ৪. স্টুডেন্ট ফাইল সাবমিশন এপিআই
-
+// ৩.৫ স্টুডেন্ট ফাইল সাবমিশন (Partner API)
 app.post('/api/partner/submit-file', upload.array('docs', 5), async (req, res) => {
     try {
         const fileNames = req.files.map(f => f.filename);
@@ -108,14 +125,27 @@ app.post('/api/partner/submit-file', upload.array('docs', 5), async (req, res) =
             files: fileNames
         });
         await newSubmission.save();
-        res.json({ success: true, message: "Application Submitted Successfully! ✅" });
+        res.json({ success: true, message: "Student File Submitted Successfully! ✅" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// --- Server & DB ---
-const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-mongoose.connect(dbURI).then(() => {
-    app.listen(process.env.PORT || 3000, () => console.log("🚀 Server Running..."));
+// ৩.৬ এডমিন প্যানেলের জন্য সাবমিশন লিস্ট দেখা (Optional for next step)
+app.get('/api/admin/submissions', async (req, res) => {
+    const submissions = await Student.find().sort({ submittedAt: -1 });
+    res.json(submissions);
 });
+
+// --- 4. Server & Database Connection ---
+
+const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+
+mongoose.connect(dbURI)
+    .then(() => {
+        app.listen(process.env.PORT || 3000, () => {
+            console.log("🚀 Server is running on port 3000");
+            console.log("📁 Upload folder ready: public/Upload");
+        });
+    })
+    .catch(err => console.log("❌ DB Error:", err));
