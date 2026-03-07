@@ -11,7 +11,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// গুরুত্বপূর্ণ: static folder পাথ ঠিক করা
+// ফাইলগুলো খুঁজে পাওয়ার জন্য স্ট্যাটিক পাথ সেট করা
+// এটি আপনার ENOENT এরর সমাধান করবে
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Cloudinary Configuration ---
@@ -38,7 +39,7 @@ mongoose.connect(mongoURI)
   .then(() => console.log('✅ MongoDB Connected Successfully'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// --- Schema ---
+// --- Database Schema ---
 const Partner = mongoose.model('Partner', new mongoose.Schema({
   name: String,
   email: String,
@@ -47,14 +48,14 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }));
 
-// --- ৩টি প্রধান লিঙ্ক/রাউট ---
+// --- লিঙ্ক/রাউট সমূহ ---
 
 // ১. পার্টনার ফর্ম (মেইন লিঙ্ক)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ২. ডাটা সাবমিট (ফাইলসহ)
+// ২. ডাটা সাবমিট রাউট
 app.post('/submit-partner', upload.single('document'), async (req, res) => {
   try {
     const { name, email, phone } = req.body;
@@ -65,12 +66,12 @@ app.post('/submit-partner', upload.single('document'), async (req, res) => {
     await newPartner.save();
     res.status(200).send('✅ Success! Data and file saved.');
   } catch (error) {
-    res.status(500).send('❌ Error: Could not save data.');
+    res.status(500).send('❌ Error saving data.');
   }
 });
 
-// ৩. অ্যাডমিন প্যানেল (গোপন লিঙ্ক)
-// আপনার লিঙ্ক হবে: https://your-site.onrender.com/admin-panel?pass=CRM2026
+// ৩. অ্যাডমিন প্যানেল (পাসওয়ার্ড প্রটেক্টেড)
+// লিঙ্ক: https://your-site.onrender.com/admin-panel?pass=CRM2026
 app.get('/admin-panel', async (req, res) => {
   if (req.query.pass !== 'CRM2026') {
     return res.status(401).send('<h1>🚫 Access Denied</h1>');
@@ -89,7 +90,7 @@ app.get('/admin-panel', async (req, res) => {
 
     res.send(`
       <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #333;">🎓 Admin Dashboard - Student List</h2>
+        <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">🎓 Admin Dashboard</h2>
         <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
           <tr style="background:#f4f4f4; text-align:left;">
             <th style="padding:10px; border:1px solid #ddd;">Name</th>
