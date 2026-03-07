@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Add University Assessment</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: auto; }
+        h2 { color: #333; text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        button { grid-column: span 2; padding: 15px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
+        button:hover { background: #0056b3; }
+        .success-msg { color: green; text-align: center; display: none; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Add New University Data</h2>
+    <form id="uniForm">
+        <div class="grid">
+            <div class="input-group"><label>Country</label><input type="text" id="country" required></div>
+            <div class="input-group"><label>University Name</label><input type="text" id="name" required></div>
+            <div class="input-group"><label>Location/City</label><input type="text" id="location"></div>
+            <div class="input-group"><label>Available Courses</label><input type="text" id="courses"></div>
+            
+            <div class="input-group">
+                <label>Degree Level</label>
+                <select id="degree">
+                    <option value="UG">Undergraduate (UG)</option>
+                    <option value="PG">Postgraduate (PG)</option>
+                    <option value="DIPLOMA">Diploma</option>
+                    <option value="PHD">PHD</option>
+                </select>
+            </div>
+
+            <div class="input-group"><label>Semester Fee</label><input type="number" id="semesterFee"></div>
+            <div class="input-group">
+                <label>Currency</label>
+                <select id="currency">
+                    <option value="USD">USD</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CAD">CAD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="EUR">EUR</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label>Language Requirement</label>
+                <select id="languageRequired">
+                    <option value="IELTS">IELTS</option>
+                    <option value="PTE">PTE</option>
+                    <option value="DUOLINGO">Duolingo</option>
+                </select>
+            </div>
+            <div class="input-group"><label>Min Score (Band/Points)</label><input type="text" id="minLanguageScore"></div>
+            <div class="input-group"><label>Min GPA/CGPA</label><input type="text" id="minGPA"></div>
+            <div class="input-group"><label>Intake (e.g. Sep 2026)</label><input type="text" id="intake"></div>
+            <div class="input-group"><label>Scholarship Details</label><input type="text" id="scholarship"></div>
+            <div class="input-group"><label>Partner Commission (BDT)</label><input type="number" id="partnerCommission"></div>
+
+            <div class="input-group"><label>Bank Name for Loan</label><input type="text" id="bankName"></div>
+            <div class="input-group"><label>Max Loan Amount</label><input type="number" id="loanAmount"></div>
+            <div class="input-group"><label>Bank Balance Required</label><input type="number" id="bankAmountRequired"></div>
+            <div class="input-group">
+                <label>Bank Deposit Type</label>
+                <select id="bankType">
+                    <option value="Savings">Savings</option>
+                    <option value="FDR">FDR</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Marital Condition</label>
+                <select id="maritalCondition">
+                    <option value="Single">Single</option>
+                    <option value="With Spouse">With Spouse</option>
+                </select>
+            </div>
+
+            <button type="submit">Save University Assessment</button>
+        </div>
+    </form>
+    <p id="msg" class="success-msg">Data Saved Successfully! ✅</p>
+</div>
+
+<script>
+    document.getElementById('uniForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            country: document.getElementById('country').value,
+            name: document.getElementById('name').value,
+            location: document.getElementById('location').value,
+            courses: document.getElementById('courses').value,
+            degree: document.getElementById('degree').value,
+            semesterFee: document.getElementById('semesterFee').value,
+            currency: document.getElementById('currency').value,
+            languageRequired: document.getElementById('languageRequired').value,
+            minLanguageScore: document.getElementById('minLanguageScore').value,
+            minGPA: document.getElementById('minGPA').value,
+            intake: document.getElementById('intake').value,
+            scholarship: document.getElementById('scholarship').value,
+            partnerCommission: document.getElementById('partnerCommission').value,
+            bankName: document.getElementById('bankName').value,
+            loanAmount: document.getElementById('loanAmount').value,
+            bankAmountRequired: document.getElementById('bankAmountRequired').value,
+            bankType: document.getElementById('bankType').value,
+            maritalCondition: document.getElementById('maritalCondition').value
+        };
+
+        const response = await fetch('/api/admin/add-university', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+        if(result.success) {
+            document.getElementById('msg').style.display = 'block';
+            document.getElementById('uniForm').reset();
+        } else {
+            alert("Error saving data!");
+        }
+    });
+</script>
+
+</body>
+</html>
