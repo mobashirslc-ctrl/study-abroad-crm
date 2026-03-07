@@ -7,7 +7,7 @@ const __root = path.resolve();
 app.use(express.json());
 app.use(express.static(path.join(__root, 'public')));
 
-// Schemes
+// --- Schemes ---
 const universitySchema = new mongoose.Schema({
     country: String, name: String, location: String, courses: String,
     degree: String, semesterFee: Number, currency: String,
@@ -27,18 +27,24 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// Routes
+// --- Routes ---
 app.get('/', (req, res) => res.sendFile(path.join(__root, 'public', 'login.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__root, 'public', 'admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__root, 'public', 'partner.html')));
 
-// Auth APIs
-app.post('/api/auth/register', async (req, res) => {
+// --- Auth & Security APIs ---
+
+// ১. স্ট্যাটাস চেক এপিআই (Deactivation ফিক্স করার জন্য)
+app.get('/api/auth/check-status', async (req, res) => {
     try {
-        const newUser = new User(req.body);
-        await newUser.save();
-        res.json({ success: true, message: "Registration successful! Wait for Admin approval." });
-    } catch (err) { res.status(400).json({ success: false, error: "Email already exists." }); }
+        const email = req.query.email;
+        const user = await User.findOne({ email });
+        if (user) {
+            res.json({ status: user.status });
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -51,7 +57,15 @@ app.post('/api/auth/login', async (req, res) => {
     res.json({ success: true, role: user.role, name: user.name, email: user.email });
 });
 
-// Admin APIs
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const newUser = new User(req.body);
+        await newUser.save();
+        res.json({ success: true, message: "Registration successful! Wait for Admin approval." });
+    } catch (err) { res.status(400).json({ success: false, error: "Email already exists." }); }
+});
+
+// --- Data APIs ---
 app.get('/api/admin/users', async (req, res) => {
     const users = await User.find({}, '-password');
     res.json(users);
@@ -73,7 +87,8 @@ app.get('/api/search-university', async (req, res) => {
     res.json(unis);
 });
 
+// --- DB Connection ---
 const dbURI = `mongodb+srv://IHPCRM:ihp2026@cluster0.8qewhkr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 mongoose.connect(dbURI).then(() => {
-    app.listen(process.env.PORT || 3000, () => console.log("Server Running..."));
+    app.listen(process.env.PORT || 3000, () => console.log("🚀 Server Running..."));
 });
