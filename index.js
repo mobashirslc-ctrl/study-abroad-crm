@@ -11,9 +11,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ফাইলগুলো খুঁজে পাওয়ার জন্য স্ট্যাটিক পাথ সেট করা
-// এটি আপনার ENOENT এরর সমাধান করবে
-app.use(express.static(path.join(__dirname, 'public')));
+// ফাইল পাথ ঠিক করা
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
 
 // --- Cloudinary Configuration ---
 cloudinary.config({
@@ -48,11 +48,11 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }));
 
-// --- লিঙ্ক/রাউট সমূহ ---
+// --- সংশোধিত রাউট সমূহ (আপনার ফাইল অনুযায়ী) ---
 
-// ১. পার্টনার ফর্ম (মেইন লিঙ্ক)
+// ১. মূল হোম পেজ (এটি এখন আপনার partner.html ফাইলটি দেখাবে)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicPath, 'partner.html'));
 });
 
 // ২. ডাটা সাবমিট রাউট
@@ -70,8 +70,7 @@ app.post('/submit-partner', upload.single('document'), async (req, res) => {
   }
 });
 
-// ৩. অ্যাডমিন প্যানেল (পাসওয়ার্ড প্রটেক্টেড)
-// লিঙ্ক: https://your-site.onrender.com/admin-panel?pass=CRM2026
+// ৩. অ্যাডমিন প্যানেল (লিঙ্ক: /admin-panel?pass=CRM2026)
 app.get('/admin-panel', async (req, res) => {
   if (req.query.pass !== 'CRM2026') {
     return res.status(401).send('<h1>🚫 Access Denied</h1>');
@@ -83,15 +82,15 @@ app.get('/admin-panel', async (req, res) => {
       <tr style="border-bottom: 1px solid #ddd;">
         <td style="padding:10px;">${s.name}</td>
         <td style="padding:10px;">${s.phone}</td>
-        <td style="padding:10px;"><a href="${s.documentUrl}" target="_blank" style="color:blue;">View File</a></td>
+        <td style="padding:10px;"><a href="${s.documentUrl}" target="_blank">View File</a></td>
         <td style="padding:10px;">${new Date(s.createdAt).toLocaleDateString()}</td>
       </tr>
     `).join('');
 
     res.send(`
-      <div style="font-family: Arial, sans-serif; padding: 20px;">
-        <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">🎓 Admin Dashboard</h2>
-        <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+      <div style="font-family: Arial; padding: 20px;">
+        <h2>🎓 Admin Dashboard</h2>
+        <table style="width:100%; border-collapse: collapse;">
           <tr style="background:#f4f4f4; text-align:left;">
             <th style="padding:10px; border:1px solid #ddd;">Name</th>
             <th style="padding:10px; border:1px solid #ddd;">Phone</th>
