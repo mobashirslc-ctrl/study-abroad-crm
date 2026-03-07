@@ -11,7 +11,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ফাইল পাথ ঠিক করা
+// ফাইল পাথ ঠিক করা (Static folder)
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
@@ -48,9 +48,9 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }));
 
-// --- সংশোধিত রাউট সমূহ (আপনার ফাইল অনুযায়ী) ---
+// --- সংশোধিত লিঙ্কসমূহ (আপনার ফাইল অনুযায়ী) ---
 
-// ১. মূল হোম পেজ (এটি এখন আপনার partner.html ফাইলটি দেখাবে)
+// ১. পার্টনার ফর্ম (হোম পেজ) - এটি আপনার 'partner.html' ফাইলটি দেখাবে
 app.get('/', (req, res) => {
   res.sendFile(path.join(publicPath, 'partner.html'));
 });
@@ -64,13 +64,14 @@ app.post('/submit-partner', upload.single('document'), async (req, res) => {
       documentUrl: req.file ? req.file.path : null
     });
     await newPartner.save();
-    res.status(200).send('✅ Success! Data and file saved.');
+    res.status(200).send('✅ Success! Data and file saved successfully.');
   } catch (error) {
     res.status(500).send('❌ Error saving data.');
   }
 });
 
 // ৩. অ্যাডমিন প্যানেল (লিঙ্ক: /admin-panel?pass=CRM2026)
+// এটি ব্রাউজারেই একটি সুন্দর টেবিল দেখাবে
 app.get('/admin-panel', async (req, res) => {
   if (req.query.pass !== 'CRM2026') {
     return res.status(401).send('<h1>🚫 Access Denied</h1>');
@@ -82,27 +83,32 @@ app.get('/admin-panel', async (req, res) => {
       <tr style="border-bottom: 1px solid #ddd;">
         <td style="padding:10px;">${s.name}</td>
         <td style="padding:10px;">${s.phone}</td>
-        <td style="padding:10px;"><a href="${s.documentUrl}" target="_blank">View File</a></td>
+        <td style="padding:10px;"><a href="${s.documentUrl}" target="_blank" style="color:blue; text-decoration:none; font-weight:bold;">View File</a></td>
         <td style="padding:10px;">${new Date(s.createdAt).toLocaleDateString()}</td>
       </tr>
     `).join('');
 
     res.send(`
-      <div style="font-family: Arial; padding: 20px;">
-        <h2>🎓 Admin Dashboard</h2>
-        <table style="width:100%; border-collapse: collapse;">
-          <tr style="background:#f4f4f4; text-align:left;">
-            <th style="padding:10px; border:1px solid #ddd;">Name</th>
-            <th style="padding:10px; border:1px solid #ddd;">Phone</th>
-            <th style="padding:10px; border:1px solid #ddd;">Document</th>
-            <th style="padding:10px; border:1px solid #ddd;">Date</th>
-          </tr>
-          ${tableRows}
-        </table>
+      <div style="font-family: Arial, sans-serif; padding: 40px; background: #f4f7f6; min-height: 100vh;">
+        <div style="max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <h2 style="color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px;">🎓 Study Abroad CRM - Admin Dashboard</h2>
+          <table style="width:100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background:#007bff; color:white; text-align:left;">
+                <th style="padding:12px; border:1px solid #ddd;">Name</th>
+                <th style="padding:12px; border:1px solid #ddd;">Phone</th>
+                <th style="padding:12px; border:1px solid #ddd;">Document</th>
+                <th style="padding:12px; border:1px solid #ddd;">Date</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+          <p style="margin-top:20px; color:#666;">Total Records: ${students.length}</p>
+        </div>
       </div>
     `);
   } catch (err) {
-    res.status(500).send("Error loading admin data");
+    res.status(500).send("Error loading admin dashboard");
   }
 });
 
