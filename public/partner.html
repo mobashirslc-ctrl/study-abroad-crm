@@ -12,7 +12,7 @@
         .search-section { background: white; padding: 25px; border-radius: 12px; margin-top: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .grid-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
         label { font-size: 13px; font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 14px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         
         .search-btn { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 20px; font-size: 16px; transition: 0.2s; }
         .search-btn:hover { background: #1557b0; }
@@ -22,7 +22,7 @@
         .details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; color: #444; margin-top: 15px; }
         .details b { color: #1a73e8; }
         
-        .bank-box { background: #fffde7; padding: 12px; border-radius: 8px; border: 1px dashed #fbc02d; margin-top: 15px; font-size: 12px; }
+        .bank-box { background: #e3f2fd; padding: 12px; border-radius: 8px; border: 1px dashed #1a73e8; margin-top: 15px; font-size: 12px; color: #0d47a1; }
         .logout-btn { background: #ff4d4d; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .no-result { grid-column: 1/-1; text-align: center; padding: 60px; color: #999; border: 2px dashed #ddd; border-radius: 12px; background: white; }
     </style>
@@ -53,6 +53,10 @@
                     <option value="PG">Postgraduate (PG)</option>
                     <option value="DIPLOMA">Diploma</option>
                 </select>
+            </div>
+            <div>
+                <label>GPA / CGPA</label>
+                <input type="number" step="0.01" id="inGPA" placeholder="e.g. 3.50">
             </div>
             <div>
                 <label>Language Type</label>
@@ -106,10 +110,11 @@
     function runSearch() {
         const c = document.getElementById('inCountry').value.toLowerCase();
         const d = document.getElementById('inDegree').value;
+        const g = document.getElementById('inGPA').value;
         const lt = document.getElementById('inLangType').value;
         const ls = document.getElementById('inLangScore').value.toLowerCase();
 
-        if (!c && !d && !lt && !ls) {
+        if (!c && !d && !g && !lt && !ls) {
             alert("Please input at least one filter criteria.");
             return;
         }
@@ -117,6 +122,7 @@
         const filtered = allUnis.filter(u => {
             return (c === "" || u.country.toLowerCase().includes(c)) &&
                    (d === "" || u.degree === d) &&
+                   (g === "" || parseFloat(u.minGPA) <= parseFloat(g)) &&
                    (lt === "" || u.languageRequired === lt) &&
                    (ls === "" || u.minLanguageScore.toLowerCase().includes(ls));
         });
@@ -141,14 +147,14 @@
                     <span>📅 Intake: <b>${u.intake}</b></span>
                     <span>💰 Fee: <b>${u.semesterFee} ${u.currency}</b></span>
                     <span>📝 Lang: <b>${u.languageRequired} (${u.minLanguageScore})</b></span>
-                    <span>👫 Marital: <b>${u.maritalCondition || 'Single/Any'}</b></span>
-                    <span style="color: green;">💸 Comm: <b>${u.partnerCommission || 0} BDT</b></span>
+                    <span>📊 Min GPA: <b>${u.minGPA || 'N/A'}</b></span>
+                    <span>👫 Marital: <b>${u.maritalCondition || 'Any'}</b></span>
                 </div>
 
                 <div class="bank-box">
-                    🏦 <b>Bank Suggestion:</b> ${u.bankName || 'Any'}<br>
-                    💵 <b>Required Balance:</b> ${u.bankAmountRequired || 0} ${u.currency}<br>
-                    🛡️ <b>Type:</b> ${u.bankType || 'N/A'} | <b>Max Loan:</b> ${u.loanAmount || 0}
+                    🏦 <b>Bank Support:</b> ${u.bankName || 'Any'}<br>
+                    💵 <b>Balance Req:</b> ${u.bankAmountRequired || 0} ${u.currency}<br>
+                    💰 <b>Max Loan: ${u.loanAmount || 0} ${u.currency}</b>
                 </div>
 
                 <button style="width:100%; margin-top:15px; padding:12px; background:#1a73e8; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">
