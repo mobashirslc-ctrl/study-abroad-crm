@@ -3,22 +3,29 @@
 <head>
     <title>IHP Master Admin</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 15px; max-width: 900px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
-        button { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .tab-btn { padding: 10px 20px; cursor: pointer; border: none; background: #ddd; margin-right: 5px; }
+        .tab-btn.active { background: #1a73e8; color: white; }
+        .section { display: none; background: white; padding: 20px; border-radius: 8px; margin-top: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        button.save { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>🎓 Master Admin - Add University</h2>
+
+    <h2>🎓 IHP Master Admin Control</h2>
+    <button class="tab-btn active" onclick="showTab('uni')">1. University Add</button>
+    <button class="tab-btn" onclick="showTab('partners')">2. Partner Control</button>
+    <button class="tab-btn" onclick="showTab('tracking')">3. File Tracking</button>
+
+    <div id="uni" class="section" style="display:block;">
+        <h3>Add University for Assessment</h3>
         <form id="uniForm">
             <div class="grid">
-                <input type="text" name="country" placeholder="Country (e.g. UK)" required>
+                <input type="text" name="country" placeholder="Country" required>
                 <input type="text" name="uniName" placeholder="University Name" required>
-                <input type="text" name="location" placeholder="Location (City)">
+                <input type="text" name="location" placeholder="Location">
                 <input type="text" name="course" placeholder="Course Name">
                 <input type="text" name="intake" placeholder="Intake (Jan/Sept)">
                 <select name="degree">
@@ -28,27 +35,49 @@
                 <select name="language">
                     <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
                 </select>
-                <input type="text" name="minScore" placeholder="Min Language Score">
-                <input type="text" name="academicScore" placeholder="Min CGPA/GPA">
-                <input type="number" name="fee" placeholder="Semester Fee">
-                <select name="currency"><option>USD</option><option>GBP</option><option>AUD</option><option>CAD</option><option>BDT</option></select>
-                <input type="text" name="bankBalance" placeholder="Bank Balance Req.">
-                <input type="text" name="bankName" placeholder="Bank Name BD">
+                <input type="text" name="minScore" placeholder="Min Lang Score">
+                <input type="text" name="academicScore" placeholder="Academic Score Box">
+                <input type="text" name="fee" placeholder="Semester Fee per year">
+                <select name="currency">
+                    <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option>
+                    <option>EURO</option><option>TAKA</option><option>UK POUND</option>
+                </select>
+                <input type="text" name="bankBalance" placeholder="Required Bank Balance">
+                <select name="bankType"><option>FDR</option><option>SAVINGS</option></select>
+                <select name="maritalStatus"><option>Single</option><option>With spouse</option></select>
+                <input type="text" name="bankName" placeholder="Bank Name Suggestion">
                 <input type="text" name="loanAmount" placeholder="Loan Amount">
-                <select name="maritalStatus"><option>Single</option><option>With Spouse</option></select>
-                <input type="text" name="partnerCommission" placeholder="Commission">
-                <button type="submit">SAVE TO SYSTEM</button>
+                <input type="text" name="partnerCommission" placeholder="Partner Commission">
+                <button type="submit" class="save">SAVE UNIVERSITY</button>
             </div>
         </form>
     </div>
+
+    <div id="partners" class="section">
+        <h3>Partner Registration & List</h3>
+        <table border="1" width="100%" style="border-collapse:collapse;">
+            <tr style="background:#eee;"><th>Name</th><th>Status</th><th>Withdraw Request</th><th>Action</th></tr>
+            <tr><td>Partner ABC</td><td>Pending</td><td>৳ 5000</td>
+                <td><button style="background:green;color:white;">Active</button> <button style="background:red;color:white;">Deactivate</button></td>
+            </tr>
+        </table>
+    </div>
+
     <script>
+        function showTab(id) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
         document.getElementById('uniForm').onsubmit = async (e) => {
             e.preventDefault();
             const res = await fetch('/api/add-uni', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
             });
-            if(res.ok) { alert("✅ Data Saved!"); e.target.reset(); }
+            if(res.ok) alert("✅ Data Saved Successfully!");
         };
     </script>
 </body>
