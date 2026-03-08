@@ -1,28 +1,51 @@
 <!DOCTYPE html>
 <html>
-<head><title>Admin Panel</title></head>
-<body style="font-family:sans-serif; padding:20px;">
-    <h2>🏫 Add University (Detailed)</h2>
-    <input type="text" id="uCountry" placeholder="Country">
-    <input type="text" id="uName" placeholder="University Name">
-    <select id="uDeg">
-        <option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-    </select>
-    <select id="uCur">
-        <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
-    </select>
-    <select id="uBankType"><option>FDR</option><option>SAVINGS</option></select>
-    <select id="uMarital"><option>Single</option><option>With spouse</option></select>
-    <input type="text" id="uBankBD" placeholder="BD Bank Name">
-    <input type="text" id="uComm" placeholder="Partner Commission">
-    <button onclick="save()" style="padding:10px 20px; background:blue; color:white;">SAVE DATA</button>
+<head>
+    <title>Admin Dashboard | IHP</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, select { padding: 10px; margin: 5px; width: 200px; border-radius: 5px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
 
-    <script>
-        async function save() {
-            const body = { country: document.getElementById('uCountry').value, uniName: document.getElementById('uName').value, degree: document.getElementById('uDeg').value, currency: document.getElementById('uCur').value, bankType: document.getElementById('uBankType').value, maritalStatus: document.getElementById('uMarital').value, bankNameBD: document.getElementById('uBankBD').value, partnerCommission: document.getElementById('uComm').value };
-            await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-            alert("University Saved!");
-        }
-    </script>
+    <div class="card">
+        <h2>🏫 Add University (Detailed)</h2>
+        <input type="text" id="uCountry" placeholder="Country">
+        <input type="text" id="uName" placeholder="University Name">
+        <select id="uDeg">
+            <option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+        </select>
+        <select id="uCur">
+            <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
+        </select>
+        <select id="uBankType"><option>FDR</option><option>SAVINGS</option></select>
+        <select id="uMarital"><option>Single</option><option>With spouse</option></select>
+        <input type="text" id="uBankBD" placeholder="Bank Name BD">
+        <input type="text" id="uComm" placeholder="Partner Commission">
+        <button onclick="saveUni()">SAVE UNIVERSITY</button>
+    </div>
+
+    <div class="card">
+        <h2>🤝 Partner Approval List</h2>
+        <div id="pList">Loading partners...</div>
+    </div>
+
+<script>
+    async function saveUni() {
+        const body = { country: document.getElementById('uCountry').value, uniName: document.getElementById('uName').value, degree: document.getElementById('uDeg').value, currency: document.getElementById('uCur').value, bankType: document.getElementById('uBankType').value, maritalStatus: document.getElementById('uMarital').value, bankNameBD: document.getElementById('uBankBD').value, partnerCommission: document.getElementById('uComm').value };
+        await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        alert("University Added Successfully!");
+    }
+
+    // এই ফাংশনটি দিয়ে আপনি পার্টনারকে Active করতে পারবেন
+    async function updateStatus(id, status) {
+        await fetch('/api/admin/update-partner', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
+        alert("Status Updated to: " + status);
+        location.reload();
+    }
+</script>
 </body>
 </html>
