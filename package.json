@@ -1,13 +1,14 @@
 {
-  "name": "ihp-crm",
+  "name": "ihp-crm-global",
   "version": "1.0.0",
-  "description": "IHP Global CRM System",
+  "description": "IHP Global CRM with 4 Dashboards",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "mongoose": "^7.0.0"
+    "mongoose": "^7.0.0",
+    "path": "^0.12.7"
   }
 }
