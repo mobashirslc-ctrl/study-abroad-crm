@@ -23,57 +23,30 @@ const UniSchema = new mongoose.Schema({
 const University = mongoose.model('University', UniSchema);
 
 const PartnerSchema = new mongoose.Schema({
-    name: String, email: String, pass: String, contact: String, 
-    status: { type: String, default: 'Pending' }, // Active / Deactivate
-    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0}, withdrawn: {type: Number, default: 0} },
+    name: String, email: String, pass: String, status: { type: String, default: 'Pending' },
+    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0} },
     subscription: { package: String, expireDate: Date },
     withdrawEnabled: { type: Boolean, default: false }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-const FileSchema = new mongoose.Schema({
-    studentName: String, contact: String, university: String,
-    status: { type: String, default: 'File Opened' },
-    complianceMember: { name: {type: String, default: 'Unassigned'}, contact: String },
-    partnerId: mongoose.Schema.Types.ObjectId,
-    openDate: { type: Date, default: Date.now }
+// --- Routes to Serve HTML Files ---
+// এই রুটগুলোই আপনার 404 এরর সমাধান করবে
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
-const FileTrack = mongoose.model('FileTrack', FileSchema);
+
+app.get('/partner', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'partner.html'));
+});
+
+app.get('/compliance', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'compliance.html'));
+});
 
 // --- APIs ---
 
-// ১. সাবস্ক্রিপশন অটো-ব্লক চেক (Middleware)
-const checkPartnerAccess = async (req, res, next) => {
-    const partner = await Partner.findById(req.headers.partnerid);
-    if (!partner) return res.status(403).json({ success: false, message: "Partner not found" });
-    if (partner.status !== 'Active') return res.status(403).json({ success: false, message: "Account is Pending/Deactivated" });
-    
-    // Auto-block if expired
-    if (new Date(partner.subscription.expireDate) < new Date()) {
-        return res.status(403).json({ success: false, message: "Subscription Expired!" });
-    }
-    next();
-};
-
-// ২. অ্যাডমিন: পার্টনার ম্যানেজমেন্ট
-app.get('/api/admin/partners', async (req, res) => {
-    res.json(await Partner.find());
-});
-
-app.post('/api/admin/partner-control', async (req, res) => {
-    const { id, status, subPackage, subDays } = req.body;
-    let expireDate = new Date();
-    expireDate.setDate(expireDate.getDate() + parseInt(subDays));
-    
-    await Partner.findByIdAndUpdate(id, { 
-        status: status, 
-        'subscription.package': subPackage, 
-        'subscription.expireDate': expireDate 
-    });
-    res.json({ success: true });
-});
-
-// ৩. অ্যাডমিন: ইউনিভার্সিটি অ্যাড (আপনার সব ফিল্ড সহ)
+// Admin: Add University
 app.post('/api/admin/add-uni', async (req, res) => {
     try {
         const uni = new University(req.body);
@@ -82,38 +55,15 @@ app.post('/api/admin/add-uni', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// ৪. পার্টনার: স্মার্ট অ্যাসেসমেন্ট (উইথ ফিল্টার)
+// Partner: Search University
 app.get('/api/search-uni', async (req, res) => {
-    const { country, degree, language } = req.query;
+    const { country, degree } = req.query;
     const query = {};
     if(country) query.country = new RegExp(country, 'i');
-    if(degree && degree !== 'Degree') query.degree = degree;
-    if(language && language !== 'Language') query.language = language;
-    
+    if(degree && degree !== 'Select Degree') query.degree = degree;
     const results = await University.find(query);
     res.json(results);
 });
 
-// ৫. কমপ্লায়েন্স: কমিশন রিলিজ
-app.post('/api/compliance/release', async (req, res) => {
-    const { partnerId, fileId, compName, compContact } = req.body;
-    // পার্টনারের উইথড্র অপশন খুলে দেওয়া
-    await Partner.findByIdAndUpdate(partnerId, { withdrawEnabled: true });
-    // ফাইল স্ট্যাটাস আপডেট
-    await FileTrack.findByIdAndUpdate(fileId, { 
-        status: 'Commission Active',
-        'complianceMember.name': compName,
-        'complianceMember.contact': compContact
-    });
-    res.json({ success: true });
-});
-
-// ৬. রেজিস্ট্রেশন এপিআই
-app.post('/api/auth/register', async (req, res) => {
-    const partner = new Partner(req.body);
-    await partner.save();
-    res.json({ success: true, message: "Registration successful. Wait for Admin Approval." });
-});
-
-const PORT = 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Live: http://localhost:${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 CRM running on port ${PORT}`));
