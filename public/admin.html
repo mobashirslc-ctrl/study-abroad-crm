@@ -1,25 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8"><title>Master Admin - IHP CRM</title>
+    <title>IHP Master Admin</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; padding: 30px; border-radius: 15px; max-width: 800px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
-        button { grid-column: span 2; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        h2 { text-align: center; color: #1a73e8; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; max-width: 900px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>🎓 Master Admin - Entry Form</h2>
+        <h2 style="color:#1a73e8; text-align:center;">🎓 Admin - Add University Data</h2>
         <form id="uniForm">
-            <div class="grid">
-                <input type="text" name="country" placeholder="Country (e.g. UK)" required>
+            <div class="form-grid">
+                <input type="text" name="country" placeholder="Country (e.g. AUSTRALIA)" required>
                 <input type="text" name="uniName" placeholder="University Name" required>
-                <input type="text" name="location" placeholder="Location (City)">
-                <input type="text" name="course" placeholder="Course Name" required>
+                <input type="text" name="location" placeholder="Location">
+                <input type="text" name="course" placeholder="Course Name">
                 <input type="text" name="intake" placeholder="Intake (Jan/Sept)">
                 <select name="degree">
                     <option>UG</option><option>PG</option><option>DIPLOMA</option>
@@ -28,31 +27,29 @@
                 <select name="language">
                     <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
                 </select>
-                <input type="text" name="minScore" placeholder="Min Language Score (6.5)">
+                <input type="text" name="minScore" placeholder="Min Language Score">
                 <input type="text" name="academicScore" placeholder="Min CGPA/GPA">
                 <input type="number" name="fee" placeholder="Semester Fee">
                 <select name="currency">
-                    <option>USD</option><option>GBP</option><option>AUD</option><option>CAD</option><option>BDT</option><option>EURO</option>
+                    <option>USD</option><option>GBP</option><option>AUD</option><option>CAD</option><option>BDT</option>
                 </select>
                 <input type="text" name="bankBalance" placeholder="Required Bank Balance">
-                <select name="bankType"><option>FDR</option><option>SAVINGS</option></select>
-                <select name="maritalStatus"><option>Single</option><option>With Spouse</option></select>
-                <input type="text" name="bankName" placeholder="Bank Name BD (Suggestion)">
+                <input type="text" name="bankName" placeholder="Bank Name BD">
                 <input type="text" name="loanAmount" placeholder="Loan Amount">
+                <select name="maritalStatus"><option>Single</option><option>With Spouse</option></select>
                 <input type="text" name="partnerCommission" placeholder="Partner Commission">
-                <button type="submit">SAVE TO SYSTEM</button>
+                <button type="submit">SAVE TO DATABASE</button>
             </div>
         </form>
     </div>
     <script>
         document.getElementById('uniForm').onsubmit = async (e) => {
             e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target));
             const res = await fetch('/api/add-uni', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+                body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
             });
-            if(res.ok) { alert("✅ Success!"); e.target.reset(); }
+            if(res.ok) { alert("✅ Data Saved Successfully!"); e.target.reset(); }
         };
     </script>
 </body>

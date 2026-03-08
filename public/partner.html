@@ -2,75 +2,132 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Assessment</title>
+    <title>Partner Portal | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; padding: 15px; }
-        .container { max-width: 600px; margin: auto; }
+        :root { --primary: #1a73e8; --bg: #f8f9fa; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        .header { background: white; padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; }
+        .container { max-width: 600px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-search { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        .result-item { background: white; padding: 20px; border-radius: 12px; margin-top: 15px; border-top: 5px solid #1a73e8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .uni-title { color: #1a73e8; font-size: 18px; font-weight: bold; margin-bottom: 5px; }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
-        .label { color: #666; font-weight: bold; }
-        .value { color: #333; font-weight: 600; }
-        .comm { background: #e6f4ea; color: #137333; padding: 10px; text-align: center; border-radius: 6px; font-weight: bold; margin-top: 15px; }
+        /* Form Styles */
+        select, input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dadce0; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* Results & Tracking */
+        .result-item { background: white; padding: 15px; border-radius: 12px; border-left: 5px solid var(--primary); margin-top: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; border-bottom: 1px solid #f1f1f1; padding-bottom: 3px; }
+        .label { color: #666; } .val { font-weight: bold; color: #333; }
+
+        /* Wallet */
+        .wallet-stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: #e8f0fe; padding: 15px; border-radius: 10px; text-align: center; }
+
+        /* Bottom Nav */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #ddd; }
+        .nav-item { text-align: center; color: #5f6368; font-size: 11px; text-decoration: none; flex: 1; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+<div class="header"><h2 style="margin:0; font-size:18px; color:var(--primary);">IHP Partner Dashboard</h2></div>
+
+<div class="container">
+    <div id="assessment" class="tab-content">
         <div class="card">
-            <h3><i class="fas fa-search"></i> Smart Assessment</h3>
-            <form id="searchForm">
-                <input type="text" id="country" placeholder="Country (e.g. UK)" required>
-                <select id="degree">
-                    <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
-                </select>
-                <select id="lang">
-                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                </select>
-                <button type="submit" class="btn-search">SEARCH UNIVERSITIES</button>
-            </form>
+            <h3 style="margin-top:0;"><i class="fas fa-magic"></i> Smart Assessment</h3>
+            <input type="text" id="s_country" placeholder="Country (e.g. AUSTRALIA)">
+            <select id="s_degree">
+                <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            <select id="s_lang">
+                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <input type="text" placeholder="CGPA & Language Score Box">
+            <button class="btn-main" onclick="searchUni()">SEARCH & VIEW RESULT</button>
         </div>
-        <div id="results"></div>
+        <div id="uniResults"></div>
     </div>
 
-    <script>
-        document.getElementById('searchForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const results = document.getElementById('results');
-            results.innerHTML = "Searching...";
-            
-            const c = document.getElementById('country').value;
-            const d = document.getElementById('degree').value;
-            const l = document.getElementById('lang').value;
+    <div id="tracking" class="tab-content" style="display:none;">
+        <div class="card">
+            <h3><i class="fas fa-file-contract"></i> File Tracking</h3>
+            <div class="result-item">
+                <div class="info-row"><span class="label">Student:</span> <span class="val">Tanvir Ahmed</span></div>
+                <div class="info-row"><span class="label">Visa Status:</span> <span class="val" style="color:orange;">Pending</span></div>
+                <button class="btn-main" style="background:#34a853; padding:8px; font-size:12px; margin-top:10px;">Download PDF</button>
+            </div>
+        </div>
+    </div>
 
-            const res = await fetch(`/api/search-uni?country=${c}&degree=${d}&language=${l}`);
-            const data = await res.json();
+    <div id="wallet" class="tab-content" style="display:none;">
+        <div class="card" style="background: var(--primary); color: white;">
+            <p style="margin:0;">Total Balance</p>
+            <h2 style="margin:5px 0;">৳ 45,000</h2>
+            <p style="font-size:12px;">Subscription Expires: 31-12-2026</p>
+        </div>
+        <div class="wallet-stat">
+            <div class="stat-box"><small>Pending</small><br><b>৳ 5,000</b></div>
+            <div class="stat-box"><small>Withdrawn</small><br><b>৳ 10,000</b></div>
+        </div>
+        <div class="card">
+            <h3>Withdraw Request</h3>
+            <select><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+            <input type="number" placeholder="Enter Amount">
+            <button class="btn-main" style="background:#34a853">WITHDRAW NOW</button>
+        </div>
+    </div>
+</div>
 
-            if(data.length === 0) { results.innerHTML = "No results found."; return; }
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showTab('assessment')"><i class="fas fa-search"></i>Assessment</div>
+    <div class="nav-item" onclick="showTab('tracking')"><i class="fas fa-folder-open"></i>Tracking</div>
+    <div class="nav-item" onclick="showTab('wallet')"><i class="fas fa-wallet"></i>Wallet</div>
+    <div class="nav-item" onclick="location.href='/student'"><i class="fas fa-user-graduate"></i>Student</div>
+</div>
 
-            results.innerHTML = data.map(uni => `
-                <div class="result-item">
-                    <div class="uni-title">${uni.uniName}</div>
-                    <div style="font-size:12px; color:#666;"><i class="fas fa-map-marker-alt"></i> ${uni.location}, ${uni.country}</div>
-                    <div class="info-grid">
-                        <div><span class="label">Course:</span> <span class="value">${uni.course}</span></div>
-                        <div><span class="label">Intake:</span> <span class="value">${uni.intake}</span></div>
-                        <div><span class="label">Fee:</span> <span class="value">${uni.fee} ${uni.currency}</span></div>
-                        <div><span class="label">Bank Req:</span> <span class="value">${uni.bankBalance}</span></div>
-                        <div><span class="label">Bank Name BD:</span> <span class="value">${uni.bankName}</span></div>
-                        <div><span class="label">Loan Amount:</span> <span class="value">${uni.loanAmount}</span></div>
-                        <div><span class="label">Marital Status:</span> <span class="value">${uni.maritalStatus}</span></div>
-                        <div><span class="label">Language Req:</span> <span class="value">${uni.minScore}</span></div>
-                    </div>
-                    <div class="comm">Commission: ${uni.partnerCommission}</div>
-                    <button style="width:100%; margin-top:10px; padding:10px; background:#34a853; color:white; border:none; border-radius:6px; cursor:pointer;">OPEN STUDENT FILE</button>
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
+    async function searchUni() {
+        const results = document.getElementById('uniResults');
+        results.innerHTML = "Searching...";
+        const c = document.getElementById('s_country').value;
+        const d = document.getElementById('s_degree').value;
+        const l = document.getElementById('s_lang').value;
+
+        const res = await fetch(`/api/search-uni?country=${c}&degree=${d}&language=${l}`);
+        const data = await res.json();
+
+        if(data.length === 0) { results.innerHTML = "<div class='card'>❌ No university found!</div>"; return; }
+
+        results.innerHTML = data.map(uni => `
+            <div class="result-item">
+                <div style="font-weight:bold; color:var(--primary); font-size:16px;">${uni.uniName}</div>
+                <div style="font-size:12px; color:#666; margin-bottom:10px;">${uni.location}, ${uni.country}</div>
+                <div class="info-row"><span class="label">Course:</span> <span class="val">${uni.course}</span></div>
+                <div class="info-row"><span class="label">Intake:</span> <span class="val">${uni.intake}</span></div>
+                <div class="info-row"><span class="label">Semester Fee:</span> <span class="val">${uni.fee} ${uni.currency}</span></div>
+                <div class="info-row"><span class="label">Bank Required:</span> <span class="val">${uni.bankBalance}</span></div>
+                <div class="info-row"><span class="label">Bank Name BD:</span> <span class="val">${uni.bankName}</span></div>
+                <div class="info-row"><span class="label">Loan Amount:</span> <span class="val">${uni.loanAmount}</span></div>
+                <div class="info-row"><span class="label">Marital Status:</span> <span class="val">${uni.maritalStatus}</span></div>
+                <div style="background:#e6f4ea; padding:8px; border-radius:5px; margin-top:10px; font-weight:bold; color:#137333; font-size:13px; text-align:center;">
+                    Commission: ${uni.partnerCommission}
                 </div>
-            `).join('');
-        };
-    </script>
+                <button class="btn-main" style="margin-top:10px; padding:10px; font-size:13px;">OPEN STUDENT FILE</button>
+            </div>
+        `).join('');
+    }
+</script>
 </body>
 </html>
