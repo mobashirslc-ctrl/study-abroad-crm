@@ -1,79 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
+        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 60px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn-main { background: #1a73e8; color: white; border: none; padding: 14px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 12px; font-size: 11px; color: #888; }
-        .active { color: #1a73e8; }
-        .page { display: none; } .active-page { display: block; }
+        .btn-search { width: 100%; background: #1a73e8; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .res-card { border-left: 5px solid #1a73e8; margin-top: 10px; padding: 10px; background: #fff; border-radius: 5px; }
+        .nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; font-size: 12px; color: #777; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div id="p-search" class="page active-page">
+    <div class="container">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Enter Country Name">
+            <input type="text" id="sCountry" placeholder="Enter Country">
             <select id="sDeg">
-                <option>Select Degree</option>
-                <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+                <option value="All">All Degrees</option><option>UG</option><option>PG</option><option>PHD</option>
             </select>
-            <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-            <input type="text" placeholder="Academic Score (GPA/CGPA)">
-            <button class="btn-main" onclick="runAssessment()">FIND UNIVERSITY</button>
+            <button class="btn-search" onclick="search()">SEARCH UNIVERSITY</button>
         </div>
         <div id="results"></div>
     </div>
-
-    <div id="p-wallet" class="page">
-        <div class="card" style="background: #1a73e8; color: white;">
-            <p>Wallet Balance</p>
-            <h2>৳ 0.00</h2>
-            <small>Expiry: <span id="expireSpan">Checking...</span></small>
-        </div>
-        <div class="card">
-            <h3>Withdraw Commission</h3>
-            <select><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-            <input type="text" placeholder="Account Number">
-            <input type="number" placeholder="Amount">
-            <button class="btn-main" id="withdrawBtn" disabled>SUBMIT REQUEST</button>
-            <p style="font-size: 10px; color: red;">* Withdrawal enables after Compliance Approval</p>
-        </div>
-    </div>
-</div>
-
-<nav class="nav-bar">
-    <div class="nav-item active" onclick="showPage('p-search')"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showPage('p-wallet')"><i class="fas fa-wallet"></i><br>Wallet</div>
-</nav>
-
-<script>
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(id).classList.add('active-page');
-    }
-
-    async function runAssessment() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDeg').value}`);
-        const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `
-            <div class="card">
-                <b>${u.uniName}</b> | ${u.country}<br>
-                <small>Commission: ${u.partnerCommission} | Bank: ${u.bankType}</small>
-                <button class="btn-main" style="background: #28a745; margin-top: 10px;">OPEN STUDENT FILE</button>
-            </div>
-        `).join('');
-    }
-</script>
+    <nav class="nav">
+        <div class="nav-item">Search</div>
+        <div class="nav-item">Files</div>
+        <div class="nav-item">Wallet</div>
+    </nav>
+    <script>
+        async function search() {
+            const country = document.getElementById('sCountry').value;
+            const res = await fetch(`/api/search-uni?country=${country}&degree=${document.getElementById('sDeg').value}`);
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.map(u => `
+                <div class="card res-card">
+                    <b>${u.uniName}</b><br>
+                    <small>Course: ${u.course} | Fee: ${u.fee} ${u.currency}</small><br>
+                    <small>Commission: ${u.partnerCommission}</small><br>
+                    <button style="background:green; color:white; border:none; padding:5px; margin-top:5px; border-radius:3px;">OPEN STUDENT FILE</button>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
