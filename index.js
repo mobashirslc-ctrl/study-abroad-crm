@@ -14,42 +14,37 @@ mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, location: String, course: String, intake: String,
     degree: String, language: String, minScore: String, academicScore: String,
-    fee: String, currency: String, bankBalance: String, bankType: String,
-    maritalStatus: String, bankName: String, loanAmount: String, partnerCommission: String
+    fee: String, currency: String, bankBalance: String, bankName: String, 
+    loanAmount: String, maritalStatus: String, partnerCommission: String
 });
 const University = mongoose.model('University', UniSchema);
 
-// 2. Partner Schema (With Subscription & Wallet)
-const PartnerSchema = new mongoose.Schema({
-    name: String, email: String, 
-    wallet: { total: Number, pending: Number, withdrawn: Number },
-    subscription: { package: String, expireDate: Date, status: String } // Active/Blocked
-});
-const Partner = mongoose.model('Partner', PartnerSchema);
-
-// --- APIs ---
-
-// সাবস্ক্রিপশন চেক মিডলওয়্যার (Expired হলে ব্লক করবে)
+// 2. Partner Middleware (Subscription Block Logic)
 const checkSubscription = async (req, res, next) => {
-    // এখানে ডামি হিসেবে একটি চেক দেওয়া হলো, ভবিষ্যতে লগইন সিস্টেমের সাথে কানেক্ট হবে
-    const expiry = new Date('2026-12-31'); 
-    if (new Date() > expiry) return res.status(403).send("Subscription Expired! Portal Blocked.");
+    const expireDate = new Date('2026-12-31'); // আপনার সাবস্ক্রিপশন ডেট এখানে দিন
+    if (new Date() > expireDate) {
+        return res.status(403).send("<h1>Access Denied</h1><p>Your subscription has expired. Please contact admin.</p>");
+    }
     next();
 };
 
+// --- APIs ---
 app.post('/api/add-uni', async (req, res) => {
-    const newUni = new University(req.body);
-    await newUni.save();
-    res.json({ success: true });
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/search-uni', checkSubscription, async (req, res) => {
     const { country, degree, language } = req.query;
-    const results = await University.find({ 
-        country: new RegExp(`^${country}$`, 'i'), 
-        degree: degree.toUpperCase(), 
-        language: language.toUpperCase() 
-    });
+    const query = {};
+    if(country) query.country = new RegExp(`^${country}$`, 'i');
+    if(degree) query.degree = degree;
+    if(language) query.language = language;
+
+    const results = await University.find(query);
     res.json(results);
 });
 
