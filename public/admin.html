@@ -1,35 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IHP Admin Dashboard</title>
+    <title>IHP Master Admin</title>
     <style>
         body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
-        .sidebar { width: 250px; background: #1a237e; color: white; height: 100vh; padding: 20px; position: fixed; }
-        .content { margin-left: 270px; padding: 30px; width: 100%; }
-        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar { width: 260px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 300px; padding: 30px; width: 100%; }
+        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; font-size: 14px; }
         .nav-btn.active { background: #3949ab; font-weight: bold; }
-        .tab-content { display: none; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
-        .save-btn { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-save { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .tab-content { display: none; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP Master Admin</h2>
-    <button class="nav-btn active" onclick="openTab(event, 'uni-add')">1. University Add</button>
-    <button class="nav-btn" onclick="openTab(event, 'tracking')">2. Student Tracking</button>
-    <button class="nav-btn" onclick="openTab(event, 'partners')">3. Partner List</button>
-    <button class="nav-btn" onclick="openTab(event, 'compliance')">4. Compliance Control</button>
-    <button class="nav-btn" onclick="openTab(event, 'team')">5. Team Admin</button>
+    <h2>IHP Admin</h2>
+    <button class="nav-btn active" onclick="showTab(event, 'tab1')">1. University Add</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab2')">2. Student File Tracking</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab3')">3. Partner List & Wallet</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab4')">4. Compliance Control</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab5')">5. Team Admin</button>
 </div>
 
-<div class="content">
-    <div id="uni-add" class="tab-content" style="display:block;">
-        <h3>🎓 Add University (Assessment Fields)</h3>
-        <form id="uniForm">
-            <div class="grid">
+<div class="main">
+    <div id="tab1" class="tab-content" style="display:block;">
+        <div class="card">
+            <h3>🎓 Add University for Assessment</h3>
+            <form id="uniForm" class="grid">
                 <input type="text" name="country" placeholder="Country" required>
                 <input type="text" name="uniName" placeholder="University Name" required>
                 <input type="text" name="course" placeholder="Course Name">
@@ -54,18 +55,26 @@
                 <input type="text" name="bankNameSuggestion" placeholder="Bank name suggestion">
                 <input type="text" name="loanAmount" placeholder="Loan amount">
                 <input type="text" name="partnerCommission" placeholder="Partner Commission">
-                <button type="submit" class="save-btn">SAVE UNIVERSITY</button>
-            </div>
-        </form>
+                <button type="submit" class="btn-save">SAVE UNIVERSITY DATA</button>
+            </form>
+        </div>
     </div>
 
-    <div id="tracking" class="tab-content"><h3>Student File Tracking Content...</h3></div>
-    <div id="partners" class="tab-content"><h3>Partner List & Control Content...</h3></div>
+    <div id="tab2" class="tab-content">
+        <div class="card"><h3>📁 Student File Tracking List</h3><p>Loading files...</p></div>
+    </div>
+
+    <div id="tab3" class="tab-content">
+        <div class="card">
+            <h3>🤝 Partner Control & Withdrawals</h3>
+            <div id="partnerList">Partner list will appear here...</div>
+        </div>
+    </div>
 </div>
 
 <script>
-    function openTab(evt, tabName) {
-        var i, tabcontent, navbtn;
+    function showTab(evt, tabName) {
+        let i, tabcontent, navbtn;
         tabcontent = document.getElementsByClassName("tab-content");
         for (i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
         navbtn = document.getElementsByClassName("nav-btn");
@@ -76,12 +85,11 @@
 
     document.getElementById('uniForm').onsubmit = async (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target));
         const res = await fetch('/api/add-uni', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
+            body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
         });
-        if(res.ok) { alert("✅ Data Saved Successfully!"); e.target.reset(); }
+        if(res.ok) alert("✅ University Saved!");
     };
 </script>
 </body>
