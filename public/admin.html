@@ -6,45 +6,45 @@
     <style>
         body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
         .sidebar { width: 260px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 280px; padding: 30px; width: 100%; }
-        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; margin-bottom: 5px; width: 100%; }
+        .main { margin-left: 280px; padding: 30px; width: calc(100% - 280px); }
+        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; margin-bottom: 5px; }
         .nav-btn.active { background: #3949ab; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        .btn-download { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>IHP ADMIN</h2>
-    <button class="nav-btn active" onclick="showTab('tab1')">University Add</button>
-    <button class="nav-btn" onclick="showTab('tab2'); loadTracking()">Student Tracking</button>
-    <button class="nav-btn" onclick="showTab('tab3'); loadPartners()">Partner List</button>
+    <button class="nav-btn active" onclick="showTab('tab1')"><i class="fas fa-plus"></i> Add University</button>
+    <button class="nav-btn" onclick="showTab('tab2'); loadTracking()"><i class="fas fa-file-invoice"></i> Student Tracking</button>
+    <button class="nav-btn" onclick="showTab('tab3'); loadPartners()"><i class="fas fa-users"></i> Partner List</button>
 </div>
 
 <div class="main">
     <div id="tab1" class="tab-content">
         <div class="card">
-            <h3>Add New University</h3>
+            <h3>🎓 Add University for Assessment</h3>
             <form id="uniForm" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                 <input type="text" name="uniName" placeholder="University Name" required>
                 <input type="text" name="country" placeholder="Country" required>
                 <input type="text" name="location" placeholder="Location">
-                <input type="text" name="fee" placeholder="Fee">
+                <input type="text" name="fee" placeholder="Semester Fee">
                 <input type="text" name="partnerCommission" placeholder="Commission">
-                <button type="submit" style="grid-column: span 3; padding:12px; background:#1a237e; color:white; border:none; border-radius:8px;">Save</button>
+                <button type="submit" style="grid-column: span 3; background:#1a237e; color:white; padding:12px; border:none; border-radius:8px; cursor:pointer;">Save Data</button>
             </form>
         </div>
     </div>
 
     <div id="tab2" class="tab-content" style="display:none;">
         <div class="card">
-            <h3>Student File Tracking</h3>
+            <h3>📁 Student File Tracking (Admin View)</h3>
             <table>
                 <thead>
-                    <tr><th>Student</th><th>University</th><th>Status</th><th>Compliance</th><th>Action</th></tr>
+                    <tr><th>Student Name</th><th>University</th><th>Compliance Info</th><th>Status</th><th>Download</th></tr>
                 </thead>
                 <tbody id="trackTable"></tbody>
             </table>
@@ -53,8 +53,13 @@
 
     <div id="tab3" class="tab-content" style="display:none;">
         <div class="card">
-            <h3>Partner Requests (Approval)</h3>
-            <table id="partnerTable"></table>
+            <h3>🤝 Partner Management</h3>
+            <table>
+                <thead>
+                    <tr><th>Partner Name</th><th>Organization</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody id="partnerTable"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -63,6 +68,8 @@
     function showTab(id) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
         document.getElementById(id).style.display = 'block';
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        event.currentTarget.classList.add('active');
     }
 
     async function loadTracking() {
@@ -72,10 +79,10 @@
             <tr>
                 <td>${f.studentName}</td>
                 <td>${f.university}</td>
-                <td><span style="color:orange">${f.status}</span></td>
-                <td>${f.complianceInfo?.name || 'N/A'}</td>
+                <td>${f.complianceInfo?.name || 'IHP Member'} (${f.complianceInfo?.id || 'ID-001'})</td>
+                <td><b>${f.status}</b></td>
                 <td>
-                    <a href="${f.pdfUrl || '#'}" target="_blank" class="btn-download">
+                    <a href="${f.pdfUrl || '#'}" target="_blank" class="btn-action" style="background:#28a745;">
                         <i class="fas fa-download"></i> PDF
                     </a>
                 </td>
@@ -86,20 +93,24 @@
     async function loadPartners() {
         const res = await fetch('/api/admin/partners');
         const data = await res.json();
-        document.getElementById('partnerTable').innerHTML = `
-            <thead><tr><th>Name</th><th>Org</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>${data.map(p => `
-                <tr>
-                    <td>${p.name}</td><td>${p.orgName}</td><td>${p.status}</td>
-                    <td><button onclick="approve('${p._id}')" style="background:green; color:white;">Approve</button></td>
-                </tr>
-            `).join('')}</tbody>`;
+        document.getElementById('partnerTable').innerHTML = data.map(p => `
+            <tr>
+                <td>${p.name}</td>
+                <td>${p.orgName}</td>
+                <td>${p.status}</td>
+                <td>
+                    <button onclick="updatePartnerStatus('${p._id}', 'Active')" class="btn-action" style="background:green;">Active</button>
+                    <button onclick="updatePartnerStatus('${p._id}', 'Deactivate')" class="btn-action" style="background:red;">Block</button>
+                </td>
+            </tr>
+        `).join('');
     }
 
-    async function approve(id) {
+    async function updatePartnerStatus(id, status) {
         await fetch('/api/admin/approve-partner', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id })
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, status })
         });
         loadPartners();
     }
