@@ -4,15 +4,16 @@
     <title>IHP Master Admin</title>
     <style>
         body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
-        .sidebar { width: 260px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 300px; padding: 30px; width: 100%; }
-        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; font-size: 14px; }
-        .nav-btn.active { background: #3949ab; font-weight: bold; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .sidebar { width: 250px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 280px; padding: 30px; width: 100%; }
+        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; margin-bottom: 5px; }
+        .nav-btn.active { background: #3949ab; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
-        .btn-save { grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         .tab-content { display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
@@ -20,76 +21,69 @@
 <div class="sidebar">
     <h2>IHP Admin</h2>
     <button class="nav-btn active" onclick="showTab(event, 'tab1')">1. University Add</button>
-    <button class="nav-btn" onclick="showTab(event, 'tab2')">2. Student File Tracking</button>
-    <button class="nav-btn" onclick="showTab(event, 'tab3')">3. Partner List & Wallet</button>
-    <button class="nav-btn" onclick="showTab(event, 'tab4')">4. Compliance Control</button>
-    <button class="nav-btn" onclick="showTab(event, 'tab5')">5. Team Admin</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab2')" id="loadFiles">2. Student Tracking</button>
+    <button class="nav-btn" onclick="showTab(event, 'tab3')">3. Partner List</button>
 </div>
 
 <div class="main">
     <div id="tab1" class="tab-content" style="display:block;">
         <div class="card">
-            <h3>🎓 Add University for Assessment</h3>
+            <h3>🎓 Add University</h3>
             <form id="uniForm" class="grid">
                 <input type="text" name="country" placeholder="Country" required>
                 <input type="text" name="uniName" placeholder="University Name" required>
                 <input type="text" name="course" placeholder="Course Name">
-                <input type="text" name="intake" placeholder="Intake (Jan/Sept)">
-                <select name="degree">
-                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                    <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                </select>
-                <select name="language">
-                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                </select>
-                <input type="text" name="academicScore" placeholder="Academic Score Box">
-                <input type="text" name="langScore" placeholder="Language Score Box">
-                <input type="text" name="fee" placeholder="Semester fee per year">
-                <select name="currency">
-                    <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option>
-                    <option>EURO</option><option>TAKA</option><option>UK POUND</option>
-                </select>
-                <input type="text" name="bankBalance" placeholder="Required bank balance">
-                <select name="bankType"><option>FDR</option><option>SAVINGS</option></select>
-                <select name="maritalStatus"><option>Single</option><option>With spouse</option></select>
-                <input type="text" name="bankNameSuggestion" placeholder="Bank name suggestion">
-                <input type="text" name="loanAmount" placeholder="Loan amount">
-                <input type="text" name="partnerCommission" placeholder="Partner Commission">
-                <button type="submit" class="btn-save">SAVE UNIVERSITY DATA</button>
+                <input type="text" name="intake" placeholder="Intake">
+                <select name="degree"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
+                <select name="language"><option>IELTS</option><option>PTE</option></select>
+                <input type="text" name="bankNameSuggestion" placeholder="Bank Name BD">
+                <input type="text" name="loanAmount" placeholder="Loan Amount">
+                <input type="text" name="partnerCommission" placeholder="Commission">
+                <button type="submit" style="grid-column: span 3; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer;">SAVE UNIVERSITY</button>
             </form>
         </div>
     </div>
 
     <div id="tab2" class="tab-content">
-        <div class="card"><h3>📁 Student File Tracking List</h3><p>Loading files...</p></div>
-    </div>
-
-    <div id="tab3" class="tab-content">
         <div class="card">
-            <h3>🤝 Partner Control & Withdrawals</h3>
-            <div id="partnerList">Partner list will appear here...</div>
+            <h3>📁 Student File Tracking</h3>
+            <table>
+                <thead><tr><th>Student</th><th>Contact</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody id="fileTableBody"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
     function showTab(evt, tabName) {
-        let i, tabcontent, navbtn;
-        tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-        navbtn = document.getElementsByClassName("nav-btn");
-        for (i = 0; i < navbtn.length; i++) navbtn[i].className = navbtn[i].className.replace(" active", "");
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName).style.display = 'block';
+        evt.currentTarget.classList.add('active');
     }
+
+    document.getElementById('loadFiles').onclick = async () => {
+        const res = await fetch('/api/admin/files');
+        const files = await res.json();
+        document.getElementById('fileTableBody').innerHTML = files.map(f => `
+            <tr>
+                <td>${f.studentName}</td>
+                <td>${f.contact}</td>
+                <td>${f.university}</td>
+                <td><span style="color:orange">${f.status}</span></td>
+                <td>${new Date(f.openTime).toLocaleString()}</td>
+            </tr>
+        `).join('');
+    };
 
     document.getElementById('uniForm').onsubmit = async (e) => {
         e.preventDefault();
-        const res = await fetch('/api/add-uni', {
+        await fetch('/api/add-uni', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
         });
-        if(res.ok) alert("✅ University Saved!");
+        alert("✅ Saved!"); e.target.reset();
     };
 </script>
 </body>

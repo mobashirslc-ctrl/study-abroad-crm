@@ -1,187 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP CRM</title>
+    <title>Partner Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1a73e8; --success: #28a745; --warning: #fbbc04; --bg: #f8f9fa; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        body { font-family: sans-serif; background: #f8f9fa; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
-        
-        /* Typography */
-        h3 { margin-top: 0; color: #333; font-size: 20px; display: flex; align-items: center; gap: 10px; }
-        
-        /* Form Elements */
-        label { font-size: 12px; color: #666; font-weight: bold; display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; background: #fff; }
-        .btn-primary { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-primary:hover { background: #1557b0; }
-
-        /* Result Display */
-        .result-card { border-left: 6px solid var(--primary); position: relative; overflow: hidden; }
-        .uni-name { font-size: 18px; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; }
-        .data-item { padding: 8px; background: #f1f3f4; border-radius: 6px; }
-        .data-item b { display: block; color: #555; font-size: 11px; text-transform: uppercase; }
-        .commission-box { background: #e6f4ea; color: #1e8e3e; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: bold; border: 1px dashed #1e8e3e; }
-
-        /* Wallet Section */
-        .wallet-card { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; position: relative; }
-        .wallet-balance { font-size: 32px; font-weight: bold; margin: 15px 0; }
-        .sub-info { font-size: 12px; opacity: 0.9; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.2); pt: 10px; margin-top: 10px; }
-
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; cursor: pointer; font-size: 12px; transition: 0.3s; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; display: block; }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-
-        .page { display: none; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: white; padding: 20 :px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-primary { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .result-card { border-left: 5px solid #1a73e8; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal-content { background: white; width: 90%; max-width: 400px; margin: 50px auto; padding: 20px; border-radius: 15px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; font-size: 11px; cursor: pointer; color: #666; }
+        .nav-item.active { color: #1a73e8; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="assess-page" class="page" style="display: block;">
+    <div id="assess-page">
         <div class="card">
-            <h3><i class="fas fa-microchip"></i> Smart Assessment</h3>
-            
-            <label>Target Country</label>
-            <input type="text" id="country" placeholder="e.g. Canada, UK, Australia">
-            
-            <label>Degree Level</label>
-            <select id="degree">
-                <option value="">Select Degree</option>
-                <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-            </select>
-            
-            <label>Language Test</label>
-            <select id="lang">
-                <option value="">Select Test</option>
-                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-            </select>
-            
-            <label>Academic & Language Score</label>
-            <input type="text" id="scores" placeholder="e.g. CGPA 3.50, IELTS 6.5">
-            
-            <button class="btn-primary" onclick="searchUniversities()">RUN ASSESSMENT</button>
+            <h3>🔍 Smart Assessment</h3>
+            <input type="text" id="c" placeholder="Country">
+            <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
+            <select id="l"><option>IELTS</option><option>PTE</option></select>
+            <button class="btn-primary" onclick="search()">RUN ASSESSMENT</button>
         </div>
-        
-        <div id="results-container"></div>
-    </div>
-
-    <div id="track-page" class="page">
-        <div class="card">
-            <h3><i class="fas fa-tasks"></i> File Tracking</h3>
-            <p style="text-align: center; color: #888; padding: 20px;">
-                <i class="fas fa-folder-open fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i><br>
-                No active student files found.
-            </p>
-        </div>
-    </div>
-
-    <div id="wallet-page" class="page">
-        <div class="card wallet-card">
-            <p style="margin:0; font-size: 14px;">Total Amount Cart</p>
-            <div class="wallet-balance">৳ 0.00</div>
-            <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                <span>Pending: ৳ 0</span>
-                <span>Withdrawn: ৳ 0</span>
-            </div>
-            <div class="sub-info">
-                <span><i class="fas fa-box"></i> Premium Package</span>
-                <span><i class="fas fa-clock"></i> Exp: 31-12-2026</span>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3><i class="fas fa-money-check-alt"></i> Withdraw Funds</h3>
-            <label>Method</label>
-            <select>
-                <option>Bkash</option><option>Nagad</option><option>Bank Account</option>
-            </select>
-            <label>Amount (BDT)</label>
-            <input type="number" placeholder="Min ৳ 500">
-            <button class="btn-primary" style="background: var(--success);">SEND WITHDRAW REQUEST</button>
-        </div>
+        <div id="results"></div>
     </div>
 </div>
 
-<div class="bottom-nav">
-    <div class="nav-item active" onclick="switchPage('assess-page', this)">
-        <i class="fas fa-search-location"></i>Assessment
+<div id="fileModal" class="modal">
+    <div class="modal-content">
+        <h3>📄 Open Student File</h3>
+        <form id="fileForm">
+            <input type="hidden" id="selectedUni">
+            <input type="text" id="sName" placeholder="Student Full Name" required>
+            <input type="text" id="sContact" placeholder="Contact Number" required>
+            <p style="font-size: 12px; color: gray;">Upload PDF manually to Admin via WhatsApp for now.</p>
+            <button type="submit" class="btn-primary">SUBMIT FILE</button>
+            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer; width:100%;">Cancel</button>
+        </form>
     </div>
-    <div class="nav-item" onclick="switchPage('track-page', this)">
-        <i class="fas fa-file-signature"></i>Tracking
-    </div>
-    <div class="nav-item" onclick="switchPage('wallet-page', this)">
-        <i class="fas fa-wallet"></i>Wallet
-    </div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item active"><i class="fas fa-search"></i><br>Assessment</div>
+    <div class="nav-item"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
-    // Navigation Logic
-    function switchPage(pageId, element) {
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(pageId).style.display = 'block';
-        element.classList.add('active');
+    async function search() {
+        const r = document.getElementById('results'); r.innerHTML = "Searching...";
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}&language=${document.getElementById('l').value}`);
+        const data = await res.json();
+        r.innerHTML = data.map(u => `
+            <div class="card result-card">
+                <div style="font-weight:bold; color:#1a73e8;">${u.uniName}</div>
+                <p style="font-size:12px;">Bank BD: ${u.bankNameSuggestion} | Loan: ${u.loanAmount}</p>
+                <button class="btn-primary" style="background:#333; font-size:12px;" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
+            </div>
+        `).join('');
     }
 
-    // Search Logic
-    async function searchUniversities() {
-        const resultsArea = document.getElementById('results-container');
-        resultsArea.innerHTML = "<div style='text-align:center; padding:20px;'><i class='fas fa-spinner fa-spin'></i> Analyzing Requirements...</div>";
-        
-        const country = document.getElementById('country').value;
-        const degree = document.getElementById('degree').value;
-        const lang = document.getElementById('lang').value;
-
-        try {
-            const res = await fetch(`/api/search-uni?country=${country}&degree=${degree}&language=${lang}`);
-            const data = await res.json();
-
-            if(data.length === 0) {
-                resultsArea.innerHTML = "<div class='card' style='text-align:center; color:#d93025;'>No matches found for this criteria.</div>";
-                return;
-            }
-
-            resultsArea.innerHTML = data.map(u => `
-                <div class="card result-card">
-                    <div class="uni-name">${u.uniName}</div>
-                    <div style="font-size:13px; color:#666; margin-bottom:15px;">
-                        <i class="fas fa-map-marker-alt"></i> ${u.location || u.country}
-                    </div>
-                    
-                    <div class="data-grid">
-                        <div class="data-item"><b>Course</b>${u.course || 'N/A'}</div>
-                        <div class="data-item"><b>Intake</b>${u.intake || 'N/A'}</div>
-                        <div class="data-item"><b>Semester Fee</b>${u.fee} ${u.currency}</div>
-                        <div class="data-item"><b>Bank Requirement</b>${u.bankBalance || 'N/A'}</div>
-                        <div class="data-item"><b>Marital Status</b>${u.maritalStatus || 'Single'}</div>
-                        <div class="data-item"><b>Bank Name (BD)</b>${u.bankNameSuggestion || 'N/A'}</div>
-                        <div class="data-item"><b>Loan Support</b>${u.loanAmount || 'N/A'}</div>
-                        <div class="data-item"><b>Degree</b>${u.degree}</div>
-                    </div>
-                    
-                    <div class="commission-box">
-                        <i class="fas fa-hand-holding-usd"></i> Partner Commission: ${u.partnerCommission || '0'}
-                    </div>
-                    
-                    <button class="btn-primary" style="margin-top:15px; background:#333;" onclick="alert('File opening process initiated for ${u.uniName}')">
-                        <i class="fas fa-plus-circle"></i> OPEN STUDENT FILE
-                    </button>
-                </div>
-            `).join('');
-        } catch (err) {
-            resultsArea.innerHTML = "<div class='card' style='color:red;'>Server Error. Please try again later.</div>";
-        }
+    function openModal(uni) {
+        document.getElementById('selectedUni').value = uni;
+        document.getElementById('fileModal').style.display = 'block';
     }
+
+    function closeModal() { document.getElementById('fileModal').style.display = 'none'; }
+
+    document.getElementById('fileForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fileData = {
+            studentName: document.getElementById('sName').value,
+            contact: document.getElementById('sContact').value,
+            university: document.getElementById('selectedUni').value
+        };
+        const res = await fetch('/api/open-file', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(fileData)
+        });
+        if(res.ok) { alert("✅ File Sent to Admin Tracking!"); closeModal(); }
+    };
 </script>
 </body>
 </html>
