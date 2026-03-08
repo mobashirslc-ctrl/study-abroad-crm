@@ -11,8 +11,6 @@ const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_
 mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected'));
 
 // --- SCHEMAS ---
-
-// 1. University Schema (১৭টি ফিল্ড)
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, course: String, intake: String,
     degree: String, language: String, academicScore: String, langScore: String,
@@ -21,19 +19,17 @@ const UniSchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniSchema);
 
-// 2. Student File Schema (নতুন ফাইল ওপেনিং এর জন্য)
+// স্টুডেন্ট ফাইল ট্র্যাকিং স্কিমা
 const FileSchema = new mongoose.Schema({
     studentName: String,
     contact: String,
     university: String,
-    status: { type: String, default: 'Pending' },
+    status: { type: String, default: 'File Opened' },
     openTime: { type: Date, default: Date.now }
 });
 const FileTrack = mongoose.model('FileTrack', FileSchema);
 
 // --- APIs ---
-
-// Admin: Add University
 app.post('/api/add-uni', async (req, res) => {
     try {
         const newUni = new University(req.body);
@@ -42,7 +38,6 @@ app.post('/api/add-uni', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Partner: Smart Search
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
     const query = {};
@@ -53,7 +48,7 @@ app.get('/api/search-uni', async (req, res) => {
     res.json(results);
 });
 
-// Partner: Submit Student File (নতুন)
+// ফাইল ওপেনিং এপিআই (এটিই আগে মিসিং ছিল)
 app.post('/api/open-file', async (req, res) => {
     try {
         const newFile = new FileTrack(req.body);
@@ -62,14 +57,10 @@ app.post('/api/open-file', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Admin: Get All Files
 app.get('/api/admin/files', async (req, res) => {
     const files = await FileTrack.find().sort({ openTime: -1 });
     res.json(files);
 });
 
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Running on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CRM Live on ${PORT}`));

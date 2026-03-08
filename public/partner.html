@@ -7,61 +7,62 @@
     <style>
         body { font-family: sans-serif; background: #f8f9fa; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20 :px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-primary { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        /* আপনার অরিজিনাল সবুজ বাটন */
+        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
+        
         .result-card { border-left: 5px solid #1a73e8; }
+        .uni-title { font-weight: bold; color: #1a73e8; font-size: 18px; margin-bottom: 5px; }
+        
+        /* Modal Style */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
         .modal-content { background: white; width: 90%; max-width: 400px; margin: 50px auto; padding: 20px; border-radius: 15px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; font-size: 11px; cursor: pointer; color: #666; }
-        .nav-item.active { color: #1a73e8; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="assess-page">
-        <div class="card">
-            <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="c" placeholder="Country">
-            <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
-            <select id="l"><option>IELTS</option><option>PTE</option></select>
-            <button class="btn-primary" onclick="search()">RUN ASSESSMENT</button>
-        </div>
-        <div id="results"></div>
+    <div class="card">
+        <h3><i class="fas fa-edit"></i> Smart Assessment</h3>
+        <input type="text" id="c" placeholder="Country">
+        <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
+        <select id="l"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+        <button class="btn-search" onclick="search()">SEARCH UNIVERSITY</button>
     </div>
+    <div id="results"></div>
 </div>
 
 <div id="fileModal" class="modal">
     <div class="modal-content">
-        <h3>📄 Open Student File</h3>
+        <h3 style="margin-top:0;">📄 Open Student File</h3>
         <form id="fileForm">
             <input type="hidden" id="selectedUni">
             <input type="text" id="sName" placeholder="Student Full Name" required>
             <input type="text" id="sContact" placeholder="Contact Number" required>
-            <p style="font-size: 12px; color: gray;">Upload PDF manually to Admin via WhatsApp for now.</p>
-            <button type="submit" class="btn-primary">SUBMIT FILE</button>
-            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer; width:100%;">Cancel</button>
+            <button type="submit" class="btn-search" style="background:#28a745;">SUBMIT FILE</button>
+            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">Close</button>
         </form>
     </div>
 </div>
 
-<div class="nav-bar">
-    <div class="nav-item active"><i class="fas fa-search"></i><br>Assessment</div>
-    <div class="nav-item"><i class="fas fa-wallet"></i><br>Wallet</div>
-</div>
-
 <script>
     async function search() {
-        const r = document.getElementById('results'); r.innerHTML = "Searching...";
+        const r = document.getElementById('results');
+        r.innerHTML = "<p style='text-align:center;'>Searching...</p>";
         const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}&language=${document.getElementById('l').value}`);
         const data = await res.json();
+        
         r.innerHTML = data.map(u => `
             <div class="card result-card">
-                <div style="font-weight:bold; color:#1a73e8;">${u.uniName}</div>
-                <p style="font-size:12px;">Bank BD: ${u.bankNameSuggestion} | Loan: ${u.loanAmount}</p>
-                <button class="btn-primary" style="background:#333; font-size:12px;" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
+                <div class="uni-title">${u.uniName}</div>
+                <div style="font-size:13px; color:#333; line-height:1.6;">
+                    Fee: ${u.fee} ${u.currency} | Bank BD: ${u.bankNameSuggestion || 'N/A'}<br>
+                    Loan: ${u.loanAmount || 'N/A'} | <b>Commission: ${u.partnerCommission}</b>
+                </div>
+                <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
@@ -81,10 +82,15 @@
             university: document.getElementById('selectedUni').value
         };
         const res = await fetch('/api/open-file', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(fileData)
         });
-        if(res.ok) { alert("✅ File Sent to Admin Tracking!"); closeModal(); }
+        if(res.ok) {
+            alert("✅ File Submitted successfully!");
+            closeModal();
+            e.target.reset();
+        }
     };
 </script>
 </body>
