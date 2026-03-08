@@ -2,115 +2,144 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal | IHP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; padding-bottom: 60px; }
-        .card { background: white; margin: 15px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-search { background: #1a73e8; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 12px; color: #666; cursor: pointer; }
-        .active { color: #1a73e8; }
-        .result-card { border-left: 5px solid #1a73e8; margin-top: 10px; padding: 10px; background: #f9f9f9; }
+        :root { --primary: #1a73e8; --success: #28a745; --bg: #f8f9fa; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        .container { max-width: 500px; margin: auto; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        
+        /* Result Grid */
+        .res-card { border-left: 5px solid var(--primary); }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin: 10px 0; }
+        .grid-info div b { color: #333; }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { flex: 1; text-align: center; color: #888; cursor: pointer; font-size: 11px; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
-<div id="assessment" class="page">
-    <div class="card">
-        <h3>🔍 Smart Assessment</h3>
-        <input type="text" id="country" placeholder="Enter Country">
-        <select id="degree">
-            <option>Select Degree</option>
-            <option>UG</option><option>PG</option><option>DIPLOMA</option>
-            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-        </select>
-        <select id="lang">
-            <option>Select Language</option>
-            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-        </select>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="langScore" placeholder="Lang Score">
-            <input type="text" id="acadScore" placeholder="Academic CGPA">
+<div class="container">
+    <div id="welcome-msg" style="padding:10px; font-weight:bold; color:var(--primary);">Welcome, <span id="pName">Partner</span></div>
+
+    <div id="assessment-page" class="page">
+        <div class="card">
+            <h3>🔍 Smart Assessment</h3>
+            <input type="text" id="sCountry" placeholder="Country">
+            <select id="sDegree">
+                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            <select id="sLang">
+                <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="sLangScore" placeholder="Lang Score">
+                <input type="text" id="sAcadScore" placeholder="Academic Score">
+            </div>
+            <button class="btn-main" onclick="runSearch()">SEARCH UNIVERSITY</button>
         </div>
-        <button class="btn-search" onclick="searchUni()">SEARCH UNIVERSITY</button>
+        <div id="resultsArea"></div>
     </div>
-    <div id="uniResults"></div>
-</div>
 
-<div id="withdraw" class="page" style="display:none;">
-    <div class="card">
-        <h3>💰 Wallet & Subscription</h3>
-        <p>Total Balance: <b>$500.00</b></p>
-        <select id="method">
-            <option>Bkash</option><option>Nagad</option><option>Bank Account</option>
-        </select>
-        <input type="number" id="amount" placeholder="Enter Amount">
-        <button class="btn-search" style="background:#28a745;">SEND WITHDRAW REQUEST</button>
+    <div id="wallet-page" class="page" style="display:none;">
+        <div class="card" style="background:var(--primary); color:white;">
+            <p>Total Balance</p><h2>৳ 0.00</h2>
+            <small>Subscription: <b>Premium</b> | Expires: 31/12/2026</small>
+        </div>
+        <div class="card">
+            <h3>Withdraw</h3>
+            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+            <input type="text" id="wAccNum" placeholder="Enter Account Number"> <input type="number" id="wAmount" placeholder="Amount">
+            <button class="btn-main">SEND REQUEST</button>
+        </div>
     </div>
-</div>
 
-<div id="tracking" class="page" style="display:none;">
-    <div class="card">
+    <div id="tracking-page" class="page" style="display:none;">
         <h3>📁 File Tracking</h3>
-        <div id="fileList"></div>
+        <div id="trackList"></div>
     </div>
 </div>
 
-<div class="nav-bar">
-    <div class="nav-item active" onclick="showPage('assessment', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showPage('tracking', this); loadFiles()"><i class="fas fa-file-alt"></i><br>Tracking</div>
-    <div class="nav-item" onclick="showPage('withdraw', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
+<div id="uploadModal" class="modal">
+    <div class="modal-content">
+        <h3>📄 Submit Student File</h3>
+        <input type="hidden" id="mUni">
+        <input type="text" id="mStdName" placeholder="Student Name">
+        <input type="text" id="mStdPhone" placeholder="Contact Number">
+        <label style="font-size:11px; font-weight:bold;">Upload Document Link (Drive/PDF)</label>
+        <input type="text" id="mPdfUrl" placeholder="Paste PDF Link"> <button class="btn-main" style="background:var(--success);" onclick="submitFile()">SUBMIT TO ADMIN</button>
+        <button onclick="closeModal()" style="border:none; background:none; color:red; width:100%; margin-top:10px;">Close</button>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
+    <div class="nav-item" onclick="showP('tracking-page', this); loadFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
+    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
-    function showPage(id, el) {
+    function showP(id, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
     }
 
-    async function searchUni() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('country').value}&degree=${document.getElementById('degree').value}`);
+    async function runSearch() {
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}`);
         const data = await res.json();
-        document.getElementById('uniResults').innerHTML = data.map(u => `
-            <div class="card result-card">
-                <b>${u.uniName}</b> (${u.location})<br>
-                <small>Intake: ${u.intake} | Fee: ${u.fee} ${u.currency}</small><br>
-                <small>Bank Req: ${u.bankReq} | Comm: ${u.partnerCommission}</small>
-                <button onclick="openFilePrompt('${u.uniName}')" style="margin-top:10px; background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">OPEN STUDENT FILE</button>
+        document.getElementById('resultsArea').innerHTML = data.map(u => `
+            <div class="card res-card">
+                <div style="font-weight:bold; color:var(--primary);">${u.uniName}</div>
+                <div class="grid-info">
+                    <div><b>Location:</b> ${u.location}</div>
+                    <div><b>Course:</b> ${u.course}</div>
+                    <div><b>Intake:</b> ${u.intake}</div>
+                    <div><b>Fee:</b> ${u.fee} ${u.currency}</div>
+                    <div><b>Bank BD:</b> ${u.bankNameBD}</div>
+                    <div><b>Commission:</b> ${u.partnerCommission}</div>
+                    <div><b>Marital:</b> ${u.maritalStatus}</div>
+                    <div><b>Loan:</b> ${u.loanAmount}</div>
+                </div>
+                <button class="btn-main" style="background:var(--success); padding:10px;" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    async function openFilePrompt(uni) {
-        const name = prompt("Student Name:");
-        const contact = prompt("Contact No:");
-        const pdf = prompt("Paste PDF Link (Google Drive/Dropbox):");
-        if(!name || !pdf) return;
+    function openModal(uni) { document.getElementById('mUni').value = uni; document.getElementById('uploadModal').style.display='flex'; }
+    function closeModal() { document.getElementById('uploadModal').style.display='none'; }
 
-        await fetch('/api/open-file', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                studentName: name, contact: contact, university: uni, pdfUrl: pdf,
-                complianceMember: { name: "IHP Admin", id: "IHP-01" } 
-            })
-        });
-        alert("File Submitted with PDF!");
+    async function submitFile() {
+        const body = {
+            studentName: document.getElementById('mStdName').value,
+            contact: document.getElementById('mStdPhone').value,
+            university: document.getElementById('mUni').value,
+            pdfUrl: document.getElementById('mPdfUrl').value,
+            complianceMember: { name: "IHP Admin", org: "IHP Global", id: "IHP-101" }
+        };
+        await fetch('/api/open-file', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        alert("File Submitted!"); closeModal();
     }
 
     async function loadFiles() {
-        const res = await fetch('/api/files');
+        const res = await fetch('/api/admin/files');
         const data = await res.json();
-        document.getElementById('fileList').innerHTML = data.map(f => `
-            <div style="border-bottom:1px solid #eee; padding:10px 0;">
-                <b>${f.studentName}</b> - ${f.university}<br>
-                <small>Status: ${f.status} | Date: ${new Date(f.openTime).toLocaleString()}</small><br>
-                <small>Compliance: ${f.complianceMember.name}</small><br>
-                <a href="${f.pdfUrl}" target="_blank" style="color:blue;">View/Download PDF</a>
+        document.getElementById('trackList').innerHTML = data.map(f => `
+            <div class="card">
+                <b>${f.studentName}</b> | ${f.university}<br>
+                <small>Status: ${f.status} | Compliance: ${f.complianceMember.name}</small><br>
+                <a href="${f.pdfUrl}" target="_blank" style="color:var(--primary); font-size:12px;">Download PDF</a>
             </div>
         `).join('');
     }

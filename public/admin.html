@@ -1,43 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IHP Admin</title>
+    <title>Admin Panel | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { display: flex; font-family: sans-serif; margin: 0; }
-        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; padding: 20px; }
-        .content { flex: 1; padding: 30px; background: #f0f2f5; }
-        .nav-link { display: block; padding: 12px; color: #a6adb4; text-decoration: none; cursor: pointer; }
-        .nav-link:hover { color: white; background: #1890ff; border-radius: 4px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        body { display: flex; font-family: sans-serif; margin: 0; background: #f0f2f5; }
+        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 270px; padding: 30px; width: 100%; }
+        .tab-btn { display: block; width: 100%; padding: 15px; color: #a6adb4; background: none; border: none; text-align: left; cursor: pointer; }
+        .tab-btn.active { background: #1890ff; color: white; border-radius: 5px; }
+        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; background: white; }
         th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        .status-btn { padding: 5px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h3>IHP ADMIN</h3>
-    <div class="nav-link" onclick="showTab('uniTab')">Add University</div>
-    <div class="nav-link" onclick="showTab('partnerTab')">Partner List</div>
-    <div class="nav-link" onclick="showTab('complianceTab')">Compliance Control</div>
+    <h2>IHP ADMIN</h2>
+    <button class="tab-btn active" onclick="showT('uniTab')">Add University</button>
+    <button class="tab-btn" onclick="showT('partnerTab'); loadPartners()">Partner Control</button>
+    <button class="tab-btn" onclick="showT('fileTab'); loadFiles()">Student Tracking</button>
+    <button class="tab-btn" onclick="showT('complianceTab')">Compliance</button>
 </div>
 
-<div class="content">
+<div class="main">
     <div id="uniTab" class="tab">
         <div class="card">
-            <h3>🏫 Add New University</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <h3>🏫 Add University (Detailed)</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                 <input type="text" id="uName" placeholder="University Name">
                 <input type="text" id="uCountry" placeholder="Country">
-                <select id="uDegree">
-                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                    <option>RESEARCH</option><option>PHD</option>
-                </select>
-                <input type="text" id="uFee" placeholder="Semester Fee">
+                <input type="text" id="uLoc" placeholder="Location">
+                <input type="text" id="uCourse" placeholder="Course">
+                <input type="text" id="uIntake" placeholder="Intake">
+                <select id="uDeg"><option>UG</option><option>PG</option><option>PHD</option><option>RESEARCH</option></select>
+                <input type="text" id="uFee" placeholder="Fee">
+                <select id="uCur"><option>USD</option><option>AUD</option><option>CAD</option><option>EURO</option><option>GBP</option><option>BDT</option></select>
+                <input type="text" id="uBankBD" placeholder="Bank Name Suggestion">
+                <input type="text" id="uLoan" placeholder="Loan Amount">
                 <input type="text" id="uComm" placeholder="Partner Commission">
+                <select id="uMarital"><option>Single</option><option>With Spouse</option></select>
             </div>
-            <button onclick="saveUni()" style="margin-top:15px; background:blue; color:white; padding:10px 20px; border:none; cursor:pointer;">ADD UNIVERSITY</button>
+            <button onclick="saveUni()" style="margin-top:20px; background:#1890ff; color:white; padding:15px 30px; border:none; cursor:pointer; border-radius:5px;">SAVE UNIVERSITY</button>
         </div>
     </div>
 
@@ -45,33 +52,61 @@
         <div class="card">
             <h3>🤝 Partner Management</h3>
             <table>
-                <tr><th>Partner Name</th><th>Organization</th><th>Status</th><th>Action</th></tr>
-                <tr><td>Nadim</td><td>Global Edu</td><td>Pending</td><td><button>Activate</button></td></tr>
+                <thead><tr><th>Name</th><th>Org</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="partnerTable"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="complianceTab" class="tab" style="display:none;">
+        <div class="card">
+            <h3>🛡️ Compliance Member Control</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" placeholder="Member Name">
+                <input type="text" placeholder="Org Name">
+                <button style="background:green; color:white; border:none; padding:10px;">Add Member</button>
+            </div>
+            <p style="margin-top:20px;">No pending requests.</p>
         </div>
     </div>
 </div>
 
 <script>
-    function showTab(id) {
+    function showT(id) {
         document.querySelectorAll('.tab').forEach(t => t.style.display='none');
         document.getElementById(id).style.display='block';
     }
 
     async function saveUni() {
         const body = {
-            uniName: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            degree: document.getElementById('uDegree').value,
-            fee: document.getElementById('uFee').value,
-            partnerCommission: document.getElementById('uComm').value
+            uniName: document.getElementById('uName').value, country: document.getElementById('uCountry').value,
+            location: document.getElementById('uLoc').value, course: document.getElementById('uCourse').value,
+            intake: document.getElementById('uIntake').value, degree: document.getElementById('uDeg').value,
+            fee: document.getElementById('uFee').value, currency: document.getElementById('uCur').value,
+            bankNameBD: document.getElementById('uBankBD').value, loanAmount: document.getElementById('uLoan').value,
+            partnerCommission: document.getElementById('uComm').value, maritalStatus: document.getElementById('uMarital').value
         };
-        await fetch('/api/admin/add-uni', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
-        });
-        alert("University Added Successfully!");
+        await fetch('/api/admin/add-uni', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        alert("Saved!");
+    }
+
+    async function loadPartners() {
+        const res = await fetch('/api/admin/partners');
+        const data = await res.json();
+        document.getElementById('partnerTable').innerHTML = data.map(p => `
+            <tr>
+                <td>${p.name}</td><td>${p.orgName}</td><td>${p.status}</td>
+                <td>
+                    <button class="status-btn" style="background:green" onclick="upP('${p._id}', 'Active')">Active</button>
+                    <button class="status-btn" style="background:red" onclick="upP('${p._id}', 'Deactivate')">Block</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function upP(id, status) {
+        await fetch('/api/admin/update-partner', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, status}) });
+        loadPartners();
     }
 </script>
 </body>
