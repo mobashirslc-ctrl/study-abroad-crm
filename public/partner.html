@@ -3,124 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP</title>
+    <title>Partner Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1a73e8; --success: #28a745; --danger: #dc3545; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; padding-bottom: 70px; }
-        .container { max-width: 600px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
+        .card { background: white; margin: 15px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
-        /* Result styling */
-        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin: 10px 0; border-top: 1px solid #eee; padding-top: 10px; }
-        .res-grid b { color: var(--primary); }
-
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 600px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; color: #888; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .btn-blue { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .res-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 11px; color: #888; cursor: pointer; }
+        .active { color: #1a73e8; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container" id="app">
-    <div id="auth-box">
+<div class="container" id="dashboard">
+    <div id="assessment" class="page">
         <div class="card">
-            <h2 id="authTitle">Partner Registration</h2>
-            <div id="regInputs">
-                <input type="text" id="pName" placeholder="Full Name">
-                <input type="text" id="pOrg" placeholder="Organization Name">
-                <input type="text" id="pContact" placeholder="Contact Number">
+            <h3>🔍 Smart Assessment</h3>
+            <input type="text" id="sCountry" placeholder="Country">
+            <select id="sDegree">
+                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            <select id="sLang">
+                <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="sAcad" placeholder="Academic Score">
+                <input type="text" id="sScore" placeholder="Lang Score">
             </div>
-            <input type="email" id="pEmail" placeholder="Email Address">
-            <input type="password" id="pPass" placeholder="Password">
-            <button class="btn-main" onclick="handleAuth()" id="authBtn">REGISTER</button>
-            <p style="text-align:center; cursor:pointer;" onclick="toggleAuth()">Already have an account? Login</p>
+            <button class="btn-blue" onclick="runSearch()">SEARCH</button>
         </div>
+        <div id="results"></div>
     </div>
 
-    <div id="dashboard" style="display:none;">
-        <div id="assessment-page" class="page">
-            <div class="card">
-                <h3>🔍 Smart Assessment</h3>
-                <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDegree">
-                    <option value="">Select Degree</option>
-                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                    <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                </select>
-                <select id="sLang">
-                    <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                </select>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="sAcadScore" placeholder="Acad Score (GPA)">
-                    <input type="text" id="sLangScore" placeholder="Lang Score">
-                </div>
-                <button class="btn-main" onclick="runSearch()">SEARCH UNIVERSITY</button>
-            </div>
-            <div id="results"></div>
+    <div id="wallet" class="page" style="display:none;">
+        <div class="card" style="background:#1a73e8; color:white;">
+            <p>Total Balance</p><h2>৳ 50,000.00</h2>
         </div>
-
-        <div id="tracking-page" class="page" style="display:none;">
-            <h3>📁 My Tracking Files</h3>
-            <div id="trackList"></div>
-        </div>
-
-        <div id="wallet-page" class="page" style="display:none;">
-            <div class="card" style="background:var(--primary); color:white;">
-                <p>Wallet Balance</p><h2>৳ <span id="wBalance">0.00</span></h2>
-                <small>Package: <b>Premium</b> | Exp: 31/12/2026</small>
-            </div>
-            <div class="card">
-                <h3>Withdraw Funds</h3>
-                <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-                <input type="text" placeholder="Account Number">
-                <input type="number" placeholder="Amount">
-                <button class="btn-main" style="background:var(--success);">SEND REQUEST</button>
-            </div>
+        <div class="card">
+            <h3>Withdraw Found</h3>
+            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
+            <input type="text" id="wAcc" placeholder="Account Number">
+            <input type="number" id="wAmt" placeholder="Amount">
+            <button class="btn-main btn-blue" style="background:#28a745;" onclick="sendWithdraw()">SEND REQUEST</button>
         </div>
     </div>
 </div>
 
-<div class="bottom-nav" id="nav" style="display:none;">
-    <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('tracking-page', this); loadMyFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
-    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showP('assessment', this)"><i class="fas fa-search"></i><br>Search</div>
+    <div class="nav-item" onclick="showP('wallet', this)"><i class="fas fa-wallet"></i><br>Withdraw</div>
 </div>
 
 <script>
-    let isLogin = false;
-    function toggleAuth() {
-        isLogin = !isLogin;
-        document.getElementById('authTitle').innerText = isLogin ? "Partner Login" : "Partner Registration";
-        document.getElementById('regInputs').style.display = isLogin ? "none" : "block";
-        document.getElementById('authBtn').innerText = isLogin ? "LOGIN" : "REGISTER";
-    }
-
-    async function handleAuth() {
-        const email = document.getElementById('pEmail').value;
-        const pass = document.getElementById('pPass').value;
-        if(isLogin) {
-            const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, pass}) });
-            const data = await res.json();
-            if(data.success) { localStorage.setItem('pUser', JSON.stringify(data.user)); location.reload(); }
-            else alert(data.message);
-        } else {
-            const body = { name: document.getElementById('pName').value, orgName: document.getElementById('pOrg').value, contact: document.getElementById('pContact').value, email, pass };
-            await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-            alert("Registered! Contact Admin for Activation.");
-        }
-    }
-
-    // Check Login
-    const user = JSON.parse(localStorage.getItem('pUser'));
-    if(user) {
-        document.getElementById('auth-box').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('nav').style.display = 'flex';
-    }
-
     function showP(id, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
@@ -134,30 +72,41 @@
         document.getElementById('results').innerHTML = data.map(u => `
             <div class="card">
                 <b>${u.uniName}</b><br><small>${u.location}, ${u.country}</small>
-                <div class="res-grid">
+                <div class="res-box">
                     <div>Course: <b>${u.course}</b></div>
                     <div>Intake: <b>${u.intake}</b></div>
                     <div>Fee: <b>${u.fee} ${u.currency}</b></div>
-                    <div>Commission: <b>${u.partnerCommission}</b></div>
-                    <div>Bank Req: <b>${u.bankBalance}</b></div>
-                    <div>BD Bank: <b>${u.bankNameBD}</b></div>
+                    <div>Bank BD: <b>${u.bankNameBD}</b></div>
                 </div>
-                <button class="btn-main" style="background:var(--success); padding:10px;">OPEN STUDENT FILE</button>
+                <button class="btn-blue" style="margin-top:10px; background:#28a745;" onclick="openStudentFile('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    async function loadMyFiles() {
-        const res = await fetch('/api/admin/all-files');
+    async function openStudentFile(uni) {
+        const name = prompt("Student Full Name:");
+        const contact = prompt("Contact No:");
+        const pdf = prompt("Paste PDF Link:");
+        if(!name) return;
+
+        const res = await fetch('/api/open-file', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ studentName: name, contact: contact, university: uni, pdfUrl: pdf })
+        });
         const data = await res.json();
-        document.getElementById('trackList').innerHTML = data.map(f => `
-            <div class="card">
-                <b>${f.studentName}</b> | ${f.university}<br>
-                <small>Status: ${f.status} | Visa: ${f.visaStatus}</small><br>
-                <small>Compliance: ${f.complianceMember.name}</small><br>
-                <a href="${f.pdfUrl}" target="_blank" style="color:var(--primary); font-size:12px;">Download PDF</a>
-            </div>
-        `).join('');
+        if(data.success) alert(data.message);
+    }
+
+    async function sendWithdraw() {
+        const body = { method: document.getElementById('wMethod').value, account: document.getElementById('wAcc').value, amount: document.getElementById('wAmt').value };
+        const res = await fetch('/api/withdraw-request', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if(data.success) alert(data.message);
     }
 </script>
 </body>

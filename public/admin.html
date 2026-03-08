@@ -1,66 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Dashboard | IHP</title>
+    <title>Admin Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { display: flex; font-family: sans-serif; margin: 0; background: #f0f2f5; }
-        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 270px; padding: 30px; width: 100%; }
-        .tab-btn { display: block; width: 100%; padding: 15px; color: #a6adb4; background: none; border: none; text-align: left; cursor: pointer; }
-        .tab-btn.active { background: #1890ff; color: white; border-radius: 5px; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
+        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 270px; padding: 20px; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; width: 30%; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP ADMIN</h2>
-    <button class="tab-btn active" onclick="showT('uniTab')">Add University</button>
-    <button class="tab-btn" onclick="showT('partnerTab'); loadPartners()">Partner List</button>
-    <button class="tab-btn" onclick="showT('fileTab'); loadFiles()">Student Files</button>
+    <h2>IHP CRM</h2>
+    <p onclick="location.reload()" style="cursor:pointer;">Add University</p>
 </div>
 
 <div class="main">
-    <div id="uniTab" class="tab">
-        <div class="card">
-            <h3>🏫 Add University (Full Details)</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                <input type="text" id="uCountry" placeholder="Country">
-                <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCourse" placeholder="Course Name">
-                <input type="text" id="uIntake" placeholder="Intake">
-                <select id="uDeg"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option></select>
-                <select id="uLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                <input type="text" id="uFee" placeholder="Semester Fee">
-                <select id="uCur"><option>USD</option><option>AUD</option><option>EURO</option><option>BDT</option></select>
-                <input type="text" id="uBankBD" placeholder="Bank Name Suggestion">
-                <input type="text" id="uComm" placeholder="Partner Commission">
-            </div>
-            <button onclick="saveUni()" style="margin-top:20px; padding:12px 30px; background:#1890ff; color:white; border:none; cursor:pointer; border-radius:5px;">SAVE UNIVERSITY</button>
-        </div>
-    </div>
-
-    <div id="partnerTab" class="tab" style="display:none;">
-        <div class="card">
-            <h3>🤝 Partner Control</h3>
-            <table id="pTable">
-                <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody id="partnerBody"></tbody>
-            </table>
-        </div>
+    <div class="card">
+        <h3>🏫 Add University (Detailed)</h3>
+        <input type="text" id="uCountry" placeholder="Country">
+        <input type="text" id="uName" placeholder="University Name">
+        <input type="text" id="uCourse" placeholder="Course">
+        <input type="text" id="uIntake" placeholder="Intake">
+        <select id="uDeg">
+            <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+        </select>
+        <select id="uLang">
+            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+        </select>
+        <input type="text" id="uFee" placeholder="Fee">
+        <select id="uCur">
+            <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>EURO</option><option>TAKA</option>
+        </select>
+        <input type="text" id="uBankBD" placeholder="Bank Name Suggestion">
+        <input type="text" id="uComm" placeholder="Commission">
+        <br>
+        <button onclick="saveUni()" style="background:blue; color:white; padding:12px 30px; border:none; margin-top:20px; cursor:pointer;">SAVE UNIVERSITY</button>
     </div>
 </div>
 
 <script>
-    function showT(id) {
-        document.querySelectorAll('.tab').forEach(t => t.style.display='none');
-        document.getElementById(id).style.display='block';
-    }
-
     async function saveUni() {
         const body = {
             country: document.getElementById('uCountry').value,
@@ -74,27 +56,12 @@
             bankNameBD: document.getElementById('uBankBD').value,
             partnerCommission: document.getElementById('uComm').value
         };
-        await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-        alert("University Added!");
-    }
-
-    async function loadPartners() {
-        const res = await fetch('/api/admin/all-partners');
-        const data = await res.json();
-        document.getElementById('partnerBody').innerHTML = data.map(p => `
-            <tr>
-                <td>${p.name}</td><td>${p.email}</td><td><b>${p.status}</b></td>
-                <td>
-                    <button style="background:green; color:white;" onclick="updateP('${p._id}', 'Active')">Active</button>
-                    <button style="background:red; color:white;" onclick="updateP('${p._id}', 'Deactivate')">Block</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function updateP(id, status) {
-        await fetch('/api/admin/partner-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
-        loadPartners();
+        const res = await fetch('/api/admin/add-uni', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        if(res.ok) alert("University Added Successfully!");
     }
 </script>
 </body>

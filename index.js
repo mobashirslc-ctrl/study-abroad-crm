@@ -8,11 +8,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
-mongoose.connect(mongoURI).then(() => console.log('✅ CRM System Connected'));
+mongoose.connect(mongoURI).then(() => console.log('✅ Connected to Master Database'));
 
 // --- SCHEMAS ---
 
-// ইউনিভার্সিটি (আপনার সব ফিল্ড এখানে আছে)
+// ১. ইউনিভার্সিটি (সব রিকোয়ার্ড ফিল্ড সহ)
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, course: String, intake: String,
     degree: String, language: String, acadScore: String, langScore: String,
@@ -21,62 +21,72 @@ const UniSchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniSchema);
 
-// পার্টনার (উইথড্র ও সাবস্ক্রিপশন সহ)
+// ২. পার্টনার (উইথড্র ও সাবস্ক্রিপশন লজিক)
 const PartnerSchema = new mongoose.Schema({
     name: String, orgName: String, contact: String, email: String, pass: String,
-    status: { type: String, default: 'Pending' }, // Pending/Active/Deactivate
-    wallet: { total: Number, pending: Number, withdrawn: Number },
+    status: { type: String, default: 'Pending' },
+    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0}, withdrawn: {type: Number, default: 0} },
     subscription: { package: String, expireDate: Date }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// ফাইল ট্র্যাকিং
+// ৩. স্টুডেন্ট ফাইল ট্র্যাকিং
 const FileSchema = new mongoose.Schema({
     studentName: String, contact: String, university: String, pdfUrl: String,
     status: { type: String, default: 'File Opened' },
-    complianceMember: { name: String, org: String },
     visaStatus: { type: String, default: 'Pending' },
+    complianceMember: { name: String, id: String },
     openDate: { type: Date, default: Date.now }
 });
 const FileTrack = mongoose.model('FileTrack', FileSchema);
 
+// ৪. উইথড্র রিকোয়েস্ট
+const WithdrawSchema = new mongoose.Schema({
+    partnerEmail: String, amount: Number, method: String, account: String, status: { type: String, default: 'Pending' }
+});
+const Withdraw = mongoose.model('Withdraw', WithdrawSchema);
+
 // --- APIs ---
 
-// ১. পার্টনার ব্লক/অ্যাক্টিভ লজিক (রিয়েল টাইম ফিক্স)
-app.post('/api/admin/partner-status', async (req, res) => {
-    const { id, status } = req.body;
-    await Partner.findByIdAndUpdate(id, { status: status });
-    res.json({ success: true });
+// ফাইল ওপেনিং (Fix: Now responds correctly)
+app.post('/api/open-file', async (req, res) => {
+    try {
+        const newFile = new FileTrack(req.body);
+        await newFile.save();
+        res.json({ success: true, message: "File Opened Successfully" });
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
 });
 
-// ২. ইউনিভার্সিটি অ্যাড (সব ফিল্ড)
+// উইথড্র রিকোয়েস্ট (Fix: Now responds correctly)
+app.post('/api/withdraw-request', async (req, res) => {
+    try {
+        const request = new Withdraw(req.body);
+        await request.save();
+        res.json({ success: true, message: "Withdraw Request Sent" });
+    } catch (err) { res.status(500).json({ success: false, error: err.message }); }
+});
+
+// অ্যাডমিন: ইউনিভার্সিটি অ্যাড
 app.post('/api/admin/add-uni', async (req, res) => {
     await new University(req.body).save();
     res.json({ success: true });
 });
 
-// ৩. স্মার্ট অ্যাসেসমেন্ট সার্চ
+// অ্যাসেসমেন্ট সার্চ
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
-    const results = await University.find({ 
-        country: new RegExp(country, 'i'),
-        degree: degree,
-        language: language
-    });
+    const results = await University.find({ country: new RegExp(country, 'i'), degree, language });
     res.json(results);
 });
 
-// ৪. পার্টনার লগইন (অ্যাপ্রুভাল চেক)
+// পার্টনার লগইন (Status Check)
 app.post('/api/auth/login', async (req, res) => {
     const user = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
-    if (!user) return res.json({ success: false, message: "User not found" });
-    if (user.status !== 'Active') return res.json({ success: false, message: "Account Pending/Blocked by Admin" });
-    res.json({ success: true, user });
+    if (user && user.status === 'Active') res.json({ success: true, user });
+    else res.json({ success: false, message: "Account Inactive or Invalid" });
 });
 
-// ৫. ডাটা গেট APIs
-app.get('/api/admin/all-partners', async (req, res) => res.json(await Partner.find()));
-app.get('/api/admin/all-files', async (req, res) => res.json(await FileTrack.find().sort({openDate:-1})));
+app.get('/api/admin/files', async (req, res) => res.json(await FileTrack.find().sort({openDate:-1})));
 
 // --- ROUTES ---
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
