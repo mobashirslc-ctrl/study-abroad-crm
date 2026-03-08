@@ -4,35 +4,37 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel | IHP</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; margin: 0; }
-        .sidebar { width: 220px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; margin: 0; }
+        .sidebar { width: 240px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
         .main { flex: 1; padding: 25px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
-        button { background: #1a73e8; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        button { background: #1a73e8; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>IHP ADMIN</h2>
-        <p onclick="showTab('uniTab')">Add University</p>
-        <p onclick="showTab('partnerTab')">Manage Partners</p>
+        <p>University Setup</p>
+        <p>Partner List</p>
+        <p>Withdraw Requests</p>
     </div>
     <div class="main">
-        <div id="uniTab" class="card">
-            <h3>🏫 Assessment Setup</h3>
+        <div class="card">
+            <h3>🏫 Add University for Smart Assessment</h3>
             <div class="grid">
                 <input type="text" id="uCountry" placeholder="Country">
                 <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCourse" placeholder="Course Name">
-                <input type="text" id="uIntake" placeholder="Intake (e.g. Sep 2026)">
                 <select id="uDeg">
                     <option>UG</option><option>PG</option><option>DIPLOMA</option>
                     <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
                 </select>
                 <select id="uLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                <select id="uCur"><option>DOLLAR</option><option>EURO</option><option>TAKA</option><option>GBP</option></select>
+                <select id="uCur">
+                    <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option>
+                    <option>EURO</option><option>TAKA</option><option>UK POUND</option>
+                </select>
                 <select id="uBank"><option>FDR</option><option>SAVINGS</option></select>
                 <select id="uMarital"><option>Single</option><option>With spouse</option></select>
                 <input type="text" id="uComm" placeholder="Partner Commission">
@@ -49,7 +51,6 @@
                 language: document.getElementById('uLang').value,
                 currency: document.getElementById('uCur').value,
                 bankType: document.getElementById('uBank').value,
-                maritalStatus: document.getElementById('uMarital').value,
                 partnerCommission: document.getElementById('uComm').value
             };
             const res = await fetch('/api/admin/add-uni', {

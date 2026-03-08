@@ -9,9 +9,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(mongoURI).then(() => console.log('✅ Connected to MongoDB Cluster'));
+mongoose.connect(mongoURI)
+    .then(() => console.log('✅ Connected to MongoDB Cluster'))
+    .catch(err => console.error('❌ DB Error:', err));
 
-// --- MODELS ---
+// --- Schemas ---
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, course: String, intake: String,
     degree: String, language: String, acadScore: String, langScore: String,
@@ -22,41 +24,54 @@ const University = mongoose.model('University', UniSchema);
 
 const PartnerSchema = new mongoose.Schema({
     name: String, email: String, contact: String, status: { type: String, default: 'Pending' },
-    wallet: { total: 0, pending: 0, withdrawn: 0 },
+    wallet: { 
+        total: { type: Number, default: 0 }, 
+        pending: { type: Number, default: 0 }, 
+        withdrawn: { type: Number, default: 0 } 
+    },
     subscription: { package: String, expireDate: Date },
     withdrawEnabled: { type: Boolean, default: false }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// --- DASHBOARD LOCKING ROUTES ---
+const FileSchema = new mongoose.Schema({
+    studentName: String, contact: String, university: String,
+    status: { type: String, default: 'File Opened' },
+    complianceMember: { name: String, contact: String },
+    partnerId: mongoose.Schema.Types.ObjectId,
+    openDate: { type: Date, default: Date.now }
+});
+const FileTrack = mongoose.model('FileTrack', FileSchema);
+
+// --- Routes to Serve Files ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 
-// --- ADMIN APIs ---
+// --- APIs ---
 app.post('/api/admin/add-uni', async (req, res) => {
-    const uni = new University(req.body);
-    await uni.save();
-    res.json({ success: true });
+    try {
+        const uni = new University(req.body);
+        await uni.save();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
-
-app.post('/api/admin/update-partner', async (req, res) => {
-    const { id, status, subDays } = req.body;
-    let expDate = new Date();
-    expDate.setDate(expDate.getDate() + parseInt(subDays));
-    await Partner.findByIdAndUpdate(id, { status, 'subscription.expireDate': expDate });
-    res.json({ success: true });
-});
-
-// --- PARTNER APIs ---
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
     let query = {};
     if(country) query.country = new RegExp(country, 'i');
-    if(degree && degree !== 'All') query.degree = degree;
-    res.json(await University.find(query));
+    if(degree && degree !== 'Select Degree') query.degree = degree;
+    const results = await University.find(query);
+    res.json(results);
 });
 
-const PORT = 10000;
-app.listen(PORT, () => console.log(`🚀 System Live on Port ${PORT}`));
+// Auto-block logic for expired subscription
+setInterval(async () => {
+    await Partner.updateMany(
+        { "subscription.expireDate": { $lt: new Date() } },
+        { status: 'Deactivate' }
+    );
+}, 86400000); // Check once a day
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
