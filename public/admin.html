@@ -1,119 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Dashboard | IHP CRM</title>
+    <title>IHP Admin Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
-        .sidebar { width: 260px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 280px; padding: 30px; width: calc(100% - 280px); }
-        .nav-btn { display: block; width: 100%; padding: 15px; text-align: left; background: none; border: none; color: white; cursor: pointer; border-radius: 8px; margin-bottom: 5px; }
-        .nav-btn.active { background: #3949ab; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
-        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; color: white; text-decoration: none; }
+        .sidebar { width: 250px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
+        .main { margin-left: 270px; padding: 20px; width: 100%; }
+        .nav-btn { display: block; width: 100%; padding: 12px; background: none; border: none; color: white; text-align: left; cursor: pointer; border-radius: 5px; margin-bottom: 5px; }
+        .nav-btn:hover, .active { background: #3949ab; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>IHP ADMIN</h2>
-    <button class="nav-btn active" onclick="showTab('tab1')"><i class="fas fa-plus"></i> Add University</button>
-    <button class="nav-btn" onclick="showTab('tab2'); loadTracking()"><i class="fas fa-file-invoice"></i> Student Tracking</button>
-    <button class="nav-btn" onclick="showTab('tab3'); loadPartners()"><i class="fas fa-users"></i> Partner List</button>
+    <button class="nav-btn active" onclick="showTab('tracking')"><i class="fas fa-file-invoice"></i> Student Tracking</button>
+    <button class="nav-btn" onclick="showTab('compliance')"><i class="fas fa-user-shield"></i> Compliance Control</button>
 </div>
 
 <div class="main">
-    <div id="tab1" class="tab-content">
-        <div class="card">
-            <h3>🎓 Add University for Assessment</h3>
-            <form id="uniForm" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                <input type="text" name="uniName" placeholder="University Name" required>
-                <input type="text" name="country" placeholder="Country" required>
-                <input type="text" name="location" placeholder="Location">
-                <input type="text" name="fee" placeholder="Semester Fee">
-                <input type="text" name="partnerCommission" placeholder="Commission">
-                <button type="submit" style="grid-column: span 3; background:#1a237e; color:white; padding:12px; border:none; border-radius:8px; cursor:pointer;">Save Data</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="tab2" class="tab-content" style="display:none;">
+    <div id="tracking" class="tab">
         <div class="card">
             <h3>📁 Student File Tracking (Admin View)</h3>
             <table>
                 <thead>
-                    <tr><th>Student Name</th><th>University</th><th>Compliance Info</th><th>Status</th><th>Download</th></tr>
+                    <tr><th>Student</th><th>University</th><th>Score</th><th>Status</th><th>Download</th></tr>
                 </thead>
-                <tbody id="trackTable"></tbody>
+                <tbody id="adminTrackTable"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="tab3" class="tab-content" style="display:none;">
+    <div id="compliance" class="tab" style="display:none;">
         <div class="card">
-            <h3>🤝 Partner Management</h3>
-            <table>
-                <thead>
-                    <tr><th>Partner Name</th><th>Organization</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody id="partnerTable"></tbody>
-            </table>
+            <h3>🛡️ Compliance Member Control</h3>
+            <p>Active Members: 12 | Pending Tasks: 5</p>
+            <button style="background: green; color:white; border:none; padding:10px; border-radius:5px;">Add New Member</button>
         </div>
     </div>
 </div>
 
 <script>
     function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
         document.getElementById(id).style.display = 'block';
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        event.currentTarget.classList.add('active');
     }
 
     async function loadTracking() {
         const res = await fetch('/api/admin/files');
         const data = await res.json();
-        document.getElementById('trackTable').innerHTML = data.map(f => `
+        document.getElementById('adminTrackTable').innerHTML = data.map(f => `
             <tr>
                 <td>${f.studentName}</td>
                 <td>${f.university}</td>
-                <td>${f.complianceInfo?.name || 'IHP Member'} (${f.complianceInfo?.id || 'ID-001'})</td>
-                <td><b>${f.status}</b></td>
+                <td>${f.language}: ${f.langScore}</td>
+                <td><b style="color:orange">${f.status}</b></td>
                 <td>
-                    <a href="${f.pdfUrl || '#'}" target="_blank" class="btn-action" style="background:#28a745;">
+                    <a href="${f.pdfUrl}" target="_blank" style="background:#28a745; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">
                         <i class="fas fa-download"></i> PDF
                     </a>
                 </td>
             </tr>
         `).join('');
     }
-
-    async function loadPartners() {
-        const res = await fetch('/api/admin/partners');
-        const data = await res.json();
-        document.getElementById('partnerTable').innerHTML = data.map(p => `
-            <tr>
-                <td>${p.name}</td>
-                <td>${p.orgName}</td>
-                <td>${p.status}</td>
-                <td>
-                    <button onclick="updatePartnerStatus('${p._id}', 'Active')" class="btn-action" style="background:green;">Active</button>
-                    <button onclick="updatePartnerStatus('${p._id}', 'Deactivate')" class="btn-action" style="background:red;">Block</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function updatePartnerStatus(id, status) {
-        await fetch('/api/admin/approve-partner', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id, status })
-        });
-        loadPartners();
-    }
+    loadTracking();
 </script>
 </body>
 </html>

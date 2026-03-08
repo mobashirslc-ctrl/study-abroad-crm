@@ -1,39 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP CRM</title>
+    <title>Partner Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .welcome-bar { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 15px; color: #1a73e8; font-weight: bold; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .track-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #28a745; }
+        .btn-blue { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .welcome-bar { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; color: #1a73e8; font-weight: bold; }
+        .track-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #28a745; position: relative; }
+        .status-badge { position: absolute; top: 15px; right: 15px; background: orange; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
         .nav-item { flex: 1; text-align: center; color: #777; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: #1a73e8; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; }
+        .nav-item.active { color: #1a73e8; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="welcome-bar">
-        <i class="fas fa-user-circle fa-lg"></i> <span id="partnerNameDisplay">Welcome, Partner</span>
+    <div class="welcome-bar"><i class="fas fa-user-circle"></i> <span id="pName">Welcome, Partner</span></div>
+
+    <div class="card" id="sub-card">
+        <h4 style="margin:0; color:#333;">Subscription Details</h4>
+        <div style="font-size:12px; color:#666; margin-top:5px;">
+            Package: <b id="pPkg">Pro</b> | Expire: <b id="pExp">2026-12-31</b>
+        </div>
     </div>
 
     <div id="assessment-page" class="page">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="c" placeholder="Country">
-            <select id="d"><option value="">Select Degree</option><option>UG</option><option>PG</option><option>PHD</option></select>
-            <input type="text" id="s" placeholder="CGPA / Score">
-            <button class="btn-search" onclick="runSearch()">SEARCH UNIVERSITY</button>
+            <input type="text" id="sCountry" placeholder="Enter Country">
+            <select id="sDegree">
+                <option value="">Select Degree</option>
+                <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option>
+            </select>
+            <select id="sLang">
+                <option value="">Select Language Test</option>
+                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <input type="text" id="sScore" placeholder="Language Score (e.g. 6.5)">
+            <button class="btn-blue" onclick="runSearch()">SEARCH UNIVERSITY</button>
         </div>
         <div id="results"></div>
     </div>
@@ -42,46 +54,14 @@
         <h3>📁 My Tracking Files</h3>
         <div id="trackList"></div>
     </div>
-
-    <div id="wallet-page" class="page" style="display:none;">
-        <div class="card" style="background:#1a73e8; color:white;">
-            <p>Total Balance</p><h2>৳ 0.00</h2>
-        </div>
-        <div class="card">
-            <h3>Withdraw Request</h3>
-            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="text" id="wAcc" placeholder="Account / Bank Number"> <input type="number" id="wAmt" placeholder="Amount">
-            <button class="btn-search" style="background:#28a745;">SEND REQUEST</button>
-        </div>
-    </div>
-</div>
-
-<div id="fileModal" class="modal">
-    <div class="modal-content">
-        <h3>📄 Open Student File</h3>
-        <form id="fileForm">
-            <input type="hidden" id="selectedUni">
-            <input type="text" id="stdName" placeholder="Student Name" required>
-            <input type="text" id="stdContact" placeholder="Contact No" required>
-            <label style="font-size:12px;">Upload PDF (Mandatory)</label>
-            <input type="file" id="stdFile" accept=".pdf" required>
-            <button type="submit" class="btn-open">SUBMIT TO ADMIN</button>
-            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">Close</button>
-        </form>
-    </div>
 </div>
 
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Assessment</div>
+    <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
     <div class="nav-item" onclick="showP('tracking-page', this); loadMyTracking()"><i class="fas fa-tasks"></i><br>Tracking</div>
-    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
-    // Welcome Name (Point 4)
-    const user = JSON.parse(localStorage.getItem('partnerUser')) || { name: "Partner" };
-    document.getElementById('partnerNameDisplay').innerText = "Welcome, " + user.name;
-
     function showP(id, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
@@ -90,51 +70,46 @@
     }
 
     async function runSearch() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}`);
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}`);
         const data = await res.json();
         document.getElementById('results').innerHTML = data.map(u => `
             <div class="card">
-                <div style="font-weight:bold; color:#1a73e8;">${u.uniName}</div>
-                <div style="font-size:12px; margin-top:5px;">Commission: ${u.partnerCommission} | Bank: ${u.bankNameSuggestion}</div>
-                <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
+                <b>${u.uniName}</b><br><small>Fee: ${u.fee} | Comm: ${u.partnerCommission}</small>
+                <button class="btn-blue" style="margin-top:10px; background:#28a745;" onclick="submitFile('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    function openModal(uni) { document.getElementById('selectedUni').value = uni; document.getElementById('fileModal').style.display = 'flex'; }
-    function closeModal() { document.getElementById('fileModal').style.display = 'none'; }
+    async function submitFile(uni) {
+        const name = prompt("Enter Student Name:");
+        if(!name) return;
+        const payload = {
+            studentName: name, university: uni,
+            degree: document.getElementById('sDegree').value,
+            language: document.getElementById('sLang').value,
+            langScore: document.getElementById('sScore').value,
+            complianceInfo: { name: "IHP Admin", id: "IHP-001" }
+        };
+        await fetch('/api/open-file', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        alert("File Submitted Successfully!");
+    }
 
     async function loadMyTracking() {
         const res = await fetch('/api/admin/files');
         const data = await res.json();
         document.getElementById('trackList').innerHTML = data.map(f => `
             <div class="track-card">
+                <span class="status-badge">${f.status}</span>
                 <b>${f.studentName}</b><br>
-                <small>University: ${f.university}</small><br>
-                <small>Compliance: ${f.complianceInfo?.name || 'IHP Member'}</small><br>
-                <a href="${f.pdfUrl || '#'}" target="_blank" style="text-decoration:none;">
-                    <button style="background:#1a73e8; color:white; border:none; padding:5px 10px; border-radius:5px; margin-top:5px; cursor:pointer;">
-                        <i class="fas fa-download"></i> Download PDF
-                    </button>
+                <small>${f.university} | ${f.language}: ${f.langScore}</small><br>
+                <a href="${f.pdfUrl}" target="_blank">
+                    <button style="margin-top:10px; cursor:pointer;">Download PDF</button>
                 </a>
             </div>
         `).join('');
-    }
-
-    document.getElementById('fileForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const payload = {
-            studentName: document.getElementById('stdName').value,
-            contact: document.getElementById('stdContact').value,
-            university: document.getElementById('selectedUni').value,
-            complianceInfo: { name: "IHP Member", org: "IHP Global", id: "IHP-102" },
-            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-        };
-        await fetch('/api/open-file', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        alert("Success!"); closeModal();
     }
 </script>
 </body>
