@@ -4,6 +4,7 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
+// Static files middleware - নিশ্চিত করুন আপনার HTML ফাইলগুলো 'public' ফোল্ডারে আছে
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
@@ -11,8 +12,6 @@ const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_
 mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected'));
 
 // --- SCHEMAS ---
-
-// 1. University Schema (All 17 Fields)
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, course: String, intake: String,
     degree: String, language: String, academicScore: String, langScore: String,
@@ -21,26 +20,18 @@ const UniSchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniSchema);
 
-// 2. Partner Schema (Status, Wallet, Subscription)
 const PartnerSchema = new mongoose.Schema({
-    name: String, contact: String, orgName: String,
-    status: { type: String, default: 'Pending' }, // Active/Deactivate
-    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0}, withdrawn: {type: Number, default: 0} },
-    subscription: { package: String, expireDate: Date }
+    name: String, status: { type: String, default: 'Pending' },
+    wallet: { total: Number, pending: Number },
+    expireDate: { type: Date, default: new Date('2026-12-31') }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// 3. File Tracking Schema
-const FileSchema = new mongoose.Schema({
-    studentName: String, contact: String, university: String, 
-    status: { type: String, default: 'File Opened' },
-    openTime: { type: Date, default: Date.now }
-});
-const FileTrack = mongoose.model('FileTrack', FileSchema);
+// --- ROUTES (যাতে 404 Error না আসে) ---
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 
 // --- APIs ---
-
-// Admin: Add University
 app.post('/api/add-uni', async (req, res) => {
     try {
         const newUni = new University(req.body);
@@ -49,7 +40,6 @@ app.post('/api/add-uni', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Partner: Smart Search
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
     const query = {};
@@ -60,11 +50,5 @@ app.get('/api/search-uni', async (req, res) => {
     res.json(results);
 });
 
-// Partner List (Admin)
-app.get('/api/partners', async (req, res) => {
-    const list = await Partner.find();
-    res.json(list);
-});
-
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Master CRM Running on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -2,77 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal</title>
+    <title>Partner Portal | IHP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f7f9; margin: 0; padding-bottom: 70px; }
+        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-main { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #ddd; }
+        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #eee; }
         .nav-item { text-align: center; color: #666; font-size: 11px; cursor: pointer; flex: 1; }
         .nav-item.active { color: #1a73e8; }
-        .result-card { border-left: 5px solid #1a73e8; padding-left: 15px; }
-    </div>
+        .result-item { border-left: 5px solid #1a73e8; margin-top: 15px; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="assess" class="page">
+    <div id="assess-view">
         <div class="card">
-            <h3><i class="fas fa-magic"></i> Smart Assessment</h3>
-            <input type="text" id="c" placeholder="Country">
-            <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>RESEARCH</option><option>PHD</option></select>
-            <select id="l"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-            <input type="text" placeholder="Academic & Language Score Box">
-            <button class="btn-main" onclick="search()">SEARCH UNIVERSITY</button>
+            <h3>🔍 Smart Assessment</h3>
+            <input type="text" id="country" placeholder="Country Name">
+            <select id="degree">
+                <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+            </select>
+            <select id="lang">
+                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <input type="text" placeholder="Academic & Language Score">
+            <button class="btn-search" onclick="searchUni()">SEARCH UNIVERSITY</button>
         </div>
         <div id="results"></div>
     </div>
-
-    <div id="wallet" class="page" style="display:none;">
-        <div class="card" style="background:#1a73e8; color:white; text-align:center;">
-            <p>Total Cart: ৳ 0 | Pending: ৳ 0</p>
-            <h2>৳ 0.00</h2>
-            <p>Subscription Expire: 31-12-2026</p>
-        </div>
-        <div class="card">
-            <h3>Withdraw (Bkash, Nagad, Bank)</h3>
-            <select><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="number" placeholder="Amount">
-            <button class="btn-main" style="background:green;">WITHDRAW</button>
-        </div>
-    </div>
 </div>
 
-<div class="nav">
-    <div class="nav-item active" onclick="show('assess')"><i class="fas fa-search"></i>Assessment</div>
-    <div class="nav-item" onclick="show('wallet')"><i class="fas fa-wallet"></i>Withdraw</div>
+<div class="nav-bar">
+    <div class="nav-item active"><i class="fas fa-search"></i><br>Assessment</div>
+    <div class="nav-item"><i class="fas fa-wallet"></i><br>Withdraw</div>
 </div>
 
 <script>
-    function show(id) {
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
-    }
+    async function searchUni() {
+        const resDiv = document.getElementById('results');
+        resDiv.innerHTML = "Searching...";
+        const c = document.getElementById('country').value;
+        const d = document.getElementById('degree').value;
+        const l = document.getElementById('lang').value;
 
-    async function search() {
-        const r = document.getElementById('results'); r.innerHTML = "Searching...";
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}&language=${document.getElementById('l').value}`);
+        const res = await fetch(`/api/search-uni?country=${c}&degree=${d}&language=${l}`);
         const data = await res.json();
         
-        r.innerHTML = data.map(u => `
-            <div class="card result-card">
+        if(data.length === 0) { resDiv.innerHTML = "No matches found."; return; }
+
+        resDiv.innerHTML = data.map(u => `
+            <div class="card result-item">
                 <div style="font-weight:bold; color:#1a73e8; font-size:18px;">${u.uniName}</div>
-                <div style="font-size:12px; color:#666;">${u.course} | ${u.location || ''}</div>
-                <div style="margin-top:10px; font-size:13px;">
-                    Intake: ${u.intake} | Fee: ${u.fee} ${u.currency}<br>
-                    Bank Req: ${u.bankBalance} | Loan: ${u.loanAmount}<br>
-                    Bank BD: ${u.bankNameSuggestion} | Marital: ${u.maritalStatus}<br>
-                    <b style="color:green;">Partner Commission: ${u.partnerCommission}</b>
+                <div style="font-size:12px; color:#666;">${u.course || 'N/A'} - ${u.intake || 'N/A'}</div>
+                <hr style="opacity:0.2;">
+                <div style="font-size:13px; line-height:1.6;">
+                    Fee: ${u.fee || '0'} ${u.currency || ''} | Bank Req: ${u.bankBalance || '0'}<br>
+                    <b>Bank BD:</b> ${u.bankNameSuggestion || 'Contact Admin'}<br>
+                    <b>Loan Amount:</b> ${u.loanAmount || 'Not Specified'}<br>
+                    <b>Commission:</b> <span style="color:green;">${u.partnerCommission || '0'}</span>
                 </div>
-                <button class="btn-main" style="margin-top:10px; background:#28a745; padding:10px;">OPEN STUDENT FILE</button>
+                <button class="btn-search" style="margin-top:10px; background:#28a745; padding:10px;">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
