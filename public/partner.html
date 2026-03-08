@@ -2,44 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal</title>
+    <title>Partner Portal | IHP</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 60px; }
-        .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
-        .btn-search { width: 100%; background: #1a73e8; color: white; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 15px; font-size: 12px; color: #777; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 70px; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; }
+        .btn-search { width: 100%; background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .uni-res { border-left: 5px solid #1a73e8; padding: 15px; margin-top: 15px; background: #fff; border-radius: 8px; }
+        .nav { position: fixed; bottom: 0; width: 100%; max-width: 600px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; font-size: 12px; color: #666; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Where to study?">
-            <select id="sDeg"><option>Select Degree</option><option>UG</option><option>PG</option><option>PHD</option></select>
-            <button class="btn-search" onclick="search()">SEARCH UNIVERSITY</button>
+            <input type="text" id="sCountry" placeholder="Country Name">
+            <select id="sDeg">
+                <option value="All">Select Degree</option>
+                <option>UG</option><option>PG</option><option>PHD</option>
+            </select>
+            <select id="sLang"><option value="All">Language</option><option>IELTS</option><option>PTE</option></select>
+            <input type="text" placeholder="Academic CGPA/GPA">
+            <button class="btn-search" onclick="runSearch()">FIND UNIVERSITY</button>
         </div>
         <div id="results"></div>
-        <div class="card" style="background: #1a73e8; color: white;">
-            <p>Wallet Balance</p>
-            <h2>৳ 0.00</h2>
-            <small>Status: Active</small>
-        </div>
     </div>
+
     <nav class="nav">
-        <div class="nav-item">Search</div><div class="nav-item">Files</div><div class="nav-item">Wallet</div>
+        <div class="nav-item"><b>Search</b></div>
+        <div class="nav-item">Files</div>
+        <div class="nav-item">Wallet</div>
     </nav>
+
     <script>
-        async function search() {
+        async function runSearch() {
             const country = document.getElementById('sCountry').value;
             const res = await fetch(`/api/search-uni?country=${country}&degree=${document.getElementById('sDeg').value}`);
-            const data = await res.json();
-            document.getElementById('results').innerHTML = data.map(u => `
-                <div class="card">
-                    <b>${u.uniName}</b><br><small>Commission: ${u.partnerCommission}</small>
-                    <button style="background: #28a745; color: white; border: none; padding: 8px; border-radius: 5px; margin-top: 10px; width: 100%;">OPEN FILE</button>
+            const unis = await res.json();
+            
+            document.getElementById('results').innerHTML = unis.map(u => `
+                <div class="uni-res">
+                    <h4>${u.uniName}</h4>
+                    <p><b>Course:</b> ${u.course} | <b>Intake:</b> ${u.intake}</p>
+                    <p><b>Fee:</b> ${u.fee} ${u.currency} | <b>Commission:</b> ${u.partnerCommission}</p>
+                    <p><small>Bank Req: ${u.bankBalance} | Loan: ${u.loanAmount}</small></p>
+                    <button style="background:green; color:white; border:none; padding:8px; border-radius:5px; width:100%;">OPEN FILE</button>
                 </div>
             `).join('');
         }

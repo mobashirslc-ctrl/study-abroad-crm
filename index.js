@@ -9,11 +9,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(mongoURI)
-    .then(() => console.log('✅ Connected to MongoDB Cluster'))
-    .catch(err => console.error('❌ DB Error:', err));
+mongoose.connect(mongoURI).then(() => console.log('✅ MongoDB Connected'));
 
-// --- Schemas ---
+// --- Models ---
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, course: String, intake: String,
     degree: String, language: String, acadScore: String, langScore: String,
@@ -23,55 +21,39 @@ const UniSchema = new mongoose.Schema({
 const University = mongoose.model('University', UniSchema);
 
 const PartnerSchema = new mongoose.Schema({
-    name: String, email: String, contact: String, status: { type: String, default: 'Pending' },
+    name: String, email: String, status: { type: String, default: 'Pending' },
     wallet: { 
         total: { type: Number, default: 0 }, 
         pending: { type: Number, default: 0 }, 
         withdrawn: { type: Number, default: 0 } 
     },
-    subscription: { package: String, expireDate: Date },
-    withdrawEnabled: { type: Boolean, default: false }
+    subscription: { package: String, expireDate: Date }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-const FileSchema = new mongoose.Schema({
-    studentName: String, contact: String, university: String,
-    status: { type: String, default: 'File Opened' },
-    complianceMember: { name: String, contact: String },
-    partnerId: mongoose.Schema.Types.ObjectId,
-    openDate: { type: Date, default: Date.now }
-});
-const FileTrack = mongoose.model('FileTrack', FileSchema);
-
-// --- Routes to Serve Files ---
+// --- Routes ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 
-// --- APIs ---
+// API: Save University
 app.post('/api/admin/add-uni', async (req, res) => {
     try {
         const uni = new University(req.body);
         await uni.save();
         res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// API: Smart Assessment Search
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
     let query = {};
     if(country) query.country = new RegExp(country, 'i');
-    if(degree && degree !== 'Select Degree') query.degree = degree;
+    if(degree && degree !== 'All') query.degree = degree;
+    if(language && language !== 'All') query.language = language;
     const results = await University.find(query);
     res.json(results);
 });
 
-// Auto-block logic for expired subscription
-setInterval(async () => {
-    await Partner.updateMany(
-        { "subscription.expireDate": { $lt: new Date() } },
-        { status: 'Deactivate' }
-    );
-}, 86400000); // Check once a day
-
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CRM Live on ${PORT}`));
