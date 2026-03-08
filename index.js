@@ -8,69 +8,87 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
-mongoose.connect(mongoURI).then(() => console.log('✅ Connected to MongoDB'));
+mongoose.connect(mongoURI).then(() => console.log('✅ Connected to Master Database'));
 
 // --- SCHEMAS ---
 
-// 1. University Schema (১৭টি ফিল্ড)
+// ১. ইউনিভার্সিটি স্কিমা (Assessment এর জন্য)
 const UniSchema = new mongoose.Schema({
-    country: String, uniName: String, course: String, intake: String,
-    degree: String, language: String, academicScore: String, langScore: String,
-    fee: String, currency: String, bankBalance: String, bankType: String,
-    maritalStatus: String, bankNameSuggestion: String, loanAmount: String, partnerCommission: String
+    country: String, uniName: String, location: String, course: String, 
+    intake: String, degree: String, language: String, langScore: String, 
+    cgpa: String, fee: String, currency: String, bankBalance: String,
+    bankNameSuggestion: String, loanAmount: String, maritalStatus: String, partnerCommission: String
 });
 const University = mongoose.model('University', UniSchema);
 
-// 2. Partner Schema (Subscription & Status)
-const PartnerSchema = new mongoose.Schema({
-    name: String, contact: String, orgName: String,
-    status: { type: String, default: 'Pending' }, // Active/Deactivate
-    wallet: { total: Number, pending: Number, withdrawn: Number },
-    subscription: { package: String, expireDate: Date }
-});
-const Partner = mongoose.model('Partner', PartnerSchema);
-
-// 3. Student File Schema
+// ২. স্টুডেন্ট ফাইল ট্র্যাকিং স্কিমা
 const FileSchema = new mongoose.Schema({
-    studentName: String, contact: String, university: String,
-    status: { type: String, default: 'Processing' },
+    studentName: String,
+    contact: String,
+    university: String,
+    status: { type: String, default: 'Pending' }, // Visa Status tracking
     openTime: { type: Date, default: Date.now }
 });
 const FileTrack = mongoose.model('FileTrack', FileSchema);
+
+// ৩. পার্টনার স্কিমা (Activation & Subscription)
+const PartnerSchema = new mongoose.Schema({
+    name: String, orgName: String, contact: String,
+    status: { type: String, default: 'Pending' }, // Active or Deactivate
+    wallet: { total: Number, pending: Number, withdrawn: Number },
+    subscriptionExpire: Date
+});
+const Partner = mongoose.model('Partner', PartnerSchema);
 
 // --- APIs ---
 
 // Admin: Add University
 app.post('/api/add-uni', async (req, res) => {
-    const newUni = new University(req.body);
-    await newUni.save();
-    res.json({ success: true });
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Partner: Smart Search (Auto-Block Check)
+// Partner: Smart Search
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
-    // এখানে ভবিষ্যতে পার্টনার সাবস্ক্রিপশন চেক লজিক বসবে
-    const results = await University.find({ 
-        country: new RegExp(`^${country}$`, 'i'), 
-        degree: degree, 
-        language: language 
-    });
+    let query = {};
+    if(country) query.country = new RegExp(`^${country}$`, 'i');
+    if(degree) query.degree = degree;
+    if(language) query.language = language;
+    
+    const results = await University.find(query);
     res.json(results);
 });
 
-// Student File Open
+// Partner: Open Student File
 app.post('/api/open-file', async (req, res) => {
-    const newFile = new FileTrack(req.body);
-    await newFile.save();
-    res.json({ success: true });
+    try {
+        const newFile = new FileTrack(req.body);
+        await newFile.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Admin: Controls
-app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
-app.get('/api/admin/files', async (req, res) => res.json(await FileTrack.find().sort({openTime: -1})));
+// Admin: Get All Files for Tracking (এটিই আগে মিসিং ছিল)
+app.get('/api/admin/files', async (req, res) => {
+    try {
+        const files = await FileTrack.find().sort({ openTime: -1 });
+        res.json(files);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
-// Routes
+// Admin: Get Partner List
+app.get('/api/admin/partners', async (req, res) => {
+    try {
+        const partners = await Partner.find();
+        res.json(partners);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// --- ROUTES ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 

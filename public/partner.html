@@ -1,113 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Dashboard</title>
+    <title>Partner Portal | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 80px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .result-card { border-left: 5px solid #1a73e8; }
-        .details { font-size: 13px; line-height: 1.6; color: #333; }
+        h3 { margin-top: 0; color: #333; font-size: 18px; }
         
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; color: #666; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: #1a73e8; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
-        .modal-content { background: white; width: 90%; max-width: 400px; margin: 50px auto; padding: 20px; border-radius: 15px; }
+        /* রেজাল্ট কার্ড ডিজাইন */
+        .result-card { border-left: 5px solid #1a73e8; background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .uni-name { font-weight: bold; color: #1a73e8; font-size: 17px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px; color: #444; margin-top: 8px; }
+        .info-item b { color: #000; }
+        .commission-tag { background: #e8f5e9; color: #2e7d32; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold; margin-top: 10px; font-size: 14px; }
+        
+        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        /* নেভিগেশন */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; z-index: 100; }
+        .nav-item { flex: 1; text-align: center; font-size: 11px; color: #777; cursor: pointer; }
+        .nav-item.active { color: #1a73e8; font-weight: bold; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 3px; }
+
+        /* পপ-আপ (Modal) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 15px; }
+
+        /* ফাইল ট্র্যাকিং টেবিল স্টাইল */
+        .track-card { background: white; padding: 15px; border-radius: 10px; border-bottom: 3px solid #ddd; margin-bottom: 10px; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="assess-page" class="page">
+    <div id="assessment-section" class="page">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="country" placeholder="Country Name">
-            <select id="degree">
-                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+            <input type="text" id="sCountry" placeholder="Country Name">
+            <select id="sDegree">
+                <option value="">Select Degree</option>
+                <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>PHD</option><option>RESEARCH</option>
             </select>
-            <select id="lang">
-                <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            <select id="sLang">
+                <option value="">Language Test</option>
+                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
             </select>
-            <input type="text" id="score" placeholder="Academic & Language Score Box">
-            <button class="btn-search" onclick="search()">RUN ASSESSMENT</button>
+            <input type="text" id="sScore" placeholder="Language & Academic Score/CGPA">
+            <button class="btn-search" onclick="runSearch()">SEARCH UNIVERSITY</button>
         </div>
-        <div id="results"></div>
+        <div id="resultsArea"></div>
     </div>
 
-    <div id="wallet-page" class="page" style="display:none;">
-        <div class="card" style="background: #1a73e8; color: white;">
-            <p>Total Balance</p><h2>৳ 0.00</h2>
-            <small>Subscription Expires: 31-12-2026</small>
+    <div id="tracking-section" class="page" style="display:none;">
+        <h3>📁 File Tracking List</h3>
+        <div id="trackingList">
+            <p style="text-align:center;">Loading tracking data...</p>
+        </div>
+    </div>
+
+    <div id="wallet-section" class="page" style="display:none;">
+        <div class="card" style="background:linear-gradient(45deg, #1a73e8, #0d47a1); color:white;">
+            <p>Available Balance</p>
+            <h2 id="wBalance">৳ 0.00</h2>
+            <div style="display:flex; justify-content: space-between; font-size:12px; margin-top:10px;">
+                <span>Pending: ৳ 0</span>
+                <span>Withdrawn: ৳ 0</span>
+            </div>
         </div>
         <div class="card">
-            <h3>Withdraw Request</h3>
-            <select><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="number" placeholder="Amount">
-            <button class="btn-search" style="background: #28a745;">SEND WITHDRAW REQUEST</button>
+            <h3>Withdraw Funds</h3>
+            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+            <input type="number" id="wAmount" placeholder="Enter Amount">
+            <button class="btn-search">SEND REQUEST</button>
+        </div>
+        <div class="card">
+            <h3>Subscription Info</h3>
+            <p style="font-size:14px;">Package: <b>Premium Pro</b><br>Expires: <span style="color:red;">31-12-2026</span></p>
         </div>
     </div>
 </div>
 
-<div id="fileModal" class="modal">
+<div id="uploadModal" class="modal">
     <div class="modal-content">
-        <h3>📄 Open Student File</h3>
-        <input type="hidden" id="selectedUni">
-        <input type="text" id="stdName" placeholder="Student Name">
-        <input type="text" id="stdContact" placeholder="Contact Number">
-        <button class="btn-search" onclick="submitFile()">CONFIRM SUBMIT</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px;">Close</button>
+        <h3>📄 Submit Student File</h3>
+        <form id="fileForm">
+            <input type="hidden" id="mUni">
+            <input type="text" id="mStdName" placeholder="Student Full Name" required>
+            <input type="text" id="mStdPhone" placeholder="Contact Number" required>
+            <label style="font-size:12px; font-weight:bold;">Upload Document (PDF)</label>
+            <input type="file" id="mFile" accept=".pdf" required>
+            <button type="submit" class="btn-open">CONFIRM & SUBMIT</button>
+            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px;">Cancel</button>
+        </form>
     </div>
 </div>
 
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="showP('assess-page', this)"><i class="fas fa-search fa-lg"></i><br>Assessment</div>
-    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet fa-lg"></i><br>Wallet</div>
+    <div class="nav-item active" onclick="showPage('assessment-section', this)"><i class="fas fa-search"></i>Assessment</div>
+    <div class="nav-item" onclick="showPage('tracking-section', this); fetchTracking()"><i class="fas fa-tasks"></i>Tracking</div>
+    <div class="nav-item" onclick="showPage('wallet-section', this)"><i class="fas fa-wallet"></i>Wallet</div>
 </div>
 
 <script>
-    async function search() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('country').value}&degree=${document.getElementById('degree').value}&language=${document.getElementById('lang').value}`);
-        const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `
-            <div class="card result-card">
-                <div style="font-weight:bold; color:#1a73e8; font-size:18px;">${u.uniName}</div>
-                <div class="details">
-                    Fee: ${u.fee} ${u.currency} | Bank: ${u.bankNameSuggestion}<br>
-                    Loan: ${u.loanAmount} | <b>Commission: ${u.partnerCommission}</b>
+    // পেজ পরিবর্তন লজিক
+    function showPage(pageId, navEl) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        document.getElementById(pageId).style.display = 'block';
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        navEl.classList.add('active');
+    }
+
+    // স্মার্ট অ্যাসেসমেন্ট সার্চ
+    async function runSearch() {
+        const area = document.getElementById('resultsArea');
+        area.innerHTML = "<p style='text-align:center;'>Searching...</p>";
+        
+        const q = `country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}&language=${document.getElementById('sLang').value}`;
+        
+        try {
+            const res = await fetch(`/api/search-uni?${q}`);
+            const data = await res.json();
+            
+            if(data.length === 0) { area.innerHTML = "<p>No university found.</p>"; return; }
+
+            area.innerHTML = data.map(u => `
+                <div class="result-card">
+                    <div class="uni-name">${u.uniName}</div>
+                    <div class="info-grid">
+                        <div class="info-item"><b>Location:</b> ${u.location || 'N/A'}</div>
+                        <div class="info-item"><b>Country:</b> ${u.country}</div>
+                        <div class="info-item"><b>Course:</b> ${u.course}</div>
+                        <div class="info-item"><b>Intake:</b> ${u.intake}</div>
+                        <div class="info-item"><b>Fee:</b> ${u.fee} ${u.currency}</div>
+                        <div class="info-item"><b>Marital:</b> ${u.maritalStatus}</div>
+                        <div class="info-item"><b>Bank BD:</b> ${u.bankNameSuggestion}</div>
+                        <div class="info-item"><b>Loan:</b> ${u.loanAmount}</div>
+                        <div class="info-item" style="grid-column: span 2;"><b>Bank Req:</b> ${u.bankBalance}</div>
+                    </div>
+                    <div class="commission-tag">Commission: ${u.partnerCommission}</div>
+                    <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
                 </div>
-                <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
+            `).join('');
+        } catch(e) { area.innerHTML = "Error loading data."; }
+    }
+
+    // ট্র্যাকিং ডেটা লোড
+    async function fetchTracking() {
+        const list = document.getElementById('trackingList');
+        const res = await fetch('/api/admin/files'); // Admin API reuse for demo
+        const data = await res.json();
+        
+        list.innerHTML = data.map(f => `
+            <div class="track-card">
+                <b>${f.studentName}</b> (${f.contact})<br>
+                <span style="color:#1a73e8;">${f.university}</span><br>
+                <small>Status: <b style="color:orange;">${f.status}</b></small><br>
+                <small>Date: ${new Date(f.openTime).toLocaleString()}</small><br>
+                <button style="margin-top:5px; font-size:11px; padding:4px;">Download PDF</button>
             </div>
         `).join('');
     }
 
-    function showP(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-    }
+    // পপ-আপ কন্ট্রোল
+    function openModal(name) { document.getElementById('mUni').value = name; document.getElementById('uploadModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
-    function openModal(uni) { document.getElementById('selectedUni').value = uni; document.getElementById('fileModal').style.display = 'block'; }
-    function closeModal() { document.getElementById('fileModal').style.display = 'none'; }
+    // ফাইল সাবমিট (PDF সহ)
+    document.getElementById('fileForm').onsubmit = async (e) => {
+        e.preventDefault();
+        // PDF হ্যান্ডলিং এর জন্য FormData ব্যবহার করা হয়েছে
+        const formData = {
+            studentName: document.getElementById('mStdName').value,
+            contact: document.getElementById('mStdPhone').value,
+            university: document.getElementById('mUni').value
+        };
 
-    async function submitFile() {
-        await fetch('/api/open-file', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                studentName: document.getElementById('stdName').value,
-                contact: document.getElementById('stdContact').value,
-                university: document.getElementById('selectedUni').value
-            })
+        const res = await fetch('/api/open-file', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
         });
-        alert("✅ File Opened Successfully!"); closeModal();
+
+        if(res.ok) {
+            alert("✅ File Submitted Successfully!");
+            closeModal();
+        }
     }
 </script>
+
 </body>
 </html>
