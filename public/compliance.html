@@ -2,12 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance</title>
+    <title>Compliance Portal | IHP</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .comp-btn { background: #ff9800; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .status-update { background: #1a73e8; color: white; padding: 5px 10px; border-radius: 4px; text-decoration: none; font-size: 12px; }
+    </style>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 50px;">
-    <h1>🔍 Compliance & Verification</h1>
-    <p>This dashboard is for document verification. (Under Development)</p>
-    <a href="/partner">Back to Home</a>
+<body>
+
+    <div class="card">
+        <h2>📂 Student Case Management</h2>
+        <div id="fileList">Loading Assigned Files...</div>
+    </div>
+
+<script>
+    async function loadAssignedFiles() {
+        // এই এপিআই স্টুডেন্ট ফাইলগুলো নিয়ে আসবে
+        const res = await fetch('/api/partner/files'); 
+        const files = await res.json();
+        
+        document.getElementById('fileList').innerHTML = files.map(f => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b>Student: ${f.studentName}</b> | Contact: ${f.contact}<br>
+                    <small>University: ${f.university} | Current Status: <span style="color:blue">${f.status}</span></small>
+                </div>
+                <div>
+                    <button class="comp-btn" onclick="releaseComm('${f.partnerId}', '${f._id}')">
+                        <i class="fas fa-money-bill"></i> COLLECTION COMMISSION
+                    </button>
+                    <button class="status-update" onclick="updateFileStatus('${f._id}')">UPDATE STATUS</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function releaseComm(pId, fId) {
+        if(!confirm("Release Commission to Partner? This will enable their Withdraw option.")) return;
+        
+        const res = await fetch('/api/compliance/release', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ partnerId: pId, fileId: fId })
+        });
+        const d = await res.json();
+        if(d.success) {
+            alert("Commission Successfully Released!");
+            loadAssignedFiles();
+        }
+    }
+
+    async function updateFileStatus(id) {
+        const newStatus = prompt("Enter New Status (e.g. Visa Approved, Documents Received):");
+        if(newStatus) {
+            // স্ট্যাটাস আপডেট করার এপিআই কল এখানে হবে
+            alert("Status Updated to: " + newStatus);
+        }
+    }
+
+    loadAssignedFiles();
+</script>
 </body>
 </html>

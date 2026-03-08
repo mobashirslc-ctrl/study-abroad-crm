@@ -2,125 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP</title>
+    <title>Partner Portal</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
         .btn-blue { background: #1a73e8; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; }
         .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 12px; font-size: 11px; color: #888; cursor: pointer; }
+        .nav-item { flex: 1; text-align: center; padding: 12px; color: #888; font-size: 11px; }
         .active { color: #1a73e8; font-weight: bold; }
         .page { display: none; } .active-page { display: block; }
-        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="auth-box" class="card">
-        <h2 id="aTitle">Registration</h2>
-        <div id="regOnly"><input type="text" id="pName" placeholder="Full Name"></div>
-        <input type="email" id="pEmail" placeholder="Email">
-        <input type="password" id="pPass" placeholder="Password">
-        <button class="btn-blue" onclick="handleAuth()" id="aBtn">REGISTER</button>
-        <p onclick="toggleA()" style="text-align:center; font-size:12px; cursor:pointer;">Switch Login/Register</p>
+<div class="container" id="app">
+    <div id="p-assessment" class="page active-page">
+        <div class="card">
+            <h3>🔍 Smart Assessment</h3>
+            <input type="text" id="sCountry" placeholder="Country">
+            <select id="sDeg">
+                <option>Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+            </select>
+            <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+            <button class="btn-blue" onclick="runSearch()">SEARCH</button>
+        </div>
+        <div id="results"></div>
     </div>
 
-    <div id="dash-box" style="display:none;">
-        <div id="p-search" class="page active-page">
-            <div class="card">
-                <h3>🔍 Smart Assessment</h3>
-                <input type="text" id="sCountry" placeholder="Country">
-                <select id="sDeg"><option>UG</option><option>PG</option><option>PHD</option><option>DIPLOMA</option></select>
-                <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                <input type="text" id="sAcad" placeholder="GPA/CGPA">
-                <button class="btn-blue" onclick="runSearch()">SEARCH</button>
-            </div>
-            <div id="results"></div>
+    <div id="p-wallet" class="page">
+        <div class="card" style="background: #1a73e8; color:white;">
+            <p>Balance</p><h2>৳ 0.00</h2>
+            <small>Package: Premium | Expiry: 2026-12-31</small>
         </div>
-
-        <div id="p-track" class="page">
-            <h3>📁 File Tracking</h3>
-            <div id="trackList"></div>
-        </div>
-
-        <div id="p-wallet" class="page">
-            <div class="card" style="background:#1a73e8; color:white;">
-                <p>Wallet</p><h2>৳ 0.00</h2>
-            </div>
-            <div class="card">
-                <h3>Withdraw</h3>
-                <select><option>Bkash</option><option>Nagad</option></select>
-                <input type="text" placeholder="Account Number">
-                <input type="number" placeholder="Amount">
-                <button class="btn-blue">SUBMIT</button>
-            </div>
+        <div class="card">
+            <h3>Withdraw</h3>
+            <select><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
+            <input type="text" placeholder="Account No">
+            <button class="btn-blue" id="wBtn" disabled>Withdraw (Disabled by Compliance)</button>
         </div>
     </div>
 </div>
 
-<div class="nav-bar" id="navbar" style="display:none;">
-    <div class="nav-item active" onclick="showP('p-search', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('p-track', this); loadFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
+<nav class="nav-bar">
+    <div class="nav-item active" onclick="showP('p-assessment', this)"><i class="fas fa-search"></i><br>Search</div>
     <div class="nav-item" onclick="showP('p-wallet', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
-</div>
+</nav>
 
 <script>
-    let isL = false;
-    function toggleA() { isL = !isL; document.getElementById('aTitle').innerText = isL ? "Login" : "Registration"; document.getElementById('regOnly').style.display = isL ? "none" : "block"; }
-
-    async function handleAuth() {
-        const body = { name: document.getElementById('pName').value, email: document.getElementById('pEmail').value, pass: document.getElementById('pPass').value };
-        const res = await fetch(isL ? '/api/auth/login' : '/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-        const d = await res.json();
-        if(d.success && isL) { localStorage.setItem('pUser', JSON.stringify(d.user)); location.reload(); } else alert(d.message);
-    }
-
     function showP(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(id).classList.add('active-page');
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
     }
-
     async function runSearch() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDeg').value}&language=${document.getElementById('sLang').value}`);
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDeg').value}&language=IELTS`);
         const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `
-            <div class="card">
-                <b>${u.uniName}</b> | ${u.country}
-                <div class="res-grid">
-                    <div>Fee: ${u.fee} ${u.currency}</div><div>Marital: ${u.maritalStatus}</div>
-                    <div>BD Bank: ${u.bankNameBD}</div><div>Comm: ${u.partnerCommission}</div>
-                </div>
-                <button class="btn-blue" style="background:#28a745; margin-top:10px;" onclick="openF('${u.uniName}')">OPEN FILE</button>
-            </div>
-        `).join('');
+        document.getElementById('results').innerHTML = data.map(u => `<div class="card"><b>${u.uniName}</b><br><small>Fee: ${u.fee} ${u.currency}</small><br><button class="btn-blue" style="background:#28a745; margin-top:10px;">OPEN FILE</button></div>`).join('');
     }
-
-    async function openF(uni) {
-        const studentName = prompt("Student Name:");
-        const contact = prompt("Student Contact:");
-        if(!studentName) return;
-        await fetch('/api/open-file', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ studentName, contact, university: uni }) });
-        alert("File Opened!");
-    }
-
-    async function loadFiles() {
-        const res = await fetch('/api/partner/files');
-        const data = await res.json();
-        document.getElementById('trackList').innerHTML = data.map(f => `
-            <div class="card">
-                <b>${f.studentName}</b><br><small>Status: ${f.status}</small><br>
-                <small>Comp. Member: ${f.complianceMember.name} (${f.complianceMember.contact})</small>
-            </div>
-        `).join('');
-    }
-
-    if(localStorage.getItem('pUser')) { document.getElementById('auth-box').style.display='none'; document.getElementById('dash-box').style.display='block'; document.getElementById('navbar').style.display='flex'; }
 </script>
 </body>
 </html>

@@ -1,76 +1,44 @@
 <!DOCTYPE html>
-<html>
-<head><title>Admin Dashboard</title>
-<style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-    .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-    input, select { padding: 8px; margin: 5px; width: 180px; }
-    button { padding: 10px; background: #1a73e8; color: white; border: none; cursor: pointer; }
-    .partner-row { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
-</style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Master Dashboard | IHP</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; }
+        .sidebar { width: 250px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
+        .main-content { flex: 1; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        input, select { padding: 12px; margin: 10px 5px; border: 1px solid #ddd; border-radius: 6px; width: 200px; }
+        .btn-save { background: #1a73e8; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; }
+        .status-btn { padding: 5px 15px; border-radius: 20px; border: none; cursor: pointer; font-size: 12px; }
+        .active-btn { background: #e8f5e9; color: #2e7d32; }
+        .pending-btn { background: #fff3e0; color: #ef6c00; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+    </style>
 </head>
 <body>
 
+<div class="sidebar">
+    <h2>IHP ADMIN</h2>
+    <p>University Setup</p>
+    <p>Partner Management</p>
+    <p>Compliance Control</p>
+</div>
+
+<div class="main-content">
     <div class="card">
-        <h2>🤝 Partner Management</h2>
-        <div id="pList">Loading partners...</div>
-    </div>
-
-    <div class="card">
-        <h2>🏫 Add University</h2>
-        <input type="text" id="uCountry" placeholder="Country">
-        <input type="text" id="uName" placeholder="University">
-        <select id="uDeg"><option>UG</option><option>PG</option><option>PHD</option></select>
-        <button onclick="saveUni()">SAVE</button>
-    </div>
-
-    <div class="card">
-        <h2>📁 Assign Compliance & Tracking</h2>
-        <div id="adminFileList">Loading files...</div>
-    </div>
-
-<script>
-    async function loadAdminData() {
-        // Load Partners
-        const pRes = await fetch('/api/admin/partners');
-        const partners = await pRes.json();
-        document.getElementById('pList').innerHTML = partners.map(p => `
-            <div class="partner-row">
-                <span>${p.name} (${p.status})</span>
-                <div>
-                    <button onclick="updateStatus('${p._id}', 'Active')">Approve</button>
-                    <button style="background:red" onclick="updateStatus('${p._id}', 'Deactivate')">Block</button>
-                </div>
-            </div>
-        `).join('');
-
-        // Load Files
-        const fRes = await fetch('/api/partner/files');
-        const files = await fRes.json();
-        document.getElementById('adminFileList').innerHTML = files.map(f => `
-            <div class="partner-row">
-                <span>${f.studentName} -> ${f.status}</span>
-                <button onclick="assignComp('${f._id}')">Assign Compliance</button>
-            </div>
-        `).join('');
-    }
-
-    async function updateStatus(id, status) {
-        await fetch('/api/admin/partner-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
-        alert("Partner " + status);
-        loadAdminData();
-    }
-
-    async function assignComp(fileId) {
-        const compName = prompt("Member Name:");
-        const compContact = prompt("Member Contact:");
-        const status = prompt("Status (Processing/Visa Approved):");
-        await fetch('/api/admin/assign-compliance', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fileId, compName, compContact, status}) });
-        alert("Assigned!");
-        loadAdminData();
-    }
-
-    loadAdminData();
-</script>
-</body>
-</html>
+        <h3>🏫 Add University for Assessment</h3>
+        <div style="display: flex; wrap: wrap;">
+            <input type="text" id="uCountry" placeholder="Country">
+            <input type="text" id="uName" placeholder="University Name">
+            <select id="uDeg">
+                <option>Degree Drop-down</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            <select id="uLang">
+                <option>Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            <select id="uCur">
+                <option>Currency</option>

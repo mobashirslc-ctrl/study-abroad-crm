@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
-mongoose.connect(mongoURI).then(() => console.log('✅ CRM Master Connected'));
+mongoose.connect(mongoURI).then(() => console.log('✅ IHP CRM Master System Live'));
 
 // --- SCHEMAS ---
 const UniSchema = new mongoose.Schema({
@@ -20,77 +20,54 @@ const UniSchema = new mongoose.Schema({
 const University = mongoose.model('University', UniSchema);
 
 const PartnerSchema = new mongoose.Schema({
-    name: String, email: String, pass: String, orgName: String, contact: String,
-    status: { type: String, default: 'Pending' }, 
-    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0}, withdrawn: {type: Number, default: 0} },
-    subscription: { package: String, expireDate: Date }
+    name: String, email: String, pass: String, status: { type: String, default: 'Pending' },
+    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0} },
+    subscription: { package: String, expireDate: Date },
+    withdrawEnabled: { type: Boolean, default: false }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
 const FileSchema = new mongoose.Schema({
     studentName: String, contact: String, university: String,
     status: { type: String, default: 'File Opened' },
-    complianceMember: { name: {type: String, default: 'Not Assigned'}, contact: {type: String, default: 'N/A'} },
+    complianceMember: { name: String, contact: String },
+    partnerId: mongoose.Schema.Types.ObjectId,
     openDate: { type: Date, default: Date.now }
 });
 const FileTrack = mongoose.model('FileTrack', FileSchema);
 
 // --- APIs ---
 
-// রেজিস্ট্রেশন ও লগইন
-app.post('/api/auth/register', async (req, res) => {
-    const p = new Partner(req.body);
-    await p.save();
-    res.json({ success: true, message: "Registered! Status: Pending Approval." });
+// ১. অটো ব্লক চেক (Middleware)
+const checkStatus = async (req, res, next) => {
+    const user = await Partner.findById(req.headers.userid);
+    if (!user || user.status !== 'Active') return res.json({ success: false, message: "Account Blocked/Pending!" });
+    if (user.subscription.expireDate < new Date()) return res.json({ success: false, message: "Subscription Expired!" });
+    next();
+};
+
+// ২. কমপ্লায়েন্স অ্যাকশন: কমিশন রিলিজ
+app.post('/api/compliance/release', async (req, res) => {
+    const { partnerId, fileId } = req.body;
+    await Partner.findByIdAndUpdate(partnerId, { withdrawEnabled: true });
+    await FileTrack.findByIdAndUpdate(fileId, { status: 'Commission Active' });
+    res.json({ success: true });
 });
 
-app.post('/api/auth/login', async (req, res) => {
-    const user = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
-    if (!user) return res.json({ success: false, message: "Invalid Credentials!" });
-    if (user.status !== 'Active') return res.json({ success: false, message: "Account is Pending Admin Approval!" });
-    res.json({ success: true, user });
-});
-
-// স্মার্ট অ্যাসেসমেন্ট ও ফাইল ওপেনিং
+// ৩. ইউনিভার্সিটি সার্চ
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
-    const results = await University.find({ country: new RegExp(country, 'i'), degree, language });
-    res.json(results);
+    res.json(await University.find({ country: new RegExp(country, 'i'), degree, language }));
 });
 
-app.post('/api/open-file', async (req, res) => {
-    const f = new FileTrack(req.body);
-    await f.save();
-    res.json({ success: true });
-});
-
-app.get('/api/partner/files', async (req, res) => res.json(await FileTrack.find().sort({openDate: -1})));
-
-// --- ADMIN CONTROL APIs ---
-app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
-app.post('/api/admin/partner-status', async (req, res) => {
-    await Partner.findByIdAndUpdate(req.body.id, { status: req.body.status });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/assign-compliance', async (req, res) => {
-    const { fileId, status, compName, compContact } = req.body;
-    await FileTrack.findByIdAndUpdate(fileId, { 
-        status, 
-        'complianceMember.name': compName, 
-        'complianceMember.contact': compContact 
-    });
-    res.json({ success: true });
-});
-
-app.post('/api/admin/add-uni', async (req, res) => {
-    await new University(req.body).save();
-    res.json({ success: true });
-});
+// ৪. অ্যাডমিন: অল ডাটা কন্ট্রোল
+app.get('/api/admin/all-partners', async (req, res) => res.json(await Partner.find()));
+app.post('/api/admin/add-uni', async (req, res) => { await new University(req.body).save(); res.json({success:true}); });
 
 // Routing
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
+app.get('/compliance', (req, res) => res.sendFile(path.join(__dirname, 'public', 'compliance.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Running on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 CRM running on ${PORT}`));
