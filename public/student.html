@@ -2,12 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Portal - IHP CRM</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; text-align: center; margin-bottom: 20px; }
+        
+        .status-card { background: #e8f0fe; padding: 15px; border-radius: 10px; margin-bottom: 25px; text-align: center; border: 1px dashed #1a73e8; }
+        .status-title { font-size: 14px; color: #666; }
+        .status-now { font-size: 20px; font-weight: bold; color: #1a73e8; margin-top: 5px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        
+        button { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1557b0; }
+        
+        #msg { margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
 </head>
-<body style="font-family: sans-serif; text-align: center; padding: 50px;">
-    <h1>🔍 Compliance & Verification</h1>
-    <p>This dashboard is for document verification. (Under Development)</p>
-    <a href="/partner">Back to Home</a>
+<body>
+
+<div class="container">
+    <h2>🎓 Student Dashboard</h2>
+
+    <div class="status-card">
+        <div class="status-title">Current File Status</div>
+        <div class="status-now">✅ Applied / In Review</div>
+    </div>
+
+    <form id="stForm">
+        <div class="form-group">
+            <label>Student Full Name</label>
+            <input type="text" name="name" placeholder="Enter your registered name" required>
+        </div>
+        <div class="form-group">
+            <label>Upload New Document (if any)</label>
+            <input type="file" name="document" required>
+        </div>
+        <button type="submit">UPLOAD NOW</button>
+    </form>
+    <div id="msg"></div>
+</div>
+
+<script>
+    document.getElementById('stForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('msg');
+        msg.innerText = "Processing upload...";
+        const formData = new FormData(e.target);
+        
+        try {
+            const res = await fetch('/submit-partner', { method: 'POST', body: formData });
+            if(res.ok) {
+                msg.innerText = "✅ Document Submitted Successfully!";
+                msg.style.color = "green";
+                e.target.reset();
+            } else {
+                msg.innerText = "❌ Submission failed!";
+                msg.style.color = "red";
+            }
+        } catch (err) {
+            msg.innerText = "Error connecting to server!";
+        }
+    };
+</script>
+
 </body>
 </html>
