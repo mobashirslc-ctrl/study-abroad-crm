@@ -10,94 +10,72 @@
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
         h3 { margin-top: 0; color: #333; font-size: 18px; }
-        
         input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* রেজাল্ট কার্ড ডিজাইন */
-        .result-card { border-left: 5px solid #1a73e8; background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .uni-name { font-weight: bold; color: #1a73e8; font-size: 17px; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .result-card { border-left: 5px solid #1a73e8; background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .uni-name { font-weight: bold; color: #1a73e8; font-size: 17px; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; font-size: 12px; color: #444; margin-top: 8px; }
-        .info-item b { color: #000; }
-        .commission-tag { background: #e8f5e9; color: #2e7d32; padding: 8px; border-radius: 5px; text-align: center; font-weight: bold; margin-top: 10px; font-size: 14px; }
-        
         .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
-        /* নেভিগেশন */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; z-index: 100; }
         .nav-item { flex: 1; text-align: center; font-size: 11px; color: #777; cursor: pointer; }
         .nav-item.active { color: #1a73e8; font-weight: bold; }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 3px; }
-
-        /* পপ-আপ (Modal) */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 15px; }
-
-        /* ফাইল ট্র্যাকিং টেবিল স্টাইল */
         .track-card { background: white; padding: 15px; border-radius: 10px; border-bottom: 3px solid #ddd; margin-bottom: 10px; font-size: 13px; }
+        .welcome-bar { padding: 10px; background: #fff; margin-bottom: 10px; border-radius: 10px; font-weight: bold; color: #1a73e8; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="welcome-bar">
+        <i class="fas fa-user-circle fa-lg"></i> <span id="partnerWelcome">Welcome, Partner</span>
+    </div>
+
     <div id="assessment-section" class="page">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Country Name">
+            <input type="text" id="sCountry" placeholder="Country">
             <select id="sDegree">
-                <option value="">Select Degree</option>
-                <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>PHD</option><option>RESEARCH</option>
+                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
             </select>
             <select id="sLang">
-                <option value="">Language Test</option>
-                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
             </select>
-            <input type="text" id="sScore" placeholder="Language & Academic Score/CGPA">
+            <input type="text" id="sScore" placeholder="Language & CGPA Score">
             <button class="btn-search" onclick="runSearch()">SEARCH UNIVERSITY</button>
         </div>
         <div id="resultsArea"></div>
     </div>
 
     <div id="tracking-section" class="page" style="display:none;">
-        <h3>📁 File Tracking List</h3>
-        <div id="trackingList">
-            <p style="text-align:center;">Loading tracking data...</p>
-        </div>
+        <h3>📁 My Student Files</h3>
+        <div id="trackingList"></div>
     </div>
 
     <div id="wallet-section" class="page" style="display:none;">
-        <div class="card" style="background:linear-gradient(45deg, #1a73e8, #0d47a1); color:white;">
-            <p>Available Balance</p>
-            <h2 id="wBalance">৳ 0.00</h2>
-            <div style="display:flex; justify-content: space-between; font-size:12px; margin-top:10px;">
-                <span>Pending: ৳ 0</span>
-                <span>Withdrawn: ৳ 0</span>
-            </div>
+        <div class="card" style="background: #1a73e8; color: white;">
+            <p>Available Balance</p><h2 id="wBalance">৳ 0.00</h2>
         </div>
         <div class="card">
             <h3>Withdraw Funds</h3>
             <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-            <input type="number" id="wAmount" placeholder="Enter Amount">
-            <button class="btn-search">SEND REQUEST</button>
-        </div>
-        <div class="card">
-            <h3>Subscription Info</h3>
-            <p style="font-size:14px;">Package: <b>Premium Pro</b><br>Expires: <span style="color:red;">31-12-2026</span></p>
+            <input type="text" id="wAccNum" placeholder="Enter Account/Bank Number"> <input type="number" id="wAmount" placeholder="Amount">
+            <button class="btn-search">SEND WITHDRAW REQUEST</button>
         </div>
     </div>
 </div>
 
 <div id="uploadModal" class="modal">
     <div class="modal-content">
-        <h3>📄 Submit Student File</h3>
+        <h3>📄 Open Student File</h3>
         <form id="fileForm">
             <input type="hidden" id="mUni">
-            <input type="text" id="mStdName" placeholder="Student Full Name" required>
+            <input type="text" id="mStdName" placeholder="Student Name" required>
             <input type="text" id="mStdPhone" placeholder="Contact Number" required>
-            <label style="font-size:12px; font-weight:bold;">Upload Document (PDF)</label>
+            <label style="font-size:12px; font-weight:bold;">Upload PDF (Mandatory)</label>
             <input type="file" id="mFile" accept=".pdf" required>
-            <button type="submit" class="btn-open">CONFIRM & SUBMIT</button>
+            <button type="submit" class="btn-open">SUBMIT FILE</button>
             <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px;">Cancel</button>
         </form>
     </div>
@@ -110,7 +88,10 @@
 </div>
 
 <script>
-    // পেজ পরিবর্তন লজিক
+    // Welcome Name Logic
+    const user = JSON.parse(localStorage.getItem('partnerUser')) || { name: "Partner" };
+    document.getElementById('partnerWelcome').innerText = "Welcome, " + user.name;
+
     function showPage(pageId, navEl) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(pageId).style.display = 'block';
@@ -118,83 +99,61 @@
         navEl.classList.add('active');
     }
 
-    // স্মার্ট অ্যাসেসমেন্ট সার্চ
     async function runSearch() {
         const area = document.getElementById('resultsArea');
-        area.innerHTML = "<p style='text-align:center;'>Searching...</p>";
-        
-        const q = `country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}&language=${document.getElementById('sLang').value}`;
-        
-        try {
-            const res = await fetch(`/api/search-uni?${q}`);
-            const data = await res.json();
-            
-            if(data.length === 0) { area.innerHTML = "<p>No university found.</p>"; return; }
-
-            area.innerHTML = data.map(u => `
-                <div class="result-card">
-                    <div class="uni-name">${u.uniName}</div>
-                    <div class="info-grid">
-                        <div class="info-item"><b>Location:</b> ${u.location || 'N/A'}</div>
-                        <div class="info-item"><b>Country:</b> ${u.country}</div>
-                        <div class="info-item"><b>Course:</b> ${u.course}</div>
-                        <div class="info-item"><b>Intake:</b> ${u.intake}</div>
-                        <div class="info-item"><b>Fee:</b> ${u.fee} ${u.currency}</div>
-                        <div class="info-item"><b>Marital:</b> ${u.maritalStatus}</div>
-                        <div class="info-item"><b>Bank BD:</b> ${u.bankNameSuggestion}</div>
-                        <div class="info-item"><b>Loan:</b> ${u.loanAmount}</div>
-                        <div class="info-item" style="grid-column: span 2;"><b>Bank Req:</b> ${u.bankBalance}</div>
-                    </div>
-                    <div class="commission-tag">Commission: ${u.partnerCommission}</div>
-                    <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
-                </div>
-            `).join('');
-        } catch(e) { area.innerHTML = "Error loading data."; }
-    }
-
-    // ট্র্যাকিং ডেটা লোড
-    async function fetchTracking() {
-        const list = document.getElementById('trackingList');
-        const res = await fetch('/api/admin/files'); // Admin API reuse for demo
+        area.innerHTML = "Searching...";
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}`);
         const data = await res.json();
-        
-        list.innerHTML = data.map(f => `
-            <div class="track-card">
-                <b>${f.studentName}</b> (${f.contact})<br>
-                <span style="color:#1a73e8;">${f.university}</span><br>
-                <small>Status: <b style="color:orange;">${f.status}</b></small><br>
-                <small>Date: ${new Date(f.openTime).toLocaleString()}</small><br>
-                <button style="margin-top:5px; font-size:11px; padding:4px;">Download PDF</button>
+        area.innerHTML = data.map(u => `
+            <div class="result-card">
+                <div class="uni-name">${u.uniName}</div>
+                <div class="info-grid">
+                    <div><b>Location:</b> ${u.location || 'N/A'}</div>
+                    <div><b>Course:</b> ${u.course}</div>
+                    <div><b>Fee:</b> ${u.fee} ${u.currency}</div>
+                    <div><b>Marital:</b> ${u.maritalStatus}</div>
+                    <div><b>Bank BD:</b> ${u.bankNameSuggestion}</div>
+                    <div><b>Loan:</b> ${u.loanAmount}</div>
+                </div>
+                <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    // পপ-আপ কন্ট্রোল
     function openModal(name) { document.getElementById('mUni').value = name; document.getElementById('uploadModal').style.display = 'flex'; }
     function closeModal() { document.getElementById('uploadModal').style.display = 'none'; }
 
-    // ফাইল সাবমিট (PDF সহ)
+    async function fetchTracking() {
+        const res = await fetch('/api/admin/files');
+        const data = await res.json();
+        document.getElementById('trackingList').innerHTML = data.map(f => `
+            <div class="track-card">
+                <b>${f.studentName}</b> | ${f.university}<br>
+                <small>Compliance: ${f.complianceInfo?.name || 'IHP Member'}</small><br>
+                <a href="${f.pdfUrl || '#'}" target="_blank" style="text-decoration:none;">
+                    <button style="background:#1a73e8; color:white; border:none; padding:5px 10px; border-radius:5px; margin-top:5px; cursor:pointer;">
+                        <i class="fas fa-download"></i> Download PDF
+                    </button>
+                </a>
+            </div>
+        `).join('');
+    }
+
     document.getElementById('fileForm').onsubmit = async (e) => {
         e.preventDefault();
-        // PDF হ্যান্ডলিং এর জন্য FormData ব্যবহার করা হয়েছে
-        const formData = {
+        const payload = {
             studentName: document.getElementById('mStdName').value,
             contact: document.getElementById('mStdPhone').value,
-            university: document.getElementById('mUni').value
+            university: document.getElementById('mUni').value,
+            complianceInfo: { name: "IHP Admin", org: "IHP Global", id: "IHP-001" },
+            pdfUrl: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" // Dummy for now
         };
-
         const res = await fetch('/api/open-file', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(formData)
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
         });
-
-        if(res.ok) {
-            alert("✅ File Submitted Successfully!");
-            closeModal();
-        }
-    }
+        if(res.ok) { alert("File Submitted!"); closeModal(); }
+    };
 </script>
-
 </body>
 </html>
