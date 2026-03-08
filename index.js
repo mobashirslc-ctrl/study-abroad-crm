@@ -4,13 +4,14 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
+// স্ট্যাটিক ফাইল লোড করার জন্য এটি নিশ্চিত করুন
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected'));
 
-// 1. University Schema (As per your requirement)
+// University Schema (আপনার রিকোয়ারমেন্ট অনুযায়ী সব ফিল্ড)
 const UniSchema = new mongoose.Schema({
     country: String, uniName: String, location: String, course: String, intake: String,
     degree: String, language: String, minScore: String, academicScore: String,
@@ -19,14 +20,11 @@ const UniSchema = new mongoose.Schema({
 });
 const University = mongoose.model('University', UniSchema);
 
-// 2. Partner Middleware (Subscription Block Logic)
-const checkSubscription = async (req, res, next) => {
-    const expireDate = new Date('2026-12-31'); // আপনার সাবস্ক্রিপশন ডেট এখানে দিন
-    if (new Date() > expireDate) {
-        return res.status(403).send("<h1>Access Denied</h1><p>Your subscription has expired. Please contact admin.</p>");
-    }
-    next();
-};
+// --- Routes ---
+// সরাসরি রুট ফাইলে কল করলে যাতে এরর না আসে
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
+app.get('/', (req, res) => res.redirect('/partner'));
 
 // --- APIs ---
 app.post('/api/add-uni', async (req, res) => {
@@ -37,7 +35,7 @@ app.post('/api/add-uni', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/search-uni', checkSubscription, async (req, res) => {
+app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
     const query = {};
     if(country) query.country = new RegExp(`^${country}$`, 'i');
