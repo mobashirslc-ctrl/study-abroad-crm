@@ -1,60 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>IHP Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IHP Admin Master</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; display: flex; margin:0; }
-        .sidebar { width: 200px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
-        .main { flex: 1; padding: 20px; background: #f8f9fa; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: blue; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; display: flex; }
+        .sidebar { width: 250px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; position: fixed; }
+        .main { margin-left: 270px; padding: 20px; width: calc(100% - 290px); }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .grid-input { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: #1a73e8; color: white; }
+        .btn-status { padding: 6px 12px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h3>IHP ADMIN</h3>
-        <p>University Setup</p>
-        <p>Partner Management</p>
-        <p>Compliance Control</p>
-    </div>
-    <div class="main">
-        <div class="card">
-            <h2>🏫 Add University (Detailed)</h2>
+
+<div class="sidebar">
+    <h2>IHP CRM</h2>
+    <hr>
+    <p><i class="fas fa-university"></i> University Setup</p>
+    <p><i class="fas fa-users"></i> Partner Management</p>
+    <p><i class="fas fa-wallet"></i> Withdraw Requests</p>
+</div>
+
+<div class="main">
+    <div class="card">
+        <h3>🏫 University Setup (for Smart Assessment)</h3>
+        <div class="grid-input">
             <input type="text" id="uCountry" placeholder="Country">
             <input type="text" id="uName" placeholder="University Name">
+            <input type="text" id="uCourse" placeholder="Course Name">
             <select id="uDeg">
-                <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+                <option>Select Degree</option>
+                <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            <select id="uLang">
+                <option>Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
             </select>
             <select id="uCur">
-                <option>DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
+                <option>Currency</option><option>DOLLAR</option><option>EURO</option><option>TAKA</option><option>GBP</option>
             </select>
             <select id="uBank"><option>FDR</option><option>SAVINGS</option></select>
             <select id="uMarital"><option>Single</option><option>With spouse</option></select>
-            <input type="text" id="uBankBD" placeholder="BD Bank Name">
             <input type="text" id="uComm" placeholder="Partner Commission">
-            <button onclick="saveUni()">SAVE DATA</button>
         </div>
+        <br>
+        <button class="btn-save" onclick="saveUniversity()">SAVE UNIVERSITY</button>
     </div>
-    <script>
-        async function saveUni() {
-            const body = {
-                country: document.getElementById('uCountry').value,
-                uniName: document.getElementById('uName').value,
-                degree: document.getElementById('uDeg').value,
-                currency: document.getElementById('uCur').value,
-                bankType: document.getElementById('uBank').value,
-                maritalStatus: document.getElementById('uMarital').value,
-                bankNameBD: document.getElementById('uBankBD').value,
-                partnerCommission: document.getElementById('uComm').value
-            };
-            const res = await fetch('/api/admin/add-uni', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(body)
-            });
-            if(res.ok) alert("University Added Successfully!");
-        }
-    </script>
+
+    <div class="card">
+        <h3>🤝 Partner List & Access Control</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th><th>Status</th><th>Sub. Package</th><th>Expire Date</th><th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="partnerTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function saveUniversity() {
+        const data = {
+            country: document.getElementById('uCountry').value,
+            uniName: document.getElementById('uName').value,
+            degree: document.getElementById('uDeg').value,
+            currency: document.getElementById('uCur').value,
+            bankType: document.getElementById('uBank').value,
+            maritalStatus: document.getElementById('uMarital').value,
+            partnerCommission: document.getElementById('uComm').value
+        };
+        const res = await fetch('/api/admin/add-uni', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        if(res.ok) alert("University Added!");
+    }
+
+    async function loadPartners() {
+        const res = await fetch('/api/admin/partners');
+        const data = await res.json();
+        document.getElementById('partnerTable').innerHTML = data.map(p => `
+            <tr>
+                <td>${p.name}</td>
+                <td style="color: ${p.status === 'Active' ? 'green' : 'red'}">${p.status}</td>
+                <td>${p.subscription?.package || 'N/A'}</td>
+                <td>${p.subscription?.expireDate ? new Date(p.subscription.expireDate).toLocaleDateString() : 'Expired'}</td>
+                <td>
+                    <button class="btn-status" onclick="updatePartner('${p._id}', 'Active')">Active</button>
+                    <button class="btn-status" onclick="updatePartner('${p._id}', 'Deactivate')" style="background:red; color:white;">Block</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    loadPartners();
+</script>
 </body>
 </html>
