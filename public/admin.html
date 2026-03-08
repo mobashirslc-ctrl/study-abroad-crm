@@ -1,51 +1,76 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Admin Dashboard | IHP</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input, select { padding: 10px; margin: 5px; width: 200px; border-radius: 5px; border: 1px solid #ddd; }
-        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    </style>
+<head><title>Admin Dashboard</title>
+<style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+    .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    input, select { padding: 8px; margin: 5px; width: 180px; }
+    button { padding: 10px; background: #1a73e8; color: white; border: none; cursor: pointer; }
+    .partner-row { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; }
+</style>
 </head>
 <body>
 
     <div class="card">
-        <h2>🏫 Add University (Detailed)</h2>
-        <input type="text" id="uCountry" placeholder="Country">
-        <input type="text" id="uName" placeholder="University Name">
-        <select id="uDeg">
-            <option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-        </select>
-        <select id="uCur">
-            <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
-        </select>
-        <select id="uBankType"><option>FDR</option><option>SAVINGS</option></select>
-        <select id="uMarital"><option>Single</option><option>With spouse</option></select>
-        <input type="text" id="uBankBD" placeholder="Bank Name BD">
-        <input type="text" id="uComm" placeholder="Partner Commission">
-        <button onclick="saveUni()">SAVE UNIVERSITY</button>
-    </div>
-
-    <div class="card">
-        <h2>🤝 Partner Approval List</h2>
+        <h2>🤝 Partner Management</h2>
         <div id="pList">Loading partners...</div>
     </div>
 
+    <div class="card">
+        <h2>🏫 Add University</h2>
+        <input type="text" id="uCountry" placeholder="Country">
+        <input type="text" id="uName" placeholder="University">
+        <select id="uDeg"><option>UG</option><option>PG</option><option>PHD</option></select>
+        <button onclick="saveUni()">SAVE</button>
+    </div>
+
+    <div class="card">
+        <h2>📁 Assign Compliance & Tracking</h2>
+        <div id="adminFileList">Loading files...</div>
+    </div>
+
 <script>
-    async function saveUni() {
-        const body = { country: document.getElementById('uCountry').value, uniName: document.getElementById('uName').value, degree: document.getElementById('uDeg').value, currency: document.getElementById('uCur').value, bankType: document.getElementById('uBankType').value, maritalStatus: document.getElementById('uMarital').value, bankNameBD: document.getElementById('uBankBD').value, partnerCommission: document.getElementById('uComm').value };
-        await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-        alert("University Added Successfully!");
+    async function loadAdminData() {
+        // Load Partners
+        const pRes = await fetch('/api/admin/partners');
+        const partners = await pRes.json();
+        document.getElementById('pList').innerHTML = partners.map(p => `
+            <div class="partner-row">
+                <span>${p.name} (${p.status})</span>
+                <div>
+                    <button onclick="updateStatus('${p._id}', 'Active')">Approve</button>
+                    <button style="background:red" onclick="updateStatus('${p._id}', 'Deactivate')">Block</button>
+                </div>
+            </div>
+        `).join('');
+
+        // Load Files
+        const fRes = await fetch('/api/partner/files');
+        const files = await fRes.json();
+        document.getElementById('adminFileList').innerHTML = files.map(f => `
+            <div class="partner-row">
+                <span>${f.studentName} -> ${f.status}</span>
+                <button onclick="assignComp('${f._id}')">Assign Compliance</button>
+            </div>
+        `).join('');
     }
 
-    // এই ফাংশনটি দিয়ে আপনি পার্টনারকে Active করতে পারবেন
     async function updateStatus(id, status) {
-        await fetch('/api/admin/update-partner', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
-        alert("Status Updated to: " + status);
-        location.reload();
+        await fetch('/api/admin/partner-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
+        alert("Partner " + status);
+        loadAdminData();
     }
+
+    async function assignComp(fileId) {
+        const compName = prompt("Member Name:");
+        const compContact = prompt("Member Contact:");
+        const status = prompt("Status (Processing/Visa Approved):");
+        await fetch('/api/admin/assign-compliance', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fileId, compName, compContact, status}) });
+        alert("Assigned!");
+        loadAdminData();
+    }
+
+    loadAdminData();
 </script>
 </body>
 </html>
