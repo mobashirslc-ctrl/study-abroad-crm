@@ -3,193 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - IHP CRM</title>
+    <title>Master Admin</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 900px; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin: auto; margin-bottom: 30px; }
-        h2 { color: #333; text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .input-group { display: flex; flex-direction: column; }
-        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input, select { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
-        button { padding: 12px; cursor: pointer; border-radius: 6px; font-weight: bold; border: none; transition: 0.3s; }
-        .save-btn { grid-column: span 2; background: #007bff; color: white; margin-top: 20px; font-size: 16px; }
-        .save-btn:hover { background: #0056b3; }
-        
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: center; }
-        th { background: #333; color: white; }
-        .badge { padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: capitalize; }
-        .status-inactive { background: #ffc107; color: black; }
-        .status-active { background: #28a745; color: white; }
-        .action-btn { font-size: 12px; padding: 6px 12px; margin: 2px; color: white; }
-        .action-btn:active { transform: scale(0.95); }
+        body { font-family: sans-serif; padding: 20px; background: #eef2f7; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #007bff; color: white; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>Add New University Data</h2>
-    <form id="uniForm">
-        <div class="grid">
-            <div class="input-group"><label>Country</label><input type="text" id="country" required></div>
-            <div class="input-group"><label>University Name</label><input type="text" id="name" required></div>
-            <div class="input-group"><label>Location/City</label><input type="text" id="location"></div>
-            <div class="input-group"><label>Available Courses</label><input type="text" id="courses"></div>
-            <div class="input-group">
-                <label>Degree Level</label>
-                <select id="degree">
-                    <option value="UG">Undergraduate (UG)</option>
-                    <option value="PG">Postgraduate (PG)</option>
-                    <option value="DIPLOMA">Diploma</option>
-                    <option value="PHD">PHD</option>
-                </select>
-            </div>
-            <div class="input-group"><label>Semester Fee</label><input type="number" id="semesterFee"></div>
-            <div class="input-group">
-                <label>Currency</label>
-                <select id="currency">
-                    <option value="USD">USD</option><option value="AUD">AUD</option><option value="CAD">CAD</option>
-                    <option value="GBP">GBP</option><option value="EUR">EUR</option><option value="BDT">BDT</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Language Requirement</label>
-                <select id="languageRequired">
-                    <option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="DUOLINGO">Duolingo</option>
-                </select>
-            </div>
-            <div class="input-group"><label>Min Lang. Score</label><input type="text" id="minLanguageScore"></div>
-            <div class="input-group"><label>Min GPA/CGPA</label><input type="text" id="minGPA"></div>
-            <div class="input-group"><label>Intake</label><input type="text" id="intake"></div>
-            <div class="input-group"><label>Scholarship</label><input type="text" id="scholarship"></div>
-            <div class="input-group"><label>Partner Commission (BDT)</label><input type="number" id="partnerCommission"></div>
-            <div class="input-group"><label>Bank Name</label><input type="text" id="bankName"></div>
-            <div class="input-group"><label>Max Loan</label><input type="number" id="loanAmount"></div>
-            <div class="input-group"><label>Bank Balance Req.</label><input type="number" id="bankAmountRequired"></div>
-            <div class="input-group">
-                <label>Bank Type</label>
-                <select id="bankType"><option value="Savings">Savings</option><option value="FDR">FDR</option></select>
-            </div>
-            <div class="input-group">
-                <label>Marital Condition</label>
-                <select id="maritalCondition"><option value="Single">Single</option><option value="With Spouse">With Spouse</option></select>
-            </div>
-            <button type="submit" class="save-btn">Save University Assessment</button>
-        </div>
-    </form>
-    <p id="msg" style="color: green; text-align: center; display: none; margin-top: 15px; font-weight: bold;">Data Saved Successfully! ✅</p>
-</div>
-
-<div class="container" style="max-width: 1000px;">
-    <h2>Partner & User Management</h2>
+    <h2>🎓 Master Admin Dashboard</h2>
     <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="userTableBody">
-            </tbody>
+        <thead><tr><th>Name</th><th>Phone</th><th>File</th></tr></thead>
+        <tbody id="list"></tbody>
     </table>
-</div>
-
-<script>
-    // --- ১. ইউনিভার্সিটি ডাটা সেভ লজিক ---
-    document.getElementById('uniForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = {
-            country: document.getElementById('country').value,
-            name: document.getElementById('name').value,
-            location: document.getElementById('location').value,
-            courses: document.getElementById('courses').value,
-            degree: document.getElementById('degree').value,
-            semesterFee: document.getElementById('semesterFee').value,
-            currency: document.getElementById('currency').value,
-            languageRequired: document.getElementById('languageRequired').value,
-            minLanguageScore: document.getElementById('minLanguageScore').value,
-            minGPA: document.getElementById('minGPA').value,
-            intake: document.getElementById('intake').value,
-            scholarship: document.getElementById('scholarship').value,
-            partnerCommission: document.getElementById('partnerCommission').value,
-            bankName: document.getElementById('bankName').value,
-            loanAmount: document.getElementById('loanAmount').value,
-            bankAmountRequired: document.getElementById('bankAmountRequired').value,
-            bankType: document.getElementById('bankType').value,
-            maritalCondition: document.getElementById('maritalCondition').value
-        };
-
-        try {
-            const res = await fetch('/api/admin/add-university', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            if(res.ok) {
-                document.getElementById('msg').style.display = 'block';
-                document.getElementById('uniForm').reset();
-                setTimeout(() => document.getElementById('msg').style.display = 'none', 3000);
-            }
-        } catch (err) { alert("Error saving university data."); }
-    });
-
-    // --- ২. ইউজার ম্যানেজমেন্ট লজিক (Fixed with Response & Auto-Refresh) ---
-    async function loadUsers() {
-        try {
-            const res = await fetch('/api/admin/users');
-            const users = await res.json();
-            const tbody = document.getElementById('userTableBody');
-            tbody.innerHTML = '';
-
-            users.forEach(user => {
-                const statusClass = user.status === 'active' ? 'status-active' : 'status-inactive';
-                const row = `
-                    <tr>
-                        <td>${user.name}</td>
-                        <td>${user.email}</td>
-                        <td><span class="badge" style="background:#eee; color:#333;">${user.role}</span></td>
-                        <td><span class="badge ${statusClass}">${user.status}</span></td>
-                        <td>
-                            <button class="action-btn" style="background:#28a745;" onclick="updateStatus('${user._id}', 'active')">Activate</button>
-                            <button class="action-btn" style="background:#dc3545;" onclick="updateStatus('${user._id}', 'inactive')">Deactivate</button>
-                        </td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
-        } catch (err) { console.error("Error loading users:", err); }
-    }
-
-    async function updateStatus(userId, newStatus) {
-        try {
-            const res = await fetch('/api/admin/update-user-status', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ userId, status: newStatus })
-            });
-            
-            const result = await res.json();
-            
-            if(result.success) {
-                alert(`Success: User is now ${newStatus}! ✅`);
-                loadUsers(); // টেবিলটি তৎক্ষণাৎ রিফ্রেশ করবে
-            } else {
-                alert("Failed to update status.");
-            }
-        } catch (err) {
-            alert("Connection error! Please try again.");
-        }
-    }
-
-    // পেজ লোড হলে সব ইউজার লিস্ট ফেচ করবে
-    window.onload = loadUsers;
-</script>
-
+    <script>
+        fetch('/api/get-data').then(r => r.json()).then(data => {
+            document.getElementById('list').innerHTML = data.map(i => `
+                <tr><td>${i.name}</td><td>${i.phone}</td><td><a href="${i.documentUrl}" target="_blank">View</a></td></tr>
+            `).join('');
+        });
+    </script>
 </body>
 </html>
