@@ -6,89 +6,128 @@
     <title>Partner Portal | IHP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1a73e8; --success: #28a745; --bg: #f8f9fa; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        
-        /* Result Grid */
-        .res-card { border-left: 5px solid var(--primary); }
-        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin: 10px 0; }
-        .grid-info div b { color: #333; }
-
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 12px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; text-align: center; color: #888; cursor: pointer; font-size: 11px; }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 1000; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-main { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { flex: 1; text-align: center; color: #888; font-size: 11px; cursor: pointer; }
+        .nav-item.active { color: #1a73e8; font-weight: bold; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="welcome-msg" style="padding:10px; font-weight:bold; color:var(--primary);">Welcome, <span id="pName">Partner</span></div>
-
-    <div id="assessment-page" class="page">
+<div class="container" id="mainApp">
+    <div id="auth-section">
         <div class="card">
-            <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Country">
-            <select id="sDegree">
-                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-            </select>
-            <select id="sLang">
-                <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-            </select>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="sLangScore" placeholder="Lang Score">
-                <input type="text" id="sAcadScore" placeholder="Academic Score">
+            <h2 id="authTitle">Partner Registration</h2>
+            <div id="regFields">
+                <input type="text" id="pName" placeholder="Full Name">
+                <input type="text" id="pOrg" placeholder="Organization Name">
+                <input type="text" id="pContact" placeholder="Contact Number">
             </div>
-            <button class="btn-main" onclick="runSearch()">SEARCH UNIVERSITY</button>
-        </div>
-        <div id="resultsArea"></div>
-    </div>
-
-    <div id="wallet-page" class="page" style="display:none;">
-        <div class="card" style="background:var(--primary); color:white;">
-            <p>Total Balance</p><h2>৳ 0.00</h2>
-            <small>Subscription: <b>Premium</b> | Expires: 31/12/2026</small>
-        </div>
-        <div class="card">
-            <h3>Withdraw</h3>
-            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-            <input type="text" id="wAccNum" placeholder="Enter Account Number"> <input type="number" id="wAmount" placeholder="Amount">
-            <button class="btn-main">SEND REQUEST</button>
+            <input type="email" id="pEmail" placeholder="Email Address">
+            <input type="password" id="pPass" placeholder="Password">
+            <button class="btn-main" id="authBtn" onclick="handleAuth()">REGISTER NOW</button>
+            <p style="text-align:center; font-size:12px; margin-top:10px;" onclick="toggleAuth()">Already have an account? Login</p>
         </div>
     </div>
 
-    <div id="tracking-page" class="page" style="display:none;">
-        <h3>📁 File Tracking</h3>
-        <div id="trackList"></div>
+    <div id="dashboard" style="display:none;">
+        <div class="card" style="background: #1a73e8; color: white;">
+            <p>Welcome, <b id="userDisp">Partner</b></p>
+            <h3>Wallet: ৳ <span id="balance">0.00</span></h3>
+        </div>
+
+        <div id="assessment-page" class="page">
+            <div class="card">
+                <h3>🔍 Smart Assessment</h3>
+                <input type="text" id="sCountry" placeholder="Country">
+                <select id="sDegree">
+                    <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+                    <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+                </select>
+                <button class="btn-main" onclick="searchUni()">SEARCH UNIVERSITY</button>
+            </div>
+            <div id="results"></div>
+        </div>
+
+        <div id="withdraw-page" class="page" style="display:none;">
+            <div class="card">
+                <h3>Withdraw Funds</h3>
+                <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
+                <input type="text" id="wAcc" placeholder="Account / Bank Number">
+                <input type="number" id="wAmt" placeholder="Amount">
+                <button class="btn-main" style="background:#28a745;" onclick="sendWithdraw()">SEND REQUEST</button>
+            </div>
+        </div>
+
+        <div id="tracking-page" class="page" style="display:none;">
+            <h3>📁 My Tracking Files</h3>
+            <div id="trackList"></div>
+        </div>
     </div>
 </div>
 
-<div id="uploadModal" class="modal">
+<div id="fileModal" class="modal">
     <div class="modal-content">
         <h3>📄 Submit Student File</h3>
-        <input type="hidden" id="mUni">
-        <input type="text" id="mStdName" placeholder="Student Name">
-        <input type="text" id="mStdPhone" placeholder="Contact Number">
-        <label style="font-size:11px; font-weight:bold;">Upload Document Link (Drive/PDF)</label>
-        <input type="text" id="mPdfUrl" placeholder="Paste PDF Link"> <button class="btn-main" style="background:var(--success);" onclick="submitFile()">SUBMIT TO ADMIN</button>
-        <button onclick="closeModal()" style="border:none; background:none; color:red; width:100%; margin-top:10px;">Close</button>
+        <input type="hidden" id="selectedUni">
+        <input type="text" id="stdName" placeholder="Student Full Name">
+        <input type="text" id="stdPhone" placeholder="Contact Number">
+        <input type="text" id="stdPdf" placeholder="Paste PDF/GDrive Link">
+        <button class="btn-main" style="background:#28a745;" onclick="finalSubmit()">SUBMIT TO ADMIN</button>
+        <button onclick="closeModal()" style="border:none; background:none; color:red; width:100%; margin-top:10px;">Cancel</button>
     </div>
 </div>
 
-<div class="bottom-nav">
+<div class="nav-bar" id="bottomNav" style="display:none;">
     <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('tracking-page', this); loadFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
-    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
+    <div class="nav-item" onclick="showP('tracking-page', this); loadMyFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
+    <div class="nav-item" onclick="showP('withdraw-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
+    let isLogin = false;
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('authTitle').innerText = isLogin ? "Partner Login" : "Partner Registration";
+        document.getElementById('regFields').style.display = isLogin ? "none" : "block";
+        document.getElementById('authBtn').innerText = isLogin ? "LOGIN" : "REGISTER NOW";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('pEmail').value;
+        const pass = document.getElementById('pPass').value;
+        if(isLogin) {
+            const res = await fetch('/api/auth/login', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({email, pass})
+            });
+            const data = await res.json();
+            if(data.success) {
+                localStorage.setItem('pUser', JSON.stringify(data.user));
+                location.reload();
+            } else alert(data.message);
+        } else {
+            const body = { name: document.getElementById('pName').value, orgName: document.getElementById('pOrg').value, contact: document.getElementById('pContact').value, email, pass };
+            await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            alert("Registration Done! Wait for Admin Approval.");
+        }
+    }
+
+    // Auth Check on Load
+    const user = JSON.parse(localStorage.getItem('pUser'));
+    if(user) {
+        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('bottomNav').style.display = 'flex';
+        document.getElementById('userDisp').innerText = user.name;
+    }
+
     function showP(id, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
@@ -96,52 +135,46 @@
         el.classList.add('active');
     }
 
-    async function runSearch() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}`);
+    async function searchUni() {
+        const res = await fetch(`/api/uni-search?country=${document.getElementById('sCountry').value}`);
         const data = await res.json();
-        document.getElementById('resultsArea').innerHTML = data.map(u => `
-            <div class="card res-card">
-                <div style="font-weight:bold; color:var(--primary);">${u.uniName}</div>
-                <div class="grid-info">
-                    <div><b>Location:</b> ${u.location}</div>
-                    <div><b>Course:</b> ${u.course}</div>
-                    <div><b>Intake:</b> ${u.intake}</div>
-                    <div><b>Fee:</b> ${u.fee} ${u.currency}</div>
-                    <div><b>Bank BD:</b> ${u.bankNameBD}</div>
-                    <div><b>Commission:</b> ${u.partnerCommission}</div>
-                    <div><b>Marital:</b> ${u.maritalStatus}</div>
-                    <div><b>Loan:</b> ${u.loanAmount}</div>
-                </div>
-                <button class="btn-main" style="background:var(--success); padding:10px;" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
+        document.getElementById('results').innerHTML = data.map(u => `
+            <div class="card">
+                <b>${u.uniName}</b><br><small>${u.location} | Comm: ${u.partnerCommission}</small>
+                <button class="btn-main" style="padding:10px; margin-top:10px; background:#28a745;" onclick="openModal('${u.uniName}')">OPEN FILE</button>
             </div>
         `).join('');
     }
 
-    function openModal(uni) { document.getElementById('mUni').value = uni; document.getElementById('uploadModal').style.display='flex'; }
-    function closeModal() { document.getElementById('uploadModal').style.display='none'; }
+    function openModal(u) { document.getElementById('selectedUni').value=u; document.getElementById('fileModal').style.display='flex'; }
+    function closeModal() { document.getElementById('fileModal').style.display='none'; }
 
-    async function submitFile() {
+    async function finalSubmit() {
         const body = {
-            studentName: document.getElementById('mStdName').value,
-            contact: document.getElementById('mStdPhone').value,
-            university: document.getElementById('mUni').value,
-            pdfUrl: document.getElementById('mPdfUrl').value,
-            complianceMember: { name: "IHP Admin", org: "IHP Global", id: "IHP-101" }
+            studentName: document.getElementById('stdName').value,
+            contact: document.getElementById('stdPhone').value,
+            university: document.getElementById('selectedUni').value,
+            pdfUrl: document.getElementById('stdPdf').value,
+            complianceMember: { name: "IHP Support", org: "IHP Global", id: "IHP-99" }
         };
-        await fetch('/api/open-file', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-        alert("File Submitted!"); closeModal();
+        await fetch('/api/file-open', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        alert("File Sent!"); closeModal();
     }
 
-    async function loadFiles() {
-        const res = await fetch('/api/admin/files');
+    async function loadMyFiles() {
+        const res = await fetch('/api/admin/all-files');
         const data = await res.json();
         document.getElementById('trackList').innerHTML = data.map(f => `
             <div class="card">
-                <b>${f.studentName}</b> | ${f.university}<br>
-                <small>Status: ${f.status} | Compliance: ${f.complianceMember.name}</small><br>
-                <a href="${f.pdfUrl}" target="_blank" style="color:var(--primary); font-size:12px;">Download PDF</a>
+                <b>${f.studentName}</b><br><small>${f.university} | Status: ${f.status}</small><br>
+                <small>Compliance: ${f.complianceMember.name}</small><br>
+                <a href="${f.pdfUrl}" target="_blank" style="color:blue; font-size:12px;">View PDF</a>
             </div>
         `).join('');
+    }
+
+    async function sendWithdraw() {
+        alert("Withdraw Request Sent Successfully!");
     }
 </script>
 </body>

@@ -8,28 +8,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
-mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected'));
+mongoose.connect(mongoURI).then(() => console.log('✅ Database Connected Successfully'));
 
 // --- SCHEMAS ---
 
-// ১. ইউনিভার্সিটি (সব রিকোয়ার্ড ফিল্ড)
+// ১. ইউনিভার্সিটি (সব ড্রপডাউন ডাটা সহ)
 const UniSchema = new mongoose.Schema({
     uniName: String, country: String, location: String, course: String, intake: String,
-    degree: String, fee: String, currency: String, bankReq: String, bankType: String,
-    maritalStatus: String, bankNameBD: String, loanAmount: String, partnerCommission: String
+    degree: String, language: String, langScore: String, fee: String, currency: String,
+    bankReq: String, bankType: String, maritalStatus: String, bankNameBD: String,
+    loanAmount: String, partnerCommission: String
 });
 const University = mongoose.model('University', UniSchema);
 
-// ২. পার্টনার (রেজিস্ট্রেশন ও অ্যাপ্রুভাল)
+// ২. পার্টনার (অ্যাপ্রুভাল সিস্টেম)
 const PartnerSchema = new mongoose.Schema({
-    name: String, orgName: String, contact: String, email: String, password: String,
-    status: { type: String, default: 'Pending' }, // Pending -> Active/Deactivate
-    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0} },
-    subscription: { package: {type: String, default: 'Basic'}, expireDate: Date }
+    name: String, orgName: String, contact: String, email: String, pass: String,
+    status: { type: String, default: 'Pending' }, // Pending / Active / Blocked
+    wallet: { total: {type: Number, default: 0}, pending: {type: Number, default: 0} }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// ৩. ফাইল ট্র্যাকিং (PDF সহ)
+// ৩. ফাইল ট্র্যাকিং (কমপ্লায়েন্স ও পিডিএফ সহ)
 const FileSchema = new mongoose.Schema({
     studentName: String, contact: String, university: String, pdfUrl: String,
     status: { type: String, default: 'Processing' },
@@ -41,44 +41,44 @@ const FileTrack = mongoose.model('FileTrack', FileSchema);
 // --- APIs ---
 
 // Partner Registration
-app.post('/api/partner/register', async (req, res) => {
-    const partner = new Partner(req.body);
-    await partner.save();
-    res.json({ success: true, message: "Registration successful. Pending admin approval." });
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const newPartner = new Partner(req.body);
+        await newPartner.save();
+        res.json({ success: true, message: "Registered! Wait for Admin Approval." });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
 // Partner Login (Only if Active)
-app.post('/api/partner/login', async (req, res) => {
-    const user = await Partner.findOne({ email: req.body.email, password: req.body.password, status: 'Active' });
-    if (user) res.json({ success: true, user });
-    else res.json({ success: false, message: "Account not active or invalid credentials." });
+app.post('/api/auth/login', async (req, res) => {
+    const user = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
+    if (!user) return res.json({ success: false, message: "User not found!" });
+    if (user.status !== 'Active') return res.json({ success: false, message: "Account Pending/Blocked!" });
+    res.json({ success: true, user });
 });
 
-// Admin: University Adding
-app.post('/api/admin/add-uni', async (req, res) => {
-    await new University(req.body).save();
-    res.json({ success: true });
-});
-
-// Admin: Partner Status Update (Active/Deactivate)
-app.post('/api/admin/update-partner', async (req, res) => {
+// Admin: Approve/Block Partner
+app.post('/api/admin/partner-status', async (req, res) => {
     await Partner.findByIdAndUpdate(req.body.id, { status: req.body.status });
     res.json({ success: true });
 });
 
-// Partner: Search & File Open
-app.get('/api/search-uni', async (req, res) => {
-    const results = await University.find({ country: new RegExp(req.query.country, 'i'), degree: req.query.degree });
+// University Search & File Open
+app.get('/api/uni-search', async (req, res) => {
+    const query = req.query.country ? { country: new RegExp(req.query.country, 'i') } : {};
+    const results = await University.find(query);
     res.json(results);
 });
 
-app.post('/api/open-file', async (req, res) => {
-    await new FileTrack(req.body).save();
+app.post('/api/file-open', async (req, res) => {
+    const newFile = new FileTrack(req.body);
+    await newFile.save();
     res.json({ success: true });
 });
 
-app.get('/api/admin/files', async (req, res) => res.json(await FileTrack.find().sort({openTime:-1})));
-app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
+// Data Fetch for Admin
+app.get('/api/admin/all-files', async (req, res) => res.json(await FileTrack.find().sort({openTime:-1})));
+app.get('/api/admin/all-partners', async (req, res) => res.json(await Partner.find()));
 
 // Routes
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));

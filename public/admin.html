@@ -1,72 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Panel | IHP CRM</title>
+    <title>Admin Dashboard | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { display: flex; font-family: sans-serif; margin: 0; background: #f0f2f5; }
         .sidebar { width: 250px; background: #001529; color: white; height: 100vh; position: fixed; padding: 20px; }
         .main { margin-left: 270px; padding: 30px; width: 100%; }
-        .tab-btn { display: block; width: 100%; padding: 15px; color: #a6adb4; background: none; border: none; text-align: left; cursor: pointer; }
-        .tab-btn.active { background: #1890ff; color: white; border-radius: 5px; }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .nav-btn { display: block; width: 100%; padding: 15px; color: #a6adb4; background: none; border: none; text-align: left; cursor: pointer; }
+        .nav-btn.active { background: #1890ff; color: white; border-radius: 5px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
         input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
-        .status-btn { padding: 5px 10px; border: none; border-radius: 4px; color: white; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
     <h2>IHP ADMIN</h2>
-    <button class="tab-btn active" onclick="showT('uniTab')">Add University</button>
-    <button class="tab-btn" onclick="showT('partnerTab'); loadPartners()">Partner Control</button>
-    <button class="tab-btn" onclick="showT('fileTab'); loadFiles()">Student Tracking</button>
-    <button class="tab-btn" onclick="showT('complianceTab')">Compliance</button>
+    <button class="nav-btn active" onclick="showT('uniTab')">Add University</button>
+    <button class="nav-btn" onclick="showT('partnerTab'); loadPartners()">Partner Control</button>
+    <button class="nav-btn" onclick="showT('fileTab'); loadFiles()">Student Tracking</button>
 </div>
 
 <div class="main">
     <div id="uniTab" class="tab">
         <div class="card">
-            <h3>🏫 Add University (Detailed)</h3>
+            <h3>🎓 Add University for Search</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
                 <input type="text" id="uName" placeholder="University Name">
                 <input type="text" id="uCountry" placeholder="Country">
-                <input type="text" id="uLoc" placeholder="Location">
-                <input type="text" id="uCourse" placeholder="Course">
-                <input type="text" id="uIntake" placeholder="Intake">
-                <select id="uDeg"><option>UG</option><option>PG</option><option>PHD</option><option>RESEARCH</option></select>
-                <input type="text" id="uFee" placeholder="Fee">
-                <select id="uCur"><option>USD</option><option>AUD</option><option>CAD</option><option>EURO</option><option>GBP</option><option>BDT</option></select>
-                <input type="text" id="uBankBD" placeholder="Bank Name Suggestion">
-                <input type="text" id="uLoan" placeholder="Loan Amount">
+                <select id="uLang">
+                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                </select>
+                <input type="text" id="uScore" placeholder="Required Score">
                 <input type="text" id="uComm" placeholder="Partner Commission">
-                <select id="uMarital"><option>Single</option><option>With Spouse</option></select>
             </div>
-            <button onclick="saveUni()" style="margin-top:20px; background:#1890ff; color:white; padding:15px 30px; border:none; cursor:pointer; border-radius:5px;">SAVE UNIVERSITY</button>
+            <button onclick="saveUni()" style="margin-top:15px; padding:10px 25px; background:blue; color:white; border:none; cursor:pointer;">Save Uni</button>
         </div>
     </div>
 
     <div id="partnerTab" class="tab" style="display:none;">
         <div class="card">
-            <h3>🤝 Partner Management</h3>
+            <h3>🤝 Partner Approval Control</h3>
             <table>
-                <thead><tr><th>Name</th><th>Org</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="partnerTable"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="complianceTab" class="tab" style="display:none;">
+    <div id="fileTab" class="tab" style="display:none;">
         <div class="card">
-            <h3>🛡️ Compliance Member Control</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="text" placeholder="Member Name">
-                <input type="text" placeholder="Org Name">
-                <button style="background:green; color:white; border:none; padding:10px;">Add Member</button>
-            </div>
-            <p style="margin-top:20px;">No pending requests.</p>
+            <h3>📁 Student File Tracking</h3>
+            <table>
+                <thead><tr><th>Student</th><th>University</th><th>Status</th><th>PDF</th></tr></thead>
+                <tbody id="trackTable"></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -78,35 +69,45 @@
     }
 
     async function saveUni() {
-        const body = {
-            uniName: document.getElementById('uName').value, country: document.getElementById('uCountry').value,
-            location: document.getElementById('uLoc').value, course: document.getElementById('uCourse').value,
-            intake: document.getElementById('uIntake').value, degree: document.getElementById('uDeg').value,
-            fee: document.getElementById('uFee').value, currency: document.getElementById('uCur').value,
-            bankNameBD: document.getElementById('uBankBD').value, loanAmount: document.getElementById('uLoan').value,
-            partnerCommission: document.getElementById('uComm').value, maritalStatus: document.getElementById('uMarital').value
+        const body = { 
+            uniName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            language: document.getElementById('uLang').value,
+            langScore: document.getElementById('uScore').value,
+            partnerCommission: document.getElementById('uComm').value
         };
-        await fetch('/api/admin/add-uni', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-        alert("Saved!");
+        await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        alert("Uni Saved!");
     }
 
     async function loadPartners() {
-        const res = await fetch('/api/admin/partners');
+        const res = await fetch('/api/admin/all-partners');
         const data = await res.json();
         document.getElementById('partnerTable').innerHTML = data.map(p => `
             <tr>
-                <td>${p.name}</td><td>${p.orgName}</td><td>${p.status}</td>
+                <td>${p.name}</td><td>${p.email}</td><td>${p.status}</td>
                 <td>
-                    <button class="status-btn" style="background:green" onclick="upP('${p._id}', 'Active')">Active</button>
-                    <button class="status-btn" style="background:red" onclick="upP('${p._id}', 'Deactivate')">Block</button>
+                    <button style="background:green; color:white;" onclick="updateP('${p._id}', 'Active')">Approve</button>
+                    <button style="background:red; color:white;" onclick="updateP('${p._id}', 'Blocked')">Block</button>
                 </td>
             </tr>
         `).join('');
     }
 
-    async function upP(id, status) {
-        await fetch('/api/admin/update-partner', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, status}) });
+    async function updateP(id, status) {
+        await fetch('/api/admin/partner-status', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, status}) });
         loadPartners();
+    }
+
+    async function loadFiles() {
+        const res = await fetch('/api/admin/all-files');
+        const data = await res.json();
+        document.getElementById('trackTable').innerHTML = data.map(f => `
+            <tr>
+                <td>${f.studentName}</td><td>${f.university}</td><td>${f.status}</td>
+                <td><a href="${f.pdfUrl}" target="_blank">View File</a></td>
+            </tr>
+        `).join('');
     }
 </script>
 </body>
