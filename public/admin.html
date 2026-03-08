@@ -1,104 +1,28 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Admin Panel | IHP</title>
-    <style>
-        body { display: flex; font-family: sans-serif; margin: 0; background: #f0f2f5; }
-        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 270px; padding: 20px; width: calc(100% - 270px); }
-        .card { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .grid-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-        button { background: #1890ff; color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-    </style>
-</head>
-<body>
+<head><title>Admin Panel</title></head>
+<body style="font-family:sans-serif; padding:20px;">
+    <h2>🏫 Add University (Detailed)</h2>
+    <input type="text" id="uCountry" placeholder="Country">
+    <input type="text" id="uName" placeholder="University Name">
+    <select id="uDeg">
+        <option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+    </select>
+    <select id="uCur">
+        <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
+    </select>
+    <select id="uBankType"><option>FDR</option><option>SAVINGS</option></select>
+    <select id="uMarital"><option>Single</option><option>With spouse</option></select>
+    <input type="text" id="uBankBD" placeholder="BD Bank Name">
+    <input type="text" id="uComm" placeholder="Partner Commission">
+    <button onclick="save()" style="padding:10px 20px; background:blue; color:white;">SAVE DATA</button>
 
-<div class="sidebar">
-    <h2>IHP ADMIN</h2>
-    <p onclick="showT('uniTab')" style="cursor:pointer;">Add University</p>
-    <p onclick="showT('partnerTab'); loadPartners()" style="cursor:pointer;">Partner List</p>
-    <p onclick="showT('trackTab'); loadFiles()" style="cursor:pointer;">Student Tracking</p>
-</div>
-
-<div class="main">
-    <div id="uniTab" class="tab">
-        <div class="card">
-            <h3>🏫 Add University (All Fields)</h3>
-            <div class="grid-inputs">
-                <input type="text" id="uCountry" placeholder="Country">
-                <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCourse" placeholder="Course Name">
-                <input type="text" id="uIntake" placeholder="Intake">
-                <select id="uDeg">
-                    <option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                </select>
-                <select id="uLang">
-                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                </select>
-                <input type="text" id="uFee" placeholder="Semester Fee">
-                <select id="uCur">
-                    <option>DOLLAR</option><option>AUSTRALIA DOLLAR</option><option>CANADIAN DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
-                </select>
-                <input type="text" id="uBankBal" placeholder="Required Bank Balance">
-                <select id="uBankType"><option>FDR</option><option>SAVINGS</option></select>
-                <select id="uMarital"><option>Single</option><option>With Spouse</option></select>
-                <input type="text" id="uBankBD" placeholder="Bank Name Suggestion">
-                <input type="text" id="uLoan" placeholder="Loan Amount">
-                <input type="text" id="uComm" placeholder="Partner Commission">
-            </div>
-            <button onclick="saveUni()" style="margin-top:20px;">SAVE UNIVERSITY</button>
-        </div>
-    </div>
-
-    <div id="partnerTab" class="tab" style="display:none;">
-        <div class="card">
-            <h3>🤝 Partner Control</h3>
-            <table id="partnerTable">
-                <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody id="pBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<script>
-    function showT(id) {
-        document.querySelectorAll('.tab').forEach(t => t.style.display='none');
-        document.getElementById(id).style.display='block';
-    }
-
-    async function saveUni() {
-        const body = {
-            country: document.getElementById('uCountry').value,
-            uniName: document.getElementById('uName').value,
-            course: document.getElementById('uCourse').value,
-            intake: document.getElementById('uIntake').value,
-            degree: document.getElementById('uDeg').value,
-            language: document.getElementById('uLang').value,
-            fee: document.getElementById('uFee').value,
-            currency: document.getElementById('uCur').value,
-            bankBalance: document.getElementById('uBankBal').value,
-            bankType: document.getElementById('uBankType').value,
-            maritalStatus: document.getElementById('uMarital').value,
-            bankNameBD: document.getElementById('uBankBD').value,
-            loanAmount: document.getElementById('uLoan').value,
-            partnerCommission: document.getElementById('uComm').value
-        };
-        await fetch('/api/admin/add-uni', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-        alert("University Added Successfully!");
-    }
-
-    async function loadPartners() {
-        const res = await fetch('/api/all-partners');
-        const data = await res.json();
-        document.getElementById('pBody').innerHTML = data.map(p => `
-            <tr><td>${p.name}</td><td>${p.email}</td><td>${p.status}</td>
-            <td><button onclick="updateP('${p._id}', 'Active')">Active</button></td></tr>
-        `).join('');
-    }
-</script>
+    <script>
+        async function save() {
+            const body = { country: document.getElementById('uCountry').value, uniName: document.getElementById('uName').value, degree: document.getElementById('uDeg').value, currency: document.getElementById('uCur').value, bankType: document.getElementById('uBankType').value, maritalStatus: document.getElementById('uMarital').value, bankNameBD: document.getElementById('uBankBD').value, partnerCommission: document.getElementById('uComm').value };
+            await fetch('/api/admin/add-uni', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+            alert("University Saved!");
+        }
+    </script>
 </body>
 </html>

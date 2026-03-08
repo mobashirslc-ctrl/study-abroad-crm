@@ -1,7 +1,6 @@
 {
-  "name": "ihp-crm-global",
+  "name": "ihp-crm-master",
   "version": "1.0.0",
-  "description": "IHP Global CRM with 4 Dashboards",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
