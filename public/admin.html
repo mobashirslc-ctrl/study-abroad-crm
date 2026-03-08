@@ -1,175 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP Master Admin | Control Panel</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8"><title>Master Admin - IHP CRM</title>
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --dark: #202124; --border: #dadce0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); display: flex; }
-        
-        /* Sidebar Design */
-        .sidebar { width: 260px; height: 100vh; background: var(--dark); color: white; position: fixed; padding-top: 20px; }
-        .sidebar h2 { text-align: center; color: var(--primary); margin-bottom: 30px; font-size: 22px; }
-        .nav-link { display: flex; align-items: center; padding: 15px 25px; color: #bdc1c6; text-decoration: none; cursor: pointer; transition: 0.3s; }
-        .nav-link i { margin-right: 15px; width: 20px; }
-        .nav-link:hover, .nav-link.active { background: #3c4043; color: white; border-left: 4px solid var(--primary); }
-
-        /* Main Content */
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 30px; }
-        h3 { margin-bottom: 25px; color: var(--dark); border-bottom: 2px solid var(--bg); padding-bottom: 15px; }
-
-        /* Grid for Assessment Form */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: #5f6368; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; outline: none; font-size: 14px; }
-        input:focus { border-color: var(--primary); }
-        
-        .btn-submit { background: var(--primary); color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
-        
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        th { background: #f1f3f4; color: #3c4043; font-weight: 700; }
-        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .pending { background: #fef7e0; color: #b05a00; }
-        .active { background: #e6f4ea; color: #137333; }
-        
-        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px; }
-        .btn-approve { background: #34a853; color: white; }
-        .btn-decline { background: #ea4335; color: white; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; max-width: 800px; margin: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        input, select { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        button { grid-column: span 2; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        h2 { text-align: center; color: #1a73e8; }
     </style>
 </head>
 <body>
-
-<div class="sidebar">
-    <h2>IHP CRM</h2>
-    <div class="nav-link active" onclick="showTab('assessment')"><i class="fas fa-university"></i> Add University</div>
-    <div class="nav-link" onclick="showTab('tracking')"><i class="fas fa-file-invoice"></i> File Tracking</div>
-    <div class="nav-link" onclick="showTab('partners')"><i class="fas fa-handshake"></i> Partner List</div>
-    <div class="nav-link" onclick="showTab('compliance')"><i class="fas fa-shield-alt"></i> Compliance Control</div>
-    <div class="nav-link" onclick="showTab('team')"><i class="fas fa-users-cog"></i> Team Admin</div>
-</div>
-
-<div class="main-content">
-
-    <section id="assessment" class="tab-content">
-        <div class="card">
-            <h3><i class="fas fa-plus"></i> Add University for Assessment</h3>
-            <form id="uniForm">
-                <div class="grid">
-                    <div class="form-group"><label>Country</label><input type="text" name="country" placeholder="e.g. UK" required></div>
-                    <div class="form-group"><label>University Name</label><input type="text" name="uniName" required></div>
-                    <div class="form-group"><label>Course Name</label><input type="text" name="course" required></div>
-                    <div class="form-group"><label>Intake</label><input type="text" name="intake" placeholder="Jan/Sept 2026"></div>
-                    <div class="form-group">
-                        <label>Degree</label>
-                        <select name="degree">
-                            <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Language Requirement</label>
-                        <select name="language">
-                            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Min Language Score</label><input type="text" name="langScore" placeholder="6.5 (6.0)"></div>
-                    <div class="form-group"><label>Academic Score (CGPA/%)</label><input type="text" name="academicScore"></div>
-                    <div class="form-group"><label>Semester Fee (Per Year)</label><input type="number" name="fee"></div>
-                    <div class="form-group">
-                        <label>Currency</label>
-                        <select name="currency">
-                            <option>USD ($)</option><option>AUD ($)</option><option>CAD ($)</option>
-                            <option>EURO (€)</option><option>UK POUND (£)</option><option>TAKA (৳)</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Required Bank Balance</label><input type="text" name="bankBalance"></div>
-                    <div class="form-group">
-                        <label>Bank Type</label>
-                        <select name="bankType"><option>FDR</option><option>SAVINGS</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Marital Status</label>
-                        <select name="maritalStatus"><option>Single</option><option>With Spouse</option></select>
-                    </div>
-                    <div class="form-group"><label>Bank Suggestion</label><input type="text" name="bankName" placeholder="e.g. City Bank"></div>
-                    <div class="form-group"><label>Loan Amount</label><input type="text" name="loanAmount"></div>
-                    <div class="form-group"><label>Partner Commission</label><input type="text" name="partnerCommission"></div>
-                </div>
-                <button type="submit" class="btn-submit">SAVE UNIVERSITY DETAILS</button>
-            </form>
-        </div>
-    </section>
-
-    <section id="tracking" class="tab-content" style="display:none;">
-        <div class="card">
-            <h3><i class="fas fa-search"></i> Student File Tracking</h3>
-            <table>
-                <thead>
-                    <tr><th>Student Name</th><th>Contact</th><th>University</th><th>Status</th><th>Date & Time</th><th>Action</th></tr>
-                </thead>
-                <tbody id="studentTable"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="partners" class="tab-content" style="display:none;">
-        <div class="card">
-            <h3><i class="fas fa-user-friends"></i> Partner Management</h3>
-            <table>
-                <thead>
-                    <tr><th>Partner Name</th><th>Subscription</th><th>Status</th><th>Withdraw Request</th><th>Action</th></tr>
-                </thead>
-                <tbody id="partnerTableBody"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="compliance" class="tab-content" style="display:none;">
-        <div class="card">
-            <h3><i class="fas fa-user-shield"></i> Compliance Member Requests</h3>
-            <table>
-                <thead>
-                    <tr><th>Member Name</th><th>Contact</th><th>Organization</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody id="complianceTable"></tbody>
-            </table>
-        </div>
-    </section>
-
-</div>
-
-<script>
-    // Tab Navigation
-    function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        event.currentTarget.classList.add('active');
-    }
-
-    // University Data Submission
-    document.getElementById('uniForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {};
-        new FormData(e.target).forEach((val, key) => data[key] = val);
-        
-        const res = await fetch('/api/add-uni', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        if(res.ok) { alert("✅ University Added Successfully!"); e.target.reset(); }
-        else { alert("❌ Error!"); }
-    };
-</script>
-
+    <div class="card">
+        <h2>🎓 Master Admin - Entry Form</h2>
+        <form id="uniForm">
+            <div class="grid">
+                <input type="text" name="country" placeholder="Country (e.g. UK)" required>
+                <input type="text" name="uniName" placeholder="University Name" required>
+                <input type="text" name="location" placeholder="Location (City)">
+                <input type="text" name="course" placeholder="Course Name" required>
+                <input type="text" name="intake" placeholder="Intake (Jan/Sept)">
+                <select name="degree">
+                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                    <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+                </select>
+                <select name="language">
+                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                </select>
+                <input type="text" name="minScore" placeholder="Min Language Score (6.5)">
+                <input type="text" name="academicScore" placeholder="Min CGPA/GPA">
+                <input type="number" name="fee" placeholder="Semester Fee">
+                <select name="currency">
+                    <option>USD</option><option>GBP</option><option>AUD</option><option>CAD</option><option>BDT</option><option>EURO</option>
+                </select>
+                <input type="text" name="bankBalance" placeholder="Required Bank Balance">
+                <select name="bankType"><option>FDR</option><option>SAVINGS</option></select>
+                <select name="maritalStatus"><option>Single</option><option>With Spouse</option></select>
+                <input type="text" name="bankName" placeholder="Bank Name BD (Suggestion)">
+                <input type="text" name="loanAmount" placeholder="Loan Amount">
+                <input type="text" name="partnerCommission" placeholder="Partner Commission">
+                <button type="submit">SAVE TO SYSTEM</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.getElementById('uniForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/add-uni', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if(res.ok) { alert("✅ Success!"); e.target.reset(); }
+        };
+    </script>
 </body>
 </html>

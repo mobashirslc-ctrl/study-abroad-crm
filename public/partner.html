@@ -1,156 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Partner Smart Assessment | IHP CRM</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Assessment</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --primary: #1a73e8; --bg: #f8f9fa; --white: #ffffff; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: var(--bg); padding-bottom: 80px; }
+        body { font-family: sans-serif; background: #f4f7f9; padding: 15px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-search { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         
-        .header { background: var(--white); padding: 15px; text-align: center; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; }
-        .header h2 { color: var(--primary); font-size: 18px; }
-
-        .container { padding: 15px; max-width: 650px; margin: auto; }
-        .card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h3 { font-size: 16px; margin-bottom: 15px; color: #333; border-left: 4px solid var(--primary); padding-left: 10px; }
-
-        /* Assessment Form Grid */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group { margin-bottom: 12px; }
-        .full-width { grid-column: span 2; }
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #5f6368; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; outline: none; }
-        
-        .btn-search { background: var(--primary); color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
-
-        /* Result Cards */
-        .result-card { background: #fff; border: 1px solid #e8f0fe; border-radius: 12px; padding: 20px; margin-top: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border-top: 4px solid var(--primary); }
-        .uni-name { font-weight: 800; color: var(--primary); font-size: 18px; margin-bottom: 5px; }
-        .location-text { font-size: 13px; color: #70757a; margin-bottom: 15px; display: block; }
-        
-        .info-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border-top: 1px solid #f1f3f4; padding-top: 15px; }
-        .info-item { font-size: 13px; line-height: 1.5; }
-        .info-label { color: #80868b; display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; }
-        .info-value { color: #202124; font-weight: 600; }
-        
-        .commission-box { grid-column: span 2; background: #e6f4ea; padding: 10px; border-radius: 6px; text-align: center; color: #137333; font-weight: bold; margin-top: 10px; }
-        .btn-file { background: #34a853; color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; margin-top: 15px; font-weight: bold; cursor: pointer; }
-
-        /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #ddd; }
-        .nav-item { text-align: center; color: #5f6368; font-size: 11px; text-decoration: none; }
-        .nav-item i { font-size: 20px; display: block; margin-bottom: 2px; }
-        .nav-item.active { color: var(--primary); }
+        .result-item { background: white; padding: 20px; border-radius: 12px; margin-top: 15px; border-top: 5px solid #1a73e8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .uni-title { color: #1a73e8; font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
+        .label { color: #666; font-weight: bold; }
+        .value { color: #333; font-weight: 600; }
+        .comm { background: #e6f4ea; color: #137333; padding: 10px; text-align: center; border-radius: 6px; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
-
-<div class="header"><h2>IHP Partner Portal</h2></div>
-
-<div class="container">
-    <div class="card">
-        <h3><i class="fas fa-filter"></i> Smart Assessment</h3>
-        <form id="assessmentForm">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Country</label>
-                    <select id="country" required>
-                        <option value="">Select Country</option>
-                        <option value="AUSTRALIA">AUSTRALIA</option>
-                        <option value="UK">UK</option>
-                        <option value="USA">USA</option>
-                        <option value="CANADA">CANADA</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Degree</label>
-                    <select id="degree" required>
-                        <option value="UG">UG</option>
-                        <option value="PG">PG</option>
-                        <option value="DIPLOMA">DIPLOMA</option>
-                        <option value="FOUNDATION">FOUNDATION</option>
-                        <option value="RESEARCH">RESEARCH</option>
-                        <option value="PHD">PHD</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Language Test</label>
-                    <select id="language" required>
-                        <option value="IELTS">IELTS</option>
-                        <option value="PTE">PTE</option>
-                        <option value="DUOLINGO">DUOLINGO</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Academic CGPA/GPA</label>
-                    <input type="text" id="cgpa" placeholder="e.g. 3.50">
-                </div>
-                <div class="form-group full-width">
-                    <label>Language Score Details</label>
-                    <input type="text" id="langDetails" placeholder="e.g. Overall 6.5 (5.5)">
-                </div>
-            </div>
-            <button type="submit" class="btn-search">SEARCH & ANALYZE</button>
-        </form>
+    <div class="container">
+        <div class="card">
+            <h3><i class="fas fa-search"></i> Smart Assessment</h3>
+            <form id="searchForm">
+                <input type="text" id="country" placeholder="Country (e.g. UK)" required>
+                <select id="degree">
+                    <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+                </select>
+                <select id="lang">
+                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                </select>
+                <button type="submit" class="btn-search">SEARCH UNIVERSITIES</button>
+            </form>
+        </div>
+        <div id="results"></div>
     </div>
 
-    <div id="resultsContainer"></div>
-</div>
+    <script>
+        document.getElementById('searchForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const results = document.getElementById('results');
+            results.innerHTML = "Searching...";
+            
+            const c = document.getElementById('country').value;
+            const d = document.getElementById('degree').value;
+            const l = document.getElementById('lang').value;
 
-<nav class="bottom-nav">
-    <a href="#" class="nav-item active"><i class="fas fa-search-location"></i>Assessment</a>
-    <a href="#" class="nav-item"><i class="fas fa-folder-open"></i>Files</a>
-    <a href="#" class="nav-item"><i class="fas fa-wallet"></i>Withdraw</a>
-    <a href="#" class="nav-item"><i class="fas fa-crown"></i>Subscription</a>
-</nav>
-
-<script>
-    document.getElementById('assessmentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const resultsBox = document.getElementById('resultsContainer');
-        resultsBox.innerHTML = "<p style='text-align:center;'>Fetching matching universities...</p>";
-
-        const country = document.getElementById('country').value;
-        const degree = document.getElementById('degree').value;
-        const language = document.getElementById('language').value;
-
-        try {
-            const res = await fetch(`/api/search-uni?country=${country}&degree=${degree}&language=${language}`);
+            const res = await fetch(`/api/search-uni?country=${c}&degree=${d}&language=${l}`);
             const data = await res.json();
 
-            if(data.length === 0) {
-                resultsBox.innerHTML = "<div class='card' style='text-align:center; color:red;'>No Universities Found matching your requirements.</div>";
-                return;
-            }
+            if(data.length === 0) { results.innerHTML = "No results found."; return; }
 
-            resultsBox.innerHTML = data.map(uni => `
-                <div class="result-card">
-                    <div class="uni-name">${uni.uniName}</div>
-                    <span class="location-text"><i class="fas fa-map-marker-alt"></i> ${uni.location || 'Location Not Set'}, ${uni.country}</span>
-                    
-                    <div class="info-container">
-                        <div class="info-item"><span class="info-label">Course</span><span class="info-value">${uni.course}</span></div>
-                        <div class="info-item"><span class="info-label">Intake</span><span class="info-value">${uni.intake || 'Not Specified'}</span></div>
-                        <div class="info-item"><span class="info-label">Semester Fee</span><span class="info-value">${uni.fee} ${uni.currency}</span></div>
-                        <div class="info-item"><span class="info-label">Bank Requirements</span><span class="info-value">${uni.bankBalance || 'N/A'}</span></div>
-                        <div class="info-item"><span class="info-label">Marital Status</span><span class="info-value">${uni.maritalStatus || 'Single/Both'}</span></div>
-                        <div class="info-item"><span class="info-label">Bank Name (BD)</span><span class="info-value">${uni.bankName || 'Any Listed'}</span></div>
-                        <div class="info-item"><span class="info-label">Loan Amount</span><span class="info-value">${uni.loanAmount || 'N/A'}</span></div>
-                        <div class="info-item"><span class="info-label">Language Score</span><span class="info-value">${uni.minScore || 'N/A'}</span></div>
-                        
-                        <div class="commission-box">
-                            <i class="fas fa-coins"></i> Partner Commission: ${uni.partnerCommission || 'TBA'}
-                        </div>
+            results.innerHTML = data.map(uni => `
+                <div class="result-item">
+                    <div class="uni-title">${uni.uniName}</div>
+                    <div style="font-size:12px; color:#666;"><i class="fas fa-map-marker-alt"></i> ${uni.location}, ${uni.country}</div>
+                    <div class="info-grid">
+                        <div><span class="label">Course:</span> <span class="value">${uni.course}</span></div>
+                        <div><span class="label">Intake:</span> <span class="value">${uni.intake}</span></div>
+                        <div><span class="label">Fee:</span> <span class="value">${uni.fee} ${uni.currency}</span></div>
+                        <div><span class="label">Bank Req:</span> <span class="value">${uni.bankBalance}</span></div>
+                        <div><span class="label">Bank Name BD:</span> <span class="value">${uni.bankName}</span></div>
+                        <div><span class="label">Loan Amount:</span> <span class="value">${uni.loanAmount}</span></div>
+                        <div><span class="label">Marital Status:</span> <span class="value">${uni.maritalStatus}</span></div>
+                        <div><span class="label">Language Req:</span> <span class="value">${uni.minScore}</span></div>
                     </div>
-                    <button class="btn-file" onclick="alert('Proceeding to File Opening...')">OPEN STUDENT FILE</button>
+                    <div class="comm">Commission: ${uni.partnerCommission}</div>
+                    <button style="width:100%; margin-top:10px; padding:10px; background:#34a853; color:white; border:none; border-radius:6px; cursor:pointer;">OPEN STUDENT FILE</button>
                 </div>
             `).join('');
-        } catch(err) { resultsBox.innerHTML = "Error loading assessment results."; }
-    };
-</script>
-
+        };
+    </script>
 </body>
 </html>
