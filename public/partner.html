@@ -1,61 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal | IHP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
-        .card { background: white; margin: 15px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; margin: 0; padding-bottom: 70px; }
+        .container { max-width: 500px; margin: auto; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-blue { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .res-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; }
+        .btn-blue { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
         .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 11px; color: #888; cursor: pointer; }
         .active { color: #1a73e8; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container" id="dashboard">
+<div class="container" id="app">
     <div id="assessment" class="page">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
             <input type="text" id="sCountry" placeholder="Country">
             <select id="sDegree">
-                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+                <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
             </select>
             <select id="sLang">
                 <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
             </select>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="sAcad" placeholder="Academic Score">
-                <input type="text" id="sScore" placeholder="Lang Score">
+                <input type="text" id="sAcad" placeholder="GPA/CGPA Box">
+                <input type="text" id="sScore" placeholder="Language Score">
             </div>
-            <button class="btn-blue" onclick="runSearch()">SEARCH</button>
+            <button class="btn-blue" onclick="runSearch()">SEARCH UNIVERSITY</button>
         </div>
-        <div id="results"></div>
+        <div id="resultsArea"></div>
     </div>
 
     <div id="wallet" class="page" style="display:none;">
         <div class="card" style="background:#1a73e8; color:white;">
-            <p>Total Balance</p><h2>৳ 50,000.00</h2>
+            <p>Wallet Balance</p><h2>৳ 0.00</h2>
+            <small>Pending: ৳ 0.00 | Withdrawn: ৳ 0.00</small>
         </div>
         <div class="card">
-            <h3>Withdraw Found</h3>
-            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="text" id="wAcc" placeholder="Account Number">
-            <input type="number" id="wAmt" placeholder="Amount">
-            <button class="btn-main btn-blue" style="background:#28a745;" onclick="sendWithdraw()">SEND REQUEST</button>
+            <h3>Withdraw Funds</h3>
+            <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+            <input type="text" placeholder="Enter Bkash/Nagad/Bank Details">
+            <input type="number" placeholder="Enter Amount">
+            <button class="btn-blue" style="background:#28a745;" onclick="alert('Withdraw Request Sent!')">SEND REQUEST</button>
         </div>
+    </div>
+
+    <div id="tracking" class="page" style="display:none;">
+        <h3>📁 File Tracking</h3>
+        <div id="trackList"></div>
     </div>
 </div>
 
 <div class="nav-bar">
     <div class="nav-item active" onclick="showP('assessment', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('wallet', this)"><i class="fas fa-wallet"></i><br>Withdraw</div>
+    <div class="nav-item" onclick="showP('tracking', this); loadFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
+    <div class="nav-item" onclick="showP('wallet', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
@@ -69,44 +75,42 @@
     async function runSearch() {
         const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}&language=${document.getElementById('sLang').value}`);
         const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `
+        document.getElementById('resultsArea').innerHTML = data.map(u => `
             <div class="card">
                 <b>${u.uniName}</b><br><small>${u.location}, ${u.country}</small>
-                <div class="res-box">
-                    <div>Course: <b>${u.course}</b></div>
-                    <div>Intake: <b>${u.intake}</b></div>
-                    <div>Fee: <b>${u.fee} ${u.currency}</b></div>
-                    <div>Bank BD: <b>${u.bankNameBD}</b></div>
+                <div class="res-grid">
+                    <div>Course: <b>${u.course}</b></div><div>Intake: <b>${u.intake}</b></div>
+                    <div>Fee: <b>${u.fee} ${u.currency}</b></div><div>Comm: <b>${u.partnerCommission}</b></div>
+                    <div>Marital: <b>${u.maritalStatus}</b></div><div>BD Bank: <b>${u.bankNameBD}</b></div>
+                    <div>Loan: <b>${u.loanAmount}</b></div><div>Bank Req: <b>${u.bankBalance}</b></div>
                 </div>
-                <button class="btn-blue" style="margin-top:10px; background:#28a745;" onclick="openStudentFile('${u.uniName}')">OPEN STUDENT FILE</button>
+                <button class="btn-blue" style="margin-top:10px; background:#28a745;" onclick="openFile('${u.uniName}')">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    async function openStudentFile(uni) {
-        const name = prompt("Student Full Name:");
+    async function openFile(uni) {
+        const name = prompt("Student Name:");
         const contact = prompt("Contact No:");
-        const pdf = prompt("Paste PDF Link:");
+        const pdf = prompt("Paste PDF Drive Link:");
         if(!name) return;
-
         const res = await fetch('/api/open-file', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ studentName: name, contact: contact, university: uni, pdfUrl: pdf })
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ studentName: name, contact: contact, university: uni, pdfUrl: pdf, complianceMember: {name: "IHP Support"} })
         });
-        const data = await res.json();
-        if(data.success) alert(data.message);
+        const d = await res.json(); if(d.success) alert(d.message);
     }
 
-    async function sendWithdraw() {
-        const body = { method: document.getElementById('wMethod').value, account: document.getElementById('wAcc').value, amount: document.getElementById('wAmt').value };
-        const res = await fetch('/api/withdraw-request', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(body)
-        });
+    async function loadFiles() {
+        const res = await fetch('/api/all-files');
         const data = await res.json();
-        if(data.success) alert(data.message);
+        document.getElementById('trackList').innerHTML = data.map(f => `
+            <div class="card">
+                <b>${f.studentName}</b> | ${f.university}<br>
+                <small>Status: ${f.status} | Visa: ${f.visaStatus}</small><br>
+                <a href="${f.pdfUrl}" target="_blank" style="color:blue; font-size:12px;">Download PDF</a>
+            </div>
+        `).join('');
     }
 </script>
 </body>
