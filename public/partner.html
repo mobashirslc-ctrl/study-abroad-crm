@@ -1,79 +1,186 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Partner Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
+        :root { --primary: #1a73e8; --success: #28a745; --warning: #fbbc04; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; color: #666; cursor: pointer; font-size: 11px; }
-        .nav-item.active { color: #1a73e8; }
-        .result-card { border-left: 5px solid #1a73e8; }
-        .tag { font-size: 11px; background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
+        
+        /* Typography */
+        h3 { margin-top: 0; color: #333; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        /* Form Elements */
+        label { font-size: 12px; color: #666; font-weight: bold; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; background: #fff; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary:hover { background: #1557b0; }
+
+        /* Result Display */
+        .result-card { border-left: 6px solid var(--primary); position: relative; overflow: hidden; }
+        .uni-name { font-size: 18px; font-weight: bold; color: var(--primary); margin-bottom: 10px; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; }
+        .data-item { padding: 8px; background: #f1f3f4; border-radius: 6px; }
+        .data-item b { display: block; color: #555; font-size: 11px; text-transform: uppercase; }
+        .commission-box { background: #e6f4ea; color: #1e8e3e; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; font-weight: bold; border: 1px dashed #1e8e3e; }
+
+        /* Wallet Section */
+        .wallet-card { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: white; position: relative; }
+        .wallet-balance { font-size: 32px; font-weight: bold; margin: 15px 0; }
+        .sub-info { font-size: 12px; opacity: 0.9; display: flex; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.2); pt: 10px; margin-top: 10px; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; color: #777; cursor: pointer; font-size: 12px; transition: 0.3s; }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; display: block; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+
+        .page { display: none; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="p-assess" class="page">
+    <div id="assess-page" class="page" style="display: block;">
         <div class="card">
-            <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="c" placeholder="Country Name">
-            <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option></select>
-            <select id="l"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-            <input type="text" id="s" placeholder="Academic & Language Score Box">
-            <button class="btn-search" onclick="search()">SEARCH UNIVERSITY</button>
+            <h3><i class="fas fa-microchip"></i> Smart Assessment</h3>
+            
+            <label>Target Country</label>
+            <input type="text" id="country" placeholder="e.g. Canada, UK, Australia">
+            
+            <label>Degree Level</label>
+            <select id="degree">
+                <option value="">Select Degree</option>
+                <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+            </select>
+            
+            <label>Language Test</label>
+            <select id="lang">
+                <option value="">Select Test</option>
+                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+            </select>
+            
+            <label>Academic & Language Score</label>
+            <input type="text" id="scores" placeholder="e.g. CGPA 3.50, IELTS 6.5">
+            
+            <button class="btn-primary" onclick="searchUniversities()">RUN ASSESSMENT</button>
         </div>
-        <div id="results"></div>
+        
+        <div id="results-container"></div>
     </div>
 
-    <div id="p-wallet" class="page" style="display:none;">
-        <div class="card" style="background: #1a73e8; color:white;">
-            <p>Total Balance</p><h2>৳ 0.00</h2>
-            <small>Expiry: 31-12-2026</small>
-        </div>
+    <div id="track-page" class="page">
         <div class="card">
-            <h3>Withdraw</h3>
-            <select><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-            <input type="number" placeholder="Amount">
-            <button class="btn-search" style="background:#28a745;">WITHDRAW REQUEST</button>
+            <h3><i class="fas fa-tasks"></i> File Tracking</h3>
+            <p style="text-align: center; color: #888; padding: 20px;">
+                <i class="fas fa-folder-open fa-3x" style="margin-bottom: 15px; opacity: 0.3;"></i><br>
+                No active student files found.
+            </p>
+        </div>
+    </div>
+
+    <div id="wallet-page" class="page">
+        <div class="card wallet-card">
+            <p style="margin:0; font-size: 14px;">Total Amount Cart</p>
+            <div class="wallet-balance">৳ 0.00</div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                <span>Pending: ৳ 0</span>
+                <span>Withdrawn: ৳ 0</span>
+            </div>
+            <div class="sub-info">
+                <span><i class="fas fa-box"></i> Premium Package</span>
+                <span><i class="fas fa-clock"></i> Exp: 31-12-2026</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3><i class="fas fa-money-check-alt"></i> Withdraw Funds</h3>
+            <label>Method</label>
+            <select>
+                <option>Bkash</option><option>Nagad</option><option>Bank Account</option>
+            </select>
+            <label>Amount (BDT)</label>
+            <input type="number" placeholder="Min ৳ 500">
+            <button class="btn-primary" style="background: var(--success);">SEND WITHDRAW REQUEST</button>
         </div>
     </div>
 </div>
 
-<div class="nav-bar">
-    <div class="nav-item active" onclick="showP('p-assess')"><i class="fas fa-search"></i><br>Assessment</div>
-    <div class="nav-item" onclick="showP('p-wallet')"><i class="fas fa-wallet"></i><br>Withdraw</div>
+<div class="bottom-nav">
+    <div class="nav-item active" onclick="switchPage('assess-page', this)">
+        <i class="fas fa-search-location"></i>Assessment
+    </div>
+    <div class="nav-item" onclick="switchPage('track-page', this)">
+        <i class="fas fa-file-signature"></i>Tracking
+    </div>
+    <div class="nav-item" onclick="switchPage('wallet-page', this)">
+        <i class="fas fa-wallet"></i>Wallet
+    </div>
 </div>
 
 <script>
-    function showP(id) {
+    // Navigation Logic
+    function switchPage(pageId, element) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(pageId).style.display = 'block';
+        element.classList.add('active');
     }
 
-    async function search() {
-        const resBox = document.getElementById('results');
-        resBox.innerHTML = "Searching...";
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}&language=${document.getElementById('l').value}`);
-        const data = await res.json();
+    // Search Logic
+    async function searchUniversities() {
+        const resultsArea = document.getElementById('results-container');
+        resultsArea.innerHTML = "<div style='text-align:center; padding:20px;'><i class='fas fa-spinner fa-spin'></i> Analyzing Requirements...</div>";
         
-        resBox.innerHTML = data.map(u => `
-            <div class="card result-card">
-                <div style="font-weight:bold; color:#1a73e8; font-size:18px;">${u.uniName}</div>
-                <div style="font-size:12px; color:#666; margin-bottom:10px;">${u.course} | ${u.intake}</div>
-                <div style="font-size:13px; line-height:1.6;">
-                    <b>Fee:</b> ${u.fee} ${u.currency} | <b>Bank Req:</b> ${u.bankBalance}<br>
-                    <b>Bank BD:</b> ${u.bankNameSuggestion} | <b>Loan:</b> ${u.loanAmount}<br>
-                    <b>Marital:</b> ${u.maritalStatus} | <b style="color:green;">Commission: ${u.partnerCommission}</b>
+        const country = document.getElementById('country').value;
+        const degree = document.getElementById('degree').value;
+        const lang = document.getElementById('lang').value;
+
+        try {
+            const res = await fetch(`/api/search-uni?country=${country}&degree=${degree}&language=${lang}`);
+            const data = await res.json();
+
+            if(data.length === 0) {
+                resultsArea.innerHTML = "<div class='card' style='text-align:center; color:#d93025;'>No matches found for this criteria.</div>";
+                return;
+            }
+
+            resultsArea.innerHTML = data.map(u => `
+                <div class="card result-card">
+                    <div class="uni-name">${u.uniName}</div>
+                    <div style="font-size:13px; color:#666; margin-bottom:15px;">
+                        <i class="fas fa-map-marker-alt"></i> ${u.location || u.country}
+                    </div>
+                    
+                    <div class="data-grid">
+                        <div class="data-item"><b>Course</b>${u.course || 'N/A'}</div>
+                        <div class="data-item"><b>Intake</b>${u.intake || 'N/A'}</div>
+                        <div class="data-item"><b>Semester Fee</b>${u.fee} ${u.currency}</div>
+                        <div class="data-item"><b>Bank Requirement</b>${u.bankBalance || 'N/A'}</div>
+                        <div class="data-item"><b>Marital Status</b>${u.maritalStatus || 'Single'}</div>
+                        <div class="data-item"><b>Bank Name (BD)</b>${u.bankNameSuggestion || 'N/A'}</div>
+                        <div class="data-item"><b>Loan Support</b>${u.loanAmount || 'N/A'}</div>
+                        <div class="data-item"><b>Degree</b>${u.degree}</div>
+                    </div>
+                    
+                    <div class="commission-box">
+                        <i class="fas fa-hand-holding-usd"></i> Partner Commission: ${u.partnerCommission || '0'}
+                    </div>
+                    
+                    <button class="btn-primary" style="margin-top:15px; background:#333;" onclick="alert('File opening process initiated for ${u.uniName}')">
+                        <i class="fas fa-plus-circle"></i> OPEN STUDENT FILE
+                    </button>
                 </div>
-                <button class="btn-search" style="margin-top:10px; background:#28a745; font-size:12px;">OPEN STUDENT FILE</button>
-            </div>
-        `).join('');
+            `).join('');
+        } catch (err) {
+            resultsArea.innerHTML = "<div class='card' style='color:red;'>Server Error. Please try again later.</div>";
+        }
     }
 </script>
 </body>
