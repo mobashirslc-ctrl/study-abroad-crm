@@ -6,88 +6,87 @@
     <title>Partner Portal | IHP</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
-        .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-main { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        :root { --primary: #1a73e8; --success: #28a745; --danger: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; padding-bottom: 70px; }
+        .container { max-width: 600px; margin: auto; padding: 15px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        
+        /* Result styling */
+        .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px; margin: 10px 0; border-top: 1px solid #eee; padding-top: 10px; }
+        .res-grid b { color: var(--primary); }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 600px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
         .nav-item { flex: 1; text-align: center; color: #888; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: #1a73e8; font-weight: bold; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container" id="mainApp">
-    <div id="auth-section">
+<div class="container" id="app">
+    <div id="auth-box">
         <div class="card">
             <h2 id="authTitle">Partner Registration</h2>
-            <div id="regFields">
+            <div id="regInputs">
                 <input type="text" id="pName" placeholder="Full Name">
                 <input type="text" id="pOrg" placeholder="Organization Name">
                 <input type="text" id="pContact" placeholder="Contact Number">
             </div>
             <input type="email" id="pEmail" placeholder="Email Address">
             <input type="password" id="pPass" placeholder="Password">
-            <button class="btn-main" id="authBtn" onclick="handleAuth()">REGISTER NOW</button>
-            <p style="text-align:center; font-size:12px; margin-top:10px;" onclick="toggleAuth()">Already have an account? Login</p>
+            <button class="btn-main" onclick="handleAuth()" id="authBtn">REGISTER</button>
+            <p style="text-align:center; cursor:pointer;" onclick="toggleAuth()">Already have an account? Login</p>
         </div>
     </div>
 
     <div id="dashboard" style="display:none;">
-        <div class="card" style="background: #1a73e8; color: white;">
-            <p>Welcome, <b id="userDisp">Partner</b></p>
-            <h3>Wallet: ৳ <span id="balance">0.00</span></h3>
-        </div>
-
         <div id="assessment-page" class="page">
             <div class="card">
                 <h3>🔍 Smart Assessment</h3>
                 <input type="text" id="sCountry" placeholder="Country">
                 <select id="sDegree">
-                    <option value="">Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+                    <option value="">Select Degree</option>
+                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
                     <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
                 </select>
-                <button class="btn-main" onclick="searchUni()">SEARCH UNIVERSITY</button>
+                <select id="sLang">
+                    <option value="">Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                </select>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="sAcadScore" placeholder="Acad Score (GPA)">
+                    <input type="text" id="sLangScore" placeholder="Lang Score">
+                </div>
+                <button class="btn-main" onclick="runSearch()">SEARCH UNIVERSITY</button>
             </div>
             <div id="results"></div>
-        </div>
-
-        <div id="withdraw-page" class="page" style="display:none;">
-            <div class="card">
-                <h3>Withdraw Funds</h3>
-                <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-                <input type="text" id="wAcc" placeholder="Account / Bank Number">
-                <input type="number" id="wAmt" placeholder="Amount">
-                <button class="btn-main" style="background:#28a745;" onclick="sendWithdraw()">SEND REQUEST</button>
-            </div>
         </div>
 
         <div id="tracking-page" class="page" style="display:none;">
             <h3>📁 My Tracking Files</h3>
             <div id="trackList"></div>
         </div>
+
+        <div id="wallet-page" class="page" style="display:none;">
+            <div class="card" style="background:var(--primary); color:white;">
+                <p>Wallet Balance</p><h2>৳ <span id="wBalance">0.00</span></h2>
+                <small>Package: <b>Premium</b> | Exp: 31/12/2026</small>
+            </div>
+            <div class="card">
+                <h3>Withdraw Funds</h3>
+                <select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
+                <input type="text" placeholder="Account Number">
+                <input type="number" placeholder="Amount">
+                <button class="btn-main" style="background:var(--success);">SEND REQUEST</button>
+            </div>
+        </div>
     </div>
 </div>
 
-<div id="fileModal" class="modal">
-    <div class="modal-content">
-        <h3>📄 Submit Student File</h3>
-        <input type="hidden" id="selectedUni">
-        <input type="text" id="stdName" placeholder="Student Full Name">
-        <input type="text" id="stdPhone" placeholder="Contact Number">
-        <input type="text" id="stdPdf" placeholder="Paste PDF/GDrive Link">
-        <button class="btn-main" style="background:#28a745;" onclick="finalSubmit()">SUBMIT TO ADMIN</button>
-        <button onclick="closeModal()" style="border:none; background:none; color:red; width:100%; margin-top:10px;">Cancel</button>
-    </div>
-</div>
-
-<div class="nav-bar" id="bottomNav" style="display:none;">
+<div class="bottom-nav" id="nav" style="display:none;">
     <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
     <div class="nav-item" onclick="showP('tracking-page', this); loadMyFiles()"><i class="fas fa-tasks"></i><br>Tracking</div>
-    <div class="nav-item" onclick="showP('withdraw-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
+    <div class="nav-item" onclick="showP('wallet-page', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
@@ -95,37 +94,31 @@
     function toggleAuth() {
         isLogin = !isLogin;
         document.getElementById('authTitle').innerText = isLogin ? "Partner Login" : "Partner Registration";
-        document.getElementById('regFields').style.display = isLogin ? "none" : "block";
-        document.getElementById('authBtn').innerText = isLogin ? "LOGIN" : "REGISTER NOW";
+        document.getElementById('regInputs').style.display = isLogin ? "none" : "block";
+        document.getElementById('authBtn').innerText = isLogin ? "LOGIN" : "REGISTER";
     }
 
     async function handleAuth() {
         const email = document.getElementById('pEmail').value;
         const pass = document.getElementById('pPass').value;
         if(isLogin) {
-            const res = await fetch('/api/auth/login', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({email, pass})
-            });
+            const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, pass}) });
             const data = await res.json();
-            if(data.success) {
-                localStorage.setItem('pUser', JSON.stringify(data.user));
-                location.reload();
-            } else alert(data.message);
+            if(data.success) { localStorage.setItem('pUser', JSON.stringify(data.user)); location.reload(); }
+            else alert(data.message);
         } else {
             const body = { name: document.getElementById('pName').value, orgName: document.getElementById('pOrg').value, contact: document.getElementById('pContact').value, email, pass };
-            await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-            alert("Registration Done! Wait for Admin Approval.");
+            await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+            alert("Registered! Contact Admin for Activation.");
         }
     }
 
-    // Auth Check on Load
+    // Check Login
     const user = JSON.parse(localStorage.getItem('pUser'));
     if(user) {
-        document.getElementById('auth-section').style.display = 'none';
+        document.getElementById('auth-box').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
-        document.getElementById('bottomNav').style.display = 'flex';
-        document.getElementById('userDisp').innerText = user.name;
+        document.getElementById('nav').style.display = 'flex';
     }
 
     function showP(id, el) {
@@ -135,30 +128,23 @@
         el.classList.add('active');
     }
 
-    async function searchUni() {
-        const res = await fetch(`/api/uni-search?country=${document.getElementById('sCountry').value}`);
+    async function runSearch() {
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDegree').value}&language=${document.getElementById('sLang').value}`);
         const data = await res.json();
         document.getElementById('results').innerHTML = data.map(u => `
             <div class="card">
-                <b>${u.uniName}</b><br><small>${u.location} | Comm: ${u.partnerCommission}</small>
-                <button class="btn-main" style="padding:10px; margin-top:10px; background:#28a745;" onclick="openModal('${u.uniName}')">OPEN FILE</button>
+                <b>${u.uniName}</b><br><small>${u.location}, ${u.country}</small>
+                <div class="res-grid">
+                    <div>Course: <b>${u.course}</b></div>
+                    <div>Intake: <b>${u.intake}</b></div>
+                    <div>Fee: <b>${u.fee} ${u.currency}</b></div>
+                    <div>Commission: <b>${u.partnerCommission}</b></div>
+                    <div>Bank Req: <b>${u.bankBalance}</b></div>
+                    <div>BD Bank: <b>${u.bankNameBD}</b></div>
+                </div>
+                <button class="btn-main" style="background:var(--success); padding:10px;">OPEN STUDENT FILE</button>
             </div>
         `).join('');
-    }
-
-    function openModal(u) { document.getElementById('selectedUni').value=u; document.getElementById('fileModal').style.display='flex'; }
-    function closeModal() { document.getElementById('fileModal').style.display='none'; }
-
-    async function finalSubmit() {
-        const body = {
-            studentName: document.getElementById('stdName').value,
-            contact: document.getElementById('stdPhone').value,
-            university: document.getElementById('selectedUni').value,
-            pdfUrl: document.getElementById('stdPdf').value,
-            complianceMember: { name: "IHP Support", org: "IHP Global", id: "IHP-99" }
-        };
-        await fetch('/api/file-open', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-        alert("File Sent!"); closeModal();
     }
 
     async function loadMyFiles() {
@@ -166,15 +152,12 @@
         const data = await res.json();
         document.getElementById('trackList').innerHTML = data.map(f => `
             <div class="card">
-                <b>${f.studentName}</b><br><small>${f.university} | Status: ${f.status}</small><br>
+                <b>${f.studentName}</b> | ${f.university}<br>
+                <small>Status: ${f.status} | Visa: ${f.visaStatus}</small><br>
                 <small>Compliance: ${f.complianceMember.name}</small><br>
-                <a href="${f.pdfUrl}" target="_blank" style="color:blue; font-size:12px;">View PDF</a>
+                <a href="${f.pdfUrl}" target="_blank" style="color:var(--primary); font-size:12px;">Download PDF</a>
             </div>
         `).join('');
-    }
-
-    async function sendWithdraw() {
-        alert("Withdraw Request Sent Successfully!");
     }
 </script>
 </body>
