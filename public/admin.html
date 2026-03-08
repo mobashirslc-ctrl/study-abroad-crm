@@ -1,44 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Master Dashboard | IHP</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>IHP Admin</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; }
-        .sidebar { width: 250px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
-        .main-content { flex: 1; padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        input, select { padding: 12px; margin: 10px 5px; border: 1px solid #ddd; border-radius: 6px; width: 200px; }
-        .btn-save { background: #1a73e8; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; }
-        .status-btn { padding: 5px 15px; border-radius: 20px; border: none; cursor: pointer; font-size: 12px; }
-        .active-btn { background: #e8f5e9; color: #2e7d32; }
-        .pending-btn { background: #fff3e0; color: #ef6c00; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        body { font-family: sans-serif; display: flex; margin:0; }
+        .sidebar { width: 200px; background: #1a237e; color: white; min-height: 100vh; padding: 20px; }
+        .main { flex: 1; padding: 20px; background: #f8f9fa; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: blue; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
-
-<div class="sidebar">
-    <h2>IHP ADMIN</h2>
-    <p>University Setup</p>
-    <p>Partner Management</p>
-    <p>Compliance Control</p>
-</div>
-
-<div class="main-content">
-    <div class="card">
-        <h3>🏫 Add University for Assessment</h3>
-        <div style="display: flex; wrap: wrap;">
+    <div class="sidebar">
+        <h3>IHP ADMIN</h3>
+        <p>University Setup</p>
+        <p>Partner Management</p>
+        <p>Compliance Control</p>
+    </div>
+    <div class="main">
+        <div class="card">
+            <h2>🏫 Add University (Detailed)</h2>
             <input type="text" id="uCountry" placeholder="Country">
             <input type="text" id="uName" placeholder="University Name">
             <select id="uDeg">
-                <option>Degree Drop-down</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-            </select>
-            <select id="uLang">
-                <option>Language</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
             </select>
             <select id="uCur">
-                <option>Currency</option>
+                <option>DOLLAR</option><option>EURO</option><option>TAKA</option><option>UK POUND</option>
+            </select>
+            <select id="uBank"><option>FDR</option><option>SAVINGS</option></select>
+            <select id="uMarital"><option>Single</option><option>With spouse</option></select>
+            <input type="text" id="uBankBD" placeholder="BD Bank Name">
+            <input type="text" id="uComm" placeholder="Partner Commission">
+            <button onclick="saveUni()">SAVE DATA</button>
+        </div>
+    </div>
+    <script>
+        async function saveUni() {
+            const body = {
+                country: document.getElementById('uCountry').value,
+                uniName: document.getElementById('uName').value,
+                degree: document.getElementById('uDeg').value,
+                currency: document.getElementById('uCur').value,
+                bankType: document.getElementById('uBank').value,
+                maritalStatus: document.getElementById('uMarital').value,
+                bankNameBD: document.getElementById('uBankBD').value,
+                partnerCommission: document.getElementById('uComm').value
+            };
+            const res = await fetch('/api/admin/add-uni', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            if(res.ok) alert("University Added Successfully!");
+        }
+    </script>
+</body>
+</html>

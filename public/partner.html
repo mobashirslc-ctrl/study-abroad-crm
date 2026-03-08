@@ -1,68 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding-bottom: 70px; }
-        .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn-blue { background: #1a73e8; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 12px; color: #888; font-size: 11px; }
-        .active { color: #1a73e8; font-weight: bold; }
-        .page { display: none; } .active-page { display: block; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 60px; }
+        .container { max-width: 500px; margin: auto; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-search { width: 100%; background: #1a73e8; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; font-size: 12px; color: #666; cursor: pointer; }
     </style>
 </head>
 <body>
-
-<div class="container" id="app">
-    <div id="p-assessment" class="page active-page">
+    <div class="container">
         <div class="card">
             <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Country">
+            <input type="text" id="sCountry" placeholder="Enter Country">
             <select id="sDeg">
-                <option>Degree</option><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
+                <option>Select Degree</option><option>UG</option><option>PG</option><option>PHD</option>
             </select>
-            <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-            <button class="btn-blue" onclick="runSearch()">SEARCH</button>
+            <button class="btn-search" onclick="searchUni()">SEARCH UNIVERSITY</button>
         </div>
         <div id="results"></div>
     </div>
-
-    <div id="p-wallet" class="page">
-        <div class="card" style="background: #1a73e8; color:white;">
-            <p>Balance</p><h2>৳ 0.00</h2>
-            <small>Package: Premium | Expiry: 2026-12-31</small>
-        </div>
-        <div class="card">
-            <h3>Withdraw</h3>
-            <select><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-            <input type="text" placeholder="Account No">
-            <button class="btn-blue" id="wBtn" disabled>Withdraw (Disabled by Compliance)</button>
-        </div>
+    <div class="nav">
+        <div class="nav-item">Search</div>
+        <div class="nav-item">Files</div>
+        <div class="nav-item">Wallet</div>
     </div>
-</div>
-
-<nav class="nav-bar">
-    <div class="nav-item active" onclick="showP('p-assessment', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('p-wallet', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
-</nav>
-
-<script>
-    function showP(id, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(id).classList.add('active-page');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-    }
-    async function runSearch() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDeg').value}&language=IELTS`);
-        const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `<div class="card"><b>${u.uniName}</b><br><small>Fee: ${u.fee} ${u.currency}</small><br><button class="btn-blue" style="background:#28a745; margin-top:10px;">OPEN FILE</button></div>`).join('');
-    }
-</script>
+    <script>
+        async function searchUni() {
+            const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}&degree=${document.getElementById('sDeg').value}`);
+            const data = await res.json();
+            document.getElementById('results').innerHTML = data.map(u => `
+                <div class="card">
+                    <b>${u.uniName}</b> (${u.country})<br>
+                    <small>Commission: ${u.partnerCommission} | Bank: ${u.bankType}</small><br>
+                    <button class="btn-search" style="background:green; margin-top:10px;">OPEN STUDENT FILE</button>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
