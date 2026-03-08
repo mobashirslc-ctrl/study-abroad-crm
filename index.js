@@ -4,43 +4,36 @@ const path = require('path');
 const app = express();
 
 app.use(express.json());
+
+// স্ট্যাটিক ফোল্ডার সেটআপ (এটি খুব গুরুত্বপূর্ণ)
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB Connection
 const mongoURI = 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
-mongoose.connect(mongoURI).then(() => console.log('✅ Master Database Connected'));
+mongoose.connect(mongoURI).then(() => console.log('✅ Connected to MongoDB'));
 
 // --- SCHEMAS ---
 const UniSchema = new mongoose.Schema({
-    country: String, uniName: String, course: String, intake: String,
-    degree: String, language: String, academicScore: String, langScore: String,
-    fee: String, currency: String, bankBalance: String, bankType: String,
-    maritalStatus: String, bankNameSuggestion: String, loanAmount: String, partnerCommission: String
+    country: String, uniName: String, location: String, course: String, 
+    intake: String, degree: String, language: String, langScore: String, 
+    cgpa: String, fee: String, currency: String, bankBalance: String,
+    bankNameSuggestion: String, loanAmount: String, maritalStatus: String, partnerCommission: String
 });
 const University = mongoose.model('University', UniSchema);
 
-// স্টুডেন্ট ফাইল ট্র্যাকিং স্কিমা
 const FileSchema = new mongoose.Schema({
-    studentName: String,
-    contact: String,
-    university: String,
+    studentName: String, contact: String, university: String,
     status: { type: String, default: 'File Opened' },
     openTime: { type: Date, default: Date.now }
 });
 const FileTrack = mongoose.model('FileTrack', FileSchema);
 
 // --- APIs ---
-app.post('/api/add-uni', async (req, res) => {
-    try {
-        const newUni = new University(req.body);
-        await newUni.save();
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
 
+// ১. ইউনিভার্সিটি সার্চ
 app.get('/api/search-uni', async (req, res) => {
     const { country, degree, language } = req.query;
-    const query = {};
+    let query = {};
     if(country) query.country = new RegExp(`^${country}$`, 'i');
     if(degree) query.degree = degree;
     if(language) query.language = language;
@@ -48,7 +41,7 @@ app.get('/api/search-uni', async (req, res) => {
     res.json(results);
 });
 
-// ফাইল ওপেনিং এপিআই (এটিই আগে মিসিং ছিল)
+// ২. স্টুডেন্ট ফাইল সেভ করা
 app.post('/api/open-file', async (req, res) => {
     try {
         const newFile = new FileTrack(req.body);
@@ -57,10 +50,24 @@ app.post('/api/open-file', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ৩. ইউনিভার্সিটি অ্যাড করা
+app.post('/api/add-uni', async (req, res) => {
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ৪. অ্যাডমিন প্যানেলে ফাইল লিস্ট দেখা
 app.get('/api/admin/files', async (req, res) => {
     const files = await FileTrack.find().sort({ openTime: -1 });
     res.json(files);
 });
+
+// --- ROUTES (লিঙ্ক ঠিক করার জন্য) ---
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 CRM Live on ${PORT}`));

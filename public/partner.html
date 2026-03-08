@@ -1,25 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal</title>
+    <title>Partner Portal | IHP CRM</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f8f9fa; margin: 0; padding-bottom: 70px; }
+        /* আপনার অরিজিনাল ডিজাইন রুলস */
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
         .container { max-width: 500px; margin: auto; padding: 15px; }
+        
+        /* সার্চ কার্ড স্টাইল */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        h3 { margin-top: 0; color: #333; font-size: 18px; }
+        
+        /* ইনপুট ফিল্ডস */
+        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
         .btn-search { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        /* রেজাল্ট কার্ড স্টাইল - আপনার স্ক্রিনশট অনুযায়ী */
+        .result-card { border-left: 5px solid #1a73e8; background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .uni-name { font-weight: bold; color: #1a73e8; font-size: 18px; margin-bottom: 5px; }
+        .info-row { font-size: 13px; color: #444; line-height: 1.6; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         
-        /* আপনার অরিজিনাল সবুজ বাটন */
-        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; display: block; text-align: center; }
-        
-        .result-card { border-left: 5px solid #1a73e8; }
-        .uni-title { font-weight: bold; color: #1a73e8; font-size: 18px; margin-bottom: 5px; }
-        
-        /* Modal Style */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
-        .modal-content { background: white; width: 90%; max-width: 400px; margin: 50px auto; padding: 20px; border-radius: 15px; }
+        /* আপনার সেই প্রিয় সবুজ বাটন */
+        .btn-open { background: #28a745; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; display: block; text-align: center; font-size: 14px; }
+        .btn-open:hover { background: #218838; }
+
+        /* পপ-আপ (Modal) ডিজাইন */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 15px; position: relative; }
+        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 24px; cursor: pointer; color: #666; }
+
+        /* নেভিগেশন বার */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; font-size: 11px; color: #777; cursor: pointer; }
+        .nav-item.active { color: #1a73e8; font-weight: bold; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -27,71 +44,115 @@
 <div class="container">
     <div class="card">
         <h3><i class="fas fa-edit"></i> Smart Assessment</h3>
-        <input type="text" id="c" placeholder="Country">
-        <select id="d"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
-        <select id="l"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-        <button class="btn-search" onclick="search()">SEARCH UNIVERSITY</button>
+        <input type="text" id="targetCountry" placeholder="Country Name (e.g. Canada)">
+        <select id="targetDegree">
+            <option value="">Select Degree</option>
+            <option>UG</option><option>PG</option><option>DIPLOMA</option>
+            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+        </select>
+        <select id="targetLang">
+            <option value="">Select Language Test</option>
+            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+        </select>
+        <button class="btn-search" onclick="runSearch()">SEARCH UNIVERSITY</button>
     </div>
-    <div id="results"></div>
+
+    <div id="resultDisplay"></div>
 </div>
 
-<div id="fileModal" class="modal">
+<div id="fileModal" class="modal" style="display: none;">
     <div class="modal-content">
-        <h3 style="margin-top:0;">📄 Open Student File</h3>
-        <form id="fileForm">
-            <input type="hidden" id="selectedUni">
-            <input type="text" id="sName" placeholder="Student Full Name" required>
-            <input type="text" id="sContact" placeholder="Contact Number" required>
-            <button type="submit" class="btn-search" style="background:#28a745;">SUBMIT FILE</button>
-            <button type="button" onclick="closeModal()" style="background:none; border:none; color:red; width:100%; margin-top:10px; cursor:pointer;">Close</button>
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <h3 style="margin-bottom: 20px;"><i class="fas fa-file-medical"></i> Open Student File</h3>
+        <form id="studentFileForm">
+            <input type="hidden" id="modalUniName">
+            <label style="font-size: 12px; font-weight: bold;">Student Full Name</label>
+            <input type="text" id="stdName" placeholder="Enter name" required>
+            
+            <label style="font-size: 12px; font-weight: bold;">Contact Number</label>
+            <input type="text" id="stdPhone" placeholder="017XXXXXXXX" required>
+            
+            <button type="submit" class="btn-open" style="margin-top: 10px;">SUBMIT FILE TO ADMIN</button>
         </form>
     </div>
 </div>
 
+<div class="bottom-nav">
+    <div class="nav-item active"><i class="fas fa-search"></i>Assessment</div>
+    <div class="nav-item" onclick="alert('Tracking page is coming soon!')"><i class="fas fa-tasks"></i>Tracking</div>
+    <div class="nav-item" onclick="alert('Wallet balance: ৳ 0.00')"><i class="fas fa-wallet"></i>Wallet</div>
+</div>
+
 <script>
-    async function search() {
-        const r = document.getElementById('results');
-        r.innerHTML = "<p style='text-align:center;'>Searching...</p>";
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('c').value}&degree=${document.getElementById('d').value}&language=${document.getElementById('l').value}`);
-        const data = await res.json();
+    // সার্চ ফাংশন
+    async function runSearch() {
+        const area = document.getElementById('resultDisplay');
+        area.innerHTML = "<p style='text-align:center; padding:20px;'>Searching Universities...</p>";
         
-        r.innerHTML = data.map(u => `
-            <div class="card result-card">
-                <div class="uni-title">${u.uniName}</div>
-                <div style="font-size:13px; color:#333; line-height:1.6;">
-                    Fee: ${u.fee} ${u.currency} | Bank BD: ${u.bankNameSuggestion || 'N/A'}<br>
-                    Loan: ${u.loanAmount || 'N/A'} | <b>Commission: ${u.partnerCommission}</b>
+        const c = document.getElementById('targetCountry').value;
+        const d = document.getElementById('targetDegree').value;
+        const l = document.getElementById('targetLang').value;
+
+        try {
+            const response = await fetch(`/api/search-uni?country=${c}&degree=${d}&language=${l}`);
+            const data = await response.json();
+
+            if(data.length === 0) {
+                area.innerHTML = "<div class='card'>No universities found matching your criteria.</div>";
+                return;
+            }
+
+            area.innerHTML = data.map(u => `
+                <div class="result-card">
+                    <div class="uni-name">${u.uniName}</div>
+                    <div style="font-size:12px; color:#666;">${u.course || 'All Courses'} | ${u.intake || 'Multiple Intakes'}</div>
+                    <div class="info-row">
+                        <b>Fee:</b> ${u.fee} ${u.currency} | <b>Bank BD:</b> ${u.bankNameSuggestion || 'N/A'}<br>
+                        <b>Loan:</b> ${u.loanAmount || 'N/A'} | <b style="color:green;">Commission: ${u.partnerCommission || '0'}</b><br>
+                        <b>Marital:</b> ${u.maritalStatus || 'Single/Married'}
+                    </div>
+                    <button class="btn-open" onclick="openPopup('${u.uniName}')">OPEN STUDENT FILE</button>
                 </div>
-                <button class="btn-open" onclick="openModal('${u.uniName}')">OPEN STUDENT FILE</button>
-            </div>
-        `).join('');
+            `).join('');
+        } catch (error) {
+            area.innerHTML = "<div class='card' style='color:red;'>Error connecting to server.</div>";
+        }
     }
 
-    function openModal(uni) {
-        document.getElementById('selectedUni').value = uni;
-        document.getElementById('fileModal').style.display = 'block';
+    // পপ-আপ কন্ট্রোল
+    function openPopup(name) {
+        document.getElementById('modalUniName').value = name;
+        document.getElementById('fileModal').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('fileModal').style.display = 'none'; }
+    function closePopup() {
+        document.getElementById('fileModal').style.display = 'none';
+    }
 
-    document.getElementById('fileForm').onsubmit = async (e) => {
+    // ফাইল সাবমিশন
+    document.getElementById('studentFileForm').onsubmit = async (e) => {
         e.preventDefault();
-        const fileData = {
-            studentName: document.getElementById('sName').value,
-            contact: document.getElementById('sContact').value,
-            university: document.getElementById('selectedUni').value
+        const payload = {
+            studentName: document.getElementById('stdName').value,
+            contact: document.getElementById('stdPhone').value,
+            university: document.getElementById('modalUniName').value
         };
+
         const res = await fetch('/api/open-file', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(fileData)
+            body: JSON.stringify(payload)
         });
+
         if(res.ok) {
-            alert("✅ File Submitted successfully!");
-            closeModal();
+            alert("✅ Success! File opened and sent to Admin Tracking.");
+            closePopup();
             e.target.reset();
+        } else {
+            alert("❌ Failed to submit. Please try again.");
         }
     };
 </script>
+
 </body>
 </html>
