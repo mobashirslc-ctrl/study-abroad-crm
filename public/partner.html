@@ -2,112 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal</title>
+    <title>Partner Dashboard</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 70px; }
-        .container { max-width: 500px; margin: auto; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-blue { background: #1a73e8; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .welcome-bar { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; color: #1a73e8; font-weight: bold; }
-        .track-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #28a745; position: relative; }
-        .status-badge { position: absolute; top: 15px; right: 15px; background: orange; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; left: 50%; transform: translateX(-50%); background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; color: #777; font-size: 11px; cursor: pointer; }
-        .nav-item.active { color: #1a73e8; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; padding-bottom: 60px; }
+        .card { background: white; margin: 15px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-search { background: #1a73e8; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; }
+        .nav-item { flex: 1; text-align: center; padding: 10px; font-size: 12px; color: #666; cursor: pointer; }
+        .active { color: #1a73e8; }
+        .result-card { border-left: 5px solid #1a73e8; margin-top: 10px; padding: 10px; background: #f9f9f9; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="welcome-bar"><i class="fas fa-user-circle"></i> <span id="pName">Welcome, Partner</span></div>
-
-    <div class="card" id="sub-card">
-        <h4 style="margin:0; color:#333;">Subscription Details</h4>
-        <div style="font-size:12px; color:#666; margin-top:5px;">
-            Package: <b id="pPkg">Pro</b> | Expire: <b id="pExp">2026-12-31</b>
+<div id="assessment" class="page">
+    <div class="card">
+        <h3>🔍 Smart Assessment</h3>
+        <input type="text" id="country" placeholder="Enter Country">
+        <select id="degree">
+            <option>Select Degree</option>
+            <option>UG</option><option>PG</option><option>DIPLOMA</option>
+            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+        </select>
+        <select id="lang">
+            <option>Select Language</option>
+            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+        </select>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="langScore" placeholder="Lang Score">
+            <input type="text" id="acadScore" placeholder="Academic CGPA">
         </div>
+        <button class="btn-search" onclick="searchUni()">SEARCH UNIVERSITY</button>
     </div>
+    <div id="uniResults"></div>
+</div>
 
-    <div id="assessment-page" class="page">
-        <div class="card">
-            <h3>🔍 Smart Assessment</h3>
-            <input type="text" id="sCountry" placeholder="Enter Country">
-            <select id="sDegree">
-                <option value="">Select Degree</option>
-                <option>UG</option><option>PG</option><option>DIPLOMA</option>
-                <option>FOUNDATION</option><option>RESEARCH</option>
-            </select>
-            <select id="sLang">
-                <option value="">Select Language Test</option>
-                <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-            </select>
-            <input type="text" id="sScore" placeholder="Language Score (e.g. 6.5)">
-            <button class="btn-blue" onclick="runSearch()">SEARCH UNIVERSITY</button>
-        </div>
-        <div id="results"></div>
-    </div>
-
-    <div id="tracking-page" class="page" style="display:none;">
-        <h3>📁 My Tracking Files</h3>
-        <div id="trackList"></div>
+<div id="withdraw" class="page" style="display:none;">
+    <div class="card">
+        <h3>💰 Wallet & Subscription</h3>
+        <p>Total Balance: <b>$500.00</b></p>
+        <select id="method">
+            <option>Bkash</option><option>Nagad</option><option>Bank Account</option>
+        </select>
+        <input type="number" id="amount" placeholder="Enter Amount">
+        <button class="btn-search" style="background:#28a745;">SEND WITHDRAW REQUEST</button>
     </div>
 </div>
 
-<div class="bottom-nav">
-    <div class="nav-item active" onclick="showP('assessment-page', this)"><i class="fas fa-search"></i><br>Search</div>
-    <div class="nav-item" onclick="showP('tracking-page', this); loadMyTracking()"><i class="fas fa-tasks"></i><br>Tracking</div>
+<div id="tracking" class="page" style="display:none;">
+    <div class="card">
+        <h3>📁 File Tracking</h3>
+        <div id="fileList"></div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showPage('assessment', this)"><i class="fas fa-search"></i><br>Search</div>
+    <div class="nav-item" onclick="showPage('tracking', this); loadFiles()"><i class="fas fa-file-alt"></i><br>Tracking</div>
+    <div class="nav-item" onclick="showPage('withdraw', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
 </div>
 
 <script>
-    function showP(id, el) {
+    function showPage(id, el) {
         document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
         document.getElementById(id).style.display = 'block';
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
     }
 
-    async function runSearch() {
-        const res = await fetch(`/api/search-uni?country=${document.getElementById('sCountry').value}`);
+    async function searchUni() {
+        const res = await fetch(`/api/search-uni?country=${document.getElementById('country').value}&degree=${document.getElementById('degree').value}`);
         const data = await res.json();
-        document.getElementById('results').innerHTML = data.map(u => `
-            <div class="card">
-                <b>${u.uniName}</b><br><small>Fee: ${u.fee} | Comm: ${u.partnerCommission}</small>
-                <button class="btn-blue" style="margin-top:10px; background:#28a745;" onclick="submitFile('${u.uniName}')">OPEN STUDENT FILE</button>
+        document.getElementById('uniResults').innerHTML = data.map(u => `
+            <div class="card result-card">
+                <b>${u.uniName}</b> (${u.location})<br>
+                <small>Intake: ${u.intake} | Fee: ${u.fee} ${u.currency}</small><br>
+                <small>Bank Req: ${u.bankReq} | Comm: ${u.partnerCommission}</small>
+                <button onclick="openFilePrompt('${u.uniName}')" style="margin-top:10px; background:#28a745; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">OPEN STUDENT FILE</button>
             </div>
         `).join('');
     }
 
-    async function submitFile(uni) {
-        const name = prompt("Enter Student Name:");
-        if(!name) return;
-        const payload = {
-            studentName: name, university: uni,
-            degree: document.getElementById('sDegree').value,
-            language: document.getElementById('sLang').value,
-            langScore: document.getElementById('sScore').value,
-            complianceInfo: { name: "IHP Admin", id: "IHP-001" }
-        };
+    async function openFilePrompt(uni) {
+        const name = prompt("Student Name:");
+        const contact = prompt("Contact No:");
+        const pdf = prompt("Paste PDF Link (Google Drive/Dropbox):");
+        if(!name || !pdf) return;
+
         await fetch('/api/open-file', {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ 
+                studentName: name, contact: contact, university: uni, pdfUrl: pdf,
+                complianceMember: { name: "IHP Admin", id: "IHP-01" } 
+            })
         });
-        alert("File Submitted Successfully!");
+        alert("File Submitted with PDF!");
     }
 
-    async function loadMyTracking() {
-        const res = await fetch('/api/admin/files');
+    async function loadFiles() {
+        const res = await fetch('/api/files');
         const data = await res.json();
-        document.getElementById('trackList').innerHTML = data.map(f => `
-            <div class="track-card">
-                <span class="status-badge">${f.status}</span>
-                <b>${f.studentName}</b><br>
-                <small>${f.university} | ${f.language}: ${f.langScore}</small><br>
-                <a href="${f.pdfUrl}" target="_blank">
-                    <button style="margin-top:10px; cursor:pointer;">Download PDF</button>
-                </a>
+        document.getElementById('fileList').innerHTML = data.map(f => `
+            <div style="border-bottom:1px solid #eee; padding:10px 0;">
+                <b>${f.studentName}</b> - ${f.university}<br>
+                <small>Status: ${f.status} | Date: ${new Date(f.openTime).toLocaleString()}</small><br>
+                <small>Compliance: ${f.complianceMember.name}</small><br>
+                <a href="${f.pdfUrl}" target="_blank" style="color:blue;">View/Download PDF</a>
             </div>
         `).join('');
     }

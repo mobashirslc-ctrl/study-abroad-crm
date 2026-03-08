@@ -1,73 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>IHP Admin Dashboard</title>
+    <title>IHP Admin</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; display: flex; margin: 0; background: #f4f7f6; }
-        .sidebar { width: 250px; background: #1a237e; color: white; height: 100vh; position: fixed; padding: 20px; }
-        .main { margin-left: 270px; padding: 20px; width: 100%; }
-        .nav-btn { display: block; width: 100%; padding: 12px; background: none; border: none; color: white; text-align: left; cursor: pointer; border-radius: 5px; margin-bottom: 5px; }
-        .nav-btn:hover, .active { background: #3949ab; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        body { display: flex; font-family: sans-serif; margin: 0; }
+        .sidebar { width: 250px; background: #001529; color: white; height: 100vh; padding: 20px; }
+        .content { flex: 1; padding: 30px; background: #f0f2f5; }
+        .nav-link { display: block; padding: 12px; color: #a6adb4; text-decoration: none; cursor: pointer; }
+        .nav-link:hover { color: white; background: #1890ff; border-radius: 4px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th, td { padding: 12px; border: 1px solid #eee; text-align: left; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>IHP ADMIN</h2>
-    <button class="nav-btn active" onclick="showTab('tracking')"><i class="fas fa-file-invoice"></i> Student Tracking</button>
-    <button class="nav-btn" onclick="showTab('compliance')"><i class="fas fa-user-shield"></i> Compliance Control</button>
+    <h3>IHP ADMIN</h3>
+    <div class="nav-link" onclick="showTab('uniTab')">Add University</div>
+    <div class="nav-link" onclick="showTab('partnerTab')">Partner List</div>
+    <div class="nav-link" onclick="showTab('complianceTab')">Compliance Control</div>
 </div>
 
-<div class="main">
-    <div id="tracking" class="tab">
+<div class="content">
+    <div id="uniTab" class="tab">
         <div class="card">
-            <h3>📁 Student File Tracking (Admin View)</h3>
-            <table>
-                <thead>
-                    <tr><th>Student</th><th>University</th><th>Score</th><th>Status</th><th>Download</th></tr>
-                </thead>
-                <tbody id="adminTrackTable"></tbody>
-            </table>
+            <h3>🏫 Add New University</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <input type="text" id="uName" placeholder="University Name">
+                <input type="text" id="uCountry" placeholder="Country">
+                <select id="uDegree">
+                    <option>UG</option><option>PG</option><option>DIPLOMA</option>
+                    <option>RESEARCH</option><option>PHD</option>
+                </select>
+                <input type="text" id="uFee" placeholder="Semester Fee">
+                <input type="text" id="uComm" placeholder="Partner Commission">
+            </div>
+            <button onclick="saveUni()" style="margin-top:15px; background:blue; color:white; padding:10px 20px; border:none; cursor:pointer;">ADD UNIVERSITY</button>
         </div>
     </div>
 
-    <div id="compliance" class="tab" style="display:none;">
+    <div id="partnerTab" class="tab" style="display:none;">
         <div class="card">
-            <h3>🛡️ Compliance Member Control</h3>
-            <p>Active Members: 12 | Pending Tasks: 5</p>
-            <button style="background: green; color:white; border:none; padding:10px; border-radius:5px;">Add New Member</button>
+            <h3>🤝 Partner Management</h3>
+            <table>
+                <tr><th>Partner Name</th><th>Organization</th><th>Status</th><th>Action</th></tr>
+                <tr><td>Nadim</td><td>Global Edu</td><td>Pending</td><td><button>Activate</button></td></tr>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
     function showTab(id) {
-        document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-        document.getElementById(id).style.display = 'block';
+        document.querySelectorAll('.tab').forEach(t => t.style.display='none');
+        document.getElementById(id).style.display='block';
     }
 
-    async function loadTracking() {
-        const res = await fetch('/api/admin/files');
-        const data = await res.json();
-        document.getElementById('adminTrackTable').innerHTML = data.map(f => `
-            <tr>
-                <td>${f.studentName}</td>
-                <td>${f.university}</td>
-                <td>${f.language}: ${f.langScore}</td>
-                <td><b style="color:orange">${f.status}</b></td>
-                <td>
-                    <a href="${f.pdfUrl}" target="_blank" style="background:#28a745; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">
-                        <i class="fas fa-download"></i> PDF
-                    </a>
-                </td>
-            </tr>
-        `).join('');
+    async function saveUni() {
+        const body = {
+            uniName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            degree: document.getElementById('uDegree').value,
+            fee: document.getElementById('uFee').value,
+            partnerCommission: document.getElementById('uComm').value
+        };
+        await fetch('/api/admin/add-uni', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        alert("University Added Successfully!");
     }
-    loadTracking();
 </script>
 </body>
 </html>
