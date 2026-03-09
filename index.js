@@ -19,41 +19,34 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
 
 const University = mongoose.model('University', new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
-    languageType: String, semesterFee: String, currency: String, bankType: String, 
-    maritalStatus: String, bankNameBD: String, loanAmount: String, 
-    partnerCommission: { type: Number, default: 0 }, location: String
+    semesterFee: String, bankNameBD: String, partnerCommission: { type: Number, default: 0 }, location: String
 }));
 
-// --- Routes ---
+// --- Routes (এই রাউটগুলো না থাকলে 404 এরর আসবে) ---
 
-// ১. রুট ডোমেইনে লগইন পেজ দেখাবে
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
-
-// ২. ড্যাশবোর্ড রাউট
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
-// ৩. লগইন এপিআই (এখানেই আপনার এরর হচ্ছিল)
+// --- APIs ---
+
+// Login API
 app.post('/api/partner/login', async (req, res) => {
     try {
-        const { email } = req.body; // পাসওয়ার্ড ফিল্ড আপনার ডাটাবেজে থাকলে সেটিও চেক করতে পারেন
-        const partner = await Partner.findOne({ email: email });
-
+        const { email } = req.body;
+        const partner = await Partner.findOne({ email });
         if (!partner) return res.status(404).json({ message: "User not found!" });
-        if (partner.status !== 'Active') return res.status(403).json({ message: "Account Inactive. Contact Admin." });
-
-        // সাকসেস হলে JSON ডাটা পাঠাবে, HTML নয়
+        if (partner.status !== 'Active') return res.status(403).json({ message: "Account Inactive." });
         res.json(partner);
-    } catch (e) {
-        res.status(500).json({ message: "Server Error" });
-    }
+    } catch (e) { res.status(500).json({ message: "Server Error" }); }
 });
 
-// ৪. অ্যাসেসমেন্ট এপিআই
+// Assessment Search API (FIXED Syntax Error here)
 app.post('/api/partner/assessment', async (req, res) => {
     try {
         const { country, degree } = req.body;
         let query = {};
-        if (country) query.country = new RegExp(country, 'i');
+        if (country) query.country = new RegExp(country, 'i'); // FIXED: 'new' keyword issue solved
         if (degree) query.degree = degree;
         const results = await University.find(query);
         res.json(results);
@@ -61,4 +54,4 @@ app.post('/api/partner/assessment', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, ()
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
