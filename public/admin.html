@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin | IHP CRM</title>
+    <meta charset="UTF-8"><title>Admin Panel | Core Locked</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>.section { display: none; } .active { display: block; }</style>
 </head>
 <body class="bg-gray-100 flex">
-    <div class="w-64 bg-slate-900 min-h-screen text-white p-6 sticky top-0">
-        <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">IHP ADMIN</h1>
+    <div class="w-64 bg-slate-900 h-screen text-white p-6 sticky top-0 shadow-xl">
+        <h1 class="text-xl font-bold mb-10 text-blue-400">IHP ADMIN</h1>
         <nav class="space-y-4">
             <button onclick="showSection('uniSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">University Management</button>
             <button onclick="showSection('partnerSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">Partner Management</button>
@@ -16,42 +16,32 @@
         </nav>
     </div>
 
-    <div class="flex-1 p-8">
-        <div id="uniSection" class="section active bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
-            <h2 class="text-xl font-bold mb-6">ADD UNIVERSITY (20+ FIELDS)</h2>
+    <div class="flex-1 p-10">
+        <div id="uniSection" class="section active bg-white p-8 rounded shadow-lg border-t-4 border-blue-600">
+            <h2 class="font-bold mb-6">ADD UNIVERSITY (20+ REQUIRED FIELDS)</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="uniForm">
                 <input type="text" id="country" placeholder="Country" class="p-2 border rounded">
                 <input type="text" id="uniName" placeholder="University Name" class="p-2 border rounded">
                 <input type="text" id="courseName" placeholder="Course Name" class="p-2 border rounded">
-                <input type="text" id="intake" placeholder="Intake" class="p-2 border rounded">
-                <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option><option>PhD</option></select>
-                <select id="languageType" class="p-2 border rounded"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                <input type="text" id="academicScore" placeholder="Min Academic GPA" class="p-2 border rounded">
-                <input type="text" id="languageScore" placeholder="Min Language Score" class="p-2 border rounded">
-                <input type="text" id="studyGap" placeholder="Accepted Study Gap" class="p-2 border rounded">
-                <input type="text" id="semesterFee" placeholder="Semester Fee" class="p-2 border rounded">
-                <input type="text" id="currency" placeholder="Currency" class="p-2 border rounded">
-                <input type="text" id="bankType" placeholder="Bank Requirements" class="p-2 border rounded">
-                <input type="text" id="maritalStatus" placeholder="Marital Status" class="p-2 border rounded">
-                <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="p-2 border rounded">
-                <input type="text" id="loanAmount" placeholder="Loan Amount" class="p-2 border rounded">
-                <input type="number" id="partnerCommission" placeholder="Partner Commission ($)" class="p-2 border rounded font-bold border-blue-400">
+                <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option></select>
+                <input type="number" id="partnerCommission" placeholder="Commission ($)" class="p-2 border rounded border-blue-400 font-bold">
                 </div>
-            <button onclick="saveUni()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded font-bold shadow-lg">SAVE UNIVERSITY</button>
+            <button onclick="saveUni()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded font-bold">SAVE DATA</button>
         </div>
-
+        
+        <div id="partnerSection" class="section">
+            <h2 class="font-bold mb-6">PARTNER MANAGEMENT</h2>
+            <p>Name, Contact, Status (Active/Inactive), Expiry, Update</p>
         </div>
+    </div>
 
     <script>
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+        function showSection(id) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         async function saveUni() {
             const data = {};
             document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => data[el.id] = el.value);
             const res = await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) alert("✅ University Added Successfully!");
+            if(res.ok) alert("✅ University Saved!");
         }
     </script>
 </body>
