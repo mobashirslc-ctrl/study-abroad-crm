@@ -1,33 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin | IHP CRM</title>
+    <meta charset="UTF-8"><title>Admin Portal | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow-lg">
-        <h2 class="text-xl font-bold mb-4 border-b pb-2 uppercase">Add New University</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="uniForm">
+<body class="bg-gray-100 p-8">
+    <div class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
+        <h2 class="text-2xl font-bold mb-6 text-blue-800 uppercase tracking-tight">University Management</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="uniForm">
             <input type="text" id="country" placeholder="Country" class="p-2 border rounded">
             <input type="text" id="uniName" placeholder="University Name" class="p-2 border rounded">
             <input type="text" id="courseName" placeholder="Course Name" class="p-2 border rounded">
             <input type="text" id="intake" placeholder="Intake" class="p-2 border rounded">
-            <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option></select>
-            <select id="languageType" class="p-2 border rounded"><option>IELTS</option><option>PTE</option></select>
-            <input type="number" id="partnerCommission" placeholder="Commission ($)" class="p-2 border rounded text-blue-600 font-bold">
+            <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option></select>
+            <select id="languageType" class="p-2 border rounded"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+            <input type="number" id="partnerCommission" placeholder="Partner Commission ($)" class="p-2 border rounded border-blue-400 font-bold text-blue-600">
             <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="p-2 border rounded">
             <input type="text" id="semesterFee" placeholder="Semester Fee" class="p-2 border rounded">
-            </div>
-        <button onclick="saveUniversity()" class="mt-6 bg-blue-600 text-white px-6 py-2 rounded font-bold">SAVE DATA</button>
+            <input type="text" id="loanAmount" placeholder="Loan Amount" class="p-2 border rounded">
+            <input type="text" id="maritalStatus" placeholder="Marital Status" class="p-2 border rounded">
+        </div>
+        <button onclick="saveUniversity()" class="mt-8 bg-blue-600 text-white px-10 py-3 rounded font-bold hover:bg-blue-700 shadow-lg">SAVE UNIVERSITY</button>
     </div>
 
     <script>
         async function saveUniversity() {
             const data = {};
             document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => data[el.id] = el.value);
-            const res = await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const res = await fetch('/api/admin/add-university', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
             const result = await res.json();
-            if(result.success) { alert("✅ " + result.message); location.reload(); }
+            if(result.success) {
+                alert("✅ " + result.message); // কনফার্মেশন নোটিফিকেশন
+                location.reload(); 
+            }
         }
     </script>
 </body>

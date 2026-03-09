@@ -9,7 +9,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: System Secured")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: System Online")).catch(err => console.log(err));
 
 // --- Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
@@ -42,7 +42,10 @@ app.patch('/api/admin/update-status', async (req, res) => {
         const { fileId, status } = req.body;
         const file = await StudentFile.findById(fileId);
         const partner = await Partner.findById(file.partnerId);
+        
+        // রিজেক্ট হলে ওয়ালেট থেকে টাকা অটো কেটে যাবে
         if (status === 'Rejected') { partner.walletBalance -= file.commissionAmount; }
+        
         file.visaStatus = status;
         await partner.save(); await file.save();
         res.status(200).json({ success: true });
@@ -55,8 +58,11 @@ app.post('/api/partner/apply', async (req, res) => {
         const { partnerId, uniId, studentName } = req.body;
         const uni = await University.findById(uniId);
         const partner = await Partner.findById(partnerId);
+        
+        // ফাইল ওপেন করলেই কমিশন অটো অ্যাড হবে
         partner.walletBalance += Number(uni.partnerCommission);
         await partner.save();
+
         const newFile = new StudentFile({ partnerId, studentName, university: uni.uniName, commissionAmount: Number(uni.partnerCommission) });
         await newFile.save();
         res.status(200).json({ success: true, message: "File Opened & Commission Added!" });
@@ -75,8 +81,7 @@ app.get('/api/partner-data/:id', async (req, res) => {
     res.json({ walletBalance: partner.walletBalance, files });
 });
 
-// --- Route Fixes ---
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
+// --- Routes ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
