@@ -1,41 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner Portal | IHP CRM</title>
+    <meta charset="UTF-8"><title>Partner Dashboard | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .section { display: none; } 
+        .active { display: block; }
+        .input-box { border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; }
+        .card-hover:hover { transform: translateY(-3px); transition: 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
 </head>
-<body class="bg-[#0f172a] flex items-center justify-center h-screen">
+<body class="bg-slate-100 min-h-screen">
 
-    <div id="authBox" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tighter">IHP CRM</h1>
-            <p class="text-gray-500 text-sm font-semibold uppercase mt-1">Partner Portal Access</p>
-        </div>
-        
-        <div id="loginForm">
-            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Registered Email</label>
-            <input type="email" id="loginEmail" placeholder="partner@example.com" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-6 outline-none focus:border-blue-500 transition">
-            <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition duration-300">LOGIN TO DASHBOARD</button>
-            <div class="mt-6 text-center">
-                <p class="text-gray-500 text-sm">Don't have an account? <a href="#" onclick="toggleAuth()" class="text-blue-600 font-bold hover:underline">Apply for Partnership</a></p>
+    <div id="authContainer" class="flex items-center justify-center h-screen bg-[#0f172a]">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-extrabold text-blue-600 tracking-tighter">IHP CRM</h1>
+                <p class="text-gray-500 text-sm font-semibold uppercase mt-1">Partner Access</p>
+            </div>
+            
+            <div id="loginForm">
+                <input type="email" id="loginEmail" placeholder="partner@example.com" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
+                <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg">LOGIN NOW</button>
+                <p class="mt-6 text-center text-sm">New Partner? <a href="#" onclick="toggleAuth()" class="text-blue-600 font-bold">Register Here</a></p>
+            </div>
+
+            <div id="regForm" class="hidden">
+                <div class="space-y-3">
+                    <input type="text" id="regName" placeholder="Full Name" class="w-full border p-3 rounded-xl">
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full border p-3 rounded-xl">
+                    <input type="text" id="regOrg" placeholder="Organization" class="w-full border p-3 rounded-xl">
+                    <input type="text" id="regContact" placeholder="Contact" class="w-full border p-3 rounded-xl">
+                </div>
+                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold mt-6">SUBMIT REQUEST</button>
+                <p class="mt-4 text-center"><a href="#" onclick="toggleAuth()" class="text-gray-400 text-sm">Back to Login</a></p>
             </div>
         </div>
+    </div>
 
-        <div id="regForm" class="hidden">
-            <div class="space-y-4">
-                <input type="text" id="regName" placeholder="Full Name" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
-                <input type="email" id="regEmail" placeholder="Email Address" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
-                <input type="text" id="regOrg" placeholder="Organization/Agency Name" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
-                <input type="text" id="regContact" placeholder="Contact Number" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
+    <div id="mainDashboard" class="hidden flex">
+        <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl">
+            <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">PARTNER PANEL</h1>
+            <nav class="space-y-2">
+                <button onclick="showSection('assessSec')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">🔍 Assessment Tool</button>
+                <button onclick="showSection('trackSec')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">📂 File Tracking</button>
+                <button onclick="location.reload()" class="w-full text-left py-3 px-4 text-red-400 mt-20">Logout</button>
+            </nav>
+        </div>
+
+        <div class="flex-1 p-10">
+            <div id="assessSec" class="section active bg-white p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-lg font-bold mb-6 uppercase text-slate-700 border-b pb-3">Smart Assessment Tool</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+                    <input type="text" id="sCountry" placeholder="Country" class="input-box">
+                    <select id="sDegree" class="input-box">
+                        <option value="">Select Degree</option>
+                        <option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option>
+                    </select>
+                    <input type="text" id="sLang" placeholder="Min. Lang Score" class="input-box">
+                    <button onclick="searchUni()" class="bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">SEARCH</button>
+                </div>
+                
+                <div id="uniResults" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>
             </div>
-            <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold mt-6 hover:bg-green-700 shadow-lg shadow-green-100 transition duration-300">SUBMIT REGISTRATION</button>
-            <div class="mt-6 text-center">
-                <a href="#" onclick="toggleAuth()" class="text-gray-400 text-sm font-bold hover:text-gray-600">Already registered? Back to Login</a>
+
+            <div id="trackSec" class="section bg-white p-8 rounded-2xl shadow-sm border">
+                <h2 class="text-lg font-bold mb-6 uppercase text-slate-700">File Tracking</h2>
+                <p class="text-gray-400">Student files will be listed here in the next step.</p>
             </div>
         </div>
     </div>
 
     <script>
+        // AUTH LOGIC
         function toggleAuth() {
             document.getElementById('loginForm').classList.toggle('hidden');
             document.getElementById('regForm').classList.toggle('hidden');
@@ -48,12 +86,7 @@
                 orgName: document.getElementById('regOrg').value,
                 contact: document.getElementById('regContact').value
             };
-            
-            if(!data.email || !data.name) return alert("Please fill required fields.");
-
-            const res = await fetch('/api/partner/register', {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
-            });
+            const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
             const result = await res.json();
             alert(result.message);
             if(result.success) toggleAuth();
@@ -61,21 +94,52 @@
 
         async function checkLogin() {
             const email = document.getElementById('loginEmail').value;
-            if(!email) return alert("Please enter email");
-
-            const res = await fetch('/api/partner/login-check', {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email })
-            });
+            const res = await fetch('/api/partner/login-check', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) });
             const result = await res.json();
             
             if(result.approved) {
-                alert(`Welcome back, ${result.name}! Redirecting...`);
-                // এখানে পরবর্তী ধাপে ড্যাশবোর্ড লোড হবে
+                // SUCCESS: Hide Login, Show Dashboard
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
                 localStorage.setItem('partnerId', result.partnerId);
-                // window.location.href = "/partner-dashboard"; // আমরা এখনো ড্যাশবোর্ড পেজ বানাইনি
             } else {
                 alert(result.msg);
             }
+        }
+
+        // DASHBOARD LOGIC
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function searchUni() {
+            const country = document.getElementById('sCountry').value;
+            const degree = document.getElementById('sDegree').value;
+            
+            const res = await fetch('/api/partner/assessment', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ country, degree })
+            });
+            const unis = await res.json();
+            
+            const div = document.getElementById('uniResults');
+            div.innerHTML = unis.map(u => `
+                <div class="p-6 bg-slate-50 border rounded-xl card-hover">
+                    <div class="flex justify-between items-start mb-4">
+                        <h4 class="font-bold text-blue-800 text-lg uppercase">${u.uniName}</h4>
+                        <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-1 rounded font-bold uppercase">${u.degree}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-y-2 text-[11px] text-gray-600 mb-4">
+                        <p><b>Location:</b> ${u.location}, ${u.country}</p>
+                        <p><b>Fee:</b> ${u.semesterFee} ${u.currency}</p>
+                        <p><b>Commission:</b> <span class="text-green-600 font-bold">$${u.partnerCommission}</span></p>
+                        <p><b>Intake:</b> ${u.intake}</p>
+                    </div>
+                    <button class="w-full bg-white border border-blue-600 text-blue-600 py-2 rounded font-bold text-xs hover:bg-blue-600 hover:text-white transition">OPEN STUDENT FILE</button>
+                </div>
+            `).join('');
         }
     </script>
 </body>
