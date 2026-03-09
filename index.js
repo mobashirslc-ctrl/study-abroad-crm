@@ -6,70 +6,49 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// 1. DATABASE CONNECTION FIX
-// Render ENV থেকে MONGODB_URI ব্যবহার করা হয়েছে
-const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/ihp_crm?retryWrites=true&w=majority";
+// DB Connection with Error Handling
+const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Database Connected")).catch(err => console.log("DB Error:", err.message));
 
-mongoose.connect(DB_URI)
-.then(() => {
-    console.log("IHP CRM: Data is Live & Database Connected Successfully");
-    seedDummyData(); // ডাটাবেস কানেক্ট হলে Dummy ডাটা ইনজেক্ট করবে
-})
-.catch(err => {
-    console.log("IHP CRM: DB Connection Failed! Error details ->", err.message);
-});
+// --- Schemas ---
+const University = mongoose.model('University', new mongoose.Schema({
+    country: String, uniName: String, courseName: String, intake: String, degree: String, 
+    languageType: String, academicScore: String, languageScore: String, studyGap: String, 
+    semesterFee: String, currency: String, bankType: String, maritalStatus: String, 
+    bankNameBD: String, loanAmount: String, partnerCommission: String
+}));
 
-// 2. SCHEMAS (LOCKED - 100% REQUIRED FIELDS)
-const universitySchema = new mongoose.Schema({
-    country: String, uniName: String, courseName: String, intake: String,
-    degree: String, languageType: String, academicScore: String, languageScore: String,
-    studyGap: String, semesterFee: String, currency: String, bankType: String,
-    maritalStatus: String, bankNameBD: String, loanAmount: String, partnerCommission: String
-});
-const University = mongoose.model('University', universitySchema);
+const Partner = mongoose.model('Partner', new mongoose.Schema({
+    name: String, contactNo: String, status: { type: String, default: 'Active' }, expiryDate: String
+}));
 
-const partnerSchema = new mongoose.Schema({
-    name: String, email: String, status: { type: String, default: 'Active' }, expiryDate: Date
-});
-const Partner = mongoose.model('Partner', partnerSchema);
+const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
+    name: String, contact: String, status: { type: String, default: 'Pending' }, fileUrl: String
+}));
 
-// 3. API ENDPOINTS (SYNCHRONIZED WITH HTML)
+const Withdrawal = mongoose.model('Withdrawal', new mongoose.Schema({
+    partnerName: String, contact: String, status: { type: String, default: 'Due' }
+}));
+
+const Compliance = mongoose.model('Compliance', new mongoose.Schema({
+    name: String, orgName: String, contactNo: String, status: { type: String, default: 'Active' }
+}));
+
+// --- APIs ---
 app.post('/api/add-university', async (req, res) => {
-    try {
-        const newUni = new University(req.body);
-        await newUni.save();
-        res.status(200).send("Success");
-    } catch (err) { res.status(500).send("Error Saving Data"); }
+    try { await new University(req.body).save(); res.status(200).send("Success"); } 
+    catch (err) { res.status(500).send("Error"); }
 });
 
-app.get('/api/get-universities', async (req, res) => { res.json(await University.find()); });
-app.get('/api/partners', async (req, res) => { res.json(await Partner.find()); });
+app.get('/api/admin-data', async (req, res) => {
+    const partners = await Partner.find();
+    const students = await StudentFile.find();
+    const withdrawals = await Withdrawal.find();
+    const compliances = await Compliance.find();
+    res.json({ partners, students, withdrawals, compliances });
+});
 
-// Serve Admin Panel
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`System Locked on Port ${PORT}`));
-
-// --- Dummy Data Seeder Logic ---
-async function seedDummyData() {
-    // University Dummy Data
-    const uniCount = await University.countDocuments();
-    if (uniCount === 0) {
-        await University.create([
-            { country: "Australia", uniName: "Monash University", degree: "UG", semesterFee: "35000", currency: "AUD DOLLAR" },
-            { country: "Canada", uniName: "University of Toronto", degree: "PG", semesterFee: "28000", currency: "DOLLAR" }
-        ]);
-        console.log("University Dummy Data Added.");
-    }
-
-    // Partner Dummy Data
-    const partnerCount = await Partner.countDocuments();
-    if (partnerCount === 0) {
-        await Partner.create([
-            { name: "Global Ed Consultants", email: "info@globaled.com", status: "Active" },
-            { name: "Nexus Abroad", email: "contact@nexusabroad.com", status: "Active" }
-        ]);
-        console.log("Partner Dummy Data Added.");
-    }
-}
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("Server running on port " + PORT));
