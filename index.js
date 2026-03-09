@@ -8,9 +8,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: All Parts Locked")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Partner Core Locked")).catch(err => console.log(err));
 
-// --- Schemas ---
+// --- Schemas (Updated with Wallet & Files) ---
 const University = mongoose.model('University', new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
     languageType: String, academicScore: String, languageScore: String, studyGap: String, 
@@ -21,33 +21,62 @@ const University = mongoose.model('University', new mongoose.Schema({
 
 const Partner = mongoose.model('Partner', new mongoose.Schema({
     name: String, contact: String, orgName: String, email: { type: String, unique: true }, 
-    status: { type: String, default: 'Inactive' }, expiryDate: Date,
-    walletBalance: { type: Number, default: 0 }, 
-    paymentStatus: { type: String, default: 'Due' },
-    subscriptionStatus: { type: String, default: 'Inactive' }
+    status: { type: String, default: 'Inactive' }, // Registration Approval System
+    walletBalance: { type: Number, default: 0 }
 }));
 
-// --- Combined Admin APIs ---
-app.post('/api/admin/add-university', async (req, res) => {
-    try { await new University(req.body).save(); res.status(200).json({ success: true }); }
-    catch (e) { res.status(500).json({ success: false }); }
+const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
+    partnerId: mongoose.Schema.Types.ObjectId,
+    studentName: String,
+    studentContact: String,
+    universityName: String,
+    commissionAmount: Number,
+    status: { type: String, default: 'File Opening' },
+    createdAt: { type: Date, default: Date.now }
+}));
+
+// --- Partner APIs ---
+
+// Part 1: Registration Approval Check (Simulated for now)
+app.post('/api/partner/login', async (req, res) => {
+    const partner = await Partner.findOne({ email: req.body.email });
+    if (!partner) return res.status(404).send("User not found");
+    if (partner.status !== 'Active') return res.status(403).send("Waiting for Admin Approval");
+    res.json(partner);
 });
 
-app.get('/api/admin/partners', async (req, res) => {
-    try { const partners = await Partner.find(); res.json(partners); }
-    catch (e) { res.status(500).send("Error fetching"); }
+// Part 2: Assessment Search
+app.post('/api/partner/assessment', async (req, res) => {
+    const { country, degree, languageType } = req.body;
+    let query = {};
+    if (country) query.country = new RegExp(country, 'i');
+    if (degree) query.degree = degree;
+    if (languageType) query.languageType = languageType;
+    
+    const results = await University.find(query);
+    res.json(results);
 });
 
-app.patch('/api/admin/update-partner/:id', async (req, res) => {
+// Part 2 & 3: File Opening & Auto-Wallet Update
+app.post('/api/partner/open-file', async (req, res) => {
     try {
-        await Partner.findByIdAndUpdate(req.params.id, req.body);
-        res.json({ success: true });
-    } catch (e) { res.status(500).send("Update failed"); }
+        const { partnerId, studentName, studentContact, uniName, commission } = req.body;
+        
+        // 1. Create Student File
+        const newFile = new StudentFile({ partnerId, studentName, studentContact, universityName: uniName, commissionAmount: commission });
+        await newFile.save();
+
+        // 2. Auto Update Partner Wallet
+        await Partner.findByIdAndUpdate(partnerId, { $inc: { walletBalance: commission } });
+
+        res.json({ success: true, message: "File Opened & Commission Added!" });
+    } catch (e) { res.status(500).send("Error"); }
 });
 
-// Routes
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
+// Part 3: Fetch Tracking Data
+app.get('/api/partner/my-files/:id', async (req, res) => {
+    const files = await StudentFile.find({ partnerId: req.params.id }).sort({ createdAt: -1 });
+    res.json(files);
+});
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("CRM Core Running..."));
+app.listen(10000, () => console.log("Partner System Live"));
