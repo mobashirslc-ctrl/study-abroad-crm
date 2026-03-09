@@ -1,80 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner Dashboard</title>
+    <meta charset="UTF-8"><title>Partner Portal | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.section { display: none; } .active { display: block; }</style>
 </head>
-<body class="bg-gray-100 flex">
-    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0">
-        <h1 class="text-xl font-bold mb-8">PARTNER MASTER</h1>
-        <div class="mb-6 p-4 bg-slate-800 rounded">
-            <p class="text-[10px] text-gray-400">WALLET BALANCE</p>
-            <h2 id="wallet" class="text-xl font-bold text-green-400">$0.00</h2>
-        </div>
-        <nav class="space-y-4">
-            <button onclick="show('assess')" class="w-full text-left">🔍 Assessment Tool</button>
-            <button onclick="show('track')" class="w-full text-left">📂 File Tracking</button>
-        </nav>
-    </div>
+<body class="bg-[#0f172a] flex items-center justify-center h-screen">
 
-    <div class="flex-1 p-10">
-        <div id="assess" class="section active bg-white p-8 rounded shadow">
-            <h2 class="font-bold mb-6 border-b pb-2">PART 2: SMART ASSESSMENT</h2>
-            <div class="grid grid-cols-3 gap-4 mb-8">
-                <input id="c" placeholder="Country" class="border p-2 rounded">
-                <select id="d" class="border p-2 rounded"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
-                <button onclick="search()" class="bg-blue-600 text-white rounded font-bold">SEARCH</button>
+    <div id="authBox" class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tighter">IHP CRM</h1>
+            <p class="text-gray-500 text-sm font-semibold uppercase mt-1">Partner Portal Access</p>
+        </div>
+        
+        <div id="loginForm">
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Registered Email</label>
+            <input type="email" id="loginEmail" placeholder="partner@example.com" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-6 outline-none focus:border-blue-500 transition">
+            <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition duration-300">LOGIN TO DASHBOARD</button>
+            <div class="mt-6 text-center">
+                <p class="text-gray-500 text-sm">Don't have an account? <a href="#" onclick="toggleAuth()" class="text-blue-600 font-bold hover:underline">Apply for Partnership</a></p>
             </div>
-            <div id="results" class="space-y-4"></div>
         </div>
 
-        <div id="track" class="section bg-white p-8 rounded shadow">
-            <h2 class="font-bold mb-6 border-b pb-2">PART 3: FILE TRACKING</h2>
-            <table class="w-full text-left text-sm">
-                <thead><tr class="bg-gray-50 uppercase text-[10px]">
-                    <th class="p-4">Student</th><th class="p-4">Contact</th><th class="p-4">Status</th><th class="p-4">Date</th>
-                </tr></thead>
-                <tbody id="trackTable"></tbody>
-            </table>
+        <div id="regForm" class="hidden">
+            <div class="space-y-4">
+                <input type="text" id="regName" placeholder="Full Name" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
+                <input type="email" id="regEmail" placeholder="Email Address" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
+                <input type="text" id="regOrg" placeholder="Organization/Agency Name" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
+                <input type="text" id="regContact" placeholder="Contact Number" class="w-full border-2 border-gray-100 p-3 rounded-xl outline-none focus:border-green-500">
+            </div>
+            <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold mt-6 hover:bg-green-700 shadow-lg shadow-green-100 transition duration-300">SUBMIT REGISTRATION</button>
+            <div class="mt-6 text-center">
+                <a href="#" onclick="toggleAuth()" class="text-gray-400 text-sm font-bold hover:text-gray-600">Already registered? Back to Login</a>
+            </div>
         </div>
     </div>
 
     <script>
-        const pId = "YOUR_ID"; // লগইন করার পর এটি সেট হবে
-
-        function show(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        function toggleAuth() {
+            document.getElementById('loginForm').classList.toggle('hidden');
+            document.getElementById('regForm').classList.toggle('hidden');
         }
 
-        async function search() {
-            const res = await fetch('/api/partner/assessment', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ country: document.getElementById('c').value, degree: document.getElementById('d').value })
+        async function handleRegister() {
+            const data = {
+                name: document.getElementById('regName').value,
+                email: document.getElementById('regEmail').value,
+                orgName: document.getElementById('regOrg').value,
+                contact: document.getElementById('regContact').value
+            };
+            
+            if(!data.email || !data.name) return alert("Please fill required fields.");
+
+            const res = await fetch('/api/partner/register', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
             });
-            const unis = await res.json();
-            document.getElementById('results').innerHTML = unis.map(u => `
-                <div class="p-6 border rounded-xl flex justify-between bg-slate-50">
-                    <div>
-                        <h4 class="font-bold text-blue-800">${u.uniName}</h4>
-                        <p class="text-xs text-gray-500">${u.location} | ${u.country}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-green-600 font-bold mb-2">Commission: $${u.partnerCommission}</p>
-                        <button onclick="openFile('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 text-white px-4 py-2 rounded text-xs">OPEN FILE</button>
-                    </div>
-                </div>`).join('');
+            const result = await res.json();
+            alert(result.message);
+            if(result.success) toggleAuth();
         }
 
-        async function openFile(name, comm) {
-            const sName = prompt("Enter Student Name:");
-            if(!sName) return;
-            const res = await fetch('/api/partner/open-file', {
-                method: 'POST', headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ partnerId: pId, studentName: sName, uniName: name, commission: comm })
+        async function checkLogin() {
+            const email = document.getElementById('loginEmail').value;
+            if(!email) return alert("Please enter email");
+
+            const res = await fetch('/api/partner/login-check', {
+                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email })
             });
-            if(res.ok) alert("File Opened & Commission Added to Wallet!");
+            const result = await res.json();
+            
+            if(result.approved) {
+                alert(`Welcome back, ${result.name}! Redirecting...`);
+                // এখানে পরবর্তী ধাপে ড্যাশবোর্ড লোড হবে
+                localStorage.setItem('partnerId', result.partnerId);
+                // window.location.href = "/partner-dashboard"; // আমরা এখনো ড্যাশবোর্ড পেজ বানাইনি
+            } else {
+                alert(result.msg);
+            }
         }
     </script>
 </body>
