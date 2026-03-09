@@ -1,47 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin Panel | Core Locked</title>
+    <meta charset="UTF-8"><title>Admin Panel | University Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.section { display: none; } .active { display: block; }</style>
+    <style>
+        .section { display: none; } 
+        .active { display: block; }
+        .input-box { @apply p-2 border rounded focus:border-blue-500 outline-none text-sm; }
+    </style>
 </head>
 <body class="bg-gray-100 flex">
     <div class="w-64 bg-slate-900 h-screen text-white p-6 sticky top-0 shadow-xl">
-        <h1 class="text-xl font-bold mb-10 text-blue-400">IHP ADMIN</h1>
+        <h1 class="text-xl font-bold mb-10 text-blue-400 text-center">IHP ADMIN</h1>
         <nav class="space-y-4">
-            <button onclick="showSection('uniSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">University Management</button>
+            <button onclick="showSection('uniSection')" class="w-full text-left py-2 px-3 bg-slate-800 rounded text-blue-300">University Management</button>
             <button onclick="showSection('partnerSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">Partner Management</button>
             <button onclick="showSection('complianceSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">File Compliance</button>
             <button onclick="showSection('withdrawSection')" class="w-full text-left py-2 px-3 hover:bg-slate-700 rounded transition">Withdraw & Subs</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-10">
-        <div id="uniSection" class="section active bg-white p-8 rounded shadow-lg border-t-4 border-blue-600">
-            <h2 class="font-bold mb-6">ADD UNIVERSITY (20+ REQUIRED FIELDS)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="uniForm">
-                <input type="text" id="country" placeholder="Country" class="p-2 border rounded">
-                <input type="text" id="uniName" placeholder="University Name" class="p-2 border rounded">
-                <input type="text" id="courseName" placeholder="Course Name" class="p-2 border rounded">
-                <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option></select>
-                <input type="number" id="partnerCommission" placeholder="Commission ($)" class="p-2 border rounded border-blue-400 font-bold">
+    <div class="flex-1 p-8">
+        <div id="uniSection" class="section active bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
+            <h2 class="text-xl font-bold mb-8 uppercase text-gray-700 border-b pb-2">Part 1: University Data Entry (20+ Fields)</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="uniForm">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Country</label>
+                    <input type="text" id="country" placeholder="e.g. UK, USA" class="w-full input-box p-2 border rounded">
                 </div>
-            <button onclick="saveUni()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded font-bold">SAVE DATA</button>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">University Name</label>
+                    <input type="text" id="uniName" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Course Name</label>
+                    <input type="text" id="courseName" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Intake</label>
+                    <input type="text" id="intake" placeholder="Jan, Sep 2026" class="w-full input-box p-2 border rounded">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Degree Type</label>
+                    <select id="degree" class="w-full input-box p-2 border rounded">
+                        <option>Ug</option><option>Pg</option><option>Diploma</option>
+                        <option>Foundation</option><option>PhD</option><option>Research</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Language Type</label>
+                    <select id="languageType" class="w-full input-box p-2 border rounded">
+                        <option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Min Academic Score</label>
+                    <input type="text" id="academicScore" placeholder="GPA/Percentage" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Min Language Score</label>
+                    <input type="text" id="languageScore" placeholder="Overall/Each" class="w-full input-box p-2 border rounded">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Semester Fee</label>
+                    <input type="text" id="semesterFee" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Currency</label>
+                    <input type="text" id="currency" placeholder="GBP, USD, EUR" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Partner Commission ($)</label>
+                    <input type="number" id="partnerCommission" class="w-full input-box border-blue-400 font-bold p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Bank Name (BD)</label>
+                    <input type="text" id="bankNameBD" placeholder="Approved Banks" class="w-full input-box p-2 border rounded">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Bank Type/Requirements</label>
+                    <input type="text" id="bankType" placeholder="Personal/Sponsor" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Loan Amount</label>
+                    <input type="text" id="loanAmount" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Marital Status</label>
+                    <input type="text" id="maritalStatus" placeholder="Single/Married Allowed" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Study Gap Allowed</label>
+                    <input type="text" id="studyGap" class="w-full input-box p-2 border rounded">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Application Fee</label>
+                    <input type="text" id="appFee" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">CAS/I-20 Deadline</label>
+                    <input type="text" id="deadline" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Scholarship Info</label>
+                    <input type="text" id="scholarship" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Work Rights</label>
+                    <input type="text" id="workRights" placeholder="20hrs/week" class="w-full input-box p-2 border rounded">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Location/Campus</label>
+                    <input type="text" id="location" class="w-full input-box p-2 border rounded">
+                </div>
+            </div>
+
+            <div class="mt-10 flex gap-4">
+                <button onclick="saveUniversity()" class="bg-blue-600 text-white px-10 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg transition-all uppercase tracking-wider">Save University Data</button>
+                <button onclick="clearForm()" class="bg-gray-200 text-gray-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-300">Clear</button>
+            </div>
         </div>
         
-        <div id="partnerSection" class="section">
-            <h2 class="font-bold mb-6">PARTNER MANAGEMENT</h2>
-            <p>Name, Contact, Status (Active/Inactive), Expiry, Update</p>
+        <div id="partnerSection" class="section p-8">
+            <h2 class="text-xl font-bold">Partner Management (Coming in Part 2)</h2>
         </div>
     </div>
 
     <script>
-        function showSection(id) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        async function saveUni() {
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function saveUniversity() {
             const data = {};
-            document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => data[el.id] = el.value);
-            const res = await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) alert("✅ University Saved!");
+            document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => {
+                data[el.id] = el.value;
+            });
+
+            try {
+                const res = await fetch('/api/admin/add-university', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if(res.ok) {
+                    alert("✅ Success: University data added to the global database!");
+                    clearForm();
+                } else {
+                    alert("❌ Error: Could not save data.");
+                }
+            } catch (err) {
+                alert("❌ Connection Error.");
+            }
+        }
+
+        function clearForm() {
+            document.querySelectorAll('#uniForm input').forEach(el => el.value = "");
         }
     </script>
 </body>
