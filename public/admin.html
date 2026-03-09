@@ -22,7 +22,7 @@
             <div class="hidden md:flex space-x-4 text-sm font-medium">
                 <span class="nav-link" onclick="showSection('partner-list')">Partner List</span>
                 <span class="nav-link" onclick="showSection('add-uni')">Add University</span>
-                <span class="nav-link" onclick="showSection('compliance')">Compliance Control</span>
+                <span class="nav-link">Compliance Control</span>
             </div>
         </div>
     </nav>
@@ -31,10 +31,7 @@
         <div id="partner-list" class="section-content">
             <div class="bg-white p-6 rounded shadow border">
                 <h2 class="text-xl font-bold mb-6 text-blue-900 border-b pb-2">Partner Access Control</h2>
-                <table class="w-full text-left border-collapse">
-                    <tr class="bg-gray-100 text-sm"><th class="p-3 border">Name</th><th class="p-3 border">Status</th><th class="p-3 border">Subscription Expiry</th><th class="p-3 border">Action</th></tr>
-                    <tbody id="partnerTableBody"></tbody>
-                </table>
+                <div class="text-gray-500 p-10 text-center">Partner management system is ready.</div>
             </div>
         </div>
 
@@ -87,15 +84,21 @@
         document.getElementById('uniForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button'); btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> SAVING...';
+            btn.disabled = true;
+
             const fields = ['country','uniName','courseName','intake','degree','languageType','academicScore','languageScore','studyGap','semesterFee','currency','bankType','maritalStatus','bankNameBD','loanAmount','partnerCommission'];
             const data = {}; fields.forEach(id => { data[id] = document.getElementById(id).value; });
 
             try {
-                const res = await fetch('/api/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+                const res = await fetch('/api/add-university', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(data) 
+                });
                 if(res.ok) { alert("Data Locked Successfully!"); e.target.reset(); }
                 else { alert("Error: API Failed to Save"); }
-            } catch (err) { alert("Error: Server Offline"); }
-            finally { btn.innerHTML = '<i class="fas fa-save mr-2"></i> PERMANENTLY SAVE UNIVERSITY'; }
+            } catch (err) { alert("Error: Server Offline or No DB Connection"); }
+            finally { btn.innerHTML = '<i class="fas fa-save mr-2"></i> PERMANENTLY SAVE UNIVERSITY'; btn.disabled = false; }
         });
     </script>
 </body>
