@@ -1,105 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Partner Master | IHP CRM</title>
+    <meta charset="UTF-8"><title>Partner Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .section { display: none; }
-        .active-section { display: block; }
-        th, td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; }
-    </style>
+    <style>.section { display: none; } .active-section { display: block; } th, td { padding: 10px; border: 1px solid #ddd; font-size: 11px; }</style>
 </head>
 <body class="bg-gray-50" onload="loadDashboard()">
     <nav class="bg-[#0f172a] text-white p-4 flex justify-between">
         <h1 class="font-bold">PARTNER MASTER</h1>
-        <div class="space-x-4">
-            <button onclick="showTab('assessment')">Assessment</button>
-            <button onclick="showTab('tracking')">File Tracking</button>
-            <button onclick="showTab('finance')">Finance</button>
-        </div>
+        <div class="space-x-4"><button onclick="showTab('assessment')">Assesment</button><button onclick="showTab('finance')">Finance</button></div>
     </nav>
 
     <div class="container mx-auto p-6">
         <div id="assessment" class="section active-section">
-            <div class="bg-white p-6 rounded shadow grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-6 rounded shadow grid grid-cols-4 gap-4 mb-4">
                 <input type="text" id="sCountry" placeholder="Country" class="border p-2 rounded">
                 <select id="sDegree" class="border p-2 rounded"><option>Ug</option><option>Pg</option></select>
-                <select id="sLang" class="border p-2 rounded"><option>IELTS</option><option>PTE</option></select>
                 <button onclick="searchUni()" class="bg-blue-600 text-white rounded">SEARCH</button>
             </div>
             <div id="results" class="bg-white p-4 rounded shadow overflow-x-auto"></div>
         </div>
 
-        <div id="tracking" class="section">
-            <div class="bg-white p-6 rounded shadow">
-                <h2 class="font-bold mb-4">File Status</h2>
-                <table class="w-full text-left">
-                    <thead><tr class="bg-gray-100"><th>Student</th><th>University</th><th>Status</th><th>Commission</th></tr></thead>
-                    <tbody id="trackBody"></tbody>
-                </table>
-            </div>
-        </div>
-
         <div id="finance" class="section">
-            <div class="grid grid-cols-2 gap-6">
-                <div class="bg-blue-900 text-white p-8 rounded-xl">
-                    <p class="text-sm opacity-70 uppercase">Wallet Balance</p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-blue-900 text-white p-10 rounded-xl">
+                    <p class="text-xs opacity-70">Wallet Balance</p>
                     <h2 class="text-4xl font-bold">$ <span id="wallet">0.00</span></h2>
                 </div>
-                <div class="bg-white p-8 rounded shadow border">
-                    <h3 class="font-bold mb-4 uppercase">Withdrawal</h3>
-                    <input type="number" id="wAmount" placeholder="Amount" class="w-full border p-2 mb-4">
-                    <button id="withdrawBtn" disabled class="w-full bg-gray-400 text-white py-2 rounded cursor-not-allowed">WITHDRAW LOCKED</button>
-                    <p class="text-[10px] text-gray-400 mt-2">*Unlocked only after 'Completed' status.</p>
+                <div class="bg-white p-10 rounded shadow border">
+                    <h3 class="font-bold mb-4">Withdraw</h3>
+                    <button id="withdrawBtn" disabled class="w-full bg-gray-400 text-white py-3 rounded cursor-not-allowed">LOCKED</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        function showTab(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.getElementById(id).classList.add('active-section');
-        }
+        function showTab(id) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
 
         async function searchUni() {
-            const res = await fetch('/api/uni-search', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: document.getElementById('sLang').value })
-            });
+            const res = await fetch('/api/uni-search', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: "IELTS" }) });
             const unis = await res.json();
-            document.getElementById('results').innerHTML = `
-                <table class="w-full">
-                    <thead class="bg-blue-50"><tr><th>University</th><th>Fee</th><th>Commission</th><th>Bank BD</th><th>Action</th></tr></thead>
-                    <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.semesterFee}</td><td class="font-bold text-blue-600">${u.partnerCommission}</td><td>${u.bankNameBD}</td><td><button onclick="applyNow('${u._id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px]">OPEN FILE</button></td></tr>`).join('')}</tbody>
-                </table>`;
+            document.getElementById('results').innerHTML = `<table class="w-full">
+                <thead class="bg-gray-100"><tr><th>University</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
+                <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.semesterFee}</td><td class="font-bold text-blue-600">$${u.partnerCommission}</td><td><button onclick="applyNow('${u._id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px]">OPEN FILE</button></td></tr>`).join('')}</tbody>
+            </table>`;
         }
 
         async function applyNow(uniId) {
-            const res = await fetch('/api/partner/apply', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ partnerId: localStorage.getItem('partnerId'), uniId, studentName: "Student Name", contact: "017..." })
-            });
-            const r = await res.json();
-            alert(r.message); loadDashboard();
+            const res = await fetch('/api/partner/apply', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ partnerId: localStorage.getItem('partnerId'), uniId, studentName: "Student" }) });
+            const r = await res.json(); alert(r.message); loadDashboard();
         }
 
         async function loadDashboard() {
             const res = await fetch(`/api/partner-data/${localStorage.getItem('partnerId')}`);
             const data = await res.json();
             document.getElementById('wallet').innerText = data.walletBalance;
-            
             const hasCompleted = data.files.some(f => f.visaStatus === 'Completed');
-            const wBtn = document.getElementById('withdrawBtn');
-            if(hasCompleted) {
-                wBtn.disabled = false; wBtn.classList.replace('bg-gray-400', 'bg-green-600');
-                wBtn.classList.remove('cursor-not-allowed'); wBtn.innerText = "WITHDRAW NOW";
+            if(hasCompleted) { 
+                const btn = document.getElementById('withdrawBtn'); 
+                btn.disabled = false; btn.innerText = "WITHDRAW NOW"; btn.classList.replace('bg-gray-400', 'bg-green-600'); btn.classList.remove('cursor-not-allowed');
             }
-
-            document.getElementById('trackBody').innerHTML = data.files.map(f => `<tr><td>${f.studentName}</td><td>${f.university}</td><td><span class="bg-blue-100 px-2 py-1 rounded text-[9px] font-bold">${f.visaStatus}</span></td><td>$${f.commissionAmount}</td></tr>`).join('');
         }
     </script>
 </body>
