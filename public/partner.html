@@ -1,146 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner Dashboard | IHP CRM</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .section { display: none; } 
         .active { display: block; }
-        .input-box { border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; }
-        .card-hover:hover { transform: translateY(-3px); transition: 0.3s; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .input-box { border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; transition: 0.2s; }
+        .input-box:focus { border-color: #2563eb; ring: 2px; ring-color: #bfdbfe; }
+        label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
+        .uni-card { border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; background: white; transition: 0.3s; }
+        .uni-card:hover { transform: translateY(-5px); shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen">
+<body class="bg-[#f8fafc] flex">
 
-    <div id="authContainer" class="flex items-center justify-center h-screen bg-[#0f172a]">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-extrabold text-blue-600 tracking-tighter">IHP CRM</h1>
-                <p class="text-gray-500 text-sm font-semibold uppercase mt-1">Partner Access</p>
-            </div>
-            
-            <div id="loginForm">
-                <input type="email" id="loginEmail" placeholder="partner@example.com" class="w-full border-2 border-gray-100 p-3 rounded-xl mb-6 outline-none focus:border-blue-500">
-                <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg">LOGIN NOW</button>
-                <p class="mt-6 text-center text-sm">New Partner? <a href="#" onclick="toggleAuth()" class="text-blue-600 font-bold">Register Here</a></p>
-            </div>
+    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl flex flex-col">
+        <h1 class="text-xl font-black mb-8 text-blue-400 text-center tracking-tighter uppercase italic">IHP Partner</h1>
+        
+        <div class="mb-10 p-4 bg-slate-800 rounded-xl border border-slate-700 text-center">
+            <p class="text-[9px] text-slate-400 uppercase font-bold mb-1">Total Commission</p>
+            <h3 id="walletBalance" class="text-2xl font-black text-green-400">$0.00</h3>
+        </div>
 
-            <div id="regForm" class="hidden">
-                <div class="space-y-3">
-                    <input type="text" id="regName" placeholder="Full Name" class="w-full border p-3 rounded-xl">
-                    <input type="email" id="regEmail" placeholder="Email" class="w-full border p-3 rounded-xl">
-                    <input type="text" id="regOrg" placeholder="Organization" class="w-full border p-3 rounded-xl">
-                    <input type="text" id="regContact" placeholder="Contact" class="w-full border p-3 rounded-xl">
-                </div>
-                <button onclick="handleRegister()" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold mt-6">SUBMIT REQUEST</button>
-                <p class="mt-4 text-center"><a href="#" onclick="toggleAuth()" class="text-gray-400 text-sm">Back to Login</a></p>
-            </div>
+        <nav class="space-y-3 flex-1">
+            <button onclick="showSection('assessmentSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">🔍 Smart Assessment</button>
+            <button onclick="showSection('trackingSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">📂 File Tracking</button>
+            <button onclick="showSection('withdrawSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">💰 Withdraw Request</button>
+        </nav>
+        
+        <div class="pt-6 border-t border-slate-800">
+            <button onclick="logout()" class="w-full bg-red-500/10 text-red-400 py-2 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition">LOGOUT</button>
         </div>
     </div>
 
-    <div id="mainDashboard" class="hidden flex">
-        <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl">
-            <h1 class="text-xl font-bold mb-8 text-blue-400 text-center">PARTNER PANEL</h1>
-            <nav class="space-y-2">
-                <button onclick="showSection('assessSec')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">🔍 Assessment Tool</button>
-                <button onclick="showSection('trackSec')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">📂 File Tracking</button>
-                <button onclick="location.reload()" class="w-full text-left py-3 px-4 text-red-400 mt-20">Logout</button>
-            </nav>
-        </div>
+    <div class="flex-1 p-10 overflow-y-auto h-screen">
 
-        <div class="flex-1 p-10">
-            <div id="assessSec" class="section active bg-white p-8 rounded-2xl shadow-sm border">
-                <h2 class="text-lg font-bold mb-6 uppercase text-slate-700 border-b pb-3">Smart Assessment Tool</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-                    <input type="text" id="sCountry" placeholder="Country" class="input-box">
-                    <select id="sDegree" class="input-box">
-                        <option value="">Select Degree</option>
-                        <option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option>
-                    </select>
-                    <input type="text" id="sLang" placeholder="Min. Lang Score" class="input-box">
-                    <button onclick="searchUni()" class="bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">SEARCH</button>
-                </div>
+        <div id="assessmentSection" class="section active">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tight">Smart Assessment Tool</h2>
                 
-                <div id="uniResults" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
+                    <div><label>Country</label><input type="text" id="aCountry" placeholder="e.g. UK" class="input-box"></div>
+                    <div><label>Degree</label>
+                        <select id="aDegree" class="input-box">
+                            <option value="">All</option>
+                            <option>Ug</option><option>Pg</option><option>Diploma</option>
+                            <option>Foundation</option><option>PhD</option><option>Research</option>
+                        </select>
+                    </div>
+                    <div><label>Language Test</label>
+                        <select id="aLanguage" class="input-box">
+                            <option value="">Any</option>
+                            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option>
+                        </select>
+                    </div>
+                    <div><label>Score</label><input type="text" id="aLangScore" placeholder="Min Score" class="input-box"></div>
+                    <div><label>Academic Result</label><input type="text" id="aAcademic" placeholder="GPA/CGPA" class="input-box"></div>
+                    <div class="flex items-end">
+                        <button onclick="runAssessment()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition uppercase text-xs">Search Uni</button>
+                    </div>
+                </div>
+
+                <div id="assessmentResult" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     </div>
             </div>
+        </div>
 
-            <div id="trackSec" class="section bg-white p-8 rounded-2xl shadow-sm border">
-                <h2 class="text-lg font-bold mb-6 uppercase text-slate-700">File Tracking</h2>
-                <p class="text-gray-400">Student files will be listed here in the next step.</p>
+        <div id="trackingSection" class="section bg-white p-8 rounded-2xl shadow-sm border">
+            <h2 class="text-xl font-bold mb-6 uppercase text-slate-800 border-b pb-4">My Student Files</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 text-[10px] uppercase text-slate-500 font-bold border-b">
+                            <th class="p-4">Student Name</th>
+                            <th class="p-4">Contact</th>
+                            <th class="p-4">University</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trackingTableBody" class="text-sm"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="fileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-2xl w-[450px] shadow-2xl">
+            <h3 class="text-xl font-bold mb-2 text-slate-800">Open New Student File</h3>
+            <p id="modalUniTitle" class="text-blue-600 font-bold mb-6 text-sm"></p>
+            
+            <div class="space-y-4">
+                <div><label>Student Full Name</label><input type="text" id="sName" placeholder="Full Name" class="input-box"></div>
+                <div><label>Student Contact No</label><input type="text" id="sContact" placeholder="017xxxxxxxx" class="input-box"></div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-100 flex justify-between items-center">
+                    <span class="text-xs font-bold text-green-700 uppercase">Commission Earn:</span>
+                    <span id="modalComm" class="text-xl font-black text-green-600"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mt-8">
+                <button onclick="submitFile()" class="bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition uppercase text-xs">Confirm & Open</button>
+                <button onclick="closeModal()" class="bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition uppercase text-xs">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        // AUTH LOGIC
-        function toggleAuth() {
-            document.getElementById('loginForm').classList.toggle('hidden');
-            document.getElementById('regForm').classList.toggle('hidden');
-        }
+        let selectedUniData = {};
+        const partnerData = JSON.parse(localStorage.getItem('partnerInfo') || '{}');
+        const pId = partnerData._id;
 
-        async function handleRegister() {
-            const data = {
-                name: document.getElementById('regName').value,
-                email: document.getElementById('regEmail').value,
-                orgName: document.getElementById('regOrg').value,
-                contact: document.getElementById('regContact').value
-            };
-            const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            const result = await res.json();
-            alert(result.message);
-            if(result.success) toggleAuth();
-        }
+        // On Load
+        window.onload = () => {
+            if(!pId) { alert("Please login first"); window.location.href = "/login.html"; }
+            document.getElementById('walletBalance').innerText = `$${partnerData.walletBalance || 0}`;
+        };
 
-        async function checkLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const res = await fetch('/api/partner/login-check', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email }) });
-            const result = await res.json();
-            
-            if(result.approved) {
-                // SUCCESS: Hide Login, Show Dashboard
-                document.getElementById('authContainer').classList.add('hidden');
-                document.getElementById('mainDashboard').classList.remove('hidden');
-                localStorage.setItem('partnerId', result.partnerId);
-            } else {
-                alert(result.msg);
-            }
-        }
-
-        // DASHBOARD LOGIC
         function showSection(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            if(id === 'trackingSection') loadTracking();
         }
 
-        async function searchUni() {
-            const country = document.getElementById('sCountry').value;
-            const degree = document.getElementById('sDegree').value;
-            
+        async function runAssessment() {
+            const filters = {
+                country: document.getElementById('aCountry').value,
+                degree: document.getElementById('aDegree').value,
+                languageType: document.getElementById('aLanguage').value
+            };
+
             const res = await fetch('/api/partner/assessment', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ country, degree })
-            });
-            const unis = await res.json();
-            
-            const div = document.getElementById('uniResults');
-            div.innerHTML = unis.map(u => `
-                <div class="p-6 bg-slate-50 border rounded-xl card-hover">
-                    <div class="flex justify-between items-start mb-4">
-                        <h4 class="font-bold text-blue-800 text-lg uppercase">${u.uniName}</h4>
-                        <span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-1 rounded font-bold uppercase">${u.degree}</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-y-2 text-[11px] text-gray-600 mb-4">
-                        <p><b>Location:</b> ${u.location}, ${u.country}</p>
-                        <p><b>Fee:</b> ${u.semesterFee} ${u.currency}</p>
-                        <p><b>Commission:</b> <span class="text-green-600 font-bold">$${u.partnerCommission}</span></p>
-                        <p><b>Intake:</b> ${u.intake}</p>
-                    </div>
-                    <button class="w-full bg-white border border-blue-600 text-blue-600 py-2 rounded font-bold text-xs hover:bg-blue-600 hover:text-white transition">OPEN STUDENT FILE</button>
-                </div>
-            `).join('');
-        }
-    </script>
-</body>
-</html>
+                body:
