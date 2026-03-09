@@ -2,198 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Master Dashboard | IHP CRM</title>
+    <title>Admin Portal | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .form-input { border: 1px solid #d1d5db; border-radius: 4px; padding: 10px; width: 100%; font-size: 14px; }
-        .nav-link { cursor: pointer; padding: 12px 20px; border-radius: 6px; transition: 0.3s; color: #cbd5e1; }
-        .nav-link:hover, .active-tab { background: #3b82f6; color: white; font-weight: bold; }
-        .section { display: none; }
-        .active-section { display: block; }
-        th { background: #f8fafc; padding: 12px; border: 1px solid #e2e8f0; text-align: left; font-size: 11px; text-transform: uppercase; color: #64748b; }
-        td { padding: 12px; border: 1px solid #e2e8f0; font-size: 13px; color: #334155; }
-    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-
-    <nav class="bg-[#0f172a] p-4 sticky top-0 z-50 shadow-2xl">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-white font-bold text-2xl tracking-tighter uppercase">IHP Admin <span class="text-blue-500">Master</span></h1>
-            <div class="flex space-x-1">
-                <span class="nav-link active-tab" onclick="showTab('add-uni', this)">Add University</span>
-                <span class="nav-link" onclick="showTab('partner-ctrl', this)">Partner Control</span>
-                <span class="nav-link" onclick="showTab('student-ctrl', this)">Student Files</span>
-                <span class="nav-link" onclick="showTab('payment-ctrl', this)">Withdraw Payment</span>
-                <span class="nav-link" onclick="showTab('compliance-ctrl', this)">Compliance</span>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 border-b pb-2">Add New University</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="uniForm">
+            <input type="text" id="country" placeholder="Country" class="p-2 border rounded">
+            <input type="text" id="uniName" placeholder="University Name" class="p-2 border rounded">
+            <input type="text" id="courseName" placeholder="Course Name" class="p-2 border rounded">
+            <input type="text" id="intake" placeholder="Intake" class="p-2 border rounded">
+            <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option></select>
+            <select id="languageType" class="p-2 border rounded"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+            <input type="number" id="partnerCommission" placeholder="Partner Commission ($)" class="p-2 border rounded text-blue-600 font-bold">
+            <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="p-2 border rounded">
+            <input type="text" id="semesterFee" placeholder="Semester Fee" class="p-2 border rounded">
             </div>
-        </div>
-    </nav>
-
-    <div class="container mx-auto p-6">
-        
-        <div id="add-uni" class="section active-section">
-            <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="font-bold mb-6 text-xl text-gray-800 border-b pb-4"><i class="fas fa-plus-circle mr-2 text-blue-600"></i>Add University Requirements</h2>
-                <form id="uniForm" class="grid grid-cols-1 md:grid-cols-4 gap-5">
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Country</label><input type="text" id="country" class="form-input" placeholder="e.g. Australia"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Degree</label><select id="degree" class="form-input"><option>UG</option><option>PG</option><option>Diploma</option><option>Foundation</option></select></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Semester Fee</label><input type="text" id="semesterFee" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Currency</label><select id="currency" class="form-input"><option>AUD DOLLAR</option><option>EURO</option><option>USD</option><option>POUND</option><option>TAKA</option></select></div>
-                    
-                    <div><label class="block text-xs font-bold mb-1 uppercase">University Name</label><input type="text" id="uniName" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Language Type</label><select id="languageType" class="form-input"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option></select></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Course Name</label><input type="text" id="courseName" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Bank Name (BD)</label><input type="text" id="bankNameBD" class="form-input"></div>
-                    
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Intake</label><input type="text" id="intake" class="form-input" placeholder="e.g. Feb 2026"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Academic Score</label><input type="text" id="academicScore" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Language Score</label><input type="text" id="languageScore" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Study Gap Allowed</label><input type="text" id="studyGap" class="form-input"></div>
-
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Bank Type</label><select id="bankType" class="form-input"><option>FDR</option><option>Savings</option><option>Student Loan</option></select></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Loan Amount</label><input type="text" id="loanAmount" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Partner Commission</label><input type="text" id="partnerCommission" class="form-input"></div>
-                    <div><label class="block text-xs font-bold mb-1 uppercase">Marital Status</label><select id="maritalStatus" class="form-input"><option>Single</option><option>With Spouse</option></select></div>
-
-                    <button type="submit" id="saveUniBtn" class="md:col-span-4 bg-blue-600 text-white font-bold py-4 rounded-lg mt-4 hover:bg-blue-700 transition duration-300 shadow-lg uppercase tracking-widest">
-                        Save University Information
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div id="partner-ctrl" class="section">
-            <div class="bg-white p-6 rounded-xl shadow border">
-                <h2 class="font-bold mb-4 text-gray-800">Partner Access Control</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr><th>Partner Name</th><th>Contact No</th><th>Status Toggle</th><th>Subscription Expire</th><th>Update</th></tr>
-                        </thead>
-                        <tbody id="partnerTable"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="student-ctrl" class="section">
-            <div class="bg-white p-6 rounded-xl shadow border">
-                <h2 class="font-bold mb-4 text-gray-800">Student File Tracking</h2>
-                <table class="w-full">
-                    <thead>
-                        <tr><th>Student Name</th><th>Contact No</th><th>File Status</th><th>Upload File View</th></tr>
-                    </thead>
-                    <tbody id="studentTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="payment-ctrl" class="section">
-            <div class="bg-white p-6 rounded-xl shadow border">
-                <h2 class="font-bold mb-4 text-gray-800">Withdrawal Management</h2>
-                <table class="w-full">
-                    <thead>
-                        <tr><th>Partner Name</th><th>Contact Name</th><th>Status (Paid/Due/Cancel)</th><th>Action</th></tr>
-                    </thead>
-                    <tbody id="paymentTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="compliance-ctrl" class="section">
-            <div class="bg-white p-6 rounded-xl shadow border">
-                <h2 class="font-bold mb-4 text-gray-800">Compliance Management</h2>
-                <table class="w-full">
-                    <thead>
-                        <tr><th>Name</th><th>Org Name</th><th>Contact No</th><th>Active/Inactive</th></tr>
-                    </thead>
-                    <tbody id="complianceTable"></tbody>
-                </table>
-            </div>
-        </div>
-
+        <button onclick="saveUniversity()" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded font-bold hover:bg-blue-700">SAVE UNIVERSITY</button>
     </div>
 
     <script>
-        function showTab(id, el) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active-tab'));
-            document.getElementById(id).classList.add('active-section');
-            el.classList.add('active-tab');
-            loadAdminData();
-        }
-
-        async function loadAdminData() {
-            const res = await fetch('/api/admin-full-data');
-            const data = await res.json();
-            
-            // Render Partners
-            document.getElementById('partnerTable').innerHTML = data.partners.map(p => `
-                <tr>
-                    <td class="font-semibold">${p.name}</td>
-                    <td>${p.contactNo || 'N/A'}</td>
-                    <td>
-                        <select id="ps-${p._id}" class="border p-2 rounded bg-gray-50">
-                            <option value="Active" ${p.status==='Active'?'selected':''}>Active</option>
-                            <option value="Inactive" ${p.status==='Inactive'?'selected':''}>Inactive</option>
-                        </select>
-                    </td>
-                    <td><input type="date" id="pd-${p._id}" value="${p.expiryDate || ''}" class="border p-2 rounded"></td>
-                    <td>
-                        <button onclick="updatePartnerStatus('${p._id}')" id="pb-${p._id}" class="bg-blue-600 text-white px-5 py-2 rounded shadow hover:bg-blue-700 transition">Update</button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Render Placeholder for Students (Since we'll start partner dashboard next)
-            document.getElementById('studentTable').innerHTML = '<tr><td colspan="4" class="text-center text-gray-400 py-10">Waiting for Partner Uploads...</td></tr>';
-        }
-
-        async function updatePartnerStatus(id) {
-            const status = document.getElementById(`ps-${id}`).value;
-            const expiryDate = document.getElementById(`pd-${id}`).value;
-            const btn = document.getElementById(`pb-${id}`);
-            
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            const res = await fetch(`/api/update-partner/${id}`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ status, expiryDate })
-            });
-            
-            if(res.ok) {
-                alert("Partner Status Locked & Updated!");
-            } else {
-                alert("Update Failed!");
-            }
-            btn.innerText = 'Update';
-        }
-
-        document.getElementById('uniForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('saveUniBtn');
-            btn.innerText = 'PROCESSING...';
-            
-            const fields = ['country','uniName','courseName','intake','degree','languageType','academicScore','languageScore','studyGap','semesterFee','currency','bankType','maritalStatus','bankNameBD','loanAmount','partnerCommission'];
+        async function saveUniversity() {
             const data = {};
-            fields.forEach(id => data[id] = document.getElementById(id).value);
+            document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => data[el.id] = el.value);
             
-            const res = await fetch('/api/add-university', {
+            const res = await fetch('/api/admin/add-university', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            
-            if(res.ok) {
-                alert("University Requirements Saved & Locked!");
-                e.target.reset();
+            const result = await res.json();
+            if(result.success) {
+                alert("✅ " + result.message);
+                location.reload();
             }
-            btn.innerText = 'Save University Information';
-        };
-
-        window.onload = loadAdminData;
+        }
     </script>
 </body>
 </html>

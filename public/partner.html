@@ -4,138 +4,102 @@
     <meta charset="UTF-8">
     <title>Partner Master | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .section { display: none; }
         .active-section { display: block; }
-        .nav-link { cursor: pointer; padding: 12px 20px; transition: 0.3s; color: #cbd5e1; font-size: 14px; font-weight: 600; }
-        .active-tab { background: #2563eb; color: white; border-radius: 6px; }
-        th { padding: 10px; border: 1px solid #e2e8f0; text-transform: uppercase; font-size: 10px; }
-        td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; }
+        th, td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <nav class="bg-[#0f172a] p-3 sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto flex justify-between items-center text-white">
-            <h1 class="font-bold text-xl tracking-tighter">PARTNER <span class="text-blue-500">MASTER</span></h1>
-            <div class="flex space-x-1">
-                <span class="nav-link active-tab" onclick="showTab('assessment', this)">Assessment</span>
-                <span class="nav-link" onclick="showTab('tracking', this); loadTracking();">File Tracking</span>
-                <span class="nav-link" onclick="showTab('withdraw', this)">Finance & Package</span>
-            </div>
-            <button onclick="localStorage.clear(); location.href='/login'" class="bg-red-600 px-4 py-1 rounded text-xs font-bold uppercase hover:bg-red-700 transition">Logout</button>
+<body class="bg-gray-50" onload="loadDashboard()">
+    <nav class="bg-[#0f172a] text-white p-4 flex justify-between">
+        <h1 class="font-bold">PARTNER MASTER</h1>
+        <div class="space-x-4">
+            <button onclick="showTab('assessment')">Assessment</button>
+            <button onclick="showTab('tracking')">File Tracking</button>
+            <button onclick="showTab('finance')">Finance</button>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 md:p-8">
+    <div class="container mx-auto p-6">
         <div id="assessment" class="section active-section">
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-                <h2 class="font-bold mb-6 text-gray-800 uppercase tracking-wide border-b pb-3 flex items-center"><i class="fas fa-filter mr-2 text-blue-600"></i> Smart Assessment Tool</h2>
-                <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Country</label>
-                    <input type="text" id="aCountry" placeholder="Any Country" class="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 outline-none"></div>
-                    
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Degree</label>
-                    <select id="aDegree" class="w-full p-2 border rounded text-sm"><option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option></select></div>
-
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Language</label>
-                    <select id="aLang" class="w-full p-2 border rounded text-sm"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select></div>
-                    
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Academic Score</label>
-                    <input type="text" id="aGPA" placeholder="e.g. 3.50" class="w-full p-2 border rounded text-sm"></div>
-                    
-                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">Lang Score</label>
-                    <input type="text" id="aLScore" placeholder="e.g. 6.5" class="w-full p-2 border rounded text-sm"></div>
-                    
-                    <div class="flex items-end"><button onclick="searchUni()" class="w-full bg-blue-600 text-white font-bold py-2 rounded text-sm shadow hover:bg-blue-700 transition uppercase">Search Results</button></div>
-                </div>
-                
-                <div id="searchResult" class="mt-8 overflow-x-auto">
-                    </div>
+            <div class="bg-white p-6 rounded shadow grid grid-cols-4 gap-4 mb-6">
+                <input type="text" id="sCountry" placeholder="Country" class="border p-2 rounded">
+                <select id="sDegree" class="border p-2 rounded"><option>Ug</option><option>Pg</option></select>
+                <select id="sLang" class="border p-2 rounded"><option>IELTS</option><option>PTE</option></select>
+                <button onclick="searchUni()" class="bg-blue-600 text-white rounded">SEARCH</button>
             </div>
+            <div id="results" class="bg-white p-4 rounded shadow overflow-x-auto"></div>
         </div>
 
         <div id="tracking" class="section">
-            <div class="bg-white p-6 rounded-xl shadow border">
-                <h2 class="font-bold mb-4 text-blue-700 text-sm uppercase"><i class="fas fa-history mr-2"></i> Real-time Student Tracking</h2>
+            <div class="bg-white p-6 rounded shadow">
+                <h2 class="font-bold mb-4">File Status</h2>
                 <table class="w-full text-left">
-                    <thead class="bg-gray-100 text-gray-600">
-                        <tr><th>Student Name</th><th>Contact</th><th>University</th><th>PDF File</th><th>Visa Status</th><th>Compliance</th><th>Submission Date</th></tr>
-                    </thead>
-                    <tbody id="trackingTable"></tbody>
+                    <thead><tr class="bg-gray-100"><th>Student</th><th>University</th><th>Status</th><th>Commission</th></tr></thead>
+                    <tbody id="trackBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="withdraw" class="section">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-8 rounded-xl shadow-xl">
-                    <h3 class="text-xs font-bold opacity-80 uppercase tracking-widest">Total Commission Earned</h3>
-                    <p class="text-4xl font-extrabold mt-2">$ <span id="balance">0.00</span></p>
+        <div id="finance" class="section">
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-blue-900 text-white p-8 rounded-xl">
+                    <p class="text-sm opacity-70 uppercase">Wallet Balance</p>
+                    <h2 class="text-4xl font-bold">$ <span id="wallet">0.00</span></h2>
                 </div>
-                <div class="bg-white p-8 rounded-xl shadow border col-span-1">
-                    <h3 class="font-bold border-b mb-6 uppercase text-gray-700 text-sm">Withdraw Request</h3>
-                    <div class="space-y-4">
-                        <select id="wMethod" class="w-full p-2 border rounded text-sm"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-                        <input type="text" id="wAcc" placeholder="Account Number / Phone" class="w-full p-2 border rounded text-sm">
-                        <input type="number" id="wAmount" placeholder="Amount to Withdraw" class="w-full p-2 border rounded text-sm">
-                        <button class="w-full bg-green-600 text-white py-2 font-bold rounded shadow hover:bg-green-700 uppercase text-xs">Submit Request</button>
-                    </div>
-                </div>
-                <div class="bg-white p-8 rounded-xl shadow border col-span-1">
-                    <h3 class="font-bold text-red-600 border-b mb-4 uppercase text-sm">Subscription Status</h3>
-                    <p class="text-sm font-semibold">Current Package: <span class="text-blue-600">Premium Partner</span></p>
-                    <p class="text-sm mt-2 font-semibold">Expire Date: <span class="text-red-500 font-bold" id="expShow">Pending</span></p>
-                    <p class="text-[10px] text-gray-400 mt-4 italic font-bold">*Auto-blocking system active for expired accounts.</p>
+                <div class="bg-white p-8 rounded shadow border">
+                    <h3 class="font-bold mb-4 uppercase">Withdrawal</h3>
+                    <input type="number" id="wAmount" placeholder="Amount" class="w-full border p-2 mb-4">
+                    <button id="withdrawBtn" disabled class="w-full bg-gray-400 text-white py-2 rounded cursor-not-allowed">WITHDRAW LOCKED</button>
+                    <p class="text-[10px] text-gray-400 mt-2">*Unlocked only after 'Completed' status.</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('expShow').innerText = localStorage.getItem('partnerExpiry') || 'Pending';
-
-        function showTab(id, el) {
+        function showTab(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active-tab'));
             document.getElementById(id).classList.add('active-section');
-            el.classList.add('active-tab');
         }
 
         async function searchUni() {
-            const res = await fetch('/api/uni-search', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({
-                    country: document.getElementById('aCountry').value,
-                    degree: document.getElementById('aDegree').value,
-                    languageType: document.getElementById('aLang').value
-                })
+            const res = await fetch('/api/uni-search', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: document.getElementById('sLang').value })
             });
             const unis = await res.json();
-            document.getElementById('searchResult').innerHTML = unis.length ? `
-                <table class="w-full text-left">
-                    <thead class="bg-blue-50 text-blue-900 uppercase">
-                        <tr>
-                            <th>University Name</th><th>Location</th><th>Course</th><th>Intake</th><th>Semester Fee</th><th>Bank Req.</th><th>Partner Comm.</th><th>Marital</th><th>Bank BD</th><th>Loan</th><th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>${unis.map(u => `
-                        <tr class="hover:bg-gray-50">
-                            <td class="font-bold text-blue-700">${u.uniName}</td><td>${u.country}</td><td>${u.courseName}</td><td>${u.intake}</td><td class="font-bold text-green-600">${u.semesterFee}</td><td>${u.bankType}</td><td class="font-bold text-blue-600">${u.partnerCommission}</td><td>${u.maritalStatus}</td><td>${u.bankNameBD}</td><td>${u.loanAmount}</td><td><button class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase shadow">Apply</button></td>
-                        </tr>`).join('')}
-                    </tbody>
-                </table>` : '<div class="p-10 text-center font-bold text-red-500 uppercase">No Matches Found in Admin Inventory!</div>';
+            document.getElementById('results').innerHTML = `
+                <table class="w-full">
+                    <thead class="bg-blue-50"><tr><th>University</th><th>Fee</th><th>Commission</th><th>Bank BD</th><th>Action</th></tr></thead>
+                    <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.semesterFee}</td><td class="font-bold text-blue-600">${u.partnerCommission}</td><td>${u.bankNameBD}</td><td><button onclick="applyNow('${u._id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px]">OPEN FILE</button></td></tr>`).join('')}</tbody>
+                </table>`;
         }
 
-        async function loadTracking() {
-            const pid = localStorage.getItem('partnerId');
-            const res = await fetch(`/api/my-students/${pid}`);
-            const students = await res.json();
-            document.getElementById('trackingTable').innerHTML = students.map(s => `
-                <tr class="border-b">
-                    <td class="font-bold">${s.studentName}</td><td>${s.contact}</td><td>${s.university}</td><td><a href="${s.pdfUrl}" target="_blank" class="text-blue-600 underline font-bold">VIEW</a></td><td><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase text-[9px]">${s.visaStatus}</span></td><td>${s.complianceMember}</td><td>${new Date(s.appliedDate).toLocaleDateString()}</td>
-                </tr>`).join('');
+        async function applyNow(uniId) {
+            const res = await fetch('/api/partner/apply', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ partnerId: localStorage.getItem('partnerId'), uniId, studentName: "Student Name", contact: "017..." })
+            });
+            const r = await res.json();
+            alert(r.message); loadDashboard();
+        }
+
+        async function loadDashboard() {
+            const res = await fetch(`/api/partner-data/${localStorage.getItem('partnerId')}`);
+            const data = await res.json();
+            document.getElementById('wallet').innerText = data.walletBalance;
+            
+            const hasCompleted = data.files.some(f => f.visaStatus === 'Completed');
+            const wBtn = document.getElementById('withdrawBtn');
+            if(hasCompleted) {
+                wBtn.disabled = false; wBtn.classList.replace('bg-gray-400', 'bg-green-600');
+                wBtn.classList.remove('cursor-not-allowed'); wBtn.innerText = "WITHDRAW NOW";
+            }
+
+            document.getElementById('trackBody').innerHTML = data.files.map(f => `<tr><td>${f.studentName}</td><td>${f.university}</td><td><span class="bg-blue-100 px-2 py-1 rounded text-[9px] font-bold">${f.visaStatus}</span></td><td>$${f.commissionAmount}</td></tr>`).join('');
         }
     </script>
 </body>
