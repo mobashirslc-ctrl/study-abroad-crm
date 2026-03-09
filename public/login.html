@@ -2,38 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Login | IHP CRM</title>
+    <title>Login | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-md border-t-4 border-blue-600">
-        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 uppercase">Partner Login</h2>
-        <form id="loginForm" class="space-y-5">
-            <div><label class="block text-sm font-bold text-gray-600">Email</label><input type="email" id="email" class="w-full p-3 border rounded-md" placeholder="partner@example.com"></div>
-            <div><label class="block text-sm font-bold text-gray-600">Password</label><input type="password" id="password" class="w-full p-3 border rounded-md" placeholder="••••••••"></div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-md font-bold hover:bg-blue-700 shadow-lg">ACCESS DASHBOARD</button>
+<body class="bg-slate-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-10 rounded-2xl shadow-xl w-96 border border-slate-200">
+        <h2 class="text-2xl font-black text-center text-slate-800 mb-6 uppercase tracking-tighter">Partner Login</h2>
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Email Address</label>
+                <input type="email" id="email" required class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Password</label>
+                <input type="password" id="password" required class="w-full p-3 border rounded-lg outline-none focus:border-blue-500">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition uppercase text-xs tracking-widest">Login to Dashboard</button>
         </form>
-        <p class="mt-6 text-center text-sm">New Partner? <a href="/register" class="text-blue-600 font-bold">Register Now</a></p>
     </div>
+
     <script>
-        document.getElementById('loginForm').onsubmit = async (e) => {
+        async function handleLogin(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+
             const res = await fetch('/api/partner/login', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email, password })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
             });
-            if(res.ok) {
-                const data = await res.json();
-                localStorage.setItem('partnerId', data.partnerId);
-                localStorage.setItem('partnerName', data.name);
-                alert("Login Successful!"); window.location.href = '/partner-dashboard';
+
+            const data = await res.json();
+
+            if (res.ok) {
+                // সাকসেস হলে ডাটা সেভ করে ড্যাশবোর্ডে পাঠানো
+                localStorage.setItem('partnerInfo', JSON.stringify(data));
+                window.location.href = "/partner";
             } else {
-                const msg = await res.text(); alert(msg);
+                alert(data.message || "Login failed!");
             }
-        };
+        }
     </script>
 </body>
 </html>
