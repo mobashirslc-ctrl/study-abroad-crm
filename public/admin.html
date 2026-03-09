@@ -3,35 +3,34 @@
 <head>
     <meta charset="UTF-8"><title>Admin | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.section { display: none; } .active { display: block; } .input-box { border: 1px solid #ddd; padding: 8px; border-radius: 4px; width: 100%; font-size: 12px; }</style>
+    <style>.section { display: none; } .active { display: block; } .input-box { border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; width: 100%; font-size: 13px; }</style>
 </head>
 <body class="bg-slate-50 flex">
     <div class="w-64 bg-slate-900 h-screen text-white p-6 sticky top-0">
         <h1 class="text-xl font-bold mb-10 text-blue-400">ADMIN PANEL</h1>
-        <nav class="space-y-4">
-            <button onclick="showSection('uniSection')" class="w-full text-left">📁 University Mgmt</button>
-            <button onclick="showSection('partnerSection')" class="w-full text-left">👥 Partner Mgmt</button>
-            <button onclick="showSection('withdrawSection')" class="w-full text-left">💰 Withdraw & Subs</button>
+        <nav class="space-y-2">
+            <button onclick="showSection('uniSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded">📁 University Mgmt</button>
+            <button onclick="showSection('partnerSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded">👥 Partner Mgmt</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-8">
-        <div id="uniSection" class="section active bg-white p-6 rounded shadow">
-            <h2 class="font-bold mb-4">ADD UNIVERSITY (21 FIELDS)</h2>
+    <div class="flex-1 p-10">
+        <div id="uniSection" class="section active bg-white p-8 rounded-xl shadow-sm border">
+            <h2 class="font-bold mb-6 text-slate-800 uppercase">Add University (21 Fields)</h2>
             <div class="grid grid-cols-4 gap-4" id="uniForm">
                 <input type="text" id="country" placeholder="Country" class="input-box">
                 <input type="text" id="uniName" placeholder="University Name" class="input-box">
-                <input type="text" id="courseName" placeholder="Course" class="input-box">
+                <input type="text" id="courseName" placeholder="Course Name" class="input-box">
                 <input type="text" id="intake" placeholder="Intake" class="input-box">
-                <select id="degree" class="input-box"><option>Ug</option><option>Pg</option><option>Diploma</option></select>
+                <select id="degree" class="input-box"><option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option><option>PhD</option></select>
                 <select id="languageType" class="input-box"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
                 <input type="text" id="academicScore" placeholder="Min GPA" class="input-box">
                 <input type="text" id="languageScore" placeholder="Min Lang Score" class="input-box">
-                <input type="text" id="semesterFee" placeholder="Fee" class="input-box">
+                <input type="text" id="semesterFee" placeholder="Semester Fee" class="input-box">
                 <input type="text" id="currency" placeholder="Currency" class="input-box">
                 <input type="number" id="partnerCommission" placeholder="Commission $" class="input-box">
                 <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="input-box">
-                <input type="text" id="bankType" placeholder="Bank Req" class="input-box">
+                <input type="text" id="bankType" placeholder="Bank Requirements" class="input-box">
                 <input type="text" id="loanAmount" placeholder="Loan Amount" class="input-box">
                 <input type="text" id="maritalStatus" placeholder="Marital Status" class="input-box">
                 <input type="text" id="studyGap" placeholder="Study Gap" class="input-box">
@@ -41,15 +40,15 @@
                 <input type="text" id="workRights" placeholder="Work Rights" class="input-box">
                 <input type="text" id="location" placeholder="Location" class="input-box">
             </div>
-            <button onclick="saveUni()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded">Save University</button>
+            <button onclick="saveUni()" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded-lg font-bold uppercase text-xs">Save University</button>
         </div>
 
-        <div id="partnerSection" class="section bg-white p-6 rounded shadow">
-            <h2 class="font-bold mb-4">PARTNER LIST</h2>
-            <table class="w-full text-left border">
-                <thead><tr class="bg-gray-100 text-xs uppercase">
-                    <th class="p-2">Name</th><th class="p-2">Org</th><th class="p-2">Status</th><th class="p-2">Action</th>
-                </tr></thead>
+        <div id="partnerSection" class="section bg-white p-8 rounded-xl shadow-sm border">
+            <h2 class="font-bold mb-6 text-slate-800 uppercase">Partner Management</h2>
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-500 border-b">
+                    <tr><th class="p-4">Name</th><th class="p-4">Org</th><th class="p-4">Status</th><th class="p-4">Action</th></tr>
+                </thead>
                 <tbody id="pTable"></tbody>
             </table>
         </div>
@@ -65,8 +64,8 @@
         async function saveUni() {
             const data = {};
             document.querySelectorAll('#uniForm input, #uniForm select').forEach(i => data[i.id] = i.value);
-            const res = await fetch('/api/admin/add-university', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
-            if(res.ok) alert("University Saved!");
+            const res = await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            if(res.ok) alert("✅ University Saved Successfully!");
         }
 
         async function loadPartners() {
@@ -74,19 +73,30 @@
             const partners = await res.json();
             const tbody = document.getElementById('pTable');
             tbody.innerHTML = partners.map(p => `
-                <tr class="border-b">
-                    <td class="p-2">${p.name}</td><td class="p-2">${p.orgName}</td>
-                    <td class="p-2 text-xs font-bold ${p.status === 'Active' ? 'text-green-600':'text-red-600'}">${p.status}</td>
-                    <td class="p-2">
-                        <button onclick="updateStatus('${p._id}', 'Active')" class="bg-green-500 text-white px-2 py-1 rounded text-[10px]">Approve</button>
+                <tr class="border-b text-sm">
+                    <td class="p-4 font-medium">${p.name}</td>
+                    <td class="p-4">${p.orgName}</td>
+                    <td class="p-4 font-bold ${p.status === 'Active' ? 'text-green-600' : 'text-red-600'}">${p.status}</td>
+                    <td class="p-4">
+                        <button onclick="toggleStatus('${p._id}', '${p.status === 'Active' ? 'Inactive' : 'Active'}')" 
+                                class="${p.status === 'Active' ? 'bg-red-500' : 'bg-green-600'} text-white px-3 py-1 rounded text-[10px] font-bold uppercase">
+                            Mark as ${p.status === 'Active' ? 'Inactive' : 'Active'}
+                        </button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function updateStatus(id, status) {
-            await fetch(`/api/admin/update-partner/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status})});
-            loadPartners();
+        async function toggleStatus(id, newStatus) {
+            const res = await fetch(`/api/admin/update-partner/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: newStatus })
+            });
+            if(res.ok) {
+                alert(`✅ Partner is now ${newStatus}`);
+                loadPartners();
+            }
         }
     </script>
 </body>
