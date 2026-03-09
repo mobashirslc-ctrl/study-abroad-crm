@@ -1,59 +1,94 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config();
-
 const app = express();
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// MongoDB Connection
-const mongoURI = "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(mongoURI).then(() => console.log('✅ MongoDB Connected'));
-
-// --- Models ---
-const UniSchema = new mongoose.Schema({
-    country: String, uniName: String, course: String, intake: String,
-    degree: String, language: String, acadScore: String, langScore: String,
-    fee: String, currency: String, bankBalance: String, bankType: String,
-    maritalStatus: String, bankNameBD: String, loanAmount: String, partnerCommission: String
-});
-const University = mongoose.model('University', UniSchema);
-
-const PartnerSchema = new mongoose.Schema({
-    name: String, email: String, status: { type: String, default: 'Pending' },
-    wallet: { 
-        total: { type: Number, default: 0 }, 
-        pending: { type: Number, default: 0 }, 
-        withdrawn: { type: Number, default: 0 } 
-    },
-    subscription: { package: String, expireDate: Date }
-});
-const Partner = mongoose.model('Partner', PartnerSchema);
-
-// --- Routes ---
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-
-// API: Save University
-app.post('/api/admin/add-uni', async (req, res) => {
-    try {
-        const uni = new University(req.body);
-        await uni.save();
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+// ১. ইউনিভার্সিটি স্কিমা (সব ২১টি ফিল্ড লক করা)
+const universitySchema = new mongoose.Schema({
+    country: String,
+    uniName: String,
+    courseName: String,
+    intake: String,
+    degree: { type: String, enum: ['UG', 'PG', 'DIPLOMA', 'FOUNDATION', 'RESEARCH', 'PHD'] },
+    languageType: { type: String, enum: ['IELTS', 'PTE', 'DUOLINGO'] },
+    academicScore: String,
+    languageScore: String,
+    studyGap: String, // আপনার নতুন রিকয়ারমেন্ট
+    semesterFee: Number,
+    currency: { type: String, enum: ['DOLLAR', 'AUSTRALIA DOLLAR', 'CANADIAN DOLLAR', 'EURO', 'TAKA', 'UK POUND'] },
+    bankBalance: String,
+    bankType: { type: String, enum: ['FDR', 'SAVINGS'] },
+    maritalStatus: { type: String, enum: ['Single', 'With spouse'] },
+    bankNameBD: String,
+    loanAmount: String,
+    partnerCommission: String,
+    addedBy: String // Admin or Team
 });
 
-// API: Smart Assessment Search
+// ২. পার্টনার স্কিমা (Manual Approval & Auto-block)
+const partnerSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+    contact: String,
+    status: { type: String, default: 'Pending' }, // Pending, Active, Deactivate
+    subscriptionExpire: Date,
+    wallet: { total: Number, pending: Number, withdrawn: Number },
+    withdrawEnabled: { type: Boolean, default: false }
+});
+
+const University = mongoose.model('University', universitySchema);
+const Partner = mongoose.model('Partner', partnerSchema);
+
+// --- পারমানেন্ট লিঙ্ক (Routing Lock) ---
+
+// Admin Dashboard Link
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/admin.html'));
+});
+
+// Partner Dashboard Link
+app.get('/partner', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/partner.html'));
+});
+
+// Compliance Dashboard Link
+app.get('/compliance', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/compliance.html'));
+});
+
+// Team Dashboard Link
+app.get('/team', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/team.html'));
+});
+
+// --- API লজিক (Real-time) ---
+
+// স্মার্ট অ্যাসেসমেন্ট সার্চ (সব ফিল্ডসহ)
 app.get('/api/search-uni', async (req, res) => {
-    const { country, degree, language } = req.query;
+    const { country, degree, language, studyGap } = req.query;
     let query = {};
-    if(country) query.country = new RegExp(country, 'i');
-    if(degree && degree !== 'All') query.degree = degree;
-    if(language && language !== 'All') query.language = language;
+    if (country) query.country = new RegExp(country, 'i');
+    if (degree !== 'All') query.degree = degree;
+    if (language !== 'All') query.languageType = language;
+    
     const results = await University.find(query);
     res.json(results);
 });
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Live on ${PORT}`));
+// সাবস্ক্রিপশন চেক মিডলওয়্যার (Auto-block)
+const checkAuth = async (req, res, next) => {
+    const partner = await Partner.findById(req.headers.partnerid);
+    if (!partner || partner.status !== 'Active') return res.status(403).send("Account Inactive");
+    if (new Date() > partner.subscriptionExpire) {
+        partner.status = 'Deactivate';
+        await partner.save();
+        return res.status(403).send("Subscription Expired. Blocked!");
+    }
+    next();
+};
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server Locked on Port ${PORT}`));
