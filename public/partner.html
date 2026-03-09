@@ -1,93 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IHP CRM | Partner Portal</title>
+    <title>Partner Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-50 font-sans">
-
-    <nav class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold"><i class="fas fa-handshake mr-2"></i> PARTNER PORTAL</h1>
-            <div id="subscription-status" class="bg-green-600 px-3 py-1 rounded-full text-sm">Active</div>
-        </div>
-    </nav>
-
-    <div class="container mx-auto p-4 lg:p-8">
+<body class="bg-blue-50 p-5">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-blue-900">Smart Assessment Portal</h1>
         
-        <section class="bg-white rounded-xl shadow-lg p-6 mb-8 border-t-4 border-blue-600">
-            <h2 class="text-2xl font-bold mb-6 text-slate-800"><i class="fas fa-search-location mr-2"></i> Smart University Assessment</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-bold mb-1">Target Country</label>
-                    <input type="text" id="searchCountry" placeholder="e.g. UK" class="w-full p-2 border rounded shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold mb-1">Degree</label>
-                    <select id="searchDegree" class="w-full p-2 border rounded shadow-sm">
-                        <option value="All">All Degrees</option>
-                        <option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold mb-1">Language Test</label>
-                    <select id="searchLanguage" class="w-full p-2 border rounded shadow-sm">
-                        <option value="All">All Tests</option>
-                        <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold mb-1">Study Gap (Years)</label>
-                    <input type="number" id="searchGap" placeholder="e.g. 2" class="w-full p-2 border rounded shadow-sm">
-                </div>
-                <div class="md:col-span-4 mt-2">
-                    <button onclick="performAssessment()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-                        GET ASSESSMENT RESULTS
-                    </button>
-                </div>
-            </div>
-        </section>
+        <div class="bg-white p-6 rounded shadow-lg grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            <input type="text" id="searchCountry" placeholder="Country" class="border p-2 rounded">
+            <select id="searchDegree" class="border p-2 rounded">
+                <option value="All">All Degrees</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
+            </select>
+            <input type="text" id="searchAcademic" placeholder="My CGPA" class="border p-2 rounded">
+            <input type="text" id="searchLangScore" placeholder="My Score" class="border p-2 rounded">
+            <input type="text" id="searchGap" placeholder="My Study Gap" class="border p-2 rounded">
+            <button onclick="search()" class="bg-blue-600 text-white font-bold p-2 rounded">SEARCH</button>
+        </div>
 
-        <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
-
+        <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </div>
 
     <script>
-        async function performAssessment() {
-            const resultsGrid = document.getElementById('resultsGrid');
-            resultsGrid.innerHTML = '<p class="text-center col-span-full">Processing Data...</p>';
-
-            // API fetch logic
-            const res = await fetch(`/api/search-uni?country=${document.getElementById('searchCountry').value}&degree=${document.getElementById('searchDegree').value}`);
+        async function search() {
+            const country = document.getElementById('searchCountry').value;
+            const degree = document.getElementById('searchDegree').value;
+            const res = await fetch(`/api/search-uni?country=${country}&degree=${degree}`);
             const data = await res.json();
-
-            resultsGrid.innerHTML = '';
+            
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
             data.forEach(uni => {
-                resultsGrid.innerHTML += `
-                    <div class="bg-white border rounded-xl shadow hover:shadow-xl transition p-5 border-l-8 border-blue-500">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-lg font-bold text-blue-900">${uni.uniName}</h3>
-                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">${uni.degree}</span>
+                resultsDiv.innerHTML += `
+                    <div class="bg-white p-5 rounded shadow border-l-4 border-blue-500">
+                        <h2 class="text-xl font-bold">${uni.uniName}</h2>
+                        <p class="text-gray-600 mb-2">${uni.courseName} (${uni.degree})</p>
+                        <hr class="my-2">
+                        <div class="grid grid-cols-2 text-sm gap-2">
+                            <div>Intake: <b>${uni.intake}</b></div>
+                            <div>Fee: <b>${uni.semesterFee} ${uni.currency}</b></div>
+                            <div>Bank Suggest BD: <b class="text-red-600">${uni.bankNameBD}</b></div>
+                            <div>Loan: <b>${uni.loanAmount}</b></div>
+                            <div>Study Gap: <b>${uni.studyGap}</b></div>
+                            <div>Marital: <b>${uni.maritalStatus}</b></div>
                         </div>
-                        <p class="text-sm text-gray-600 mb-4"><i class="fas fa-book-open mr-2"></i> ${uni.courseName}</p>
-                        
-                        <div class="space-y-2 text-sm border-t pt-3">
-                            <div class="flex justify-between"><span>Intake:</span> <strong>${uni.intake}</strong></div>
-                            <div class="flex justify-between"><span>Semester Fee:</span> <strong>${uni.semesterFee} ${uni.currency}</strong></div>
-                            <div class="flex justify-between"><span>Marital Status:</span> <strong class="text-green-600">${uni.maritalStatus}</strong></div>
-                            <div class="flex justify-between"><span>Study Gap Allowed:</span> <strong>${uni.studyGap}</strong></div>
-                            <div class="flex justify-between font-bold text-red-600"><span>Bank Req BD:</span> <span>${uni.bankNameBD}</span></div>
-                            <div class="flex justify-between"><span>Loan Support:</span> <strong>${uni.loanAmount}</strong></div>
-                        </div>
-
-                        <button class="w-full mt-4 bg-slate-800 text-white py-2 rounded font-bold text-sm">
-                            <i class="fas fa-folder-plus mr-2"></i> OPEN STUDENT FILE
-                        </button>
+                        <button class="w-full mt-4 bg-gray-800 text-white p-2 rounded">OPEN STUDENT FILE</button>
                     </div>
                 `;
             });
