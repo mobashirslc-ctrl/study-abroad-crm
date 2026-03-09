@@ -32,13 +32,20 @@
         <div id="partner-list" class="section-content">
             <div class="bg-white p-6 rounded shadow border">
                 <h2 class="text-xl font-bold mb-6 text-blue-900 border-b pb-2">Active Partner Control</h2>
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-100 text-sm">
-                        <tr><th class="p-3 border">Partner Name</th><th class="p-3 border">Status</th><th class="p-3 border">Expiry Date</th><th class="p-3 border">Action</th></tr>
-                    </thead>
-                    <tbody id="partnerTableBody">
-                        </tbody>
-                </table>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-100 text-sm">
+                            <tr>
+                                <th class="p-3 border">Partner Name</th>
+                                <th class="p-3 border">Contact No</th>
+                                <th class="p-3 border">Status</th>
+                                <th class="p-3 border">Expiry Date</th>
+                                <th class="p-3 border">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partnerTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -57,7 +64,7 @@
                     <div><label class="form-label">Marital Status</label><select id="maritalStatus" class="form-input"><option>Single</option><option>With spouse</option></select></div>
                     
                     <div><label class="form-label">University Name</label><input type="text" id="uniName" class="form-input"></div>
-                    <div><label class="form-label">Language Requirement</label><select id="languageType" class="form-input"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select></div>
+                    <div><label class="form-label">Language Req</label><select id="languageType" class="form-input"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select></div>
                     <div><label class="form-label">Currency</label>
                         <select id="currency" class="form-input">
                             <option>AUD DOLLAR</option><option>DOLLAR</option><option>EURO</option><option>POUND</option><option>TAKA</option>
@@ -74,7 +81,7 @@
 
                     <input type="hidden" id="intake" value="Standard"><input type="hidden" id="academicScore" value="N/A"><input type="hidden" id="languageScore" value="N/A">
 
-                    <button type="submit" class="md:col-span-4 bg-[#2563eb] text-white font-bold py-3 mt-4 rounded hover:bg-blue-700 transition uppercase shadow-md flex justify-center items-center">
+                    <button type="submit" id="saveUniBtn" class="md:col-span-4 bg-[#2563eb] text-white font-bold py-3 mt-4 rounded hover:bg-blue-700 transition uppercase shadow-md flex justify-center items-center">
                         <i class="fas fa-save mr-2"></i> PERMANENTLY SAVE UNIVERSITY
                     </button>
                 </form>
@@ -84,7 +91,7 @@
         <div id="compliance" class="section-content">
             <div class="bg-white p-6 rounded shadow border text-center">
                 <h2 class="text-xl font-bold mb-4">Compliance Control Panel</h2>
-                <p class="text-gray-500">System security and global compliance settings.</p>
+                <p class="text-gray-500">Global compliance and policy management area.</p>
             </div>
         </div>
 
@@ -105,35 +112,64 @@
                 body.innerHTML = partners.map(p => `
                     <tr>
                         <td class="p-3 border font-semibold">${p.name}</td>
+                        <td class="p-3 border text-gray-600">${p.contactNo || 'N/A'}</td>
                         <td class="p-3 border">
-                            <select onchange="updatePartner('${p._id}', this.value, '${p.expiryDate}')" class="border p-1 rounded">
-                                <option ${p.status === 'Active' ? 'selected' : ''}>Active</option>
-                                <option ${p.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                            <select id="status-${p._id}" class="border p-1 rounded text-sm">
+                                <option value="Active" ${p.status === 'Active' ? 'selected' : ''}>Active</option>
+                                <option value="Inactive" ${p.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
                             </select>
                         </td>
-                        <td class="p-3 border"><input type="date" value="${p.expiryDate ? p.expiryDate.split('T')[0] : ''}" onchange="updatePartner('${p._id}', '${p.status}', this.value)" class="border p-1 rounded"></td>
-                        <td class="p-3 border"><button class="bg-blue-600 text-white px-3 py-1 rounded text-xs">Update</button></td>
+                        <td class="p-3 border">
+                            <input type="date" id="date-${p._id}" value="${p.expiryDate ? p.expiryDate.split('T')[0] : ''}" class="border p-1 rounded text-sm">
+                        </td>
+                        <td class="p-3 border">
+                            <button onclick="triggerUpdate('${p._id}')" id="btn-${p._id}" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">
+                                Update
+                            </button>
+                        </td>
                     </tr>
                 `).join('');
-            } catch (e) { console.log("No partner data found."); }
+            } catch (e) { alert("Failed to load partner data."); }
         }
 
-        async function updatePartner(id, status, expiryDate) {
-            await fetch('/api/update-partner', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, status, expiryDate })
-            });
-            alert("Partner settings updated!");
+        async function triggerUpdate(id) {
+            const status = document.getElementById(`status-${id}`).value;
+            const expiryDate = document.getElementById(`date-${id}`).value;
+            const btn = document.getElementById(`btn-${id}`);
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/update-partner', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id, status, expiryDate })
+                });
+                if(res.ok) { alert("Partner status updated!"); }
+                else { alert("Update failed!"); }
+            } catch (err) { alert("Connection Error"); }
+            finally { btn.innerHTML = 'Update'; btn.disabled = false; }
         }
 
         document.getElementById('uniForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
+            const btn = document.getElementById('saveUniBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> SAVING...';
+            btn.disabled = true;
+
             const fields = ['country','uniName','courseName','intake','degree','languageType','academicScore','languageScore','studyGap','semesterFee','currency','bankType','maritalStatus','bankNameBD','loanAmount','partnerCommission'];
             const data = {}; fields.forEach(id => { data[id] = document.getElementById(id).value; });
-            const res = await fetch('/api/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            if(res.ok) { alert("University Saved!"); e.target.reset(); }
+
+            try {
+                const res = await fetch('/api/add-university', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(data) 
+                });
+                if(res.ok) { alert("University Saved Successfully!"); e.target.reset(); }
+                else { alert("Save Failed!"); }
+            } catch (err) { alert("Server Offline"); }
+            finally { btn.innerHTML = '<i class="fas fa-save mr-2"></i> PERMANENTLY SAVE UNIVERSITY'; btn.disabled = false; }
         });
     </script>
 </body>
