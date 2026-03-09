@@ -2,55 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - IHP CRM</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin:0; }
-        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 320px; }
-        input, select, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ddd; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; font-weight: bold; }
-    </style>
+    <title>Partner Login | IHP CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="card">
-        <h2 id="title">Login</h2>
-        <form id="authForm">
-            <input type="text" id="name" placeholder="Full Name" style="display:none">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="pass" placeholder="Password" required>
-            <select id="role" style="display:none"><option value="partner">Partner</option></select>
-            <button type="submit" id="btn">Login</button>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-10 rounded-lg shadow-2xl w-full max-w-md border-t-4 border-blue-600">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 uppercase">Partner Login</h2>
+        <form id="loginForm" class="space-y-5">
+            <div><label class="block text-sm font-bold text-gray-600">Email</label><input type="email" id="email" class="w-full p-3 border rounded-md" placeholder="partner@example.com"></div>
+            <div><label class="block text-sm font-bold text-gray-600">Password</label><input type="password" id="password" class="w-full p-3 border rounded-md" placeholder="••••••••"></div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-md font-bold hover:bg-blue-700 shadow-lg">ACCESS DASHBOARD</button>
         </form>
-        <p onclick="toggle()" style="text-align:center; color:blue; cursor:pointer;" id="toggleTxt">Register New Account</p>
+        <p class="mt-6 text-center text-sm">New Partner? <a href="/register" class="text-blue-600 font-bold">Register Now</a></p>
     </div>
-
     <script>
-        let isLogin = true;
-        function toggle() {
-            isLogin = !isLogin;
-            document.getElementById('title').innerText = isLogin ? "Login" : "Register";
-            document.getElementById('name').style.display = isLogin ? "none" : "block";
-            document.getElementById('role').style.display = isLogin ? "none" : "block";
-            document.getElementById('btn').innerText = isLogin ? "Login" : "Register";
-        }
-
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
-            const body = { email: document.getElementById('email').value, password: document.getElementById('pass').value };
-            if(!isLogin) { body.name = document.getElementById('name').value; body.role = document.getElementById('role').value; }
-
-            const res = await fetch(isLogin ? '/api/auth/login' : '/api/auth/register', {
-                method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/partner/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password })
             });
-            const data = await res.json();
-            if(data.success) {
-                if(isLogin) {
-                    localStorage.setItem('userName', data.name);
-                    localStorage.setItem('userEmail', data.email);
-                    localStorage.setItem('userRole', data.role);
-                    window.location.href = `/${data.role}`;
-                } else { alert(data.message); toggle(); }
-            } else { alert(data.message || "Error occurred"); }
-        });
+            if(res.ok) {
+                const data = await res.json();
+                localStorage.setItem('partnerId', data.partnerId);
+                localStorage.setItem('partnerName', data.name);
+                alert("Login Successful!"); window.location.href = '/partner-dashboard';
+            } else {
+                const msg = await res.text(); alert(msg);
+            }
+        };
     </script>
 </body>
 </html>

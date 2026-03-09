@@ -1,57 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Assessment</title>
+    <title>Partner Sign Up | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-blue-50 p-5">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8 text-blue-900">Smart Assessment Portal</h1>
-        
-        <div class="bg-white p-6 rounded shadow-lg grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
-            <input type="text" id="searchCountry" placeholder="Country" class="border p-2 rounded">
-            <select id="searchDegree" class="border p-2 rounded">
-                <option value="All">All Degrees</option><option>UG</option><option>PG</option><option>DIPLOMA</option>
-            </select>
-            <input type="text" id="searchAcademic" placeholder="My CGPA" class="border p-2 rounded">
-            <input type="text" id="searchLangScore" placeholder="My Score" class="border p-2 rounded">
-            <input type="text" id="searchGap" placeholder="My Study Gap" class="border p-2 rounded">
-            <button onclick="search()" class="bg-blue-600 text-white font-bold p-2 rounded">SEARCH</button>
-        </div>
-
-        <div id="results" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+        <h2 class="text-3xl font-bold text-blue-700 mb-6 text-center">Partner Registration</h2>
+        <form id="regForm" class="space-y-4">
+            <div><label class="block text-sm font-semibold">Full Name</label><input type="text" id="name" class="w-full p-2 border rounded" required></div>
+            <div><label class="block text-sm font-semibold">Email Address</label><input type="email" id="email" class="w-full p-2 border rounded" required></div>
+            <div><label class="block text-sm font-semibold">Contact Number</label><input type="text" id="contact" class="w-full p-2 border rounded" required></div>
+            <div><label class="block text-sm font-semibold">Password</label><input type="password" id="password" class="w-full p-2 border rounded" required></div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">SUBMIT APPLICATION</button>
+        </form>
+        <p class="mt-4 text-center text-sm">Already have an account? <a href="/login" class="text-blue-600 font-bold">Login Here</a></p>
     </div>
-
     <script>
-        async function search() {
-            const country = document.getElementById('searchCountry').value;
-            const degree = document.getElementById('searchDegree').value;
-            const res = await fetch(`/api/search-uni?country=${country}&degree=${degree}`);
-            const data = await res.json();
-            
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-            data.forEach(uni => {
-                resultsDiv.innerHTML += `
-                    <div class="bg-white p-5 rounded shadow border-l-4 border-blue-500">
-                        <h2 class="text-xl font-bold">${uni.uniName}</h2>
-                        <p class="text-gray-600 mb-2">${uni.courseName} (${uni.degree})</p>
-                        <hr class="my-2">
-                        <div class="grid grid-cols-2 text-sm gap-2">
-                            <div>Intake: <b>${uni.intake}</b></div>
-                            <div>Fee: <b>${uni.semesterFee} ${uni.currency}</b></div>
-                            <div>Bank Suggest BD: <b class="text-red-600">${uni.bankNameBD}</b></div>
-                            <div>Loan: <b>${uni.loanAmount}</b></div>
-                            <div>Study Gap: <b>${uni.studyGap}</b></div>
-                            <div>Marital: <b>${uni.maritalStatus}</b></div>
-                        </div>
-                        <button class="w-full mt-4 bg-gray-800 text-white p-2 rounded">OPEN STUDENT FILE</button>
-                    </div>
-                `;
+        document.getElementById('regForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                contactNo: document.getElementById('contact').value,
+                password: document.getElementById('password').value
+            };
+            const res = await fetch('/api/partner/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
             });
-        }
+            if(res.ok) { alert("Registration Success! Account is Inactive until Admin Approval."); window.location.href = '/login'; }
+            else { alert("Failed. Email already registered."); }
+        };
     </script>
 </body>
 </html>
