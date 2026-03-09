@@ -2,27 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Registration | IHP CRM</title>
+    <title>Partner Sign Up | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 class="text-2xl font-bold text-blue-700 mb-6 text-center">Partner Sign Up</h2>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Join as Partner</h2>
+        <p class="text-gray-500 text-sm text-center mb-6">Create your account for IHP CRM access</p>
         <form id="regForm" class="space-y-4">
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border rounded-lg" required>
-            <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border rounded-lg" required>
-            <input type="text" id="contact" placeholder="Contact Number" class="w-full p-3 border rounded-lg" required>
-            <input type="password" id="password" placeholder="Create Password" class="w-full p-3 border rounded-lg" required>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg">REGISTER NOW</button>
+            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
+            <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
+            <input type="text" id="contact" placeholder="Contact Number" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
+            <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">SUBMIT REGISTRATION</button>
         </form>
-        <p class="mt-4 text-center text-sm">Already approved? <a href="/login" class="text-blue-600 font-bold">Login Here</a></p>
+        <p class="mt-4 text-center text-sm">Already a partner? <a href="/login" class="text-blue-600 font-bold underline">Login here</a></p>
     </div>
     <script>
         document.getElementById('regForm').onsubmit = async (e) => {
             e.preventDefault();
             const data = { name: document.getElementById('name').value, email: document.getElementById('email').value, contactNo: document.getElementById('contact').value, password: document.getElementById('password').value };
             const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
-            if(res.ok) { alert("Registration Done! Wait for admin approval."); window.location.href = '/login'; }
+            if(res.ok) { alert("Registration Success! Please wait for Admin Activation."); window.location.href = '/login'; }
         };
     </script>
 </body>
