@@ -1,29 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Login | IHP CRM</title><script src="https://cdn.tailwindcss.com"></script></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Partner Login | IHP CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
 <body class="bg-slate-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-96 border">
-        <h2 class="text-xl font-bold text-center mb-6">PARTNER LOGIN</h2>
-        <form onsubmit="handleLogin(event)" class="space-y-4">
-            <input type="email" id="email" placeholder="Email" required class="w-full p-3 border rounded-lg outline-none">
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">Login</button>
+    <div class="bg-white p-10 rounded-2xl shadow-xl w-96 border border-slate-200">
+        <h2 class="text-2xl font-black text-center text-slate-800 mb-6 uppercase tracking-tighter">IHP Partner Login</h2>
+        
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Registered Email</label>
+                <input type="email" id="email" required placeholder="name@company.com" 
+                       class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Password</label>
+                <input type="password" id="password" required placeholder="••••••••" 
+                       class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 transition text-sm">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition uppercase text-xs">
+                Login to Dashboard
+            </button>
         </form>
+        <p class="text-center text-[10px] text-slate-400 mt-6 uppercase">IHP Global Network CRM © 2026</p>
     </div>
+
     <script>
-        async function handleLogin(e) {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
-            const res = await fetch('/api/partner/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('partnerInfo', JSON.stringify(data));
-                window.location.href = "/partner";
-            } else { alert(data.message || "Login failed!"); }
-        }
+
+            try {
+                const res = await fetch('/api/partner/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // ডাটা সেভ এবং রিডাইরেক্ট
+                    localStorage.setItem('partnerInfo', JSON.stringify(data));
+                    window.location.href = "/partner";
+                } else {
+                    alert(data.message || "Login failed!");
+                }
+            } catch (error) {
+                alert("Server is currently offline. Please check Render logs.");
+            }
+        });
     </script>
 </body>
 </html>

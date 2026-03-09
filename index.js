@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Systems Online")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Online")).catch(err => console.log(err));
 
 // --- Schemas ---
 const Partner = mongoose.model('Partner', new mongoose.Schema({
@@ -22,32 +22,33 @@ const University = mongoose.model('University', new mongoose.Schema({
     semesterFee: String, bankNameBD: String, partnerCommission: { type: Number, default: 0 }, location: String
 }));
 
-// --- Routes (এই রাউটগুলো না থাকলে 404 এরর আসবে) ---
-
+// --- Routes ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
-// --- APIs ---
-
-// Login API
+// Login API (এটি JSON ডাটা পাঠাবে)
 app.post('/api/partner/login', async (req, res) => {
     try {
         const { email } = req.body;
         const partner = await Partner.findOne({ email });
+
         if (!partner) return res.status(404).json({ message: "User not found!" });
-        if (partner.status !== 'Active') return res.status(403).json({ message: "Account Inactive." });
-        res.json(partner);
-    } catch (e) { res.status(500).json({ message: "Server Error" }); }
+        if (partner.status !== 'Active') return res.status(403).json({ message: "Account Inactive. Contact Admin." });
+
+        res.json(partner); // সাকসেস হলে পার্টনার ডাটা পাঠাবে
+    } catch (e) {
+        res.status(500).json({ message: "Server Error" });
+    }
 });
 
-// Assessment Search API (FIXED Syntax Error here)
+// Assessment API (FIXED Syntax on Line 46)
 app.post('/api/partner/assessment', async (req, res) => {
     try {
         const { country, degree } = req.body;
         let query = {};
-        if (country) query.country = new RegExp(country, 'i'); // FIXED: 'new' keyword issue solved
+        if (country) query.country = new RegExp(country, 'i'); // সিনট্যাক্স ঠিক করা হয়েছে
         if (degree) query.degree = degree;
+        
         const results = await University.find(query);
         res.json(results);
     } catch (e) { res.status(500).json([]); }
