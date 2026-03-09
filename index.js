@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
-const bcrypt = require('bcryptjs');
 const app = express();
 
 app.use(express.json());
@@ -14,19 +13,18 @@ mongoose.connect(DB_URI).then(() => console.log("IHP CRM: System Online")).catch
 // --- Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
-    languageType: String, academicScore: String, languageScore: String, studyGap: String, 
-    semesterFee: String, currency: String, bankType: String, maritalStatus: String, 
-    bankNameBD: String, loanAmount: String, partnerCommission: { type: Number, default: 0 }
+    languageType: String, partnerCommission: { type: Number, default: 0 },
+    semesterFee: String, bankNameBD: String, loanAmount: String
 }));
 
 const Partner = mongoose.model('Partner', new mongoose.Schema({
-    name: String, email: { type: String, unique: true }, password: String,
+    name: String, email: { type: String, unique: true }, 
     walletBalance: { type: Number, default: 0 }, status: { type: String, default: 'Inactive' }
 }));
 
 const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
     partnerId: mongoose.Schema.Types.ObjectId, studentName: String, university: String,
-    commissionAmount: Number, visaStatus: { type: String, default: 'Pending' }, appliedDate: { type: Date, default: Date.now }
+    commissionAmount: Number, visaStatus: { type: String, default: 'Pending' }
 }));
 
 // --- Admin APIs ---
@@ -42,10 +40,7 @@ app.patch('/api/admin/update-status', async (req, res) => {
         const { fileId, status } = req.body;
         const file = await StudentFile.findById(fileId);
         const partner = await Partner.findById(file.partnerId);
-        
-        // রিজেক্ট হলে ওয়ালেট থেকে টাকা অটো কেটে যাবে
         if (status === 'Rejected') { partner.walletBalance -= file.commissionAmount; }
-        
         file.visaStatus = status;
         await partner.save(); await file.save();
         res.status(200).json({ success: true });
@@ -58,11 +53,8 @@ app.post('/api/partner/apply', async (req, res) => {
         const { partnerId, uniId, studentName } = req.body;
         const uni = await University.findById(uniId);
         const partner = await Partner.findById(partnerId);
-        
-        // ফাইল ওপেন করলেই কমিশন অটো অ্যাড হবে
         partner.walletBalance += Number(uni.partnerCommission);
         await partner.save();
-
         const newFile = new StudentFile({ partnerId, studentName, university: uni.uniName, commissionAmount: Number(uni.partnerCommission) });
         await newFile.save();
         res.status(200).json({ success: true, message: "File Opened & Commission Added!" });
@@ -81,10 +73,11 @@ app.get('/api/partner-data/:id', async (req, res) => {
     res.json({ walletBalance: partner.walletBalance, files });
 });
 
-// --- Routes ---
+// --- Essential Route Fixes ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Live on " + PORT));
+app.listen(PORT, () => console.log("Server Running..."));
