@@ -9,7 +9,7 @@ app.use(express.static('public'));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("System Locked")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("System Locked & Connected")).catch(err => console.log(err));
 
 // --- Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
@@ -27,8 +27,7 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
 
 const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
     partnerId: mongoose.Schema.Types.ObjectId, studentName: String, contact: String,
-    university: String, pdfUrl: String, visaStatus: { type: String, default: 'Pending' },
-    complianceMember: String, appliedDate: { type: Date, default: Date.now }
+    university: String, visaStatus: { type: String, default: 'Pending' }, appliedDate: { type: Date, default: Date.now }
 }));
 
 // --- Auth APIs ---
@@ -36,30 +35,32 @@ app.post('/api/partner/register', async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
         await new Partner({ ...req.body, password: hashedPassword }).save();
-        res.status(200).send("Registration Successful! Wait for Approval.");
-    } catch (e) { res.status(500).send("Error"); }
+        res.status(200).send("Success");
+    } catch (e) { res.status(500).send("Email exists"); }
 });
 
 app.post('/api/partner/login', async (req, res) => {
     const partner = await Partner.findOne({ email: req.body.email });
-    if (!partner || partner.status !== 'Active') return res.status(403).send("Account Inactive");
+    if (!partner || partner.status !== 'Active') return res.status(403).send("Inactive");
     const match = await bcrypt.compare(req.body.password, partner.password);
-    if (!match) return res.status(400).send("Wrong Password");
+    if (!match) return res.status(400).send("Error");
     res.status(200).json({ partnerId: partner._id, name: partner.name });
 });
 
-// --- University Search (Smart Assessment) ---
+// --- Smart Assessment API ---
 app.post('/api/uni-search', async (req, res) => {
-    const { country, degree, languageType } = req.body;
-    const results = await University.find({ country, degree, languageType });
+    const { country, degree, academicGPA, languageScore } = req.body;
+    // সরাসরি ম্যাচিং লজিক
+    const results = await University.find({ country, degree });
     res.json(results);
 });
 
 // --- Routes Mapping ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Live on " + PORT));

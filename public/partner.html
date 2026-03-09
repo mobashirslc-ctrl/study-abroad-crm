@@ -8,18 +8,18 @@
     <style>
         .section { display: none; }
         .active-section { display: block; }
-        .nav-link { cursor: pointer; padding: 10px 15px; border-radius: 5px; color: #cbd5e1; }
-        .active-tab { background: #3b82f6; color: white; }
+        .nav-link { cursor: pointer; padding: 12px 20px; transition: 0.3s; color: #cbd5e1; }
+        .active-tab { background: #3b82f6; color: white; font-weight: bold; border-radius: 8px; }
     </style>
 </head>
 <body class="bg-gray-100">
-    <nav class="bg-slate-900 p-4 sticky top-0 z-50 shadow-lg">
+    <nav class="bg-[#0f172a] p-4 sticky top-0 z-50 shadow-lg">
         <div class="container mx-auto flex justify-between items-center text-white">
-            <h1 class="font-bold text-xl uppercase">Partner <span class="text-blue-500">Master</span></h1>
+            <h1 class="font-bold text-xl">Partner <span class="text-blue-500">Master</span></h1>
             <div class="flex space-x-2">
-                <span class="nav-link active-tab" onclick="showTab('assessment', this)">Smart Assessment</span>
+                <span class="nav-link active-tab" onclick="showTab('assessment', this)">Assessment</span>
                 <span class="nav-link" onclick="showTab('tracking', this)">File Tracking</span>
-                <span class="nav-link" onclick="showTab('finance', this)">Withdraw & Package</span>
+                <span class="nav-link" onclick="showTab('withdraw', this)">Finance & Subscription</span>
             </div>
             <button onclick="location.href='/login'" class="bg-red-600 px-4 py-1 rounded text-sm font-bold">LOGOUT</button>
         </div>
@@ -27,47 +27,41 @@
 
     <div class="container mx-auto p-6">
         <div id="assessment" class="section active-section">
-            <div class="bg-white p-6 rounded shadow-lg">
-                <h2 class="font-bold mb-4 text-blue-700 uppercase border-b pb-2">Smart Assessment Tool</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <select id="country" class="border p-2 rounded"><option>Australia</option><option>UK</option><option>USA</option><option>Canada</option></select>
-                    <select id="degree" class="border p-2 rounded"><option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option><option>PhD</option></select>
-                    <select id="lang" class="border p-2 rounded"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                    <button onclick="searchUni()" class="bg-blue-600 text-white font-bold rounded">SEARCH UNIVERSITY</button>
+            <div class="bg-white p-8 rounded-xl shadow-lg border">
+                <h2 class="font-bold mb-6 text-gray-800 border-b pb-4">SMART ASSESSMENT TOOL</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div><label class="block text-xs font-bold uppercase text-gray-400">Country</label>
+                    <input type="text" id="aCountry" placeholder="Enter Country" class="w-full p-3 border rounded-lg"></div>
+                    
+                    <div><label class="block text-xs font-bold uppercase text-gray-400">Degree</label>
+                    <select id="aDegree" class="w-full p-3 border rounded-lg"><option>Ug</option><option>Pg</option><option>Diploma</option><option>PhD</option></select></div>
+                    
+                    <div><label class="block text-xs font-bold uppercase text-gray-400">Academic CGPA</label>
+                    <input type="text" id="aGPA" placeholder="e.g. 3.80" class="w-full p-3 border rounded-lg"></div>
+                    
+                    <div><label class="block text-xs font-bold uppercase text-gray-400">Language Score</label>
+                    <input type="text" id="aLangScore" placeholder="e.g. 6.5" class="w-full p-3 border rounded-lg"></div>
+                    
+                    <div class="flex items-end"><button onclick="searchUni()" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg shadow-lg">SEARCH</button></div>
                 </div>
-                <div id="searchResult" class="overflow-x-auto mt-4">
-                    </div>
+                <div id="searchResult" class="mt-8 overflow-x-auto"></div>
             </div>
         </div>
 
-        <div id="tracking" class="section">
-            <div class="bg-white p-6 rounded shadow">
-                <h2 class="font-bold mb-4 text-blue-700 uppercase">Student File Tracking</h2>
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-200">
-                        <tr><th>Student</th><th>Contact</th><th>University</th><th>PDF</th><th>Visa Status</th><th>Compliance</th><th>Date</th></tr>
-                    </thead>
-                    <tbody id="fileTable"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="finance" class="section">
+        <div id="withdraw" class="section">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-blue-800 text-white p-6 rounded-lg shadow-xl">
-                    <h3 class="text-sm uppercase font-bold">Total Commission</h3>
-                    <p class="text-3xl font-bold mt-2">$ <span id="totalAmt">0.00</span></p>
+                <div class="bg-blue-800 text-white p-8 rounded-xl shadow-xl">
+                    <h3 class="text-xs font-bold opacity-70">TOTAL COMMISSION</h3>
+                    <p class="text-3xl font-extrabold mt-2">$ <span id="balance">0.00</span></p>
                 </div>
-                <div class="bg-white p-6 rounded shadow border">
-                    <h3 class="font-bold border-b mb-4">Request Withdraw</h3>
-                    <select class="w-full p-2 border mb-2"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
-                    <input type="number" placeholder="Amount" class="w-full p-2 border mb-2">
-                    <button class="w-full bg-green-600 text-white py-2 font-bold rounded">WITHDRAW NOW</button>
-                </div>
-                <div class="bg-white p-6 rounded shadow border">
-                    <h3 class="font-bold text-red-600 border-b mb-4">Subscription Status</h3>
-                    <p class="text-sm">Expire Date: <span id="expDate" class="font-bold text-blue-600">Pending</span></p>
-                    <p class="text-xs text-gray-400 mt-2 italic">*Auto-block on expiration.</p>
+                <div class="bg-white p-8 rounded-xl shadow border col-span-2">
+                    <h3 class="font-bold border-b mb-6 uppercase text-gray-700">Request Withdraw</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select class="p-3 border rounded-lg"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+                        <input type="text" placeholder="Account Number" class="p-3 border rounded-lg">
+                        <input type="number" placeholder="Amount" class="p-3 border rounded-lg">
+                        <button class="bg-green-600 text-white font-bold rounded-lg shadow-lg">WITHDRAW NOW</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,13 +76,13 @@
         }
 
         async function searchUni() {
-            const data = { country: document.getElementById('country').value, degree: document.getElementById('degree').value, languageType: document.getElementById('lang').value };
+            const data = { country: document.getElementById('aCountry').value, degree: document.getElementById('aDegree').value };
             const res = await fetch('/api/uni-search', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
             const unis = await res.json();
             document.getElementById('searchResult').innerHTML = `
-                <table class="w-full text-xs">
-                    <thead class="bg-gray-100"><tr><th>Uni Name</th><th>Course</th><th>Intake</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
-                    <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.courseName}</td><td>${u.intake}</td><td>${u.semesterFee}</td><td>${u.partnerCommission}</td><td><button class="bg-blue-500 text-white px-2 py-1 rounded">Apply</button></td></tr>`).join('')}</tbody>
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-100 text-gray-600"><tr><th>University</th><th>Location</th><th>Course</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
+                    <tbody>${unis.map(u => `<tr class="border-b"><td>${u.uniName}</td><td>${u.country}</td><td>${u.courseName}</td><td>${u.semesterFee}</td><td class="text-blue-600 font-bold">${u.partnerCommission}</td><td><button class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs">Apply</button></td></tr>`).join('')}</tbody>
                 </table>`;
         }
     </script>
