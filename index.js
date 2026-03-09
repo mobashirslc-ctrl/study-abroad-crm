@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Render error fix
 const app = express();
 
 app.use(express.json());
@@ -21,13 +21,19 @@ const University = mongoose.model('University', new mongoose.Schema({
 
 const Partner = mongoose.model('Partner', new mongoose.Schema({
     name: String, email: { type: String, unique: true }, password: String,
-    contactNo: String, status: { type: String, default: 'Inactive' }, expiryDate: String,
+    contactNo: String, status: { type: String, default: 'Inactive' }, expiryDate: { type: String, default: 'Pending' },
     totalCommission: { type: Number, default: 0 }, pendingAmount: { type: Number, default: 0 }
 }));
 
 const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
-    partnerId: mongoose.Schema.Types.ObjectId, studentName: String, contact: String,
-    university: String, visaStatus: { type: String, default: 'Pending' }, appliedDate: { type: Date, default: Date.now }
+    partnerId: mongoose.Schema.Types.ObjectId, 
+    studentName: String, 
+    contact: String,
+    university: String, 
+    pdfUrl: String, 
+    visaStatus: { type: String, default: 'Pending' },
+    complianceMember: { type: String, default: 'Assigning...' },
+    appliedDate: { type: Date, default: Date.now }
 }));
 
 // --- Auth APIs ---
@@ -44,15 +50,20 @@ app.post('/api/partner/login', async (req, res) => {
     if (!partner || partner.status !== 'Active') return res.status(403).send("Inactive");
     const match = await bcrypt.compare(req.body.password, partner.password);
     if (!match) return res.status(400).send("Error");
-    res.status(200).json({ partnerId: partner._id, name: partner.name });
+    res.status(200).json({ partnerId: partner._id, name: partner.name, expiry: partner.expiryDate });
 });
 
 // --- Smart Assessment API ---
 app.post('/api/uni-search', async (req, res) => {
-    const { country, degree, academicGPA, languageScore } = req.body;
-    // সরাসরি ম্যাচিং লজিক
-    const results = await University.find({ country, degree });
+    const { country, degree, languageType } = req.body;
+    const results = await University.find({ country, degree, languageType });
     res.json(results);
+});
+
+// --- File Tracking API ---
+app.get('/api/my-students/:id', async (req, res) => {
+    const students = await StudentFile.find({ partnerId: req.params.id });
+    res.json(students);
 });
 
 // --- Routes Mapping ---
@@ -60,7 +71,6 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public/register.ht
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
-app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public/register.html')));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Live on " + PORT));
