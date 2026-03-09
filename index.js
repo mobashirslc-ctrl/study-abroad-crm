@@ -6,49 +6,48 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public'));
 
-// DB Connection with Error Handling
+// Database Connection Fix
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Database Connected")).catch(err => console.log("DB Error:", err.message));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Database Connected & Locked")).catch(err => console.log("DB Error:", err.message));
 
-// --- Schemas ---
-const University = mongoose.model('University', new mongoose.Schema({
+// ২০+ ফিল্ডের ইউনিভার্সিটি স্কিমা
+const universitySchema = new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
     languageType: String, academicScore: String, languageScore: String, studyGap: String, 
     semesterFee: String, currency: String, bankType: String, maritalStatus: String, 
     bankNameBD: String, loanAmount: String, partnerCommission: String
-}));
+});
+const University = mongoose.model('University', universitySchema);
 
+// পার্টনার স্কিমা (Contact No সহ)
 const Partner = mongoose.model('Partner', new mongoose.Schema({
     name: String, contactNo: String, status: { type: String, default: 'Active' }, expiryDate: String
 }));
 
-const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
-    name: String, contact: String, status: { type: String, default: 'Pending' }, fileUrl: String
-}));
-
-const Withdrawal = mongoose.model('Withdrawal', new mongoose.Schema({
-    partnerName: String, contact: String, status: { type: String, default: 'Due' }
-}));
-
-const Compliance = mongoose.model('Compliance', new mongoose.Schema({
-    name: String, orgName: String, contactNo: String, status: { type: String, default: 'Active' }
-}));
-
 // --- APIs ---
+// ১. ইউনিভার্সিটি সেভ API
 app.post('/api/add-university', async (req, res) => {
     try { await new University(req.body).save(); res.status(200).send("Success"); } 
-    catch (err) { res.status(500).send("Error"); }
+    catch (err) { res.status(500).send("Error Saving Data"); }
 });
 
+// ২. ডাটা লোড API
 app.get('/api/admin-data', async (req, res) => {
     const partners = await Partner.find();
-    const students = await StudentFile.find();
-    const withdrawals = await Withdrawal.find();
-    const compliances = await Compliance.find();
-    res.json({ partners, students, withdrawals, compliances });
+    const unis = await University.find();
+    res.json({ partners, unis });
+});
+
+// ৩. পার্টনার আপডেট API (Fixed Button Logic)
+app.patch('/api/update-partner/:id', async (req, res) => {
+    try {
+        const { status, expiryDate } = req.body;
+        await Partner.findByIdAndUpdate(req.params.id, { status, expiryDate });
+        res.status(200).json({ message: "Update Success" });
+    } catch (err) { res.status(500).json({ message: "Update Failed" }); }
 });
 
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.listen(PORT, () => console.log("Server Live on " + PORT));
