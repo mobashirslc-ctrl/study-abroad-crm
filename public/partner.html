@@ -2,123 +2,94 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Dashboard | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .section { display: none; } 
-        .active { display: block; }
-        .input-box { border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; transition: 0.2s; }
-        .input-box:focus { border-color: #2563eb; ring: 2px; ring-color: #bfdbfe; }
-        label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
-        .uni-card { border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; background: white; transition: 0.3s; }
-        .uni-card:hover { transform: translateY(-5px); shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .section { display: none; } .active { display: block; }
+        .input-box { border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; width: 100%; font-size: 13px; outline: none; }
+        label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; }
     </style>
 </head>
-<body class="bg-[#f8fafc] flex">
+<body class="bg-slate-50 flex">
 
-    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl flex flex-col">
-        <h1 class="text-xl font-black mb-8 text-blue-400 text-center tracking-tighter uppercase italic">IHP Partner</h1>
+    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl">
+        <h1 class="text-xl font-black mb-8 text-blue-400 text-center uppercase tracking-tighter">IHP Partner</h1>
         
         <div class="mb-10 p-4 bg-slate-800 rounded-xl border border-slate-700 text-center">
-            <p class="text-[9px] text-slate-400 uppercase font-bold mb-1">Total Commission</p>
+            <p class="text-[9px] text-slate-400 uppercase font-bold mb-1 tracking-widest">Your Wallet</p>
             <h3 id="walletBalance" class="text-2xl font-black text-green-400">$0.00</h3>
         </div>
 
-        <nav class="space-y-3 flex-1">
-            <button onclick="showSection('assessmentSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">🔍 Smart Assessment</button>
-            <button onclick="showSection('trackingSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">📂 File Tracking</button>
-            <button onclick="showSection('withdrawSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition flex items-center gap-3 font-semibold text-sm">💰 Withdraw Request</button>
+        <nav class="space-y-2">
+            <button onclick="showSection('assessmentSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition font-semibold text-sm">🔍 Smart Assessment</button>
+            <button onclick="showSection('trackingSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition font-semibold text-sm">📂 File Tracking</button>
         </nav>
-        
-        <div class="pt-6 border-t border-slate-800">
-            <button onclick="logout()" class="w-full bg-red-500/10 text-red-400 py-2 rounded-lg text-xs font-bold hover:bg-red-500 hover:text-white transition">LOGOUT</button>
-        </div>
     </div>
 
     <div class="flex-1 p-10 overflow-y-auto h-screen">
 
-        <div id="assessmentSection" class="section active">
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 mb-8">
-                <h2 class="text-2xl font-black text-slate-800 mb-6 uppercase tracking-tight">Smart Assessment Tool</h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-8">
-                    <div><label>Country</label><input type="text" id="aCountry" placeholder="e.g. UK" class="input-box"></div>
-                    <div><label>Degree</label>
-                        <select id="aDegree" class="input-box">
-                            <option value="">All</option>
-                            <option>Ug</option><option>Pg</option><option>Diploma</option>
-                            <option>Foundation</option><option>PhD</option><option>Research</option>
-                        </select>
-                    </div>
-                    <div><label>Language Test</label>
-                        <select id="aLanguage" class="input-box">
-                            <option value="">Any</option>
-                            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option>
-                        </select>
-                    </div>
-                    <div><label>Score</label><input type="text" id="aLangScore" placeholder="Min Score" class="input-box"></div>
-                    <div><label>Academic Result</label><input type="text" id="aAcademic" placeholder="GPA/CGPA" class="input-box"></div>
-                    <div class="flex items-end">
-                        <button onclick="runAssessment()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition uppercase text-xs">Search Uni</button>
-                    </div>
+        <div id="assessmentSection" class="section active bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-black mb-6 uppercase tracking-tight text-slate-800 border-b pb-4">Smart Assessment Tool</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+                <div><label>Country</label><input type="text" id="aCountry" placeholder="e.g. UK" class="input-box"></div>
+                <div><label>Degree</label>
+                    <select id="aDegree" class="input-box">
+                        <option value="">All</option>
+                        <option>Ug</option><option>Pg</option><option>Diploma</option>
+                        <option>Foundation</option><option>PhD</option><option>Research</option>
+                    </select>
                 </div>
-
-                <div id="assessmentResult" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    </div>
+                <div><label>Language</label>
+                    <select id="aLanguage" class="input-box">
+                        <option value="">Select</option>
+                        <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                    </select>
+                </div>
+                <div><label>Score</label><input type="text" id="aLangScore" placeholder="Score" class="input-box"></div>
+                <div><label>Academic</label><input type="text" id="aAcademic" placeholder="GPA" class="input-box"></div>
+                <div class="flex items-end"><button onclick="runAssessment()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-blue-200">SEARCH</button></div>
             </div>
+
+            <div id="assessmentResult" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
         </div>
 
         <div id="trackingSection" class="section bg-white p-8 rounded-2xl shadow-sm border">
-            <h2 class="text-xl font-bold mb-6 uppercase text-slate-800 border-b pb-4">My Student Files</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left">
-                    <thead>
-                        <tr class="bg-slate-50 text-[10px] uppercase text-slate-500 font-bold border-b">
-                            <th class="p-4">Student Name</th>
-                            <th class="p-4">Contact</th>
-                            <th class="p-4">University</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="trackingTableBody" class="text-sm"></tbody>
-                </table>
-            </div>
+            <h2 class="text-xl font-bold mb-6 uppercase border-b pb-4">File Tracking</h2>
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-[10px] uppercase text-slate-500 font-bold border-b">
+                    <tr><th class="p-4">Student</th><th class="p-4">Contact</th><th class="p-4">University</th><th class="p-4">Status</th><th class="p-4">Commission</th></tr>
+                </thead>
+                <tbody id="trackingTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
         </div>
-
     </div>
 
     <div id="fileModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-2xl w-[450px] shadow-2xl">
-            <h3 class="text-xl font-bold mb-2 text-slate-800">Open New Student File</h3>
-            <p id="modalUniTitle" class="text-blue-600 font-bold mb-6 text-sm"></p>
-            
+        <div class="bg-white p-8 rounded-2xl w-[400px] shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-slate-800 uppercase tracking-tighter">Open Student File</h3>
             <div class="space-y-4">
-                <div><label>Student Full Name</label><input type="text" id="sName" placeholder="Full Name" class="input-box"></div>
-                <div><label>Student Contact No</label><input type="text" id="sContact" placeholder="017xxxxxxxx" class="input-box"></div>
-                <div class="bg-green-50 p-4 rounded-lg border border-green-100 flex justify-between items-center">
-                    <span class="text-xs font-bold text-green-700 uppercase">Commission Earn:</span>
-                    <span id="modalComm" class="text-xl font-black text-green-600"></span>
+                <div><label>Student Name</label><input type="text" id="sName" placeholder="Full Name" class="input-box"></div>
+                <div><label>Contact No</label><input type="text" id="sContact" placeholder="Phone Number" class="input-box"></div>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between">
+                    <span class="text-[10px] font-bold text-green-700 uppercase">Will Earn:</span>
+                    <span id="modalComm" class="text-lg font-black text-green-600"></span>
                 </div>
             </div>
-
-            <div class="grid grid-cols-2 gap-4 mt-8">
-                <button onclick="submitFile()" class="bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition uppercase text-xs">Confirm & Open</button>
-                <button onclick="closeModal()" class="bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition uppercase text-xs">Cancel</button>
+            <div class="flex gap-3 mt-8">
+                <button onclick="submitFile()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Confirm</button>
+                <button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-500 py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let selectedUniData = {};
-        const partnerData = JSON.parse(localStorage.getItem('partnerInfo') || '{}');
-        const pId = partnerData._id;
+        let selectedUni = {};
+        const pId = JSON.parse(localStorage.getItem('partnerInfo') || '{}')._id;
 
-        // On Load
         window.onload = () => {
-            if(!pId) { alert("Please login first"); window.location.href = "/login.html"; }
-            document.getElementById('walletBalance').innerText = `$${partnerData.walletBalance || 0}`;
+            if(!pId) { alert("Please login first"); window.location.href = "/"; }
+            updateWalletDisplay();
         };
 
         function showSection(id) {
@@ -128,13 +99,61 @@
         }
 
         async function runAssessment() {
-            const filters = {
-                country: document.getElementById('aCountry').value,
-                degree: document.getElementById('aDegree').value,
-                languageType: document.getElementById('aLanguage').value
-            };
-
             const res = await fetch('/api/partner/assessment', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body:
+                body: JSON.stringify({ country: document.getElementById('aCountry').value, degree: document.getElementById('aDegree').value })
+            });
+            const unis = await res.json();
+            const div = document.getElementById('assessmentResult');
+            div.innerHTML = unis.map(u => `
+                <div class="bg-slate-50 border rounded-2xl p-6 shadow-sm">
+                    <h3 class="font-black text-blue-900 uppercase leading-none">${u.uniName}</h3>
+                    <p class="text-[10px] text-blue-500 font-bold mb-3 mt-1 uppercase">${u.location}, ${u.country}</p>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-slate-600 border-y py-3 mb-4">
+                        <p><b>Course:</b> ${u.courseName}</p><p><b>Intake:</b> ${u.intake}</p>
+                        <p><b>Fee:</b> ${u.semesterFee} ${u.currency}</p><p><b>Bank BD:</b> ${u.bankNameBD}</p>
+                        <p><b>Loan:</b> ${u.loanAmount}</p><p><b>Marital:</b> ${u.maritalStatus}</p>
+                        <p class="col-span-2"><b>Bank Req:</b> ${u.bankType}</p>
+                    </div>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-blue-50 shadow-sm">
+                        <div><p class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Commission</p><p class="text-xl font-black text-green-600">$${u.partnerCommission}</p></div>
+                        <button onclick="openFileModal('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-tighter">Open File</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openFileModal(name, comm) {
+            selectedUni = { name, comm };
+            document.getElementById('modalComm').innerText = `$${comm}`;
+            document.getElementById('fileModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('fileModal').classList.add('hidden'); }
+
+        async function submitFile() {
+            const data = { partnerId: pId, studentName: document.getElementById('sName').value, studentContact: document.getElementById('sContact').value, universityName: selectedUni.name, commissionAmount: selectedUni.comm };
+            const res = await fetch('/api/partner/open-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            if(res.ok) { alert("✅ Success: File Opened & Wallet Updated!"); location.reload(); }
+        }
+
+        async function loadTracking() {
+            const res = await fetch(`/api/partner/my-files/${pId}`);
+            const files = await res.json();
+            const tbody = document.getElementById('trackingTableBody');
+            tbody.innerHTML = files.map(f => `
+                <tr class="hover:bg-slate-50 transition border-b">
+                    <td class="p-4 font-bold text-slate-800">${f.studentName}</td><td class="p-4">${f.studentContact}</td>
+                    <td class="p-4">${f.universityName}</td><td class="p-4 text-xs font-bold text-blue-600">${f.status}</td>
+                    <td class="p-4 text-green-600 font-bold">$${f.commissionAmount}</td>
+                </tr>`).join('');
+        }
+
+        function updateWalletDisplay() {
+            const info = JSON.parse(localStorage.getItem('partnerInfo') || '{}');
+            document.getElementById('walletBalance').innerText = `$${info.walletBalance || 0}`;
+        }
+    </script>
+</body>
+</html>
