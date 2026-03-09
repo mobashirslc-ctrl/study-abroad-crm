@@ -1,44 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin | IHP CRM</title>
+    <meta charset="UTF-8"><title>Admin Panel | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex">
-    <div class="w-64 bg-slate-900 h-screen text-white p-6 sticky top-0">
+<body class="bg-slate-50 flex">
+    <div class="w-64 bg-[#0f172a] min-h-screen text-white p-6 sticky top-0">
         <h1 class="text-xl font-bold mb-10 text-blue-400">ADMIN PANEL</h1>
-        <nav class="space-y-4">
-            <button class="block w-full text-left hover:text-blue-400">University Management</button>
-            <button class="block w-full text-left hover:text-blue-400">Partner List</button>
-            <button class="block w-full text-left hover:text-blue-400">File Compliance</button>
+        <nav class="space-y-6 text-sm">
+            <button onclick="showSection('uniForm')" class="block w-full text-left hover:text-blue-300">University Management</button>
+            <button onclick="showSection('partnerList')" class="block w-full text-left hover:text-blue-300">Partner Management</button>
+            <button onclick="showSection('compliance')" class="block w-full text-left hover:text-blue-300">File Compliance</button>
+            <button onclick="showSection('finance')" class="block w-full text-left hover:text-blue-300">Withdraw & Subs</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-10">
-        <div class="bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
-            <h2 class="text-2xl font-bold mb-6 uppercase">Add New University</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="uniForm">
+    <div class="flex-1 p-8">
+        <div id="uniSection" class="bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-600">
+            <h2 class="text-xl font-bold mb-6 uppercase">Add University Requirements</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="uniForm">
                 <input type="text" id="country" placeholder="Country" class="p-2 border rounded">
                 <input type="text" id="uniName" placeholder="University Name" class="p-2 border rounded">
                 <input type="text" id="courseName" placeholder="Course Name" class="p-2 border rounded">
-                <input type="text" id="intake" placeholder="Intake" class="p-2 border rounded">
-                <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option></select>
-                <select id="languageType" class="p-2 border rounded"><option>IELTS</option><option>PTE</option></select>
-                <input type="number" id="partnerCommission" placeholder="Commission ($)" class="p-2 border rounded font-bold text-blue-600">
-                <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="p-2 border rounded">
+                <select id="degree" class="p-2 border rounded"><option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option></select>
                 <input type="text" id="semesterFee" placeholder="Semester Fee" class="p-2 border rounded">
-            </div>
-            <button onclick="saveUniversity()" class="mt-8 bg-blue-600 text-white px-10 py-3 rounded font-bold shadow-lg">SAVE UNIVERSITY</button>
+                <input type="text" id="bankNameBD" placeholder="Bank Name BD" class="p-2 border rounded">
+                <input type="number" id="partnerCommission" placeholder="Commission ($)" class="p-2 border rounded font-bold">
+                <input type="text" id="intake" placeholder="Intake (e.g. Jan, Feb)" class="p-2 border rounded">
+                </div>
+            <button onclick="saveUni()" class="mt-8 bg-blue-600 text-white px-8 py-3 rounded font-bold shadow-md">SAVE UNIVERSITY INFORMATION</button>
         </div>
     </div>
 
     <script>
-        async function saveUniversity() {
+        async function saveUni() {
             const data = {};
             document.querySelectorAll('#uniForm input, #uniForm select').forEach(el => data[el.id] = el.value);
             const res = await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
             const result = await res.json();
-            if(result.success) { alert("✅ " + result.message); location.reload(); }
+            if(result.success) { alert("✅ University Added Successfully!"); location.reload(); }
         }
     </script>
 </body>

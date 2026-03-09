@@ -1,39 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner Dashboard</title>
+    <meta charset="UTF-8"><title>Partner Master | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>.section { display: none; } .active-section { display: block; }</style>
+    <style>.section { display: none; } .active-section { display: block; } th, td { padding: 10px; border: 1px solid #e2e8f0; font-size: 11px; }</style>
 </head>
-<body class="bg-gray-50 flex" onload="loadDashboard()">
+<body class="bg-slate-50 flex" onload="loadData()">
     <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0">
         <h1 class="text-xl font-bold mb-10">PARTNER <span class="text-blue-500">MASTER</span></h1>
         <nav class="space-y-4">
-            <button onclick="showTab('assessment')" class="block w-full text-left py-2 hover:bg-slate-800 rounded px-2">Assesment</button>
-            <button onclick="showTab('tracking')" class="block w-full text-left py-2 hover:bg-slate-800 rounded px-2">File Tracking</button>
-            <button onclick="showTab('finance')" class="block w-full text-left py-2 hover:bg-slate-800 rounded px-2">Finance & Withdraw</button>
+            <button onclick="showTab('assessment')" class="block w-full text-left py-2 hover:bg-slate-800 px-2 rounded">Smart Assesment</button>
+            <button onclick="showTab('tracking')" class="block w-full text-left py-2 hover:bg-slate-800 px-2 rounded">File Tracking</button>
+            <button onclick="showTab('finance')" class="block w-full text-left py-2 hover:bg-slate-800 px-2 rounded">Finance & Subs</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-10">
-        <div id="assessment" class="section active-section">
-            <div class="bg-white p-6 rounded shadow grid grid-cols-4 gap-4 mb-6">
+    <div class="flex-1 p-8">
+        <div id="assessment" class="section active-section bg-white p-6 rounded shadow-lg">
+            <h2 class="font-bold mb-4 uppercase text-blue-800">Smart Assessment Tool</h2>
+            <div class="grid grid-cols-4 gap-4 mb-6">
                 <input type="text" id="sCountry" placeholder="Country" class="border p-2 rounded">
-                <select id="sDegree" class="border p-2 rounded"><option>Ug</option><option>Pg</option></select>
-                <button onclick="searchUni()" class="bg-blue-600 text-white rounded font-bold uppercase text-xs">Search</button>
+                <select id="sDegree" class="border p-2 rounded">
+                    <option>Ug</option><option>Pg</option><option>Diploma</option><option>Foundation</option><option>PhD</option>
+                </select>
+                <select id="sLang" class="border p-2 rounded">
+                    <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
+                </select>
+                <button onclick="searchUni()" class="bg-blue-600 text-white rounded font-bold uppercase">Search</button>
             </div>
-            <div id="results" class="bg-white p-4 rounded shadow overflow-x-auto"></div>
+            <div id="results" class="overflow-x-auto mt-6"></div>
         </div>
 
         <div id="finance" class="section">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-blue-900 text-white p-10 rounded-2xl shadow-xl">
-                    <p class="text-xs opacity-60 uppercase">Wallet Balance</p>
-                    <h2 class="text-4xl font-extrabold">$ <span id="wallet">0.00</span></h2>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="bg-blue-900 text-white p-8 rounded-xl shadow-lg">
+                    <p class="text-xs opacity-60">Total Amount Cart</p>
+                    <h2 class="text-3xl font-bold">$ <span id="wallet">0.00</span></h2>
                 </div>
-                <div class="bg-white p-10 rounded-2xl shadow border">
-                    <button id="withdrawBtn" disabled class="w-full bg-gray-300 text-white py-4 rounded-lg font-bold cursor-not-allowed uppercase">Withdraw Locked</button>
-                    <p class="text-[10px] text-red-500 mt-2 font-bold uppercase italic text-center">Unlocked after first visa 'Completed'</p>
+                <div class="bg-white p-8 rounded-xl shadow border">
+                    <h3 class="font-bold mb-4">WITHDRAW</h3>
+                    <select id="method" class="w-full border p-2 mb-4 rounded"><option>Bkash</option><option>Nagad</option><option>Bank Account</option></select>
+                    <button id="withdrawBtn" disabled class="w-full bg-gray-300 text-white py-3 rounded-lg font-bold cursor-not-allowed">LOCKED</button>
                 </div>
             </div>
         </div>
@@ -43,29 +50,22 @@
         function showTab(id) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
 
         async function searchUni() {
-            const res = await fetch('/api/uni-search', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: "IELTS" }) });
+            const res = await fetch('/api/uni-search', { method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ country: document.getElementById('sCountry').value, degree: document.getElementById('sDegree').value, languageType: document.getElementById('sLang').value }) 
+            });
             const unis = await res.json();
             document.getElementById('results').innerHTML = `<table class="w-full text-left">
-                <thead class="bg-blue-50"><tr><th>University</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
-                <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.semesterFee}</td><td class="font-bold text-blue-600">$${u.partnerCommission}</td><td><button onclick="applyNow('${u._id}')" class="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-bold">OPEN FILE</button></td></tr>`).join('')}</tbody>
+                <thead class="bg-gray-100"><tr><th>University</th><th>Location</th><th>Intake</th><th>Commission</th><th>Action</th></tr></thead>
+                <tbody>${unis.map(u => `<tr><td>${u.uniName}</td><td>${u.country}</td><td>${u.intake}</td><td class="text-blue-600 font-bold">$${u.partnerCommission}</td><td><button onclick="applyNow('${u._id}')" class="bg-green-600 text-white px-3 py-1 rounded text-[10px]">OPEN FILE</button></td></tr>`).join('')}</tbody>
             </table>`;
         }
 
         async function applyNow(uniId) {
-            const res = await fetch('/api/partner/apply', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ partnerId: localStorage.getItem('partnerId'), uniId, studentName: "Student" }) });
-            const r = await res.json(); alert(r.message); loadDashboard();
-        }
-
-        async function loadDashboard() {
-            const res = await fetch(`/api/partner-data/${localStorage.getItem('partnerId')}`);
-            const data = await res.json();
-            document.getElementById('wallet').innerText = data.walletBalance;
-            const hasCompleted = data.files.some(f => f.visaStatus === 'Completed');
-            if(hasCompleted) {
-                const btn = document.getElementById('withdrawBtn');
-                btn.disabled = false; btn.innerText = "WITHDRAW NOW";
-                btn.classList.replace('bg-gray-300', 'bg-green-600'); btn.classList.remove('cursor-not-allowed');
-            }
+            const student = prompt("Enter Student Name:");
+            const res = await fetch('/api/partner/apply', { method: 'POST', headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify({ partnerId: localStorage.getItem('partnerId'), uniId, studentName: student }) 
+            });
+            const r = await res.json(); alert(r.message); location.reload();
         }
     </script>
 </body>
