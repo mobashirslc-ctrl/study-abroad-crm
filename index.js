@@ -8,9 +8,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Core Locked & Live")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: PART 2 SYNCED")).catch(err => console.log(err));
 
-// --- Permanently Locked Schemas ---
+// --- Updated Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
     languageType: String, academicScore: String, languageScore: String, studyGap: String, 
@@ -20,26 +20,21 @@ const University = mongoose.model('University', new mongoose.Schema({
 }));
 
 const Partner = mongoose.model('Partner', new mongoose.Schema({
-    name: String, contact: String, orgName: String, email: { type: String, unique: true }, 
-    status: { type: String, default: 'Inactive' }, expiryDate: Date,
-    walletBalance: { type: Number, default: 0 }, subscriptionStatus: { type: String, default: 'Due' }
+    name: String, 
+    contact: String, 
+    orgName: String, 
+    email: { type: String, unique: true }, 
+    status: { type: String, default: 'Inactive' }, 
+    expiryDate: Date,
+    walletBalance: { type: Number, default: 0 }
 }));
 
-const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
-    partnerId: mongoose.Schema.Types.ObjectId, studentName: String, contact: String, university: String,
-    commissionAmount: Number, visaStatus: { type: String, default: 'Pending' }, 
-    complianceMember: String, appliedDate: { type: Date, default: Date.now }
-}));
-
-// --- Admin APIs ---
-
-// Part 1: Save University
+// --- APIs ---
 app.post('/api/admin/add-university', async (req, res) => {
     try { await new University(req.body).save(); res.status(200).json({ success: true }); }
     catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Part 2: Partner Management
 app.get('/api/admin/partners', async (req, res) => {
     try { const partners = await Partner.find(); res.json(partners); }
     catch (e) { res.status(500).send("Error fetching partners"); }
@@ -53,9 +48,8 @@ app.patch('/api/admin/update-partner/:id', async (req, res) => {
     } catch (e) { res.status(500).send("Update failed"); }
 });
 
-// --- Final Route Locks ---
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Active on ${PORT}`));
