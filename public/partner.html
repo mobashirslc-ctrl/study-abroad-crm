@@ -1,146 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner Dashboard | IHP CRM</title>
+    <meta charset="UTF-8"><title>Partner Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .section { display: none; } .active { display: block; }
-        .input-box { border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; width: 100%; font-size: 13px; }
-    </style>
+    <style>.section { display: none; } .active { display: block; }</style>
 </head>
-<body class="bg-slate-50 flex">
-
-    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0 shadow-2xl">
-        <h1 class="text-xl font-bold mb-6 text-blue-400 text-center uppercase">Partner Panel</h1>
-        <div class="mb-8 p-3 bg-slate-800 rounded text-center">
-            <p class="text-[10px] text-slate-400 uppercase">Wallet Balance</p>
-            <h3 id="walletDisplay" class="text-xl font-bold text-green-400">$0.00</h3>
+<body class="bg-gray-100 flex">
+    <div class="w-64 bg-[#0f172a] h-screen text-white p-6 sticky top-0">
+        <h1 class="text-xl font-bold mb-8">PARTNER MASTER</h1>
+        <div class="mb-6 p-4 bg-slate-800 rounded">
+            <p class="text-[10px] text-gray-400">WALLET BALANCE</p>
+            <h2 id="wallet" class="text-xl font-bold text-green-400">$0.00</h2>
         </div>
-        <nav class="space-y-2">
-            <button onclick="showSection('assessmentSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">🔍 Assessment Tool</button>
-            <button onclick="showSection('trackingSection')" class="w-full text-left py-3 px-4 hover:bg-slate-800 rounded-lg transition">📂 File Tracking</button>
+        <nav class="space-y-4">
+            <button onclick="show('assess')" class="w-full text-left">🔍 Assessment Tool</button>
+            <button onclick="show('track')" class="w-full text-left">📂 File Tracking</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-8">
-
-        <div id="assessmentSection" class="section active bg-white p-8 rounded-xl shadow-sm border">
-            <h2 class="text-lg font-bold mb-6 uppercase border-b pb-3 text-slate-700">Part 2: Smart Assessment</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <input type="text" id="aCountry" placeholder="Country" class="input-box">
-                <select id="aLanguage" class="input-box"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option></select>
-                <input type="text" id="aLangScore" placeholder="Lang Score" class="input-box">
-                <select id="aDegree" class="input-box"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option><option>RESEARCH</option></select>
-                <input type="text" id="aAcademic" placeholder="Academic Result" class="input-box">
-                <button onclick="runAssessment()" class="bg-blue-600 text-white rounded font-bold text-xs uppercase">Search</button>
+    <div class="flex-1 p-10">
+        <div id="assess" class="section active bg-white p-8 rounded shadow">
+            <h2 class="font-bold mb-6 border-b pb-2">PART 2: SMART ASSESSMENT</h2>
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <input id="c" placeholder="Country" class="border p-2 rounded">
+                <select id="d" class="border p-2 rounded"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
+                <button onclick="search()" class="bg-blue-600 text-white rounded font-bold">SEARCH</button>
             </div>
-            
-            <div id="assessmentResult" class="grid grid-cols-1 gap-4">
-                </div>
+            <div id="results" class="space-y-4"></div>
         </div>
 
-        <div id="trackingSection" class="section bg-white p-8 rounded-xl shadow-sm border">
-            <h2 class="text-lg font-bold mb-6 uppercase border-b pb-3 text-slate-700">Part 3: File Tracking</h2>
+        <div id="track" class="section bg-white p-8 rounded shadow">
+            <h2 class="font-bold mb-6 border-b pb-2">PART 3: FILE TRACKING</h2>
             <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 font-bold uppercase text-[10px]">
-                    <tr><th class="p-4">Student Name</th><th class="p-4">Contact</th><th class="p-4">University</th><th class="p-4">Status</th><th class="p-4">Date & Time</th></tr>
-                </thead>
-                <tbody id="trackingTable"></tbody>
+                <thead><tr class="bg-gray-50 uppercase text-[10px]">
+                    <th class="p-4">Student</th><th class="p-4">Contact</th><th class="p-4">Status</th><th class="p-4">Date</th>
+                </tr></thead>
+                <tbody id="trackTable"></tbody>
             </table>
-        </div>
-
-    </div>
-
-    <div id="fileModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
-        <div class="bg-white p-8 rounded-xl w-96">
-            <h3 class="font-bold mb-4">Open Student File</h3>
-            <input type="text" id="sName" placeholder="Student Name" class="input-box mb-3">
-            <input type="text" id="sContact" placeholder="Student Contact" class="input-box mb-3">
-            <div class="flex gap-2">
-                <button onclick="submitFile()" class="bg-green-600 text-white flex-1 py-2 rounded font-bold">Confirm</button>
-                <button onclick="closeModal()" class="bg-gray-200 flex-1 py-2 rounded font-bold">Cancel</button>
-            </div>
         </div>
     </div>
 
     <script>
-        let selectedUni = {};
-        const partnerId = "YOUR_LOGGED_IN_ID"; // এটি লগইন সেশন থেকে আসবে
+        const pId = "YOUR_ID"; // লগইন করার পর এটি সেট হবে
 
-        function showSection(id) {
+        function show(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            if(id === 'trackingSection') loadTracking();
         }
 
-        async function runAssessment() {
+        async function search() {
             const res = await fetch('/api/partner/assessment', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ country: document.getElementById('aCountry').value, degree: document.getElementById('aDegree').value })
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ country: document.getElementById('c').value, degree: document.getElementById('d').value })
             });
             const unis = await res.json();
-            const div = document.getElementById('assessmentResult');
-            div.innerHTML = unis.map(u => `
-                <div class="p-6 bg-slate-50 border rounded-xl flex justify-between items-center shadow-sm">
+            document.getElementById('results').innerHTML = unis.map(u => `
+                <div class="p-6 border rounded-xl flex justify-between bg-slate-50">
                     <div>
-                        <h4 class="font-bold text-blue-700 text-lg uppercase">${u.uniName}</h4>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase">${u.location}, ${u.country} | Intake: ${u.intake}</p>
-                        <div class="grid grid-cols-2 gap-4 mt-3 text-xs">
-                            <p><b>Fee:</b> ${u.semesterFee} ${u.currency}</p>
-                            <p><b>Bank BD:</b> ${u.bankNameBD}</p>
-                            <p><b>Loan:</b> ${u.loanAmount}</p>
-                            <p><b>Status:</b> ${u.maritalStatus}</p>
-                        </div>
+                        <h4 class="font-bold text-blue-800">${u.uniName}</h4>
+                        <p class="text-xs text-gray-500">${u.location} | ${u.country}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-bold text-green-600 mb-2">Commission: $${u.partnerCommission}</p>
-                        <button onclick="openFileModal('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-xs">OPEN FILE</button>
+                        <p class="text-green-600 font-bold mb-2">Commission: $${u.partnerCommission}</p>
+                        <button onclick="openFile('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 text-white px-4 py-2 rounded text-xs">OPEN FILE</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        function openFileModal(name, comm) {
-            selectedUni = { name, comm };
-            document.getElementById('fileModal').classList.remove('hidden');
-        }
-
-        function closeModal() { document.getElementById('fileModal').classList.add('hidden'); }
-
-        async function submitFile() {
-            const data = {
-                partnerId: "PARTNER_DB_ID", // আপনার পার্টনার আইডি এখানে দিবেন
-                studentName: document.getElementById('sName').value,
-                studentContact: document.getElementById('sContact').value,
-                uniName: selectedUni.name,
-                commission: selectedUni.comm
-            };
+        async function openFile(name, comm) {
+            const sName = prompt("Enter Student Name:");
+            if(!sName) return;
             const res = await fetch('/api/partner/open-file', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ partnerId: pId, studentName: sName, uniName: name, commission: comm })
             });
-            if(res.ok) {
-                alert("✅ Success: File Opened & Commission Added to Wallet!");
-                closeModal();
-                location.reload();
-            }
-        }
-
-        async function loadTracking() {
-            const res = await fetch('/api/partner/my-files/PARTNER_DB_ID');
-            const files = await res.json();
-            const tbody = document.getElementById('trackingTable');
-            tbody.innerHTML = files.map(f => `
-                <tr class="border-b text-slate-600">
-                    <td class="p-4 font-bold">${f.studentName}</td>
-                    <td class="p-4">${f.studentContact}</td>
-                    <td class="p-4">${f.universityName}</td>
-                    <td class="p-4"><span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-[10px] font-bold">${f.status}</span></td>
-                    <td class="p-4 text-[10px]">${new Date(f.createdAt).toLocaleString()}</td>
-                </tr>
-            `).join('');
+            if(res.ok) alert("File Opened & Commission Added to Wallet!");
         }
     </script>
 </body>
