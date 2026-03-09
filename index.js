@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Admin Part 4 Locked")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: All Parts Locked")).catch(err => console.log(err));
 
 // --- Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
@@ -23,11 +23,11 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
     name: String, contact: String, orgName: String, email: { type: String, unique: true }, 
     status: { type: String, default: 'Inactive' }, expiryDate: Date,
     walletBalance: { type: Number, default: 0 }, 
-    paymentStatus: { type: String, default: 'Due' }, // Paid, Due, Cancel
-    subscriptionStatus: { type: String, default: 'Inactive' } // Active, Inactive
+    paymentStatus: { type: String, default: 'Due' },
+    subscriptionStatus: { type: String, default: 'Inactive' }
 }));
 
-// --- Admin APIs ---
+// --- Combined Admin APIs ---
 app.post('/api/admin/add-university', async (req, res) => {
     try { await new University(req.body).save(); res.status(200).json({ success: true }); }
     catch (e) { res.status(500).json({ success: false }); }
@@ -35,17 +35,14 @@ app.post('/api/admin/add-university', async (req, res) => {
 
 app.get('/api/admin/partners', async (req, res) => {
     try { const partners = await Partner.find(); res.json(partners); }
-    catch (e) { res.status(500).send("Error"); }
+    catch (e) { res.status(500).send("Error fetching"); }
 });
 
 app.patch('/api/admin/update-partner/:id', async (req, res) => {
     try {
-        const { status, expiryDate, name, contact, orgName, paymentStatus, subscriptionStatus } = req.body;
-        await Partner.findByIdAndUpdate(req.params.id, { 
-            status, expiryDate, name, contact, orgName, paymentStatus, subscriptionStatus 
-        });
+        await Partner.findByIdAndUpdate(req.params.id, req.body);
         res.json({ success: true });
-    } catch (e) { res.status(500).send("Error"); }
+    } catch (e) { res.status(500).send("Update failed"); }
 });
 
 // Routes
@@ -53,4 +50,4 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("IHP CRM Live - Admin Mode"));
+app.listen(PORT, () => console.log("CRM Core Running..."));
