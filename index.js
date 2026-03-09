@@ -8,9 +8,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: System Ready")).catch(err => console.log(err));
+mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Admin Part 4 Locked")).catch(err => console.log(err));
 
-// --- Schema with 21 Fields ---
+// --- Schemas ---
 const University = mongoose.model('University', new mongoose.Schema({
     country: String, uniName: String, courseName: String, intake: String, degree: String, 
     languageType: String, academicScore: String, languageScore: String, studyGap: String, 
@@ -22,7 +22,9 @@ const University = mongoose.model('University', new mongoose.Schema({
 const Partner = mongoose.model('Partner', new mongoose.Schema({
     name: String, contact: String, orgName: String, email: { type: String, unique: true }, 
     status: { type: String, default: 'Inactive' }, expiryDate: Date,
-    walletBalance: { type: Number, default: 0 }, subscriptionStatus: { type: String, default: 'Due' }
+    walletBalance: { type: Number, default: 0 }, 
+    paymentStatus: { type: String, default: 'Due' }, // Paid, Due, Cancel
+    subscriptionStatus: { type: String, default: 'Inactive' } // Active, Inactive
 }));
 
 // --- Admin APIs ---
@@ -38,8 +40,10 @@ app.get('/api/admin/partners', async (req, res) => {
 
 app.patch('/api/admin/update-partner/:id', async (req, res) => {
     try {
-        const { status, expiryDate, name, contact, orgName } = req.body;
-        await Partner.findByIdAndUpdate(req.params.id, { status, expiryDate, name, contact, orgName });
+        const { status, expiryDate, name, contact, orgName, paymentStatus, subscriptionStatus } = req.body;
+        await Partner.findByIdAndUpdate(req.params.id, { 
+            status, expiryDate, name, contact, orgName, paymentStatus, subscriptionStatus 
+        });
         res.json({ success: true });
     } catch (e) { res.status(500).send("Error"); }
 });
@@ -49,4 +53,4 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("IHP CRM Live"));
+app.listen(PORT, () => console.log("IHP CRM Live - Admin Mode"));
