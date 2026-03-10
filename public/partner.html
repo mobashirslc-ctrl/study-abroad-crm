@@ -24,19 +24,13 @@
         </div>
         
         <nav class="mt-8 flex-1">
-            <div class="nav-item active">
-                <span>🔍</span> Smart Assessment
-            </div>
-            <div class="nav-item">
-                <span>📂</span> File Tracking
-            </div>
-            <div class="nav-item">
-                <span>💳</span> Withdraw & Sub
-            </div>
+            <div class="nav-item active"><span>🔍</span> Smart Assessment</div>
+            <div class="nav-item"><span>📂</span> File Tracking</div>
+            <div class="nav-item"><span>💳</span> Withdraw & Sub</div>
         </nav>
 
         <div class="p-4 border-t border-white/5">
-            <button onclick="location.href='/login'" class="nav-item w-full text-red-400 hover:bg-red-500/10">
+            <button onclick="location.href='/login'" class="nav-item w-full text-red-400 hover:bg-red-500/10 text-left">
                 <span>🚪</span> Logout
             </button>
         </div>
@@ -55,11 +49,9 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
             <div class="lg:col-span-1 space-y-4">
                 <div class="glass p-6 rounded-2xl">
                     <h3 class="text-sm font-bold text-blue-300 mb-4 uppercase tracking-wider">Search Filters</h3>
-                    
                     <div class="space-y-4">
                         <div>
                             <label class="text-[10px] text-slate-500 uppercase">Destination</label>
@@ -78,14 +70,9 @@
                             </select>
                         </div>
                         <div>
-                            <label class="text-[10px] text-slate-500 uppercase">IELTS / PTE Score</label>
+                            <label class="text-[10px] text-slate-500 uppercase">Language Score</label>
                             <input type="text" id="fLang" placeholder="e.g. 6.5" class="w-full p-2.5 rounded mt-1">
                         </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500 uppercase">Academic Score (%)</label>
-                            <input type="text" id="fGpa" placeholder="e.g. 80" class="w-full p-2.5 rounded mt-1">
-                        </div>
-
                         <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/40 transition-all mt-4">
                             SEARCH NOW
                         </button>
@@ -100,12 +87,10 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Init Load
         document.getElementById('partnerDisplayName').innerText = localStorage.getItem('partnerName') || 'Partner';
         let currentWallet = 0;
 
@@ -116,17 +101,16 @@
             try {
                 const res = await fetch('/api/universities');
                 const unis = await res.json();
-                
                 const country = document.getElementById('fCountry').value;
                 const filtered = country ? unis.filter(u => u.country === country) : unis;
 
                 if(filtered.length === 0) {
-                    grid.innerHTML = '<div class="glass p-10 text-center rounded-2xl">No matching universities found for this criteria.</div>';
+                    grid.innerHTML = '<div class="glass p-10 text-center rounded-2xl">No matching universities found.</div>';
                     return;
                 }
 
                 grid.innerHTML = filtered.map(u => `
-                    <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 hover:bg-white/[0.05] transition-all">
+                    <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 hover:bg-white/[0.05] transition-all mb-4">
                         <div class="flex justify-between items-start mb-6">
                             <div>
                                 <h3 class="text-xl font-bold">${u.uniName}</h3>
@@ -136,35 +120,35 @@
                                 <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-3 py-1 rounded-full font-bold border border-emerald-500/20 uppercase">Commission: $${u.partnerCommission}</span>
                             </div>
                         </div>
-
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs border-t border-white/5 pt-6">
-                            <div><p class="text-slate-500 uppercase mb-1">Intake</p><p class="font-semibold">${u.intake}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Location</p><p class="font-semibold">${u.location}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Semester Fee</p><p class="font-semibold text-blue-300 font-mono">${u.semesterFee}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Total Fee</p><p class="font-semibold text-blue-300 font-mono">${u.totalFee}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Bank BD</p><p class="font-semibold">${u.bankNameBD}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Loan Amount</p><p class="font-semibold">${u.loanAmount}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Marital Status</p><p class="font-semibold">${u.maritalStatus}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Intake</p><p class="font-semibold">${u.intake || 'N/A'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Location</p><p class="font-semibold">${u.location || 'N/A'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Semester Fee</p><p class="font-semibold text-blue-300 font-mono">${u.semesterFee || '0'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Total Fee</p><p class="font-semibold text-blue-300 font-mono">${u.totalFee || '0'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Bank BD</p><p class="font-semibold">${u.bankNameBD || 'N/A'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Loan Amount</p><p class="font-semibold">${u.loanAmount || 'No'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Marital Status</p><p class="font-semibold">${u.maritalStatus || 'Single'}</p></div>
                             <div><p class="text-slate-500 uppercase mb-1">Language Req</p><p class="font-semibold text-orange-400">${u.ieltsScore || '6.0'}</p></div>
                         </div>
-
-                        <button onclick="handleCommission(${u.partnerCommission}, this)" class="w-full mt-8 bg-white/5 hover:bg-blue-600 py-2.5 rounded-lg text-[10px] font-bold tracking-widest transition-all border border-white/10 uppercase">
+                        <button onclick="addCommission('${u.partnerCommission}', this)" class="w-full mt-8 bg-white/5 hover:bg-blue-600 py-2.5 rounded-lg text-[10px] font-bold tracking-widest transition-all border border-white/10 uppercase">
                             Open File & Add Commission
                         </button>
                     </div>
                 `).join('');
-
             } catch(e) {
                 grid.innerHTML = '<p class="text-red-400 text-center">Failed to load data.</p>';
             }
         }
 
-        function handleCommission(amt, btn) {
-            currentWallet += parseFloat(amt);
-            document.getElementById('walletDisp').innerText = currentWallet.toFixed(2);
-            btn.innerText = "✓ FILE OPENED - COMMISSION ADDED";
-            btn.disabled = true;
-            btn.className = "w-full mt-8 bg-emerald-600/20 text-emerald-400 py-2.5 rounded-lg text-[10px] font-bold cursor-not-allowed border border-emerald-500/20";
+        function addCommission(amt, btn) {
+            const amount = parseFloat(amt);
+            if(!isNaN(amount)) {
+                currentWallet += amount;
+                document.getElementById('walletVal').innerText = currentWallet.toFixed(2);
+                btn.innerText = "✓ FILE OPENED - COMMISSION ADDED";
+                btn.disabled = true;
+                btn.className = "w-full mt-8 bg-emerald-600/20 text-emerald-400 py-2.5 rounded-lg text-[10px] font-bold cursor-not-allowed border border-emerald-500/20";
+            }
         }
     </script>
 </body>
