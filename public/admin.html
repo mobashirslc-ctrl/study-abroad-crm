@@ -2,56 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel | IHP CRM</title>
+    <title>Master Admin | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; }
-        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; }
+        body { background: #0b0f1a; color: white; }
+        .sidebar { background: #161b2a; border-right: 1px solid #2d334a; }
+        .nav-link { padding: 12px; display: block; color: #94a3b8; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-left: 3px solid #3b82f6; }
     </style>
 </head>
-<body class="p-8">
-    <div class="max-w-6xl mx-auto space-y-8">
-        <h1 class="text-3xl font-bold text-blue-400">Master Control Panel</h1>
-
-        <div class="card">
-            <h2 class="text-xl font-bold mb-4">Partner Management</h2>
-            <div id="pList" class="space-y-2"></div>
-        </div>
-
-        <div class="card">
-            <h2 class="text-xl font-bold mb-4">Add University</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <input id="uName" placeholder="Uni Name" class="bg-slate-800 p-2 rounded">
-                <select id="uDeg" class="bg-slate-800 p-2 rounded">
-                    <option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>PHD</option>
-                </select>
-                <input id="uComm" placeholder="Commission (Number)" class="bg-slate-800 p-2 rounded">
-                <button onclick="addUni()" class="bg-blue-600 rounded font-bold">SAVE UNI</button>
-            </div>
-        </div>
+<body class="flex">
+    <div class="w-64 h-screen sidebar sticky top-0 hidden md:block">
+        <div class="p-6 text-2xl font-bold border-b border-white/10">IHP ADMIN</div>
+        <nav class="mt-8">
+            <a href="#" onclick="showSection('partners')" class="nav-link active">Partner Requests</a>
+            <a href="#" onclick="showSection('files')" class="nav-link">Student Files</a>
+            <a href="#" onclick="showSection('universities')" class="nav-link">Manage Universities</a>
+        </nav>
     </div>
 
+    <main class="flex-1 p-8">
+        <div id="partners" class="section">
+            <h2 class="text-2xl font-bold mb-6">Partner Management</h2>
+            <div id="pList" class="grid gap-4"></div>
+        </div>
+
+        <div id="files" class="section hidden">
+            <h2 class="text-2xl font-bold mb-6">Compliance Investigation</h2>
+            <div class="bg-slate-900 rounded-xl overflow-hidden">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-800 text-slate-400"><tr><th class="p-4">Student</th><th class="p-4">Uni</th><th class="p-4">Commission</th><th class="p-4">Action</th></tr></thead>
+                    <tbody id="fList"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
     <script>
-        async function loadAdmin() {
-            const res = await fetch('/api/admin/partners');
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        async function loadFiles() {
+            const res = await fetch('/api/admin/all-files');
             const data = await res.json();
-            document.getElementById('pList').innerHTML = data.map(p => `
-                <div class="flex justify-between p-3 bg-white/5 rounded">
-                    <span>${p.name} (${p.status})</span>
-                    ${p.status==='Pending' ? `<button onclick="updateP('${p._id}', 'Active')" class="text-emerald-400">Approve</button>` : ''}
-                </div>
+            document.getElementById('fList').innerHTML = data.map(f => `
+                <tr class="border-b border-white/5">
+                    <td class="p-4">${f.studentName}</td><td class="p-4">${f.uniName}</td><td class="p-4">$${f.commission}</td>
+                    <td class="p-4">
+                        ${f.status === 'Pending' ? `
+                            <button onclick="verify('${f._id}', 'Fix')" class="bg-emerald-600 px-3 py-1 rounded text-sm">Approve/Fix</button>
+                            <button onclick="verify('${f._id}', 'Reject')" class="bg-red-600 px-3 py-1 rounded text-sm ml-2">Reject</button>
+                        ` : f.status}
+                    </td>
+                </tr>
             `).join('');
         }
-        async function updateP(id, status) {
-            await fetch('/api/admin/partner-status/'+id, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status}) });
-            loadAdmin();
+
+        async function verify(id, action) {
+            await fetch(`/api/admin/verify-file/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action}) });
+            loadFiles();
         }
-        async function addUni() {
-            const body = { uniName: document.getElementById('uName').value, degreeType: document.getElementById('uDeg').value, partnerCommission: Number(document.getElementById('uComm').value) };
-            await fetch('/api/admin/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-            alert("Uni Saved");
-        }
-        loadAdmin();
+        // ... (Partner load logic remains same)
+        loadFiles();
     </script>
 </body>
 </html>

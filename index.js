@@ -10,9 +10,9 @@ app.use(express.static('public'));
 
 // --- DB CONNECTION ---
 const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI).then(() => console.log("✅ Mission Database Locked")).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log("✅ DB Connected")).catch(err => console.error("❌ DB Error:", err));
 
-// --- SCHEMAS (LOCKED) ---
+// --- SCHEMAS ---
 const UniSchema = new mongoose.Schema({
     uniName: String, country: String, courseName: String, degreeType: String,
     intake: String, semesterFee: String, partnerCommission: Number,
@@ -37,51 +37,36 @@ const StudentFileSchema = new mongoose.Schema({
 });
 const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
 
-// --- HTML ROUTES ---
+// --- ROUTES ---
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
-// --- AUTH API ---
-app.post('/api/partner/register', async (req, res) => {
-    try { const p = new Partner(req.body); await p.save(); res.json({msg: "Success"}); } 
-    catch(e) { res.status(400).json({msg: "Email exists"}); }
-});
-
-app.post('/api/partner/login', async (req, res) => {
-    const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
-    if(p && p.status === 'Active') res.json({id: p._id, name: p.name, wallet: p.walletBalance});
-    else res.status(401).json({msg: "Account Pending or Invalid"});
-});
-
-// --- PARTNER & ESCROW API ---
+// --- WALLET & FILE API (The Fix) ---
 app.post('/api/partner/submit-file', async (req, res) => {
-    try { const f = new StudentFile(req.body); await f.save(); res.json({msg: "Success"}); }
-    catch(e) { res.status(500).send(); }
+    try {
+        const f = new StudentFile(req.body);
+        await f.save();
+        res.json({ msg: "Success" });
+    } catch(e) { res.status(500).send(e); }
 });
 
-app.get('/api/partner/history/:id', async (req, res) => {
-    const history = await StudentFile.find({ partnerId: req.params.id }).sort({date: -1});
-    res.json(history);
+// পার্টনারের পেন্ডিং কমিশন হিসেব করার এপিআই
+app.get('/api/partner/stats/:id', async (req, res) => {
+    const files = await StudentFile.find({ partnerId: req.params.id });
+    const pending = files.filter(f => f.status === 'Pending').reduce((acc, curr) => acc + curr.commission, 0);
+    const partner = await Partner.findById(req.params.id);
+    res.json({ pending, fixed: partner.walletBalance, history: files });
 });
 
-// --- ADMIN & COMPLIANCE API ---
+// --- ADMIN API ---
+app.get('/api/admin/all-files', async (req, res) => res.json(await StudentFile.find().sort({date: -1})));
 app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
-app.put('/api/admin/partner-status/:id', async (req, res) => {
-    await Partner.findByIdAndUpdate(req.params.id, {status: req.body.status});
-    res.json({msg: "Updated"});
-});
-app.post('/api/admin/add-university', async (req, res) => {
-    const u = new University(req.body); await u.save(); res.json({msg: "Saved"});
-});
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
-// Compliance Verification
 app.put('/api/admin/verify-file/:fileId', async (req, res) => {
     const { action } = req.body; 
     const file = await StudentFile.findById(req.params.fileId);
-    if (!file || file.status !== 'Pending') return res.status(400).send();
-
     if (action === 'Fix') {
         file.status = 'Fixed';
         file.complianceStatus = 'File Opening Start';
@@ -91,8 +76,8 @@ app.put('/api/admin/verify-file/:fileId', async (req, res) => {
         file.complianceStatus = 'File Rejected';
     }
     await file.save();
-    res.json({ msg: "Done" });
+    res.json({ msg: "Updated" });
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Mission Running on Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
