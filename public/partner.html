@@ -2,185 +2,109 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Dashboard | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-right: 1px solid rgba(255, 255, 255, 0.1); height: 100vh; position: fixed; }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 2rem; }
-        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
-        input, select { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; outline: none; }
-        .nav-item { padding: 14px 24px; display: flex; align-items: center; gap: 12px; color: #94a3b8; }
-        .nav-item.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-right: 3px solid #3b82f6; }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
+        input, select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        .status-fixed { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 4px; }
+        .status-pending { color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 4px; }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <div class="p-6"><h2 class="text-xl font-bold text-blue-400">IHP CRM</h2></div>
-        <nav class="mt-4">
-            <div class="nav-item active"><i class="fas fa-search"></i> <span>Assessment</span></div>
-            <div class="nav-item"><i class="fas fa-file-alt"></i> <span>Applications</span></div>
-            <div class="mt-20 px-6"><button onclick="localStorage.clear(); location.href='/login'" class="text-red-400 text-sm">Logout</button></div>
-        </nav>
-    </div>
-
-    <div class="main-content">
-        <div class="flex justify-between items-center mb-8 glass-panel p-6">
-            <h1 class="text-2xl font-bold text-blue-400">Welcome, <span id="partnerNameDisplay">...</span></h1>
-            <div class="text-right">
-                <p class="text-xs text-slate-500 uppercase">Wallet Balance</p>
-                <p class="text-3xl font-bold text-emerald-400">$<span id="walletBal">0.00</span></p>
-            </div>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-8 glass p-6">
+            <div><h1 class="text-2xl font-bold">IHP Partner Portal</h1><p class="text-slate-400" id="pName">Welcome</p></div>
+            <div class="text-right"><p class="text-xs text-slate-400">Total Fixed Balance</p><p class="text-2xl font-bold text-emerald-400">$<span id="pWallet">0.00</span></p></div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="glass-panel p-6 h-fit">
-                <h2 class="text-lg font-semibold mb-6 border-b border-white/10 pb-2">Smart Assessment</h2>
+            <div class="glass p-6 h-fit">
+                <h2 class="text-lg font-bold mb-4 border-b border-white/10 pb-2">Smart Assessment</h2>
                 <div class="space-y-4">
-                    <div>
-                        <label class="text-xs text-slate-400">Preferred Country</label>
-                        <input type="text" id="sCountry" placeholder="e.g. UK, Australia" class="w-full p-3 rounded-lg mt-1">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400">Select Degree</label>
-                        <select id="sDegree" class="w-full p-3 rounded-lg mt-1">
-                            <option value="UG">UG (Under Graduate)</option>
-                            <option value="PG">PG (Post Graduate)</option>
-                            <option value="DIPLOMA">DIPLOMA</option>
-                            <option value="RESEARCH">RESEARCH</option>
-                            <option value="PHD">PHD</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400">Language Test</label>
-                        <select id="sLang" class="w-full p-3 rounded-lg mt-1">
-                            <option value="IELTS">IELTS</option>
-                            <option value="PTE">PTE</option>
-                            <option value="DUOLINGO">DUOLINGO</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-xs text-slate-400">Lang Score</label><input type="text" id="sScore" placeholder="7.0" class="w-full p-3 rounded-lg mt-1"></div>
-                        <div><label class="text-xs text-slate-400">Academic GPA</label><input type="text" id="sGpa" placeholder="3.80" class="w-full p-3 rounded-lg mt-1"></div>
-                    </div>
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold uppercase transition-all">Find Universities</button>
+                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>PHD</option></select>
+                    <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+                    <input type="text" id="sScore" placeholder="Language Score">
+                    <input type="text" id="sGpa" placeholder="Academic Score (GPA)">
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition">FIND UNIVERSITIES</button>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 glass-panel p-6">
-                <h2 class="text-lg font-semibold mb-6 border-b border-white/10 pb-2">Matching Results</h2>
-                <div id="resultsArea" class="space-y-4">
-                    <p class="text-center py-20 text-slate-500">Enter filters and search to see results.</p>
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glass p-6">
+                    <h2 class="text-lg font-bold mb-4">Matching Results</h2>
+                    <div id="resultsArea" class="space-y-4"><p class="text-slate-500 text-center py-10">Search to see eligible courses.</p></div>
+                </div>
+
+                <div class="glass p-6">
+                    <h2 class="text-lg font-bold mb-4">Commission History (Escrow)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead><tr class="text-slate-500 border-b border-white/10"><th class="pb-2">Student</th><th class="pb-2">University</th><th class="pb-2">Amount</th><th class="pb-2">Status</th></tr></thead>
+                            <tbody id="historyArea"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="fileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[200]">
-        <div class="glass-panel p-8 w-full max-w-md border-t-4 border-blue-500">
-            <h2 class="text-2xl font-bold mb-4">Open Student File</h2>
+    <div id="fileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div class="glass p-8 w-full max-w-md bg-slate-900">
+            <h2 class="text-xl font-bold mb-4">Open Student File</h2>
             <div class="space-y-4">
-                <input type="text" id="stName" placeholder="Student Full Name" class="w-full p-3 rounded-lg">
-                <input type="text" id="stContact" placeholder="Phone Number" class="w-full p-3 rounded-lg">
-                <input type="text" id="stPassport" placeholder="Passport Number" class="w-full p-3 rounded-lg">
-                <button onclick="submitStudentFile()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-4 rounded-xl font-bold uppercase">Submit & Earn Commission</button>
-                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-400 text-sm mt-2">Cancel</button>
+                <input type="text" id="stName" placeholder="Student Name">
+                <input type="text" id="stContact" placeholder="Contact Number">
+                <input type="text" id="stPassport" placeholder="Passport Number">
+                <input type="email" id="stEmail" placeholder="Student Email">
+                <p class="text-xs text-amber-400">Note: Commission will stay "Pending" until Compliance verification.</p>
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold">SUBMIT APPLICATION</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
-        let selectedUni = null;
-        window.onload = () => {
-            document.getElementById('partnerNameDisplay').innerText = localStorage.getItem('partnerName') || 'Partner';
-            refreshWallet();
-        };
-
-        async function refreshWallet() {
-            try {
-                const res = await fetch(`/api/partner/details/${localStorage.getItem('partnerId')}`);
-                const data = await res.json();
-                document.getElementById('walletBal').innerText = (data.walletBalance || 0).toFixed(2);
-            } catch(e) { console.error("Wallet load failed"); }
+        const pId = localStorage.getItem('partnerId');
+        document.getElementById('pName').innerText = "Welcome, " + localStorage.getItem('partnerName');
+        
+        async function loadDashboard() {
+            const res = await fetch('/api/partner/history/' + pId);
+            const data = await res.json();
+            document.getElementById('historyArea').innerHTML = data.map(h => `
+                <tr class="border-b border-white/5"><td class="py-3">${h.studentName}</td><td>${h.uniName}</td><td>$${h.commission}</td>
+                <td><span class="status-${h.status.toLowerCase()}">${h.status}</span><br><small class="text-slate-500">${h.complianceStatus}</small></td></tr>
+            `).join('');
         }
 
         async function runAssessment() {
-            const resultsArea = document.getElementById('resultsArea');
-            resultsArea.innerHTML = '<div class="flex flex-col items-center py-20"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mb-4"></div><p class="text-blue-400">Searching Databases...</p></div>';
-            
-            try {
-                const res = await fetch('/api/universities');
-                const unis = await res.json();
-                
-                const country = document.getElementById('sCountry').value.trim().toUpperCase();
-                const degree = document.getElementById('sDegree').value.trim().toUpperCase();
-
-                // Advanced Filtering Logic
-                const filtered = unis.filter(u => {
-                    const dbCountry = (u.country || "").toUpperCase();
-                    const dbDegree = (u.degreeType || "").toUpperCase();
-                    return dbCountry.includes(country) && dbDegree.includes(degree);
-                });
-
-                if(filtered.length === 0) {
-                    resultsArea.innerHTML = '<p class="text-center py-20 text-slate-400">No matching universities found for your criteria.</p>';
-                    return;
-                }
-
-                resultsArea.innerHTML = filtered.map(u => `
-                    <div class="glass-panel p-6 border-l-4 border-blue-500 mb-4 hover:bg-white/5 transition-all">
-                        <div class="flex justify-between items-start mb-4">
-                            <div><h3 class="text-xl font-bold text-blue-300 uppercase">${u.uniName}</h3><p class="text-sm text-slate-400">${u.country} | ${u.location}</p></div>
-                            <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/20">$${u.partnerCommission} COMM.</span>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px] text-slate-400 mb-6 uppercase tracking-wider">
-                            <div>INTAKE: <span class="text-white font-bold">${u.intake}</span></div>
-                            <div>COURSE: <span class="text-white font-bold">${u.courseName}</span></div>
-                            <div>SEM. FEE: <span class="text-white font-bold">${u.semesterFee}</span></div>
-                            <div>BANK BD: <span class="text-white font-bold">${u.bankNameBD}</span></div>
-                            <div>LOAN AMT: <span class="text-white font-bold">${u.loanAmount}</span></div>
-                            <div>MARITAL: <span class="text-white font-bold">${u.maritalStatus}</span></div>
-                        </div>
-                        <button onclick="openFileForm('${u.uniName}', ${u.partnerCommission})" class="w-full bg-blue-600/20 hover:bg-blue-600 py-3 rounded-lg text-sm font-bold border border-blue-500/30 transition-all uppercase">Open File & Earn</button>
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
+            document.getElementById('resultsArea').innerHTML = filtered.map(u => `
+                <div class="glass p-4 border-l-4 border-blue-500">
+                    <div class="flex justify-between">
+                        <div><h3 class="font-bold text-blue-300">${u.uniName}</h3><p class="text-xs text-slate-400">${u.courseName}</p></div>
+                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-white/10 px-4 py-2 rounded text-xs hover:bg-white/20">Open File & Commission</button>
                     </div>
-                `).join('');
-            } catch(e) {
-                resultsArea.innerHTML = '<p class="text-center text-red-400 py-20 font-bold">Server connection failed. Please check Database URI and Network.</p>';
-            }
+                </div>
+            `).join('');
         }
 
-        function openFileForm(uniName, commission) {
-            selectedUni = { uniName, commission };
-            document.getElementById('fileModal').classList.remove('hidden');
-        }
+        let currentUni = null;
+        function openForm(name, comm) { currentUni = {name, comm}; document.getElementById('fileModal').classList.remove('hidden'); }
 
-        async function submitStudentFile() {
-            const data = {
-                partnerId: localStorage.getItem('partnerId'),
-                studentName: document.getElementById('stName').value.trim(),
-                contactNo: document.getElementById('stContact').value.trim(),
-                passportNo: document.getElementById('stPassport').value.trim(),
-                uniName: selectedUni.uniName,
-                commission: selectedUni.commission
+        async function submitFile() {
+            const body = {
+                partnerId: pId, studentName: document.getElementById('stName').value,
+                contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value,
+                studentEmail: document.getElementById('stEmail').value, uniName: currentUni.name, commission: currentUni.comm
             };
-
-            if(!data.studentName || !data.contactNo) return alert("Please fill all fields");
-
-            const res = await fetch('/api/partner/submit-file', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-
-            if(res.ok) {
-                alert("File Submitted Successfully! Commission added to wallet.");
-                location.reload();
-            } else {
-                alert("Submission failed. Try again.");
-            }
+            await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+            alert("File Submitted!"); location.reload();
         }
+        loadDashboard();
     </script>
 </body>
 </html>
