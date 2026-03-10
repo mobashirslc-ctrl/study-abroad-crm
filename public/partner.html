@@ -7,11 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; display: flex; min-height: 100vh; }
         .sidebar { width: 260px; background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border-right: 1px solid rgba(255, 255, 255, 0.1); height: 100vh; position: fixed; }
         .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 2rem; }
         .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
-        input, select { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; }
+        input, select { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; outline: none; }
         .nav-item { padding: 14px 24px; display: flex; align-items: center; gap: 12px; color: #94a3b8; }
         .nav-item.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-right: 3px solid #3b82f6; }
     </style>
@@ -21,31 +21,48 @@
         <div class="p-6"><h2 class="text-xl font-bold text-blue-400">IHP CRM</h2></div>
         <nav class="mt-4">
             <div class="nav-item active"><i class="fas fa-search"></i> <span>Assessment</span></div>
-            <div class="nav-item"><i class="fas fa-file-invoice"></i> <span>Applications</span></div>
+            <div class="nav-item"><i class="fas fa-file-alt"></i> <span>Applications</span></div>
             <div class="mt-20 px-6"><button onclick="localStorage.clear(); location.href='/login'" class="text-red-400 text-sm">Logout</button></div>
         </nav>
     </div>
 
     <div class="main-content">
         <div class="flex justify-between items-center mb-8 glass-panel p-6">
-            <h1 class="text-2xl font-bold text-blue-400">Welcome, <span id="partnerNameDisplay">...</span></h1>
-            <div class="text-right"><p class="text-xs text-slate-500 uppercase">Wallet</p><p class="text-3xl font-bold text-emerald-400">$<span id="walletBal">0.00</span></p></div>
+            <h1 class="text-2xl font-bold">Welcome, <span id="partnerNameDisplay" class="text-blue-400">...</span></h1>
+            <div class="text-right">
+                <p class="text-xs text-slate-500 uppercase">Wallet Balance</p>
+                <p class="text-3xl font-bold text-emerald-400">$<span id="walletBal">0.00</span></p>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="glass-panel p-6 h-fit">
                 <h2 class="text-lg font-semibold mb-6 border-b border-white/10 pb-2">Smart Filters</h2>
                 <div class="space-y-4">
-                    <input type="text" id="sCountry" placeholder="Preferred Country" class="w-full p-3 rounded-lg">
-                    <select id="sDegree" class="w-full p-3 rounded-lg">
-                        <option value="UG">UG (Under Graduate)</option>
-                        <option value="PG">PG (Post Graduate)</option>
-                        <option value="DIPLOMA">DIPLOMA</option>
-                        <option value="FOUNDATION">FOUNDATION</option>
-                        <option value="RESEARCH">RESEARCH</option>
-                        <option value="PHD">PHD</option>
-                    </select>
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-4 rounded-xl font-bold uppercase">Find Universities</button>
+                    <div>
+                        <label class="text-xs text-slate-400">Preferred Country (Written)</label>
+                        <input type="text" id="sCountry" placeholder="e.g. UK, USA" class="w-full p-3 rounded-lg mt-1">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Degree Type</label>
+                        <select id="sDegree" class="w-full p-3 rounded-lg mt-1">
+                            <option value="UG">UG</option><option value="PG">PG</option>
+                            <option value="DIPLOMA">DIPLOMA</option><option value="RESEARCH">RESEARCH</option>
+                            <option value="PHD">PHD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400">Language Test</label>
+                        <select id="sLang" class="w-full p-3 rounded-lg mt-1">
+                            <option value="IELTS">IELTS</option><option value="PTE">PTE</option>
+                            <option value="DUOLINGO">DUOLINGO</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="text-xs text-slate-400">Lang Score</label><input type="text" id="sScore" placeholder="6.5" class="w-full p-3 rounded-lg mt-1"></div>
+                        <div><label class="text-xs text-slate-400">Academic GPA</label><input type="text" id="sGpa" placeholder="3.50" class="w-full p-3 rounded-lg mt-1"></div>
+                    </div>
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold uppercase">Find Universities</button>
                 </div>
             </div>
 
@@ -61,10 +78,9 @@
             <h2 class="text-2xl font-bold mb-4">Open Student File</h2>
             <div class="space-y-4">
                 <input type="text" id="stName" placeholder="Student Full Name" class="w-full p-3 rounded-lg">
-                <input type="text" id="stContact" placeholder="Contact No" class="w-full p-3 rounded-lg">
+                <input type="text" id="stContact" placeholder="Phone Number" class="w-full p-3 rounded-lg">
                 <input type="text" id="stPassport" placeholder="Passport Number" class="w-full p-3 rounded-lg">
-                <p class="text-xs text-slate-400">Commission will be added to wallet upon submission.</p>
-                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold uppercase">Submit & Add Commission</button>
+                <button onclick="submitStudentFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold uppercase">Submit & Add Commission</button>
                 <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-400 text-sm">Cancel</button>
             </div>
         </div>
@@ -85,53 +101,52 @@
 
         async function runAssessment() {
             const resultsArea = document.getElementById('resultsArea');
-            resultsArea.innerHTML = '<p class="text-center py-20">Searching...</p>';
-            const res = await fetch('/api/universities');
-            const unis = await res.json();
-            const country = document.getElementById('sCountry').value.toUpperCase();
-            const degree = document.getElementById('sDegree').value;
+            resultsArea.innerHTML = '<p class="text-center py-20 animate-pulse">Searching...</p>';
+            try {
+                const res = await fetch('/api/universities');
+                const unis = await res.json();
+                const country = document.getElementById('sCountry').value.toUpperCase();
+                const degree = document.getElementById('sDegree').value;
 
-            const filtered = unis.filter(u => u.country.toUpperCase().includes(country) && u.degreeType.includes(degree));
-            
-            resultsArea.innerHTML = filtered.map(u => `
-                <div class="glass-panel p-6 border-l-4 border-blue-500">
-                    <div class="flex justify-between items-start mb-4">
-                        <div><h3 class="text-xl font-bold text-blue-300 uppercase">${u.uniName}</h3><p class="text-sm text-slate-400">${u.country} | ${u.location}</p></div>
-                        <span class="text-emerald-400 font-bold">$${u.partnerCommission} COMM.</span>
+                const filtered = unis.filter(u => u.country.toUpperCase().includes(country) && u.degreeType.includes(degree));
+                
+                if(filtered.length === 0) {
+                    resultsArea.innerHTML = '<p class="text-center py-20 text-slate-500">No matching results found.</p>';
+                    return;
+                }
+
+                resultsArea.innerHTML = filtered.map(u => `
+                    <div class="glass-panel p-6 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div><h3 class="text-xl font-bold text-blue-300 uppercase">${u.uniName}</h3><p class="text-sm text-slate-400">${u.country} | ${u.location}</p></div>
+                            <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">$${u.partnerCommission} COMM.</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px] text-slate-400 mb-6 uppercase">
+                            <div>INTAKE: <span class="text-white">${u.intake}</span></div>
+                            <div>COURSE: <span class="text-white">${u.courseName}</span></div>
+                            <div>FEE: <span class="text-white">${u.semesterFee}</span></div>
+                            <div>BANK: <span class="text-white">${u.bankNameBD}</span></div>
+                            <div>LOAN: <span class="text-white">${u.loanAmount}</span></div>
+                            <div>STATUS: <span class="text-white">${u.maritalStatus}</span></div>
+                        </div>
+                        <button onclick="openFileForm('${u.uniName}', ${u.partnerCommission})" class="w-full bg-blue-600/20 hover:bg-blue-600 py-3 rounded-lg text-sm font-bold border border-blue-500/30 transition-all uppercase">Open File & Earn</button>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px] text-slate-400 mb-6">
-                        <div>INTAKE: <span class="text-white">${u.intake}</span></div>
-                        <div>FEE: <span class="text-white">${u.semesterFee}</span></div>
-                        <div>BANK: <span class="text-white">${u.bankNameBD}</span></div>
-                        <div>LOAN: <span class="text-white">${u.loanAmount}</span></div>
-                        <div>STATUS: <span class="text-white">${u.maritalStatus}</span></div>
-                        <div>COURSE: <span class="text-white">${u.courseName}</span></div>
-                    </div>
-                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="w-full bg-blue-600/20 hover:bg-blue-600 py-3 rounded-lg text-sm font-bold border border-blue-500/30 transition-all uppercase">Open File & Add Commission</button>
-                </div>
-            `).join('');
+                `).join('');
+            } catch(e) { resultsArea.innerHTML = '<p class="text-center text-red-400 py-20">Server Connection Failed.</p>'; }
         }
 
-        function openForm(name, comm) {
-            selectedUni = { name, comm };
-            document.getElementById('fileModal').classList.remove('hidden');
-        }
+        function openFileForm(name, comm) { selectedUni = { name, comm }; document.getElementById('fileModal').classList.remove('hidden'); }
 
-        async function submitFile() {
+        async function submitStudentFile() {
             const data = {
                 partnerId: localStorage.getItem('partnerId'),
                 studentName: document.getElementById('stName').value,
                 contactNo: document.getElementById('stContact').value,
                 passportNo: document.getElementById('stPassport').value,
-                uniName: selectedUni.name,
-                commission: selectedUni.comm
+                uniName: selectedUni.name, commission: selectedUni.comm
             };
-            const res = await fetch('/api/partner/submit-file', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            if(res.ok) { alert("File Opened Successfully!"); location.reload(); }
+            const res = await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            if(res.ok) { alert("Success! Commission added."); location.reload(); }
         }
     </script>
 </body>
