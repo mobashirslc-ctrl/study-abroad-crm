@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Dashboard | IHP CRM</title>
+    <title>Partner Portal | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background: #0b0f1a; color: white; font-family: sans-serif; }
@@ -10,17 +10,18 @@
         .nav-link { padding: 14px 20px; display: block; color: #94a3b8; cursor: pointer; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
         .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }
-        input, select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; font-size: 13px; }
-        .status-pending { color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 10px; border-radius: 6px; font-size: 10px; }
+        input, select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        .status-pending { color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 4px; font-size: 10px; }
     </style>
 </head>
 <body class="flex">
+
     <div class="w-64 h-screen sidebar sticky top-0 hidden md:flex flex-col">
         <div class="p-6 text-2xl font-bold border-b border-white/10 text-blue-500">IHP CRM</div>
         <nav class="mt-8 flex-1">
-            <div onclick="showSection('assessment')" class="nav-link active" id="link-assessment">🔍 Search & Assessment</div>
+            <div onclick="showSection('assessment')" class="nav-link active" id="link-assessment">🔍 Assessment</div>
             <div onclick="showSection('history')" class="nav-link" id="link-history">📋 Live Tracking</div>
-            <div onclick="showSection('wallet')" class="nav-link" id="link-wallet">💰 Wallet (Taka)</div>
+            <div onclick="showSection('wallet')" class="nav-link" id="link-wallet">💰 Wallet & Payout</div>
         </nav>
         <div class="p-6 border-t border-white/10">
             <button onclick="handleLogout()" class="text-red-400 font-bold">Logout ➔</button>
@@ -28,29 +29,28 @@
     </div>
 
     <main class="flex-1 p-6 md:p-10">
-        <div class="flex justify-between items-center mb-10 bg-slate-900/50 p-4 rounded-xl">
+        <div class="flex justify-between items-center mb-10">
             <h2 class="text-xl font-bold" id="pNameDisp">Welcome</h2>
             <div class="flex gap-4">
-                <div class="glass-card px-4 py-1 text-center border-amber-500/30">
-                    <p class="text-[9px] text-slate-500">PENDING</p>
+                <div class="glass-card px-4 py-2 border-amber-500/30 text-center">
+                    <p class="text-[9px] text-slate-500 uppercase">Pending</p>
                     <p class="text-amber-500 font-bold" id="pendingBal">৳0</p>
                 </div>
-                <div class="glass-card px-4 py-1 text-center border-emerald-500/30">
-                    <p class="text-[9px] text-slate-500">FIXED</p>
+                <div class="glass-card px-4 py-2 border-emerald-500/30 text-center">
+                    <p class="text-[9px] text-slate-500 uppercase">Fixed</p>
                     <p class="text-emerald-500 font-bold" id="fixedBal">৳0</p>
                 </div>
             </div>
         </div>
 
         <div id="section-assessment" class="content-section">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="glass-card p-6 h-fit space-y-4">
-                    <h3 class="font-bold text-blue-400">Smart Assessment</h3>
-                    <input type="text" id="sCountry" placeholder="Country Name">
+                    <input type="text" id="sCountry" placeholder="Country">
                     <select id="sDegree"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>PHD</option></select>
-                    <input type="text" id="sGpa" placeholder="Academic GPA">
-                    <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                    <input type="text" id="sScore" placeholder="Score">
+                    <input type="text" id="sGpa" placeholder="GPA">
+                    <select id="sLang"><option>IELTS</option><option>PTE</option></select>
+                    <input type="text" id="sScore" placeholder="Test Score">
                     <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-lg font-bold">FIND UNIVERSITY</button>
                 </div>
                 <div class="lg:col-span-3 space-y-4" id="resultsArea"></div>
@@ -60,24 +60,42 @@
         <div id="section-history" class="content-section hidden">
             <div class="glass-card p-6 overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead><tr class="text-slate-500 border-b border-white/5"><th class="pb-4">Student</th><th class="pb-4">University</th><th class="pb-4">Comm.</th><th class="pb-4">Status</th></tr></thead>
+                    <thead class="text-slate-500 border-b border-white/5">
+                        <tr><th class="pb-4">Student</th><th class="pb-4">University</th><th class="pb-4">Comm.</th><th class="pb-4">Status</th></tr>
+                    </thead>
                     <tbody id="historyArea"></tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="section-wallet" class="content-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="glass-card p-8 border-l-4 border-emerald-500">
+                    <p class="text-slate-400 text-sm">Available (Fixed)</p>
+                    <h2 class="text-4xl font-bold text-emerald-500 mt-2">৳<span id="fixedBalLarge">0</span></h2>
+                    <div class="mt-6 text-[11px] text-slate-500">Subscription: <span class="text-blue-400">Premium Life-time</span></div>
+                </div>
+                <div class="glass-card p-6 space-y-4">
+                    <h3 class="font-bold">Withdrawal Request</h3>
+                    <select id="wMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
+                    <input type="text" id="wAcc" placeholder="Account No">
+                    <input type="number" id="wAmount" placeholder="Amount ৳">
+                    <button id="withdrawBtn" disabled onclick="handleWithdraw()" class="w-full bg-slate-700 py-3 rounded-lg font-bold opacity-50 cursor-not-allowed">WITHDRAW</button>
+                </div>
             </div>
         </div>
     </main>
 
     <div id="fileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-900 p-8 rounded-2xl w-full max-w-lg border border-white/10">
-            <h2 class="text-xl font-bold mb-6 text-blue-400">Student Application</h2>
-            <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="stName" placeholder="Full Name">
+        <div class="bg-slate-900 p-8 rounded-2xl w-full max-w-md border border-white/10">
+            <h2 class="text-xl font-bold mb-6 text-blue-400">Open Student File</h2>
+            <div class="space-y-4">
+                <input type="text" id="stName" placeholder="Student Name">
                 <input type="text" id="stContact" placeholder="Contact No">
                 <input type="text" id="stPassport" placeholder="Passport No">
-                <input type="text" id="stUni" readonly class="bg-slate-800">
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold">SUBMIT</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 text-sm">Cancel</button>
             </div>
-            <button onclick="submitFile()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold mt-6">SUBMIT FILE</button>
-            <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-sm">Cancel</button>
         </div>
     </div>
 
@@ -91,11 +109,19 @@
         async function loadDashboard() {
             const res = await fetch('/api/partner/stats/' + pId);
             const data = await res.json();
-            document.getElementById('pendingBal').innerText = "৳" + data.pending.toLocaleString();
-            document.getElementById('fixedBal').innerText = "৳" + data.fixed.toLocaleString();
+            document.getElementById('pendingBal').innerText = "৳" + data.pending;
+            document.getElementById('fixedBal').innerText = "৳" + data.fixed;
+            document.getElementById('fixedBalLarge').innerText = data.fixed;
+
+            if(data.fixed >= 500) {
+                const btn = document.getElementById('withdrawBtn');
+                btn.disabled = false; btn.classList.remove('bg-slate-700', 'opacity-50', 'cursor-not-allowed'); btn.classList.add('bg-emerald-600');
+            }
+
             document.getElementById('historyArea').innerHTML = data.history.map(h => `
-                <tr class="border-b border-white/5"><td class="py-4 font-bold">${h.studentName}</td><td>${h.uniName}</td>
-                <td class="text-blue-400 font-bold">৳${h.commission}</td><td><span class="status-pending">${h.status}</span></td></tr>`).join('');
+                <tr class="border-b border-white/5"><td class="py-4 font-bold">${h.studentName}</td>
+                <td>${h.uniName}</td><td class="text-blue-400 font-bold">৳${h.commission}</td>
+                <td><span class="status-pending">${h.status}</span></td></tr>`).join('');
         }
 
         async function runAssessment() {
@@ -103,20 +129,34 @@
             const unis = await res.json();
             const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
             document.getElementById('resultsArea').innerHTML = filtered.map(u => `
-                <div class="glass-card p-6 flex justify-between items-center border-l-4 border-blue-600">
-                    <div><p class="font-bold text-lg text-blue-400">${u.uniName}</p><p class="text-xs text-slate-500">${u.country} | ৳${u.partnerCommission}</p></div>
-                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-6 py-2 rounded-lg font-bold text-xs">OPEN FILE</button>
+                <div class="glass-card p-6 border-l-4 border-blue-600 flex justify-between items-center">
+                    <div><p class="font-bold text-lg text-blue-400">${u.uniName}</p><p class="text-xs text-slate-500">${u.country}</p></div>
+                    <div class="text-right">
+                        <p class="font-bold text-emerald-400">৳${u.partnerCommission}</p>
+                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-4 py-1 rounded text-[10px] mt-2">OPEN FILE</button>
+                    </div>
                 </div>`).join('');
         }
 
         let sel = null;
-        function openForm(n, c) { sel={n,c}; document.getElementById('stUni').value=n; document.getElementById('fileModal').classList.remove('hidden'); }
+        function openForm(n, c) { sel={n,c}; document.getElementById('fileModal').classList.remove('hidden'); }
+
         async function submitFile() {
-            const body = { partnerId: pId, studentName: document.getElementById('stName').value, contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value, uniName: sel.n, commission: sel.c };
+            const body = { partnerId: pId, studentName: document.getElementById('stName').value, contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value, uniName: sel.n, commission: sel.c, degree: document.getElementById('sDegree').value, gpa: document.getElementById('sGpa').value, langScore: document.getElementById('sScore').value };
             await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
             location.reload();
         }
-        function showSection(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.getElementById('section-'+id).classList.remove('hidden'); }
+
+        async function handleWithdraw() {
+            const amount = document.getElementById('wAmount').value;
+            const method = document.getElementById('wMethod').value;
+            const accNo = document.getElementById('wAcc').value;
+            await fetch('/api/partner/withdraw', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ partnerId: pId, amount, method, accNo }) });
+            alert("Request Sent!"); location.reload();
+        }
+
+        function showSection(id) { document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden')); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.getElementById('section-'+id).classList.remove('hidden'); document.getElementById('link-'+id).classList.add('active'); }
+
         loadDashboard();
     </script>
 </body>

@@ -2,42 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Login | IHP CRM</title>
+    <title>Login | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; }
-        .glass-box { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
-        input { background: #1e293b; border: 1px solid #334155; color: white; padding: 12px; border-radius: 10px; width: 100%; outline: none; transition: 0.3s; }
-        input:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
-        .btn-primary { background: #3b82f6; transition: 0.3s; font-weight: bold; }
-        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
-        .msg-box { display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; text-align: center; }
-    </style>
+    <style>body { background: #0b0f1a; color: white; }</style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
-    <div class="w-full max-w-md glass-box p-8 shadow-2xl">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-blue-500">IHP CRM</h1>
-            <p class="text-slate-400 text-sm mt-2" id="formSubtitle">Partner Access Portal</p>
-        </div>
-
-        <div id="msgDisplay" class="msg-box"></div>
-
+<body class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md bg-white/5 p-8 rounded-2xl border border-white/10">
+        <h2 class="text-2xl font-bold text-center text-blue-500 mb-8" id="title">Partner Login</h2>
+        <div id="msg" class="hidden p-3 rounded mb-4 text-xs text-center"></div>
+        
         <div id="loginForm" class="space-y-4">
-            <input type="email" id="lEmail" placeholder="Email Address">
-            <input type="password" id="lPass" placeholder="Password">
-            <button onclick="handleLogin()" class="w-full btn-primary py-3 rounded-lg">LOGIN</button>
-            <p class="text-center text-sm text-slate-500">
-                Don't have an account? 
-                <a href="#" onclick="toggleForm('reg')" class="text-blue-400 hover:underline">Register</a>
-            </p>
+            <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
+            <input type="password" id="lPass" placeholder="Password" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 py-3 rounded font-bold">LOGIN</button>
+            <p class="text-center text-xs text-slate-500 mt-4">New? <a href="javascript:toggleForm()" class="text-blue-400">Register</a></p>
         </div>
 
         <div id="regForm" class="hidden space-y-4">
-            <input type="text" id="rName" placeholder="Full Name / Agency Name">
-            <input type="email" id="rEmail" placeholder="Business Email">
-            <input type="password" id="rPass" placeholder="Create Password">
-            <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg font-bold">CREATE ACCOUNT</button>
-            <p class="text-center text-sm text-slate-5
+            <input type="text" id="rName" placeholder="Name" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
+            <input type="email" id="rEmail" placeholder="Email" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
+            <input type="password" id="rPass" placeholder="Password" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
+            <button onclick="handleRegister()" class="w-full bg-emerald-600 py-3 rounded font-bold">REGISTER</button>
+            <p class="text-center text-xs text-slate-500 mt-4">Back to <a href="javascript:toggleForm()" class="text-blue-400">Login</a></p>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm() { 
+            document.getElementById('loginForm').classList.toggle('hidden'); 
+            document.getElementById('regForm').classList.toggle('hidden');
+            document.getElementById('title').innerText = document.getElementById('loginForm').classList.contains('hidden') ? "Partner Registration" : "Partner Login";
+        }
+
+        async function handleLogin() {
+            const res = await fetch('/api/partner/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: lEmail.value, pass: lPass.value }) });
+            const data = await res.json();
+            if(res.ok) { localStorage.setItem('partnerId', data.id); localStorage.setItem('partnerName', data.name); window.location.href='/partner'; }
+            else { alert(data.msg); }
+        }
+
+        async function handleRegister() {
+            const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: rName.value, email: rEmail.value, pass: rPass.value }) });
+            const data = await res.json();
+            alert(data.msg); toggleForm();
+        }
+    </script>
+</body>
+</html>
