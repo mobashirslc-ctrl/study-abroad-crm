@@ -6,110 +6,38 @@
     <title>Partner Login | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-        }
-        input {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-        }
-        input:focus {
-            border-color: #3b82f6 !important;
-            outline: none;
-        }
+        body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; }
+        .glass-box { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; }
+        input { background: #1e293b; border: 1px solid #334155; color: white; padding: 12px; border-radius: 10px; width: 100%; outline: none; transition: 0.3s; }
+        input:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .btn-primary { background: #3b82f6; transition: 0.3s; font-weight: bold; }
+        .btn-primary:hover { background: #2563eb; transform: translateY(-2px); }
+        .msg-box { display: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 15px; text-align: center; }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="w-full max-w-md p-8">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold tracking-tighter text-blue-500 italic">IHP GLOBAL</h1>
-            <p class="text-slate-400 mt-2 text-sm">Partner Recruitment Portal</p>
+    <div class="w-full max-w-md glass-box p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-500">IHP CRM</h1>
+            <p class="text-slate-400 text-sm mt-2" id="formSubtitle">Partner Access Portal</p>
         </div>
 
-        <div class="glass-card p-8 shadow-2xl">
-            <h2 class="text-xl font-semibold mb-6">Welcome Back</h2>
-            
-            <form onsubmit="handleLogin(event)" class="space-y-5">
-                <div>
-                    <label class="text-xs text-slate-400 block mb-1 uppercase tracking-widest">Email Address</label>
-                    <input type="email" id="email" class="w-full p-3 rounded-xl" placeholder="name@org.com" required>
-                </div>
-                
-                <div>
-                    <label class="text-xs text-slate-400 block mb-1 uppercase tracking-widest">Password</label>
-                    <input type="password" id="pass" class="w-full p-3 rounded-xl" placeholder="••••••••" required>
-                </div>
+        <div id="msgDisplay" class="msg-box"></div>
 
-                <button type="submit" id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/20">
-                    SIGN IN
-                </button>
-            </form>
-
-            <div class="mt-8 pt-6 border-t border-white/5 text-center">
-                <p class="text-sm text-slate-500">Don't have an account? 
-                    <a href="/" class="text-blue-400 hover:underline">Apply Now</a>
-                </p>
-            </div>
+        <div id="loginForm" class="space-y-4">
+            <input type="email" id="lEmail" placeholder="Email Address">
+            <input type="password" id="lPass" placeholder="Password">
+            <button onclick="handleLogin()" class="w-full btn-primary py-3 rounded-lg">LOGIN</button>
+            <p class="text-center text-sm text-slate-500">
+                Don't have an account? 
+                <a href="#" onclick="toggleForm('reg')" class="text-blue-400 hover:underline">Register</a>
+            </p>
         </div>
-        
-        <p class="text-center text-[10px] text-slate-600 mt-10 uppercase tracking-[3px]">© 2026 IHP Global CRM System</p>
-    </div>
 
-    <script>
-        // যদি ইউজার আগে থেকেই লগইন করা থাকে, তবে সরাসরি ড্যাশবোর্ডে পাঠিয়ে দিবে
-        if (localStorage.getItem('partnerId')) {
-            window.location.replace('/partner');
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const btn = document.getElementById('loginBtn');
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('pass').value;
-
-            btn.innerText = "VERIFYING...";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/partner/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, pass })
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    // সফল হলে ডাটা সেভ করা
-                    localStorage.setItem('partnerId', data.id);
-                    localStorage.setItem('partnerName', data.name);
-                    // সরাসরি রিডাইরেক্ট
-                    window.location.replace('/partner');
-                } else {
-                    alert(data.msg || "Invalid Credentials");
-                    btn.innerText = "SIGN IN";
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                alert("Server Connection Error");
-                btn.innerText = "SIGN IN";
-                btn.disabled = false;
-            }
-        }
-    </script>
-</body>
-</html>
+        <div id="regForm" class="hidden space-y-4">
+            <input type="text" id="rName" placeholder="Full Name / Agency Name">
+            <input type="email" id="rEmail" placeholder="Business Email">
+            <input type="password" id="rPass" placeholder="Create Password">
+            <button onclick="handleRegister()" class="w-full bg-emerald-600 hover:bg-emerald-700 py-3 rounded-lg font-bold">CREATE ACCOUNT</button>
+            <p class="text-center text-sm text-slate-5
