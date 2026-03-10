@@ -13,26 +13,27 @@
         .content-section { display: none; height: calc(100vh - 40px); overflow-y: auto; padding: 20px; }
         .content-section.active { display: block; }
         input, select { background: #161b2a; border: 1px solid #2d364d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
-        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body class="flex">
 
     <div class="w-64 h-screen glass border-r border-white/5 flex flex-col p-4">
         <div class="mb-10 px-2">
-            <h1 class="text-xl font-bold text-blue-400">IHP GLOBAL</h1>
-            <p class="text-[10px] text-slate-500 uppercase">Partner Portal</p>
+            <h1 class="text-xl font-bold text-blue-400 uppercase tracking-tighter">IHP Global</h1>
+            <p class="text-[10px] text-slate-500 uppercase">Partner Dashboard</p>
         </div>
 
         <nav class="flex-1">
             <div onclick="showSection('assessment')" class="sidebar-item active"><i class="fa-solid fa-search mr-2"></i> Assessment</div>
             <div onclick="showSection('history')" class="sidebar-item"><i class="fa-solid fa-clock-rotate-left mr-2"></i> File Tracking</div>
             <div onclick="showSection('wallet')" class="sidebar-item"><i class="fa-solid fa-wallet mr-2"></i> My Wallet</div>
+            <div onclick="showSection('subscription')" class="sidebar-item"><i class="fa-solid fa-crown mr-2"></i> Subscription</div>
         </nav>
 
         <div class="mt-auto space-y-2">
             <div class="glass p-3 rounded-xl border-l-4 border-amber-500">
-                <p class="text-[9px] text-slate-500 uppercase">Pending Box</p>
+                <p class="text-[9px] text-slate-500 uppercase">Pending</p>
                 <p class="text-md font-bold text-amber-500">$<span id="pPending">0.00</span></p>
             </div>
             <div class="glass p-3 rounded-xl border-l-4 border-emerald-500">
@@ -48,32 +49,23 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="glass p-6 rounded-2xl space-y-4 h-fit">
                     <h2 class="font-bold text-blue-400 border-b border-white/5 pb-2">Smart Search</h2>
-                    <div><label class="text-[10px] text-slate-500">Target Country</label><input type="text" id="sCountry" placeholder="e.g. UK"></div>
-                    <div><label class="text-[10px] text-slate-500">Degree</label>
-                        <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>PHD</option></select>
-                    </div>
-                    <div><label class="text-[10px] text-slate-500">GPA Score</label><input type="text" id="sGpa" placeholder="e.g. 3.50"></div>
-                    <div><label class="text-[10px] text-slate-500">Language Test</label>
-                        <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option></select>
-                    </div>
-                    <div><label class="text-[10px] text-slate-500">Language Score</label><input type="text" id="sScore" placeholder="e.g. 6.5"></div>
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold mt-2 hover:bg-blue-700">FIND COURSES</button>
+                    <input type="text" id="sCountry" placeholder="Target Country">
+                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option></select>
+                    <input type="text" id="sGpa" placeholder="GPA Score">
+                    <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+                    <input type="text" id="sScore" placeholder="Score">
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">FIND COURSES</button>
                 </div>
-
-                <div class="lg:col-span-3">
-                    <div id="resultsArea" class="space-y-4">
-                        <div class="glass p-20 text-center text-slate-500 rounded-2xl">Generated results will appear here</div>
-                    </div>
-                </div>
+                <div class="lg:col-span-3" id="resultsArea"><div class="glass p-20 text-center text-slate-500">Search results...</div></div>
             </div>
         </div>
 
         <div id="history" class="content-section">
             <div class="glass p-6 rounded-2xl overflow-x-auto">
-                <h2 class="text-xl font-bold mb-6 text-blue-400">Student File Tracking</h2>
+                <h2 class="text-xl font-bold mb-6 text-blue-400">File Tracking</h2>
                 <table class="w-full text-left">
                     <thead class="text-[10px] text-slate-500 border-b border-white/5">
-                        <tr><th class="pb-4">STUDENT & CONTACT</th><th class="pb-4">PASSPORT</th><th class="pb-4">UNIVERSITY</th><th class="pb-4">COMMISSION</th><th class="pb-4">LIVE STATUS</th></tr>
+                        <tr><th>STUDENT</th><th>PASSPORT</th><th>UNIVERSITY</th><th>COMMISSION</th><th>STATUS</th></tr>
                     </thead>
                     <tbody id="historyList" class="text-xs"></tbody>
                 </table>
@@ -83,12 +75,38 @@
         <div id="wallet" class="content-section">
             <div class="grid grid-cols-2 gap-6 max-w-2xl mx-auto mt-20">
                 <div class="glass p-10 rounded-3xl text-center border-t-4 border-amber-500">
-                    <p class="text-slate-500 mb-2 font-bold">Pending Box</p>
+                    <p class="text-slate-500 mb-2">Pending Box</p>
                     <p class="text-4xl font-bold text-amber-500">$<span id="pPendingBig">0.00</span></p>
                 </div>
                 <div class="glass p-10 rounded-3xl text-center border-t-4 border-emerald-500">
-                    <p class="text-slate-500 mb-2 font-bold">Final Commission</p>
+                    <p class="text-slate-500 mb-2">Final Wallet</p>
                     <p class="text-4xl font-bold text-emerald-500">$<span id="pFinalBig">0.00</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="subscription" class="content-section">
+            <div class="max-w-2xl mx-auto mt-10">
+                <div class="glass p-8 rounded-3xl border border-blue-500/20">
+                    <div class="flex justify-between items-center mb-10">
+                        <h2 class="text-2xl font-bold">Subscription Details</h2>
+                        <span id="subBadge" class="px-4 py-1 rounded-full text-xs font-bold bg-white/5"></span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-8">
+                        <div>
+                            <p class="text-slate-500 text-xs mb-1">PLAN AMOUNT</p>
+                            <p class="text-2xl font-bold">$<span id="subAmountDisplay">0.00</span></p>
+                        </div>
+                        <div>
+                            <p class="text-slate-500 text-xs mb-1">EXPIRY DATE</p>
+                            <p class="text-2xl font-bold text-blue-400" id="subExpireDisplay">--/--/--</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 p-4 bg-white/5 rounded-2xl border border-white/5">
+                        <p class="text-xs text-slate-400"><i class="fa-solid fa-circle-info mr-2"></i> To renew or upgrade your plan, please contact the Administration Team.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -96,15 +114,14 @@
 
     <div id="fileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
         <div class="glass p-8 w-full max-w-md rounded-3xl">
-            <h2 class="text-xl font-bold mb-4">Student Application</h2>
+            <h2 class="text-xl font-bold mb-4">Student Info</h2>
             <div class="space-y-3">
-                <input type="text" id="stName" placeholder="Full Name">
-                <input type="text" id="stContact" placeholder="Contact Number">
-                <input type="text" id="stPassport" placeholder="Passport Number">
-                <input type="email" id="stEmail" placeholder="Email Address">
-                <div class="p-3 bg-amber-500/10 rounded-lg"><p class="text-[10px] text-amber-500 text-center">Commission will be added to Pending Box until Compliance Approval.</p></div>
+                <input type="text" id="stName" placeholder="Student Name">
+                <input type="text" id="stContact" placeholder="Contact">
+                <input type="text" id="stPassport" placeholder="Passport No">
+                <input type="email" id="stEmail" placeholder="Email">
                 <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold">SUBMIT FILE</button>
-                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-sm">Cancel</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2">Cancel</button>
             </div>
         </div>
     </div>
@@ -121,51 +138,45 @@
         async function loadData() {
             const res = await fetch('/api/partner/details/' + pId);
             const p = await res.json();
+            
+            // Update Balances
             document.getElementById('pPending').innerText = p.pendingBalance.toFixed(2);
             document.getElementById('pFinal').innerText = p.walletBalance.toFixed(2);
             document.getElementById('pPendingBig').innerText = p.pendingBalance.toFixed(2);
             document.getElementById('pFinalBig').innerText = p.walletBalance.toFixed(2);
 
+            // Update Subscription UI
+            document.getElementById('subAmountDisplay').innerText = p.subAmount.toFixed(2);
+            document.getElementById('subExpireDisplay').innerText = p.subExpireDate;
+            const badge = document.getElementById('subBadge');
+            badge.innerText = p.subStatus;
+            badge.className = p.subStatus === 'Active' ? 'px-4 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/20' : 'px-4 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-500 border border-red-500/20';
+
+            // History & Results loading logic same as previous version...
             const hRes = await fetch('/api/partner/history/' + pId);
             const history = await hRes.json();
-            document.getElementById('historyList').innerHTML = history.map(h => {
-                let color = "text-amber-500";
-                if(h.status === 'File Received' || h.status === 'Visa Success') color = "text-emerald-500";
-                if(h.status.includes('Rejected')) color = "text-red-500";
-                return `
-                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                        <td class="py-4 font-bold text-slate-200">${h.studentName}<br><span class="text-[9px] text-slate-500 font-normal">${h.contactNo}</span></td>
-                        <td class="text-slate-400">${h.passportNo}</td>
-                        <td>${h.uniName}</td>
-                        <td class="font-bold text-blue-400">$${h.commission}</td>
-                        <td><span class="status-badge ${color}">${h.status}</span></td>
-                    </tr>
-                `;
-            }).join('');
+            document.getElementById('historyList').innerHTML = history.map(h => `
+                <tr class="border-b border-white/5">
+                    <td class="py-4 font-bold text-slate-300">${h.studentName}</td>
+                    <td class="text-slate-500">${h.passportNo}</td>
+                    <td>${h.uniName}</td>
+                    <td class="font-bold text-blue-400">$${h.commission}</td>
+                    <td><span class="status-badge bg-white/5 ${h.status.includes('Rejected') ? 'text-red-500' : 'text-amber-500'}">${h.status}</span></td>
+                </tr>
+            `).join('');
         }
 
         async function runAssessment() {
             const res = await fetch('/api/universities');
             const unis = await res.json();
             const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
-            
             document.getElementById('resultsArea').innerHTML = filtered.map(u => `
-                <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="col-span-full flex justify-between border-b border-white/5 pb-2">
-                        <h3 class="text-lg font-bold text-blue-300">${u.uniName}</h3>
-                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition">Open File</button>
+                <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 mb-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-blue-300 text-lg">${u.uniName}</h3>
+                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Open File</button>
                     </div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                        <p><span class="text-slate-500">Country:</span> ${u.country}</p>
-                        <p><span class="text-slate-500">Location:</span> ${u.location}</p>
-                        <p><span class="text-slate-500">Course:</span> ${u.courseName}</p>
-                        <p><span class="text-slate-500">Intake:</span> ${u.intake}</p>
-                        <p><span class="text-slate-500">Semester Fee:</span> ${u.semesterFee}</p>
-                        <p><span class="text-slate-500">Total Fee:</span> ${u.totalFee}</p>
-                        <p><span class="text-slate-500">Bank BD:</span> ${u.bankNameBD}</p>
-                        <p><span class="text-slate-500">GPA Req:</span> ${u.minGpa}</p>
-                        <p class="col-span-full text-emerald-400 font-bold mt-2">Partner Commission: $${u.partnerCommission}</p>
-                    </div>
+                    <p class="text-xs text-slate-500 mt-2">${u.courseName} | ${u.country} | Intake: ${u.intake}</p>
                 </div>
             `).join('');
         }
@@ -180,8 +191,9 @@
                 studentEmail: document.getElementById('stEmail').value, uniName: curUni.n, commission: curUni.c
             };
             await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-            alert("File sent to Compliance Observation Box!"); location.reload();
+            alert("Application Submitted!"); location.reload();
         }
+
         loadData();
     </script>
 </body>
