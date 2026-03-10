@@ -14,25 +14,52 @@
         .nav-item { padding: 12px 24px; display: flex; align-items: center; gap: 12px; color: #94a3b8; transition: all 0.3s; cursor: pointer; border-radius: 8px; margin: 4px 16px; }
         .nav-item:hover, .nav-item.active { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
         input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; }
+        
+        /* Modal Styles */
+        #leadModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { width: 100%; max-width: 450px; padding: 30px; border-radius: 24px; position: relative; }
     </style>
 </head>
 <body>
+
+    <div id="leadModal">
+        <div class="modal-content glass">
+            <h2 class="text-xl font-bold mb-1 text-blue-400">Student Information</h2>
+            <p class="text-xs text-slate-400 mb-6">Complete student profile to open file</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] uppercase text-slate-500">Student Name</label>
+                    <input type="text" id="stdName" placeholder="Full Name" class="w-full p-2.5 rounded mt-1 outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-slate-500">Contact Number</label>
+                    <input type="text" id="stdPhone" placeholder="+880..." class="w-full p-2.5 rounded mt-1 outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] uppercase text-slate-500">Upload Documents (ZIP/PDF)</label>
+                    <input type="file" id="stdFile" class="w-full p-2 rounded mt-1 text-xs file:bg-blue-600 file:border-none file:text-white file:px-3 file:py-1 file:rounded file:mr-4">
+                </div>
+                
+                <div class="flex gap-3 mt-8">
+                    <button onclick="closeModal()" class="flex-1 bg-white/5 py-3 rounded-xl font-bold text-xs uppercase hover:bg-white/10 transition-all">Cancel</button>
+                    <button onclick="confirmLead()" class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-xs uppercase hover:bg-blue-700 shadow-lg shadow-blue-900/40 transition-all">Confirm & Open</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="sidebar glass flex flex-col">
         <div class="p-8 border-b border-white/5">
             <h2 class="text-xl font-bold tracking-tighter text-blue-400">IHP PARTNER</h2>
         </div>
-        
         <nav class="mt-8 flex-1">
             <div class="nav-item active"><span>🔍</span> Smart Assessment</div>
             <div class="nav-item"><span>📂</span> File Tracking</div>
             <div class="nav-item"><span>💳</span> Withdraw & Sub</div>
         </nav>
-
         <div class="p-4 border-t border-white/5">
-            <button onclick="location.href='/login'" class="nav-item w-full text-red-400 hover:bg-red-500/10 text-left">
-                <span>🚪</span> Logout
-            </button>
+            <button onclick="location.href='/login'" class="nav-item w-full text-red-400 hover:bg-red-500/10 text-left"><span>🚪</span> Logout</button>
         </div>
     </div>
 
@@ -40,7 +67,7 @@
         <div class="flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-2xl font-bold">Hello, <span id="partnerDisplayName" class="text-blue-400">...</span></h1>
-                <p class="text-slate-400 text-sm italic">"Assessment logic is now active & locked"</p>
+                <p class="text-slate-400 text-sm italic">Lead information required to unlock commission</p>
             </div>
             <div class="glass px-8 py-4 rounded-2xl text-center border-emerald-500/20">
                 <p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Wallet Balance</p>
@@ -49,33 +76,22 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-1 space-y-4">
+            <div class="lg:col-span-1">
                 <div class="glass p-6 rounded-2xl">
                     <h3 class="text-sm font-bold text-blue-300 mb-4 uppercase tracking-wider">Search Filters</h3>
                     <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] text-slate-500 uppercase">Destination</label>
-                            <select id="fCountry" class="w-full p-2.5 rounded mt-1">
-                                <option value="">Select Country</option>
-                                <option value="UK">United Kingdom</option>
-                                <option value="USA">USA</option>
-                                <option value="Canada">Canada</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500 uppercase">Degree Type</label>
-                            <select id="fDegree" class="w-full p-2.5 rounded mt-1">
-                                <option value="Bachelors">Undergraduate (UG)</option>
-                                <option value="Masters">Postgraduate (PG)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500 uppercase">Language Score</label>
-                            <input type="text" id="fLang" placeholder="e.g. 6.5" class="w-full p-2.5 rounded mt-1">
-                        </div>
-                        <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/40 transition-all mt-4">
-                            SEARCH NOW
-                        </button>
+                        <select id="fCountry" class="w-full p-2.5 rounded mt-1">
+                            <option value="">Select Country</option>
+                            <option value="UK">United Kingdom</option>
+                            <option value="USA">USA</option>
+                            <option value="Canada">Canada</option>
+                        </select>
+                        <select id="fDegree" class="w-full p-2.5 rounded mt-1">
+                            <option value="Bachelors">Undergraduate (UG)</option>
+                            <option value="Masters">Postgraduate (PG)</option>
+                        </select>
+                        <input type="text" id="fLang" placeholder="IELTS Score" class="w-full p-2.5 rounded mt-1">
+                        <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold transition-all mt-4">SEARCH NOW</button>
                     </div>
                 </div>
             </div>
@@ -83,7 +99,7 @@
             <div class="lg:col-span-3">
                 <div id="resGrid" class="space-y-4">
                     <div class="text-center py-24 glass rounded-2xl border-dashed border-white/10">
-                        <p class="text-slate-500">Enter student criteria to see matching results.</p>
+                        <p class="text-slate-500">Search results will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -93,62 +109,71 @@
     <script>
         document.getElementById('partnerDisplayName').innerText = localStorage.getItem('partnerName') || 'Partner';
         let currentWallet = 0;
+        let pendingCommission = 0;
+        let currentButton = null;
 
         async function runAssessment() {
             const grid = document.getElementById('resGrid');
             grid.innerHTML = '<div class="text-center py-20 text-blue-400 animate-pulse">Scanning Matches...</div>';
-
             try {
                 const res = await fetch('/api/universities');
                 const unis = await res.json();
                 const country = document.getElementById('fCountry').value;
                 const filtered = country ? unis.filter(u => u.country === country) : unis;
 
-                if(filtered.length === 0) {
-                    grid.innerHTML = '<div class="glass p-10 text-center rounded-2xl">No matching universities found.</div>';
-                    return;
-                }
-
                 grid.innerHTML = filtered.map(u => `
-                    <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 hover:bg-white/[0.05] transition-all mb-4">
+                    <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 mb-4">
                         <div class="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 class="text-xl font-bold">${u.uniName}</h3>
-                                <p class="text-blue-400 text-sm font-medium">${u.courseName} (${u.degreeType})</p>
-                            </div>
-                            <div class="text-right">
-                                <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-3 py-1 rounded-full font-bold border border-emerald-500/20 uppercase">Commission: $${u.partnerCommission}</span>
-                            </div>
+                            <div><h3 class="text-xl font-bold">${u.uniName}</h3><p class="text-blue-400 text-sm font-medium">${u.courseName}</p></div>
+                            <span class="bg-emerald-500/10 text-emerald-400 text-[10px] px-3 py-1 rounded-full font-bold border border-emerald-500/20 uppercase">$${u.partnerCommission}</span>
                         </div>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-xs border-t border-white/5 pt-6">
-                            <div><p class="text-slate-500 uppercase mb-1">Intake</p><p class="font-semibold">${u.intake || 'N/A'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Location</p><p class="font-semibold">${u.location || 'N/A'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Semester Fee</p><p class="font-semibold text-blue-300 font-mono">${u.semesterFee || '0'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Total Fee</p><p class="font-semibold text-blue-300 font-mono">${u.totalFee || '0'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Bank BD</p><p class="font-semibold">${u.bankNameBD || 'N/A'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Loan Amount</p><p class="font-semibold">${u.loanAmount || 'No'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Marital Status</p><p class="font-semibold">${u.maritalStatus || 'Single'}</p></div>
-                            <div><p class="text-slate-500 uppercase mb-1">Language Req</p><p class="font-semibold text-orange-400">${u.ieltsScore || '6.0'}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Intake</p><p class="font-semibold">${u.intake}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Semester Fee</p><p class="font-semibold text-blue-300 font-mono">${u.semesterFee}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Bank BD</p><p class="font-semibold">${u.bankNameBD}</p></div>
+                            <div><p class="text-slate-500 uppercase mb-1">Loan</p><p class="font-semibold">${u.loanAmount}</p></div>
                         </div>
-                        <button onclick="addCommission('${u.partnerCommission}', this)" class="w-full mt-8 bg-white/5 hover:bg-blue-600 py-2.5 rounded-lg text-[10px] font-bold tracking-widest transition-all border border-white/10 uppercase">
+                        <button onclick="openLeadModal('${u.partnerCommission}', this)" class="w-full mt-8 bg-white/5 hover:bg-blue-600 py-2.5 rounded-lg text-[10px] font-bold tracking-widest transition-all border border-white/10 uppercase">
                             Open File & Add Commission
                         </button>
                     </div>
                 `).join('');
-            } catch(e) {
-                grid.innerHTML = '<p class="text-red-400 text-center">Failed to load data.</p>';
-            }
+            } catch(e) { grid.innerHTML = '<p class="text-red-400 text-center">Failed to load data.</p>'; }
         }
 
-        function addCommission(amt, btn) {
-            const amount = parseFloat(amt);
-            if(!isNaN(amount)) {
-                currentWallet += amount;
-                document.getElementById('walletVal').innerText = currentWallet.toFixed(2);
-                btn.innerText = "✓ FILE OPENED - COMMISSION ADDED";
-                btn.disabled = true;
-                btn.className = "w-full mt-8 bg-emerald-600/20 text-emerald-400 py-2.5 rounded-lg text-[10px] font-bold cursor-not-allowed border border-emerald-500/20";
+        // Modal Logic
+        function openLeadModal(amt, btn) {
+            pendingCommission = parseFloat(amt);
+            currentButton = btn;
+            document.getElementById('leadModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('leadModal').style.display = 'none';
+        }
+
+        function confirmLead() {
+            const name = document.getElementById('stdName').value;
+            const phone = document.getElementById('stdPhone').value;
+
+            if(!name || !phone) {
+                alert("Please enter Student Name and Contact Number");
+                return;
             }
+
+            // Wallet Logic
+            currentWallet += pendingCommission;
+            document.getElementById('walletVal').innerText = currentWallet.toFixed(2);
+            
+            // Button Update
+            currentButton.innerText = "✓ FILE OPENED FOR: " + name.toUpperCase();
+            currentButton.disabled = true;
+            currentButton.className = "w-full mt-8 bg-emerald-600/20 text-emerald-400 py-2.5 rounded-lg text-[10px] font-bold cursor-not-allowed border border-emerald-500/20";
+            
+            // Cleanup & Close
+            document.getElementById('stdName').value = "";
+            document.getElementById('stdPhone').value = "";
+            closeModal();
         }
     </script>
 </body>
