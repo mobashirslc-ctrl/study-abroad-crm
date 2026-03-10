@@ -1,74 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Partner | Smart Assessment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>if(!localStorage.getItem('partnerId')) window.location.replace('/login');</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
-        input, select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
+        body { background: linear-gradient(45deg, #0f172a, #1e293b); min-height: 100vh; color: white; font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
+        input, select { background: rgba(255, 255, 255, 0.05) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: white !important; }
+        .res-card { transition: transform 0.2s; }
+        .res-card:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.06); }
     </style>
 </head>
-<body class="flex">
-    <div class="w-64 min-h-screen bg-slate-900 border-r border-white/10 p-6 fixed">
-        <h1 class="text-xl font-bold text-blue-500 mb-8">IHP PARTNER</h1>
-        <nav class="space-y-4">
-            <a href="#" class="block p-3 bg-blue-600 rounded-lg">Smart Assessment</a>
-            <button onclick="logout()" class="w-full text-left p-3 text-red-400 mt-20">Logout</button>
-        </nav>
-    </div>
+<body class="p-4 md:p-8">
 
-    <div class="flex-1 ml-64 p-8">
-        <div class="flex justify-between mb-8">
-            <h2 class="text-2xl font-bold italic">University <span class="text-blue-400">Assessment Tool</span></h2>
-            <div class="text-right"><p id="pName" class="text-sm font-bold"></p><p class="text-emerald-400">$0.00</p></div>
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 glass-panel p-6 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold">Hello, <span id="pName" class="text-blue-400">Partner</span></h1>
+                <p class="text-slate-400 text-sm">Welcome to your Global Assessment Portal</p>
+            </div>
+            <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl px-6 py-3 text-center min-w-[200px]">
+                <p class="text-[10px] uppercase tracking-widest text-blue-400 font-bold">Wallet Balance</p>
+                <p class="text-3xl font-mono font-bold text-white">$<span id="walletDisp">0.00</span></p>
+            </div>
         </div>
 
-        <div class="grid grid-cols-4 gap-6">
-            <div class="glass p-6 h-fit space-y-4">
-                <h3 class="text-xs font-bold text-slate-500 uppercase">Filters</h3>
-                <div><label class="text-[10px]">Destination</label><select id="sCountry" class="w-full p-2 rounded"><option>UK</option><option>USA</option><option>Canada</option></select></div>
-                <div><label class="text-[10px]">Academic Score %</label><input type="number" id="sAcademic" class="w-full p-2 rounded"></div>
-                <div><label class="text-[10px]">Degree</label><select id="sDegree" class="w-full p-2 rounded"><option>UG</option><option>PG</option></select></div>
-                <button onclick="search()" class="w-full bg-blue-600 py-3 rounded-xl font-bold mt-2 shadow-lg shadow-blue-500/20">SEARCH NOW</button>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="glass-panel p-6">
+                    <h2 class="text-lg font-semibold mb-4 text-blue-300">Smart Filter</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-slate-500">Target Country</label>
+                            <select id="fCountry" class="w-full p-2.5 rounded mt-1 outline-none">
+                                <option value="">All Countries</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="USA">USA</option>
+                                <option value="Canada">Canada</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-500">Language Score (IELTS/PTE)</label>
+                            <input type="text" id="fLang" placeholder="e.g. 6.5" class="w-full p-2.5 rounded mt-1 outline-none">
+                        </div>
+                        <button onclick="searchUni()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-bold shadow-lg shadow-blue-500/20 transition-all">
+                            FIND PROGRAMS
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="col-span-3 space-y-4" id="results">
-                <div class="glass p-20 text-center text-slate-500 italic">Enter student criteria to see matching results.</div>
+            <div class="lg:col-span-3">
+                <div id="resultCount" class="mb-4 text-sm text-slate-400"></div>
+                <div id="resGrid" class="space-y-4">
+                    <div class="text-center py-20 glass-panel">
+                        <p class="text-slate-500 italic">Select criteria and click search to see eligible universities.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('pName').innerText = localStorage.getItem('partnerName');
-        async function search(){
-            const resArea = document.getElementById('results');
-            resArea.innerHTML = '<div class="text-blue-400 p-10 text-center animate-pulse">Filtering Universities...</div>';
-            const res = await fetch('/api/universities');
-            const unis = await res.json();
-            const country = document.getElementById('sCountry').value;
-            const score = parseFloat(document.getElementById('sAcademic').value) || 0;
-            const degree = document.getElementById('sDegree').value;
+        // Init Data
+        document.getElementById('pName').innerText = localStorage.getItem('partnerName') || 'Partner';
+        let currentWallet = 0;
 
-            const filtered = unis.filter(u => u.country === country && score >= (u.minAcademicScore || 0) && u.degreeType === degree);
-
-            if(filtered.length === 0) { resArea.innerHTML = '<div class="glass p-20 text-center text-slate-500">No match found for this criteria.</div>'; return; }
+        async function searchUni() {
+            const grid = document.getElementById('resGrid');
+            grid.innerHTML = '<div class="text-center py-20 text-blue-400 animate-pulse">Scanning Global Database...</div>';
             
-            resArea.innerHTML = filtered.map(u => `
-                <div class="glass p-6 border-l-4 border-blue-500 hover:bg-white/5 transition">
-                    <div class="flex justify-between items-start">
-                        <div><h3 class="text-lg font-bold">${u.uniName}</h3><p class="text-blue-400 text-xs">${u.courseName} (${u.degreeType})</p></div>
-                        <div class="text-right text-emerald-400 font-bold">$${u.partnerCommission}<br><span class="text-[9px] text-slate-500 uppercase">Comm.</span></div>
+            try {
+                const res = await fetch('/api/universities');
+                const unis = await res.json();
+                
+                const filterCountry = document.getElementById('fCountry').value;
+                const filtered = filterCountry ? unis.filter(u => u.country === filterCountry) : unis;
+
+                if(filtered.length === 0) {
+                    grid.innerHTML = '<div class="text-center py-20 glass-panel">No programs match your criteria.</div>';
+                    return;
+                }
+
+                document.getElementById('resultCount').innerText = `${filtered.length} Programs Found`;
+
+                grid.innerHTML = filtered.map(u => `
+                    <div class="glass-panel p-6 res-card border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${u.uniName}</h3>
+                                <p class="text-blue-400 text-sm font-semibold">${u.courseName} — ${u.degreeType}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] text-slate-500 uppercase">Commission</p>
+                                <p class="text-xl font-bold text-emerald-400">$${u.partnerCommission}</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-2 border-t border-white/5 pt-4">
+                            <div><p class="text-[10px] text-slate-500 uppercase">Intake</p><p class="text-sm">${u.intake || 'N/A'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Location</p><p class="text-sm">${u.location || 'N/A'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Semester Fee</p><p class="text-sm font-mono">${u.semesterFee || '0'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Total Fee</p><p class="text-sm font-mono">${u.totalFee || '0'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Bank BD</p><p class="text-sm">${u.bankNameBD || 'N/A'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Loan Support</p><p class="text-sm">${u.loanAmount || 'No'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Marital Status</p><p class="text-sm">${u.maritalStatus || 'Single'}</p></div>
+                            <div><p class="text-[10px] text-slate-500 uppercase">Language Score</p><p class="text-sm">IELTS: ${u.ieltsScore || 'Any'}</p></div>
+                        </div>
+
+                        <button onclick="addCommission('${u.partnerCommission}', this)" class="w-full mt-6 bg-white/5 hover:bg-emerald-600 hover:text-white border border-white/10 py-2.5 rounded-lg text-xs font-bold transition-all uppercase tracking-widest">
+                            Open File & Add Commission
+                        </button>
                     </div>
-                    <div class="grid grid-cols-4 gap-4 mt-4 text-[10px] bg-black/20 p-3 rounded uppercase">
-                        <div>Score Req: ${u.minAcademicScore}%</div><div>Bank: ${u.bankType}</div><div>Intake: ${u.intake}</div><div>Fee: ${u.semesterFee}</div>
-                    </div>
-                    <button class="w-full mt-4 bg-white/10 hover:bg-blue-600 py-2 rounded font-bold text-xs transition">OPEN FILE & APPLY</button>
-                </div>
-            `).join('');
+                `).join('');
+
+            } catch(e) {
+                grid.innerHTML = '<div class="text-center py-20 text-red-400">Error connecting to server.</div>';
+            }
         }
-        function logout(){ localStorage.clear(); window.location.replace('/login'); }
+
+        function addCommission(amt, btn) {
+            const amount = parseFloat(amt);
+            if(!isNaN(amount)) {
+                currentWallet += amount;
+                document.getElementById('walletDisp').innerText = currentWallet.toFixed(2);
+                
+                // Visual feedback
+                btn.innerText = "FILE OPENED & COMMISSION ADDED";
+                btn.disabled = true;
+                btn.className = "w-full mt-6 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 py-2.5 rounded-lg text-xs font-bold cursor-not-allowed";
+            }
+        }
     </script>
 </body>
 </html>
