@@ -1,203 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | IHP CRM</title>
+    <meta charset="UTF-8"><title>Partner | Smart Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>if(!localStorage.getItem('partnerId')) window.location.replace('/login');</script>
     <style>
-        body {
-            background: linear-gradient(45deg, #0f172a, #1e293b, #334155);
-            min-height: 100vh;
-            color: white;
-            font-family: 'Inter', sans-serif;
-        }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-        }
-        .sidebar-item:hover {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
-        }
-        input, select {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: white !important;
-        }
-        .result-card {
-            border-left: 4px solid #3b82f6;
-            transition: all 0.3s ease;
-        }
-        .result-card:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-2px);
-        }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; }
+        input, select { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: white !important; }
     </style>
 </head>
 <body class="flex">
-
-    <div class="w-64 min-h-screen bg-slate-900/50 border-r border-white/10 p-6 hidden md:block">
-        <h1 class="text-2xl font-bold text-blue-500 mb-10">IHP PARTNER</h1>
-        <nav class="space-y-2">
-            <a href="#" class="block p-3 rounded-lg bg-blue-600 text-white font-medium">Dashboard</a>
-            <a href="#" class="sidebar-item block p-3 rounded-lg text-slate-400 transition">My Applications</a>
-            <a href="#" class="sidebar-item block p-3 rounded-lg text-slate-400 transition">Wallet History</a>
-            <a href="#" class="sidebar-item block p-3 rounded-lg text-slate-400 transition">Support</a>
+    <div class="w-64 min-h-screen bg-slate-900 border-r border-white/10 p-6 fixed">
+        <h1 class="text-xl font-bold text-blue-500 mb-8">IHP PARTNER</h1>
+        <nav class="space-y-4">
+            <a href="#" class="block p-3 bg-blue-600 rounded-lg">Smart Assessment</a>
+            <button onclick="logout()" class="w-full text-left p-3 text-red-400 mt-20">Logout</button>
         </nav>
-        
-        <div class="mt-20 p-4 glass-panel text-center">
-            <p class="text-xs text-slate-400">Wallet Balance</p>
-            <p class="text-xl font-bold text-emerald-400 mt-1">$<span id="sideWallet">0.00</span></p>
-        </div>
     </div>
 
-    <div class="flex-1 p-4 md:p-8 overflow-y-auto">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h2 class="text-2xl font-bold">Assessment <span class="text-blue-400 text-lg ml-2">Center</span></h2>
-                <p class="text-slate-400 text-sm">Welcome back, <span id="pName" class="text-slate-200">User</span></p>
-            </div>
-            <button onclick="logout()" class="text-slate-400 hover:text-red-400 text-sm">Logout</button>
+    <div class="flex-1 ml-64 p-8">
+        <div class="flex justify-between mb-8">
+            <h2 class="text-2xl font-bold italic">University <span class="text-blue-400">Assessment Tool</span></h2>
+            <div class="text-right"><p id="pName" class="text-sm font-bold"></p><p class="text-emerald-400">$0.00</p></div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
-            <div class="lg:col-span-1 space-y-6">
-                <div class="glass-panel p-5">
-                    <h3 class="text-md font-semibold mb-4 flex items-center">
-                        <span class="mr-2">🔍</span> Smart Filters
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] uppercase tracking-wider text-slate-500">Destination</label>
-                            <select id="sCountry" class="w-full p-2 rounded mt-1 outline-none">
-                                <option value="UK">United Kingdom</option>
-                                <option value="USA">USA</option>
-                                <option value="Canada">Canada</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="text-[10px] uppercase tracking-wider text-slate-500">Academic Score (%)</label>
-                            <input type="number" id="sAcademic" placeholder="e.g. 75" class="w-full p-2 rounded mt-1 outline-none">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] uppercase tracking-wider text-slate-500">GPA</label>
-                                <input type="text" id="sGpa" placeholder="4.50" class="w-full p-2 rounded mt-1 outline-none">
-                            </div>
-                            <div>
-                                <label class="text-[10px] uppercase tracking-wider text-slate-500">Passing Year</label>
-                                <input type="text" id="sYear" placeholder="2023" class="w-full p-2 rounded mt-1 outline-none">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-[10px] uppercase tracking-wider text-slate-500">Language Test</label>
-                            <div class="flex gap-1 mt-1">
-                                <select id="sLang" class="flex-1 p-2 rounded outline-none text-xs">
-                                    <option value="IELTS">IELTS</option>
-                                    <option value="PTE">PTE</option>
-                                    <option value="MOI">MOI</option>
-                                </select>
-                                <input type="text" id="sScore" placeholder="6.5" class="w-16 p-2 rounded outline-none text-center">
-                            </div>
-                        </div>
-
-                        <button onclick="runSearch()" class="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-bold mt-4 shadow-lg shadow-blue-500/20 transition-all">
-                            SEARCH COURSES
-                        </button>
-                    </div>
-                </div>
+        <div class="grid grid-cols-4 gap-6">
+            <div class="glass p-6 h-fit space-y-4">
+                <h3 class="text-xs font-bold text-slate-500 uppercase">Filters</h3>
+                <div><label class="text-[10px]">Destination</label><select id="sCountry" class="w-full p-2 rounded"><option>UK</option><option>USA</option><option>Canada</option></select></div>
+                <div><label class="text-[10px]">Academic Score %</label><input type="number" id="sAcademic" class="w-full p-2 rounded"></div>
+                <div><label class="text-[10px]">Degree</label><select id="sDegree" class="w-full p-2 rounded"><option>UG</option><option>PG</option></select></div>
+                <button onclick="search()" class="w-full bg-blue-600 py-3 rounded-xl font-bold mt-2 shadow-lg shadow-blue-500/20">SEARCH NOW</button>
             </div>
 
-            <div class="lg:col-span-3">
-                <div id="resultCount" class="mb-4 text-sm text-slate-400">Showing matches for your criteria...</div>
-                <div id="mainResults" class="space-y-4">
-                    <div class="glass-panel p-20 text-center opacity-50">
-                        <p>Search results will appear here</p>
-                    </div>
-                </div>
+            <div class="col-span-3 space-y-4" id="results">
+                <div class="glass p-20 text-center text-slate-500 italic">Enter student criteria to see matching results.</div>
             </div>
-
         </div>
     </div>
 
     <script>
-        // Init Dashboard
-        document.getElementById('pName').innerText = localStorage.getItem('partnerName') || 'Partner';
+        document.getElementById('pName').innerText = localStorage.getItem('partnerName');
+        async function search(){
+            const resArea = document.getElementById('results');
+            resArea.innerHTML = '<div class="text-blue-400 p-10 text-center animate-pulse">Filtering Universities...</div>';
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            const country = document.getElementById('sCountry').value;
+            const score = parseFloat(document.getElementById('sAcademic').value) || 0;
+            const degree = document.getElementById('sDegree').value;
 
-        async function runSearch() {
-            const container = document.getElementById('mainResults');
-            container.innerHTML = '<div class="p-20 text-center text-blue-400 animate-pulse">Scanning Global Database...</div>';
+            const filtered = unis.filter(u => u.country === country && score >= (u.minAcademicScore || 0) && u.degreeType === degree);
 
-            try {
-                const res = await fetch('/api/universities');
-                const unis = await res.json();
-
-                // Filters
-                const country = document.getElementById('sCountry').value;
-                const academic = parseFloat(document.getElementById('sAcademic').value) || 0;
-
-                const filtered = unis.filter(u => {
-                    const matchCountry = u.country === country;
-                    const matchAcademic = academic >= (u.minAcademicScore || 0);
-                    return matchCountry && matchAcademic;
-                });
-
-                document.getElementById('resultCount').innerText = `${filtered.length} Matching Universities Found`;
-
-                if(filtered.length === 0) {
-                    container.innerHTML = '<div class="glass-panel p-20 text-center text-slate-500">No matches found. Try adjusting scores.</div>';
-                    return;
-                }
-
-                container.innerHTML = filtered.map(u => `
-                    <div class="glass-panel p-6 result-card">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-xl font-bold text-white">${u.uniName}</h3>
-                                <p class="text-sm text-blue-400">${u.location}, ${u.country}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] text-slate-500 uppercase">Commission</p>
-                                <p class="text-lg font-bold text-emerald-400">$${u.partnerCommission}</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs bg-black/20 p-4 rounded-lg">
-                            <div><p class="text-slate-500">Course</p><p class="font-medium truncate">${u.courseName}</p></div>
-                            <div><p class="text-slate-500">Intake</p><p class="font-medium">${u.intake}</p></div>
-                            <div><p class="text-slate-500">Semester Fee</p><p class="font-medium">${u.semesterFee}</p></div>
-                            <div><p class="text-slate-500">Min Score Req</p><p class="font-medium">${u.minAcademicScore || 'N/A'}%</p></div>
-                        </div>
-
-                        <div class="flex gap-3 mt-4">
-                            <button class="flex-1 bg-white/10 hover:bg-white/20 py-2 rounded font-semibold text-xs transition">
-                                VIEW DETAILS
-                            </button>
-                            <button class="flex-1 bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white py-2 rounded font-semibold text-xs transition">
-                                OPEN FILE (+ COMMISSION)
-                            </button>
-                        </div>
+            if(filtered.length === 0) { resArea.innerHTML = '<div class="glass p-20 text-center text-slate-500">No match found for this criteria.</div>'; return; }
+            
+            resArea.innerHTML = filtered.map(u => `
+                <div class="glass p-6 border-l-4 border-blue-500 hover:bg-white/5 transition">
+                    <div class="flex justify-between items-start">
+                        <div><h3 class="text-lg font-bold">${u.uniName}</h3><p class="text-blue-400 text-xs">${u.courseName} (${u.degreeType})</p></div>
+                        <div class="text-right text-emerald-400 font-bold">$${u.partnerCommission}<br><span class="text-[9px] text-slate-500 uppercase">Comm.</span></div>
                     </div>
-                `).join('');
-
-            } catch (err) {
-                container.innerHTML = '<div class="p-20 text-center text-red-400">Error loading data.</div>';
-            }
+                    <div class="grid grid-cols-4 gap-4 mt-4 text-[10px] bg-black/20 p-3 rounded uppercase">
+                        <div>Score Req: ${u.minAcademicScore}%</div><div>Bank: ${u.bankType}</div><div>Intake: ${u.intake}</div><div>Fee: ${u.semesterFee}</div>
+                    </div>
+                    <button class="w-full mt-4 bg-white/10 hover:bg-blue-600 py-2 rounded font-bold text-xs transition">OPEN FILE & APPLY</button>
+                </div>
+            `).join('');
         }
-
-        function logout() {
-            localStorage.clear();
-            window.location.href = '/login';
-        }
+        function logout(){ localStorage.clear(); window.location.replace('/login'); }
     </script>
 </body>
 </html>

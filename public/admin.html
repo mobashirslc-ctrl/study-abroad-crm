@@ -1,180 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin | IHP CRM</title>
+    <meta charset="UTF-8"><title>Admin | 21 Fields Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-link.active { background: #3b82f6; color: white; }
-        input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; }
-        label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        
-        /* Toggle Switch Style */
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; font-size: 12px; padding: 8px; border-radius: 6px; }
+        label { font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(20px); }
+        input:checked + .slider:before { transform: translateX(16px); }
     </style>
 </head>
 <body class="flex">
-
     <div class="w-64 min-h-screen bg-slate-900 border-r border-white/10 p-6 fixed">
-        <h1 class="text-xl font-bold text-blue-500 mb-10 italic">IHP GLOBAL MASTER</h1>
+        <h1 class="text-xl font-bold text-blue-500 mb-8 italic">IHP MASTER</h1>
         <nav class="space-y-2">
-            <button onclick="showSection('partners')" id="btn-partners" class="sidebar-link active w-full text-left p-3 rounded-lg flex items-center gap-3">👥 Partners</button>
-            <button onclick="showSection('universities')" id="btn-universities" class="sidebar-link w-full text-left p-3 rounded-lg flex items-center gap-3">🎓 Universities</button>
+            <button onclick="showSec('partners')" class="w-full text-left p-3 rounded-lg hover:bg-blue-600">Partners</button>
+            <button onclick="showSec('uni')" class="w-full text-left p-3 rounded-lg hover:bg-blue-600">Universities</button>
         </nav>
     </div>
 
-    <div class="flex-1 ml-64 p-10">
-        
+    <div class="flex-1 ml-64 p-8">
         <div id="sec-partners">
             <h2 class="text-2xl font-bold mb-6">Partner Management</h2>
-            <div class="glass rounded-xl overflow-hidden">
+            <div class="glass rounded-xl overflow-x-auto">
                 <table class="w-full text-left">
-                    <thead class="bg-white/5 text-[11px] text-slate-400 uppercase">
-                        <tr>
-                            <th class="p-4">Partner/Org Name</th>
-                            <th class="p-4 text-center">Status Toggle</th>
-                            <th class="p-4">Expiry Date</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
+                    <thead class="bg-white/5 text-[10px] uppercase text-slate-400">
+                        <tr><th class="p-4">Name/Org</th><th class="p-4">Contact</th><th class="p-4">Toggle Status</th><th class="p-4">Expiry</th><th class="p-4">Action</th></tr>
                     </thead>
-                    <tbody id="partnerTableBody" class="divide-y divide-white/5"></tbody>
+                    <tbody id="pTable"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="sec-universities" class="hidden">
-            <h2 class="text-2xl font-bold mb-6">Manage Universities</h2>
-            <form id="uniForm" class="glass p-8 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div class="col-span-full border-b border-white/10 pb-2 mb-2"><h3 class="text-blue-400 font-bold text-sm">Course & Eligibility</h3></div>
-                
-                <div><label>University Name</label><input type="text" id="uniName" class="w-full p-2 rounded" required></div>
-                <div><label>Country</label><input type="text" id="country" class="w-full p-2 rounded" required></div>
-                
-                <div>
-                    <label>Degree Type</label>
-                    <select id="degreeType" class="w-full p-2 rounded">
-                        <option value="UG">UG (Undergraduate)</option>
-                        <option value="PG">PG (Postgraduate)</option>
-                        <option value="DIPLOMA">DIPLOMA</option>
-                        <option value="FOUNDATION">FOUNDATION</option>
-                    </select>
-                </div>
+        <div id="sec-uni" class="hidden">
+            <h2 class="text-2xl font-bold mb-4">Add University (21 Fields)</h2>
+            <form id="uForm" class="glass p-6 rounded-xl grid grid-cols-4 gap-4">
+                <div class="col-span-4 border-b border-white/5 pb-1 text-blue-400 font-bold text-xs">BASIC & COURSE</div>
+                <div><label>Uni Name</label><input type="text" id="uniName" class="w-full"></div>
+                <div><label>Country</label><input type="text" id="country" class="w-full"></div>
+                <div><label>Location</label><input type="text" id="location" class="w-full"></div>
+                <div><label>Course Name</label><input type="text" id="courseName" class="w-full"></div>
+                <div><label>Degree</label><select id="degreeType" class="w-full"><option>UG</option><option>PG</option><option>DIPLOMA</option><option>FOUNDATION</option></select></div>
+                <div><label>Intake</label><input type="text" id="intake" class="w-full"></div>
+                <div><label>Duration</label><input type="text" id="duration" class="w-full"></div>
+                <div><label>Currency</label><input type="text" id="currency" class="w-full"></div>
 
-                <div><label>Course Name</label><input type="text" id="courseName" class="w-full p-2 rounded"></div>
-                <div><label>Partner Commission ($)</label><input type="text" id="partnerCommission" class="w-full p-2 rounded"></div>
-                <div><label>Min Academic Score (%)</label><input type="number" id="minAcademicScore" class="w-full p-2 rounded"></div>
+                <div class="col-span-4 border-b border-white/5 pb-1 text-emerald-400 font-bold text-xs mt-2">FEES & ELIGIBILITY</div>
+                <div><label>Semester Fee</label><input type="text" id="semesterFee" class="w-full"></div>
+                <div><label>Total Fee</label><input type="text" id="totalFee" class="w-full"></div>
+                <div><label>Commission ($)</label><input type="text" id="partnerCommission" class="w-full"></div>
+                <div><label>Min GPA</label><input type="text" id="minGpa" class="w-full"></div>
+                <div><label>Academic Score %</label><input type="number" id="minAcademicScore" class="w-full"></div>
+                <div><label>IELTS</label><input type="text" id="ieltsScore" class="w-full"></div>
+                <div><label>PTE</label><input type="text" id="pteScore" class="w-full"></div>
+                <div><label>Duolingo</label><input type="text" id="duolingoScore" class="w-full"></div>
 
-                <div class="col-span-full border-b border-white/10 pb-2 mb-2 mt-4"><h3 class="text-emerald-400 font-bold text-sm">Bank Requirements</h3></div>
-                
-                <div>
-                    <label>Bank Type</label>
-                    <select id="bankType" class="w-full p-2 rounded">
-                        <option value="FDR">FDR</option>
-                        <option value="SAVINGS">SAVINGS</option>
-                    </select>
-                </div>
-                <div><label>Bank Name (BD)</label><input type="text" id="bankNameBD" class="w-full p-2 rounded"></div>
-                <div><label>Loan Amount Available</label><input type="text" id="loanAmount" class="w-full p-2 rounded"></div>
+                <div class="col-span-4 border-b border-white/5 pb-1 text-orange-400 font-bold text-xs mt-2">OTHERS</div>
+                <div><label>Bank Type</label><select id="bankType" class="w-full"><option>FDR</option><option>SAVINGS</option></select></div>
+                <div><label>Bank Name BD</label><input type="text" id="bankNameBD" class="w-full"></div>
+                <div><label>MOI Available?</label><select id="moiAvailable" class="w-full"><option>Yes</option><option>No</option></select></div>
+                <div><label>Gap Acceptance</label><input type="text" id="gapAcceptance" class="w-full"></div>
+                <div><label>Marital Status</label><select id="maritalStatus" class="w-full"><option>Single</option><option>Married</option><option>Both</option></select></div>
 
-                <button type="submit" class="col-span-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold mt-6 transition-all">SAVE UNIVERSITY DATA</button>
+                <button type="submit" class="col-span-4 bg-blue-600 py-3 rounded-lg font-bold mt-2">SAVE UNIVERSITY</button>
             </form>
         </div>
     </div>
 
     <script>
-        function showSection(id) {
-            document.getElementById('sec-partners').classList.add('hidden');
-            document.getElementById('sec-universities').classList.add('hidden');
-            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('sec-' + id).classList.remove('hidden');
-            document.getElementById('btn-' + id).classList.add('active');
+        function showSec(id){
+            document.getElementById('sec-partners').classList.toggle('hidden', id !== 'partners');
+            document.getElementById('sec-uni').classList.toggle('hidden', id !== 'uni');
         }
-
-        async function loadPartners() {
+        async function loadP(){
             const res = await fetch('/api/admin/partners');
             const data = await res.json();
-            document.getElementById('partnerTableBody').innerHTML = data.map(p => `
-                <tr class="hover:bg-white/5 transition">
-                    <td class="p-4">
-                        <p class="font-bold text-white">${p.name}</p>
-                        <p class="text-[10px] text-slate-500">${p.orgName || 'N/A'}</p>
-                    </td>
-                    <td class="p-4 text-center">
-                        <label class="switch">
-                            <input type="checkbox" ${p.status === 'Active' ? 'checked' : ''} onchange="toggleStatus('${p._id}', this.checked)">
-                            <span class="slider"></span>
-                        </label>
-                        <p class="text-[9px] mt-1 ${p.status === 'Active' ? 'text-emerald-400' : 'text-slate-500'}">${p.status}</p>
-                    </td>
-                    <td class="p-4 text-xs text-orange-300">
-                        ${p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="updateExpiry('${p._id}')" class="text-blue-400 hover:underline text-[10px] font-bold">SET EXPIRY</button>
-                        <span class="mx-2">|</span>
-                        <button onclick="deletePartner('${p._id}')" class="text-red-400 hover:underline text-[10px] font-bold">DELETE</button>
-                    </td>
+            document.getElementById('pTable').innerHTML = data.map(p => `
+                <tr class="border-b border-white/5">
+                    <td class="p-4"><b>${p.name}</b><br><span class="text-[10px] text-slate-500">${p.orgName}</span></td>
+                    <td class="p-4 text-xs">${p.contactNo}</td>
+                    <td class="p-4"><label class="switch"><input type="checkbox" ${p.status==='Active'?'checked':''} onchange="toggleP('${p._id}', this.checked)"><span class="slider"></span></label></td>
+                    <td class="p-4 text-xs">${p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                    <td class="p-4"><button onclick="setExp('${p._id}')" class="text-blue-400 text-xs">Expiry</button></td>
                 </tr>
             `).join('');
         }
-
-        async function toggleStatus(id, isChecked) {
-            const newStatus = isChecked ? 'Active' : 'Inactive';
-            await fetch('/api/admin/partner-update/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
-            });
-            loadPartners(); // Refresh list
+        async function toggleP(id, check){
+            await fetch('/api/admin/partner-update/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status: check?'Active':'Inactive'})});
+            loadP();
         }
-
-        async function updateExpiry(id) {
-            const date = prompt("Enter Expiry Date (YYYY-MM-DD):");
-            if(date) {
-                await fetch('/api/admin/partner-update/' + id, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ expiryDate: date })
-                });
-                loadPartners();
-            }
+        async function setExp(id){
+            const d = prompt("YYYY-MM-DD:");
+            if(d) { await fetch('/api/admin/partner-update/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({expiryDate:d})}); loadP(); }
         }
-
-        document.getElementById('uniForm').onsubmit = async (e) => {
+        document.getElementById('uForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = {};
-            new FormData(e.target).forEach((v, k) => formData[k] = v); // Note: Add IDs to form inputs or map manually
-            // Manual Map for reliability
-            const payload = {
-                uniName: document.getElementById('uniName').value,
-                country: document.getElementById('country').value,
-                degreeType: document.getElementById('degreeType').value,
-                courseName: document.getElementById('courseName').value,
-                partnerCommission: document.getElementById('partnerCommission').value,
-                minAcademicScore: document.getElementById('minAcademicScore').value,
-                bankType: document.getElementById('bankType').value,
-                bankNameBD: document.getElementById('bankNameBD').value,
-                loanAmount: document.getElementById('loanAmount').value
-            };
-
-            const res = await fetch('/api/admin/add-university', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) { alert("University Saved!"); e.target.reset(); }
+            const payload = {};
+            const fields = ["uniName","country","location","courseName","degreeType","intake","duration","currency","semesterFee","totalFee","partnerCommission","minGpa","minAcademicScore","ieltsScore","pteScore","duolingoScore","bankType","bankNameBD","moiAvailable","gapAcceptance","maritalStatus"];
+            fields.forEach(f => payload[f] = document.getElementById(f).value);
+            await fetch('/api/admin/add-university', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+            alert("Saved!"); e.target.reset();
         };
-
-        loadPartners();
+        loadP();
     </script>
 </body>
 </html>
