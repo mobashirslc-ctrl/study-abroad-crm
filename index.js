@@ -12,7 +12,7 @@ app.use(express.static('public'));
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI).then(() => console.log("✅ DB Locked & Connected")).catch(err => console.log(err));
 
-// --- SCHEMAS ---
+// --- SCHEMAS (LOCKED) ---
 const University = mongoose.model('University', new mongoose.Schema({
     uniName: String, country: String, location: String, courseName: String,
     degreeType: String, intake: String, duration: String,
@@ -47,9 +47,7 @@ const Withdraw = mongoose.model('Withdraw', new mongoose.Schema({
     date: { type: Date, default: Date.now }
 }));
 
-// --- ROUTES & APIS ---
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
-
+// --- APIS (LOCKED REQUIREMENTS) ---
 app.post('/api/partner/login', async (req, res) => {
     const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
     if(p && p.status === 'Active') res.json({id: p._id, name: p.name});
@@ -60,12 +58,14 @@ app.get('/api/partner/details/:id', async (req, res) => res.json(await Partner.f
 
 // কমিশন লজিক: ফাইল সাবমিট করলে শুধু পেন্ডিং বক্সে যোগ হবে
 app.post('/api/partner/submit-file', async (req, res) => {
-    const newFile = new StudentFile(req.body);
-    await newFile.save();
-    await Partner.findByIdAndUpdate(req.body.partnerId, { 
-        $inc: { pendingBalance: req.body.commission } 
-    });
-    res.json({ msg: "Success" });
+    try {
+        const newFile = new StudentFile(req.body);
+        await newFile.save();
+        await Partner.findByIdAndUpdate(req.body.partnerId, { 
+            $inc: { pendingBalance: req.body.commission } 
+        });
+        res.json({ msg: "Success" });
+    } catch (err) { res.status(500).send(err); }
 });
 
 app.post('/api/partner/withdraw', async (req, res) => {
@@ -82,5 +82,8 @@ app.post('/api/partner/withdraw', async (req, res) => {
 app.get('/api/partner/history/:id', async (req, res) => res.json(await StudentFile.find({partnerId: req.params.id}).sort({date:-1})));
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
+// --- PORT FIX FOR RENDER ---
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Running on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+});
