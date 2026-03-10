@@ -8,39 +8,73 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
 
-const mongoURI = process.env.MONGODB_URI; 
+// --- DB CONNECTION ---
+const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI).then(() => console.log("✅ DB Locked")).catch(err => console.log(err));
 
-const University = mongoose.model('University', new mongoose.Schema({
-    uniName: String, country: String, courseName: String, degreeType: String, 
-    intake: String, location: String, semesterFee: String, totalFee: String,
-    partnerCommission: String, bankNameBD: String, loanAmount: String, 
-    maritalStatus: String, ieltsScore: String
-}));
+// --- SCHEMAS ---
+const UniSchema = new mongoose.Schema({
+    uniName: String, country: String, courseName: String, degreeType: String,
+    intake: String, semesterFee: String, partnerCommission: Number,
+    bankNameBD: String, loanAmount: String, maritalStatus: String
+});
+const University = mongoose.model('University', UniSchema);
 
-const Partner = mongoose.model('Partner', new mongoose.Schema({
+const PartnerSchema = new mongoose.Schema({
     name: String, email: { type: String, unique: true }, pass: String,
-    status: { type: String, default: 'Pending' }, walletBalance: { type: Number, default: 0 }
-}));
+    status: { type: String, default: 'Pending' },
+    walletBalance: { type: Number, default: 0 }
+});
+const Partner = mongoose.model('Partner', PartnerSchema);
 
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+const StudentFileSchema = new mongoose.Schema({
+    partnerId: String, studentName: String, contactNo: String,
+    uniName: String, courseName: String, commission: Number,
+    status: { type: String, default: 'Received' },
+    date: { type: Date, default: Date.now }
+});
+const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
 
+// --- ROUTES ---
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
+
+// --- WALLET & FILE API ---
+app.post('/api/partner/submit-file', async (req, res) => {
+    const { partnerId, studentName, contactNo, uniName, commission } = req.body;
+    
+    // 1. Save Student File
+    const newFile = new StudentFile(req.body);
+    await newFile.save();
+
+    // 2. Add Commission to Partner Wallet
+    await Partner.findByIdAndUpdate(partnerId, { $inc: { walletBalance: commission } });
+    
+    res.json({ msg: "File Submitted & Commission Added!" });
+});
+
+// --- OTHER APIS (LOCKED) ---
 app.post('/api/partner/register', async (req, res) => {
-    try { const n = new Partner(req.body); await n.save(); res.json({msg: "Success"}); } 
-    catch (e) { res.status(400).json({msg: "Error"}); }
+    try { const p = new Partner(req.body); await p.save(); res.json({msg: "Success"}); } 
+    catch(e) { res.status(400).send(); }
 });
 
 app.post('/api/partner/login', async (req, res) => {
-    const p = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
-    if (!p) return res.status(401).json({ msg: "Invalid" });
-    if (p.status !== 'Active') return res.status(401).json({ msg: "Pending" });
-    res.json({ id: p._id, name: p.name });
+    const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
+    if(p && p.status === 'Active') res.json({id: p._id, name: p.name, wallet: p.walletBalance});
+    else res.status(401).json({msg: "Pending or Invalid"});
 });
 
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
+app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
+app.put('/api/admin/partner-status/:id', async (req, res) => {
+    await Partner.findByIdAndUpdate(req.params.id, {status: req.body.status});
+    res.json({msg: "Updated"});
+});
+app.post('/api/admin/add-university', async (req, res) => {
+    const u = new University(req.body); await u.save(); res.json({msg: "Saved"});
+});
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server on ${PORT}`));
