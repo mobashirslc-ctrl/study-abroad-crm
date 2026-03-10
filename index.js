@@ -8,12 +8,11 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- DATABASE CONNECTION (STRICT FIX) ---
-const rawURI = process.env.MONGODB_URI;
-const mongoURI = rawURI ? rawURI.trim() : null;
+// --- DATABASE CONNECTION ---
+const mongoURI = process.env.MONGODB_URI ? process.env.MONGODB_URI.trim() : null;
 
 mongoose.connect(mongoURI)
-    .then(() => console.log("✅ Database Connected & Locked"))
+    .then(() => console.log("✅ Database Connected Successfully"))
     .catch(err => console.error("❌ DB Connection Error:", err.message));
 
 // --- SCHEMAS ---
@@ -48,11 +47,11 @@ app.post('/api/partner/submit-file', async (req, res) => {
         await newFile.save();
         await Partner.findByIdAndUpdate(partnerId, { $inc: { walletBalance: commission } });
         res.json({ msg: "Success" });
-    } catch (e) { res.status(500).send(); }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/partner/details/:id', async (req, res) => res.json(await Partner.findById(req.params.id)));
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Mission Running on Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server locked and running on port ${PORT}`));
