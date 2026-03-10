@@ -7,181 +7,173 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-link { transition: all 0.3s ease; border-radius: 8px; margin-bottom: 5px; }
-        .sidebar-link:hover, .sidebar-link.active { background: #3b82f6; color: white; }
-        input, select, textarea { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; font-size: 13px; }
-        label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar-link.active { background: #3b82f6; color: white; }
+        input, select { background: #1e293b !important; border: 1px solid #334155 !important; color: white !important; }
+        label { font-size: 11px; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        
+        /* Toggle Switch Style */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body class="flex">
 
-    <div class="w-64 min-h-screen bg-slate-900 border-r border-white/10 p-6 fixed lg:relative z-50">
-        <h1 class="text-xl font-bold text-blue-500 mb-10 px-2 tracking-tighter italic">IHP GLOBAL MASTER</h1>
-        <nav>
-            <button onclick="showSection('partners')" id="btn-partners" class="sidebar-link active w-full text-left p-3 flex items-center gap-3">
-                <span>👥</span> Partner Management
-            </button>
-            <button onclick="showSection('universities')" id="btn-universities" class="sidebar-link w-full text-left p-3 flex items-center gap-3">
-                <span>🎓</span> University Database
-            </button>
-            <button onclick="showSection('settings')" class="sidebar-link w-full text-left p-3 flex items-center gap-3 text-slate-500">
-                <span>⚙️</span> Settings
-            </button>
+    <div class="w-64 min-h-screen bg-slate-900 border-r border-white/10 p-6 fixed">
+        <h1 class="text-xl font-bold text-blue-500 mb-10 italic">IHP GLOBAL MASTER</h1>
+        <nav class="space-y-2">
+            <button onclick="showSection('partners')" id="btn-partners" class="sidebar-link active w-full text-left p-3 rounded-lg flex items-center gap-3">👥 Partners</button>
+            <button onclick="showSection('universities')" id="btn-universities" class="sidebar-link w-full text-left p-3 rounded-lg flex items-center gap-3">🎓 Universities</button>
         </nav>
     </div>
 
-    <div class="flex-1 p-6 lg:p-10 ml-0 overflow-y-auto h-screen">
+    <div class="flex-1 ml-64 p-10">
         
         <div id="sec-partners">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Partner Management</h2>
-                <span class="bg-blue-600/20 text-blue-400 px-3 py-1 rounded-full text-xs" id="pCount">0 Partners</span>
-            </div>
-
+            <h2 class="text-2xl font-bold mb-6">Partner Management</h2>
             <div class="glass rounded-xl overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-white/5 border-b border-white/10">
-                        <tr class="text-slate-400 text-[11px] uppercase">
+                <table class="w-full text-left">
+                    <thead class="bg-white/5 text-[11px] text-slate-400 uppercase">
+                        <tr>
                             <th class="p-4">Partner/Org Name</th>
-                            <th class="p-4">Contact Details</th>
-                            <th class="p-4">Status</th>
+                            <th class="p-4 text-center">Status Toggle</th>
                             <th class="p-4">Expiry Date</th>
                             <th class="p-4 text-center">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="partnerTableBody" class="divide-y divide-white/5">
-                        </tbody>
+                    <tbody id="partnerTableBody" class="divide-y divide-white/5"></tbody>
                 </table>
             </div>
         </div>
 
         <div id="sec-universities" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold">Manage Universities</h2>
-                <button onclick="document.getElementById('uniForm').reset();" class="text-xs bg-white/10 px-3 py-1 rounded">Clear Form</button>
-            </div>
-
-            <form id="uniForm" class="glass p-8 rounded-xl shadow-2xl">
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                    <div class="col-span-full border-b border-white/10 pb-2 mb-2"><h3 class="text-blue-400 font-bold text-sm">Academic & Course Info</h3></div>
-                    <div><label>University Name</label><input type="text" id="uniName" class="w-full p-2 rounded mt-1" required></div>
-                    <div><label>Country</label><input type="text" id="country" class="w-full p-2 rounded mt-1" required></div>
-                    <div><label>Location (City)</label><input type="text" id="location" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Course Name</label><input type="text" id="courseName" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Degree Type</label><select id="degreeType" class="w-full p-2 rounded mt-1"><option>Bachelors</option><option>Masters</option><option>Diploma</option></select></div>
-                    <div><label>Intake</label><input type="text" id="intake" placeholder="Sep 2026" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Duration</label><input type="text" id="duration" placeholder="3 Years" class="w-full p-2 rounded mt-1"></div>
-
-                    <div class="col-span-full border-b border-white/10 pb-2 mb-2 mt-4"><h3 class="text-emerald-400 font-bold text-sm">Financials & Commission</h3></div>
-                    <div><label>Currency</label><input type="text" id="currency" value="GBP" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Semester Fee</label><input type="text" id="semesterFee" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Total Fee/Year</label><input type="text" id="totalFee" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Partner Commission ($)</label><input type="text" id="partnerCommission" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Bank Name (BD Req)</label><input type="text" id="bankNameBD" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Loan Amount Available</label><input type="text" id="loanAmount" class="w-full p-2 rounded mt-1"></div>
-
-                    <div class="col-span-full border-b border-white/10 pb-2 mb-2 mt-4"><h3 class="text-orange-400 font-bold text-sm">Admission Requirements</h3></div>
-                    <div><label>Min GPA</label><input type="text" id="minGpa" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Academic Score (%)</label><input type="number" id="minAcademicScore" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>IELTS Score</label><input type="text" id="ieltsScore" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>PTE Score</label><input type="text" id="pteScore" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Duolingo Score</label><input type="text" id="duolingoScore" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>MOI Available?</label><select id="moiAvailable" class="w-full p-2 rounded mt-1"><option>Yes</option><option>No</option></select></div>
-                    <div><label>Marital Status</label><select id="maritalStatus" class="w-full p-2 rounded mt-1"><option>Single</option><option>Married</option><option>Both</option></select></div>
-                    <div><label>Gap Acceptance</label><input type="text" id="gapAcceptance" class="w-full p-2 rounded mt-1"></div>
-                    <div><label>Bank Type</label><select id="bankType" class="w-full p-2 rounded mt-1"><option>Fixed</option><option>Transactional</option></select></div>
+            <h2 class="text-2xl font-bold mb-6">Manage Universities</h2>
+            <form id="uniForm" class="glass p-8 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="col-span-full border-b border-white/10 pb-2 mb-2"><h3 class="text-blue-400 font-bold text-sm">Course & Eligibility</h3></div>
+                
+                <div><label>University Name</label><input type="text" id="uniName" class="w-full p-2 rounded" required></div>
+                <div><label>Country</label><input type="text" id="country" class="w-full p-2 rounded" required></div>
+                
+                <div>
+                    <label>Degree Type</label>
+                    <select id="degreeType" class="w-full p-2 rounded">
+                        <option value="UG">UG (Undergraduate)</option>
+                        <option value="PG">PG (Postgraduate)</option>
+                        <option value="DIPLOMA">DIPLOMA</option>
+                        <option value="FOUNDATION">FOUNDATION</option>
+                    </select>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold mt-10 transition-all shadow-xl shadow-blue-900/20">
-                    SAVE UNIVERSITY DATA
-                </button>
+                <div><label>Course Name</label><input type="text" id="courseName" class="w-full p-2 rounded"></div>
+                <div><label>Partner Commission ($)</label><input type="text" id="partnerCommission" class="w-full p-2 rounded"></div>
+                <div><label>Min Academic Score (%)</label><input type="number" id="minAcademicScore" class="w-full p-2 rounded"></div>
+
+                <div class="col-span-full border-b border-white/10 pb-2 mb-2 mt-4"><h3 class="text-emerald-400 font-bold text-sm">Bank Requirements</h3></div>
+                
+                <div>
+                    <label>Bank Type</label>
+                    <select id="bankType" class="w-full p-2 rounded">
+                        <option value="FDR">FDR</option>
+                        <option value="SAVINGS">SAVINGS</option>
+                    </select>
+                </div>
+                <div><label>Bank Name (BD)</label><input type="text" id="bankNameBD" class="w-full p-2 rounded"></div>
+                <div><label>Loan Amount Available</label><input type="text" id="loanAmount" class="w-full p-2 rounded"></div>
+
+                <button type="submit" class="col-span-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold mt-6 transition-all">SAVE UNIVERSITY DATA</button>
             </form>
         </div>
     </div>
 
     <script>
-        // Tab Switch Logic
         function showSection(id) {
             document.getElementById('sec-partners').classList.add('hidden');
             document.getElementById('sec-universities').classList.add('hidden');
-            document.getElementById('btn-partners').classList.remove('active');
-            document.getElementById('btn-universities').classList.remove('active');
-            
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
             document.getElementById('sec-' + id).classList.remove('hidden');
             document.getElementById('btn-' + id).classList.add('active');
         }
 
-        // Load Partners
         async function loadPartners() {
-            try {
-                const res = await fetch('/api/admin/partners');
-                const data = await res.json();
-                document.getElementById('pCount').innerText = data.length + " Partners";
-                
-                document.getElementById('partnerTableBody').innerHTML = data.map(p => `
-                    <tr class="hover:bg-white/5 transition">
-                        <td class="p-4">
-                            <p class="font-bold text-white">${p.name}</p>
-                            <p class="text-[10px] text-slate-500">${p.orgName || 'No Organization'}</p>
-                        </td>
-                        <td class="p-4">
-                            <p class="text-xs text-slate-300">${p.email}</p>
-                            <p class="text-[10px] text-slate-500">${p.contactNo || 'No Contact'}</p>
-                        </td>
-                        <td class="p-4">
-                            <span class="px-2 py-1 rounded text-[10px] font-bold ${
-                                p.status === 'Active' ? 'bg-green-500/20 text-green-400' : 
-                                p.status === 'Rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
-                            }">${p.status}</span>
-                        </td>
-                        <td class="p-4 text-xs text-orange-300">
-                            ${p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A'}
-                        </td>
-                        <td class="p-4">
-                            <div class="flex gap-2 justify-center">
-                                <button onclick="updatePartner('${p._id}', 'Active')" class="bg-green-600 hover:bg-green-700 p-1 px-3 rounded text-[10px] font-bold">APPROVE</button>
-                                <button onclick="updatePartner('${p._id}', 'Rejected')" class="bg-red-600 hover:bg-red-700 p-1 px-3 rounded text-[10px] font-bold">REJECT</button>
-                            </div>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (err) { console.error("Load Error:", err); }
+            const res = await fetch('/api/admin/partners');
+            const data = await res.json();
+            document.getElementById('partnerTableBody').innerHTML = data.map(p => `
+                <tr class="hover:bg-white/5 transition">
+                    <td class="p-4">
+                        <p class="font-bold text-white">${p.name}</p>
+                        <p class="text-[10px] text-slate-500">${p.orgName || 'N/A'}</p>
+                    </td>
+                    <td class="p-4 text-center">
+                        <label class="switch">
+                            <input type="checkbox" ${p.status === 'Active' ? 'checked' : ''} onchange="toggleStatus('${p._id}', this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <p class="text-[9px] mt-1 ${p.status === 'Active' ? 'text-emerald-400' : 'text-slate-500'}">${p.status}</p>
+                    </td>
+                    <td class="p-4 text-xs text-orange-300">
+                        ${p.expiryDate ? new Date(p.expiryDate).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="updateExpiry('${p._id}')" class="text-blue-400 hover:underline text-[10px] font-bold">SET EXPIRY</button>
+                        <span class="mx-2">|</span>
+                        <button onclick="deletePartner('${p._id}')" class="text-red-400 hover:underline text-[10px] font-bold">DELETE</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        // Update Partner Status
-        async function updatePartner(id, newStatus) {
-            const exp = prompt("Enter Expiry Date (YYYY-MM-DD) or leave blank:");
+        async function toggleStatus(id, isChecked) {
+            const newStatus = isChecked ? 'Active' : 'Inactive';
             await fetch('/api/admin/partner-update/' + id, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus, expiryDate: exp })
+                body: JSON.stringify({ status: newStatus })
             });
-            loadPartners();
+            loadPartners(); // Refresh list
         }
 
-        // Add University
+        async function updateExpiry(id) {
+            const date = prompt("Enter Expiry Date (YYYY-MM-DD):");
+            if(date) {
+                await fetch('/api/admin/partner-update/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ expiryDate: date })
+                });
+                loadPartners();
+            }
+        }
+
         document.getElementById('uniForm').onsubmit = async (e) => {
             e.preventDefault();
-            const fields = ["uniName", "country", "location", "courseName", "degreeType", "intake", "duration", "currency", "semesterFee", "totalFee", "partnerCommission", "bankNameBD", "loanAmount", "minGpa", "minAcademicScore", "ieltsScore", "pteScore", "duolingoScore", "moiAvailable", "maritalStatus", "gapAcceptance", "bankType"];
-            
-            const payload = {};
-            fields.forEach(f => payload[f] = document.getElementById(f).value);
+            const formData = {};
+            new FormData(e.target).forEach((v, k) => formData[k] = v); // Note: Add IDs to form inputs or map manually
+            // Manual Map for reliability
+            const payload = {
+                uniName: document.getElementById('uniName').value,
+                country: document.getElementById('country').value,
+                degreeType: document.getElementById('degreeType').value,
+                courseName: document.getElementById('courseName').value,
+                partnerCommission: document.getElementById('partnerCommission').value,
+                minAcademicScore: document.getElementById('minAcademicScore').value,
+                bankType: document.getElementById('bankType').value,
+                bankNameBD: document.getElementById('bankNameBD').value,
+                loanAmount: document.getElementById('loanAmount').value
+            };
 
             const res = await fetch('/api/admin/add-university', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
-            if (res.ok) {
-                alert("✅ University Locked Successfully!");
-                e.target.reset();
-            }
+            if (res.ok) { alert("University Saved!"); e.target.reset(); }
         };
 
-        // Initial Load
         loadPartners();
     </script>
 </body>
