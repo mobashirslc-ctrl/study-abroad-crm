@@ -6,9 +6,9 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static('public'));
+app.use(express.static('public')); // static ফাইল সার্ভ করার জন্য
 
-// --- DB CONNECTION ---
+// --- DATABASE CONNECTION ---
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI).then(() => console.log("✅ DB Connected")).catch(err => console.log(err));
 
@@ -37,7 +37,11 @@ const StudentFileSchema = new mongoose.Schema({
 });
 const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
 
-// --- AUTH API (Registration & Login with Approval Check) ---
+// --- ROUTES FOR HTML PAGES (Fixes "Cannot GET" Error) ---
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+
+// --- AUTH API ---
 app.post('/api/partner/register', async (req, res) => {
     try { const p = new Partner(req.body); await p.save(); res.json({msg: "Registration Successful. Wait for Admin Approval."}); } 
     catch(e) { res.status(400).json({msg: "Email already exists"}); }
@@ -45,8 +49,8 @@ app.post('/api/partner/register', async (req, res) => {
 
 app.post('/api/partner/login', async (req, res) => {
     const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
-    if(!p) return res.status(401).json({msg: "Invalid Credentials"});
-    if(p.status !== 'Active') return res.status(403).json({msg: "Account Inactive. Contact Admin."});
+    if(!p) return res.status(401).json({msg: "Invalid Email or Password"});
+    if(p.status !== 'Active') return res.status(403).json({msg: "Account Inactive. Contact Admin for Approval."});
     res.json({id: p._id, name: p.name});
 });
 
@@ -60,11 +64,11 @@ app.get('/api/partner/stats/:id', async (req, res) => {
 
 app.post('/api/partner/submit-file', async (req, res) => {
     const f = new StudentFile(req.body); await f.save();
-    res.json({msg: "Success"});
+    res.json({msg: "Application Submitted!"});
 });
 
-// --- ADMIN API ---
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
+// --- SERVER START ---
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server running on port ${PORT}`));
