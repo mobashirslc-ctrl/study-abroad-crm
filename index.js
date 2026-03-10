@@ -8,50 +8,107 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
 
+// --- DATABASE CONNECTION (LOCKED) ---
 const mongoURI = process.env.MONGODB_URI; 
-mongoose.connect(mongoURI).then(() => console.log("✅ DB Connected")).catch(err => console.log(err));
 
-// --- UNIVERSITY SCHEMA (21+ FIELDS LOCKED) ---
+mongoose.connect(mongoURI)
+    .then(() => console.log("✅ Database Connected & Locked"))
+    .catch(err => console.error("❌ DB Connection Error:", err));
+
+// --- 1. UNIVERSITY SCHEMA (LOCKED: 21 FIELDS) ---
 const UniversitySchema = new mongoose.Schema({
-    uniName: String, country: String, location: String, courseName: String,
-    degreeType: String, intake: String, duration: String, currency: String,
-    semesterFee: String, totalFee: String, partnerCommission: String,
-    bankNameBD: String, loanAmount: String, maritalStatus: String,
+    uniName: String, location: String, country: String, courseName: String,
+    degreeType: String, intake: String, duration: String,
+    currency: String, semesterFee: String, totalFee: String,
+    bankNameBD: String, loanAmount: String, partnerCommission: String,
     minGpa: String, ieltsScore: String, pteScore: String, duolingoScore: String,
-    moiAvailable: String, gapAcceptance: String, bankType: String,
-    minAcademicScore: Number, passingYearLimit: String
+    moiAvailable: String, maritalStatus: String, gapAcceptance: String,
+    bankType: String
 });
 const University = mongoose.model('University', UniversitySchema);
 
-// --- PARTNER SCHEMA ---
+// --- 2. PARTNER SCHEMA (LOCKED) ---
 const PartnerSchema = new mongoose.Schema({
-    name: String, contactNo: String, orgName: String, email: { type: String, unique: true },
-    pass: String, status: { type: String, default: 'Pending' }, 
-    expiryDate: Date, walletBalance: { type: Number, default: 0 }
+    name: String,
+    email: { type: String, unique: true },
+    pass: String,
+    status: { type: String, default: 'Pending' }, 
+    walletBalance: { type: Number, default: 0 },
+    registrationDate: { type: Date, default: Date.now }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// --- API ROUTES ---
-app.post('/api/partner/login', async (req, res) => {
-    const p = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
-    if (!p) return res.status(401).json({ msg: "Invalid Credentials" });
-    if (p.status !== 'Active') return res.status(401).json({ msg: "Account " + p.status });
-    res.json({ id: p._id, name: p.name });
+// ==========================================
+// 🛡️ HTML ROUTING LOCK (PREVENTS "CANNOT GET")
+// ==========================================
+
+// Main Access Points
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
 
-app.put('/api/admin/partner-update/:id', async (req, res) => {
-    await Partner.findByIdAndUpdate(req.params.id, req.body);
-    res.json({ msg: "Updated" });
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/partner', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'partner.html'));
+});
+
+// ==========================================
+// 🚀 API ROUTES (PART 1, 2, & 3)
+// ==========================================
+
+// --- PARTNER AUTH ---
+app.post('/api/partner/register', async (req, res) => {
+    try {
+        const { name, email, pass } = req.body;
+        const newPartner = new Partner({ name, email, pass });
+        await newPartner.save();
+        res.json({ msg: "Success" });
+    } catch (e) { res.status(400).json({ msg: "Email exists" }); }
+});
+
+app.post('/api/partner/login', async (req, res) => {
+    try {
+        const { email, pass } = req.body;
+        const p = await Partner.findOne({ email, pass });
+        if (!p) return res.status(401).json({ msg: "Invalid Credentials" });
+        if (p.status !== 'Active') return res.status(401).json({ msg: "Account Pending Approval" });
+        res.json({ id: p._id, name: p.name });
+    } catch (e) { res.status(500).json({ msg: "Login Error" }); }
+});
+
+// --- ADMIN API ---
+app.get('/api/admin/partners', async (req, res) => {
+    const partners = await Partner.find();
+    res.json(partners);
+});
+
+app.put('/api/admin/partner-status/:id', async (req, res) => {
+    const { status } = req.body;
+    await Partner.findByIdAndUpdate(req.params.id, { status });
+    res.json({ msg: "Status Updated" });
 });
 
 app.post('/api/admin/add-university', async (req, res) => {
-    try { await new University(req.body).save(); res.json({ msg: "Saved" }); }
-    catch (e) { res.status(500).json({ msg: "Error" }); }
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.json({ msg: "University Saved" });
+    } catch (e) { res.status(500).json({ msg: "Error Saving Data" }); }
 });
 
-app.get('/api/universities', async (req, res) => res.json(await University.find()));
+// --- PUBLIC/PARTNER DATA API ---
+app.get('/api/universities', async (req, res) => {
+    const unis = await University.find();
+    res.json(unis);
+});
 
+// --- SERVER START ---
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Mission Running on Port ${PORT}`));
