@@ -3,196 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Dashboard | IHP CRM</title>
+    <title>Partner Portal | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; }
-        input, select { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .sidebar { background: #161b2a; border-right: 1px solid #2d334a; transition: 0.3s; }
+        .nav-link { padding: 14px 20px; display: flex; align-items: center; color: #94a3b8; transition: 0.3s; cursor: pointer; }
+        .nav-link:hover, .nav-link.active { color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; }
+        .glass-stat { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }
+        input, select { background: #1e293b; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
         .status-fixed { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 4px; }
         .status-pending { color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 4px; }
-        .status-rejected { color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 2px 8px; border-radius: 4px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="flex">
 
-    <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass p-6 md:col-span-1">
-                <h1 class="text-2xl font-bold text-blue-400">IHP Portal</h1>
-                <p class="text-slate-400" id="pNameDisplay">Welcome, Partner</p>
+    <div class="w-64 h-screen sidebar sticky top-0 hidden md:flex flex-col">
+        <div class="p-6 text-2xl font-bold border-b border-white/10 tracking-tight text-blue-500">IHP CRM</div>
+        <nav class="mt-8 flex-1">
+            <div onclick="showSection('dashboard')" class="nav-link active" id="link-dashboard">
+                <span>🏠 Dashboard</span>
             </div>
-            <div class="glass p-6 flex flex-col justify-center">
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Pending Commission</p>
-                <p class="text-2xl font-bold text-amber-400">$<span id="pendingBal">0.00</span></p>
+            <div onclick="showSection('assessment')" class="nav-link" id="link-assessment">
+                <span>🔍 Smart Assessment</span>
             </div>
-            <div class="glass p-6 flex flex-col justify-center">
-                <p class="text-xs text-slate-400 uppercase tracking-wider">Fixed Balance (Wallet)</p>
-                <p class="text-2xl font-bold text-emerald-400">$<span id="fixedBal">0.00</span></p>
+            <div onclick="showSection('history')" class="nav-link" id="link-history">
+                <span>📋 Application History</span>
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="glass p-6 h-fit sticky top-8">
-                <h2 class="text-lg font-bold mb-4 border-b border-white/10 pb-2">Smart Assessment</h2>
-                <div class="space-y-4">
-                    <label class="text-xs text-slate-500">Select Degree</label>
-                    <select id="sDegree">
-                        <option>PG</option><option>UG</option><option>DIPLOMA</option>
-                        <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                    </select>
-                    <label class="text-xs text-slate-500">Language Test</label>
-                    <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                    <input type="text" id="sScore" placeholder="Language Score (e.g. 6.5)">
-                    <input type="text" id="sGpa" placeholder="Academic Score (GPA)">
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition duration-300">
-                        FIND UNIVERSITIES
-                    </button>
-                </div>
+            <div onclick="showSection('wallet')" class="nav-link" id="link-wallet">
+                <span>💰 Wallet & Earnings</span>
             </div>
-
-            <div class="lg:col-span-2 space-y-8">
-                <div class="glass p-6">
-                    <h2 class="text-lg font-bold mb-4">Eligible Universities</h2>
-                    <div id="resultsArea" class="space-y-4">
-                        <p class="text-slate-500 text-center py-10">Matching universities will appear here.</p>
-                    </div>
-                </div>
-
-                <div class="glass p-6">
-                    <h2 class="text-lg font-bold mb-4">Student File & Commission History</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="text-slate-500 border-b border-white/10">
-                                <tr>
-                                    <th class="pb-3">Student Name</th>
-                                    <th class="pb-3">University</th>
-                                    <th class="pb-3">Commission</th>
-                                    <th class="pb-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyArea">
-                                </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        </nav>
+        <div class="p-6 border-t border-white/10 text-xs text-slate-500">
+            Logged in as: <br><span id="pNameDisp" class="text-slate-300 font-bold">Partner</span>
         </div>
     </div>
 
+    <main class="flex-1 min-h-screen p-6 md:p-10">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div class="glass-stat p-6 border-l-4 border-amber-500">
+                <p class="text-xs text-slate-400 uppercase font-bold">Pending Commission</p>
+                <h3 class="text-3xl font-bold text-amber-500 mt-1">$<span id="pendingBal">0.00</span></h3>
+            </div>
+            <div class="glass-stat p-6 border-l-4 border-emerald-500">
+                <p class="text-xs text-slate-400 uppercase font-bold">Fixed Balance (Wallet)</p>
+                <h3 class="text-3xl font-bold text-emerald-500 mt-1">$<span id="fixedBal">0.00</span></h3>
+            </div>
+        </div>
+
+        <div id="section-assessment" class="content-section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="glass-stat p-6 h-fit">
+                    <h2 class="text-xl font-bold mb-6">Smart Assessment</h2>
+                    <div class="space-y-4">
+                        <label class="text-xs text-slate-500">Degree Type</label>
+                        <select id="sDegree">
+                            <option>PG</option><option>UG</option><option>DIPLOMA</option>
+                            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
+                        </select>
+                        <label class="text-xs text-slate-500">Language Test</label>
+                        <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
+                        <input type="text" id="sScore" placeholder="Test Score">
+                        <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700 transition">FIND UNIVERSITIES</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2 glass-stat p-6">
+                    <h2 class="text-xl font-bold mb-6">Eligible Matches</h2>
+                    <div id="resultsArea" class="space-y-4 text-slate-500">Search to see results...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-history" class="content-section hidden">
+            <div class="glass-stat p-6">
+                <h2 class="text-xl font-bold mb-6">Application Tracking</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-slate-500 border-b border-white/10 text-xs uppercase">
+                            <tr><th class="pb-4">Student</th><th class="pb-4">University</th><th class="pb-4">Commission</th><th class="pb-4">Status</th></tr>
+                        </thead>
+                        <tbody id="historyArea"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
     <div id="fileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-        <div class="glass p-8 w-full max-w-md bg-slate-900">
-            <h2 class="text-xl font-bold mb-2">Open Student File</h2>
-            <p class="text-slate-400 text-sm mb-6">Enter student details to start the process.</p>
+        <div class="bg-slate-900 border border-white/10 p-8 rounded-2xl w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6">Student Application</h2>
             <div class="space-y-4">
                 <input type="text" id="stName" placeholder="Student Full Name">
                 <input type="text" id="stContact" placeholder="Contact Number">
                 <input type="text" id="stPassport" placeholder="Passport Number">
-                <input type="email" id="stEmail" placeholder="Student Email">
-                <div class="bg-blue-500/10 p-3 rounded text-xs text-blue-300">
-                    Target Uni: <span id="targetUniLabel" class="font-bold"></span><br>
-                    Commission: $<span id="targetCommLabel" class="font-bold"></span> (Pending)
+                <div class="p-3 bg-blue-500/10 rounded text-sm text-blue-300">
+                    Uni: <span id="targetUni" class="font-bold"></span> | Comm: $<span id="targetComm" class="font-bold"></span>
                 </div>
-                <button onclick="submitFile()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold hover:bg-emerald-700 transition">
-                    SUBMIT TO COMPLIANCE
-                </button>
-                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 text-sm">Cancel</button>
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-3 rounded-lg font-bold">SUBMIT FILE</button>
+                <button onclick="closeModal()" class="w-full text-slate-500 mt-2">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
         const pId = localStorage.getItem('partnerId');
-        if(!pId) window.location.href = '/login';
+        document.getElementById('pNameDisp').innerText = localStorage.getItem('partnerName');
 
-        document.getElementById('pNameDisplay').innerText = "Welcome, " + (localStorage.getItem('partnerName') || 'Partner');
+        function showSection(id) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('section-' + (id === 'dashboard' ? 'assessment' : id)).classList.remove('hidden');
+            document.getElementById('link-' + id).classList.add('active');
+        }
 
-        async function loadDashboard() {
-            try {
-                const res = await fetch('/api/partner/stats/' + pId);
-                const data = await res.json();
-                
-                document.getElementById('pendingBal').innerText = data.pending.toFixed(2);
-                document.getElementById('fixedBal').innerText = data.fixed.toFixed(2);
-
-                document.getElementById('historyArea').innerHTML = data.history.map(h => `
-                    <tr class="border-b border-white/5">
-                        <td class="py-4 font-medium">${h.studentName}</td>
-                        <td class="py-4 text-slate-400">${h.uniName}</td>
-                        <td class="py-4 font-bold text-blue-400">$${h.commission}</td>
-                        <td class="py-4">
-                            <span class="status-${h.status.toLowerCase()}">${h.status}</span>
-                            <div class="text-[10px] text-slate-500 mt-1">${h.complianceStatus}</div>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (e) { console.error("Error loading stats"); }
+        async function loadStats() {
+            const res = await fetch('/api/partner/stats/' + pId);
+            const data = await res.json();
+            document.getElementById('pendingBal').innerText = data.pending.toFixed(2);
+            document.getElementById('fixedBal').innerText = data.fixed.toFixed(2);
+            document.getElementById('historyArea').innerHTML = data.history.map(h => `
+                <tr class="border-b border-white/5">
+                    <td class="py-4 font-bold text-slate-300">${h.studentName}</td>
+                    <td class="py-4 text-slate-500">${h.uniName}</td>
+                    <td class="py-4 text-blue-400 font-bold">$${h.commission}</td>
+                    <td class="py-4"><span class="status-${h.status.toLowerCase()}">${h.status}</span></td>
+                </tr>
+            `).join('');
         }
 
         async function runAssessment() {
-            const resultsArea = document.getElementById('resultsArea');
-            resultsArea.innerHTML = '<p class="text-center text-blue-400">Searching...</p>';
-            
             const res = await fetch('/api/universities');
             const unis = await res.json();
             const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
-            
-            if(filtered.length === 0) {
-                resultsArea.innerHTML = '<p class="text-center py-10 text-slate-500">No matching universities found.</p>';
-                return;
-            }
-
-            resultsArea.innerHTML = filtered.map(u => `
-                <div class="glass p-5 border-l-4 border-blue-500 hover:bg-white/5 transition duration-300">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="font-bold text-blue-300 text-lg">${u.uniName}</h3>
-                            <p class="text-xs text-slate-400">${u.courseName} | ${u.country}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-emerald-400 font-bold">$${u.partnerCommission}</p>
-                            <p class="text-[10px] text-slate-500 uppercase">Commission</p>
-                        </div>
-                    </div>
-                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="w-full mt-4 bg-white/10 py-2 rounded text-xs font-semibold hover:bg-white/20 transition">
-                        OPEN STUDENT FILE
-                    </button>
+            document.getElementById('resultsArea').innerHTML = filtered.map(u => `
+                <div class="p-4 bg-white/5 rounded-xl flex justify-between items-center border border-white/5">
+                    <div><p class="font-bold text-blue-400">${u.uniName}</p><p class="text-xs text-slate-500">${u.courseName}</p></div>
+                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-4 py-2 rounded text-xs font-bold">Apply</button>
                 </div>
             `).join('');
         }
 
-        let currentUni = null;
-        function openForm(name, comm) {
-            currentUni = {name, comm};
-            document.getElementById('targetUniLabel').innerText = name;
-            document.getElementById('targetCommLabel').innerText = comm;
-            document.getElementById('fileModal').classList.remove('hidden');
+        let selected = null;
+        function openForm(n, c) { 
+            selected = {n, c}; 
+            document.getElementById('targetUni').innerText = n;
+            document.getElementById('targetComm').innerText = c;
+            document.getElementById('fileModal').classList.remove('hidden'); 
         }
+        function closeModal() { document.getElementById('fileModal').classList.add('hidden'); }
 
         async function submitFile() {
             const body = {
-                partnerId: pId,
-                studentName: document.getElementById('stName').value,
-                contactNo: document.getElementById('stContact').value,
-                passportNo: document.getElementById('stPassport').value,
-                studentEmail: document.getElementById('stEmail').value,
-                uniName: currentUni.name,
-                commission: currentUni.comm
+                partnerId: pId, studentName: document.getElementById('stName').value,
+                contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value,
+                uniName: selected.n, commission: selected.c
             };
-
-            const res = await fetch('/api/partner/submit-file', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(body)
-            });
-
-            if(res.ok) {
-                alert("File Submitted Successfully!");
-                location.reload();
-            }
+            await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+            alert("File Submitted!"); location.reload();
         }
 
-        loadDashboard();
+        loadStats();
     </script>
 </body>
 </html>
