@@ -19,9 +19,9 @@
 
     <div class="w-64 h-screen glass border-r border-white/5 flex flex-col p-4">
         <div class="mb-8 p-4 bg-white/5 rounded-2xl">
-            <p class="text-[10px] text-slate-500 uppercase">Welcome,</p>
-            <h2 id="userName" class="text-sm font-bold text-blue-400">Partner</h2>
-            <button onclick="logout()" class="mt-2 text-[10px] text-red-400 hover:underline">LOGOUT</button>
+            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Logged in as</p>
+            <h2 id="userName" class="text-sm font-bold text-blue-400">Partner Name</h2>
+            <button onclick="logout()" class="mt-3 text-[10px] text-red-400 font-bold hover:underline"><i class="fa-solid fa-power-off"></i> LOGOUT</button>
         </div>
 
         <nav class="flex-1">
@@ -32,13 +32,13 @@
         </nav>
 
         <div class="mt-auto space-y-2">
-            <div class="glass p-3 rounded-xl border-l-4 border-amber-500">
+            <div class="glass p-4 rounded-xl border-l-4 border-amber-500">
                 <p class="text-[9px] text-slate-500 uppercase">Pending</p>
-                <p class="text-md font-bold text-amber-500">$<span id="pPending">0.00</span></p>
+                <p class="text-lg font-bold text-amber-500">$<span id="pPending">0.00</span></p>
             </div>
-            <div class="glass p-3 rounded-xl border-l-4 border-emerald-500">
+            <div class="glass p-4 rounded-xl border-l-4 border-emerald-500">
                 <p class="text-[9px] text-slate-500 uppercase">Final Wallet</p>
-                <p class="text-md font-bold text-emerald-500">$<span id="pFinal">0.00</span></p>
+                <p class="text-lg font-bold text-emerald-500">$<span id="pFinal">0.00</span></p>
             </div>
         </div>
     </div>
@@ -48,27 +48,17 @@
         <div id="assessment" class="content-section active">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div class="glass p-6 rounded-2xl space-y-4 h-fit">
-                    <h2 class="font-bold text-blue-400 border-b border-white/5 pb-2">Smart Search</h2>
-                    <input type="text" id="sCountry" placeholder="Target Country">
-                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option></select>
-                    <input type="text" id="sGpa" placeholder="GPA">
+                    <h2 class="font-bold text-blue-400 border-b border-white/5 pb-2 uppercase text-xs tracking-widest">Smart Search</h2>
+                    <input type="text" id="sCountry" placeholder="Country">
+                    <select id="sDegree"><option>UG</option><option>PG</option><option>DIPLOMA</option></select>
+                    <input type="text" id="sGpa" placeholder="GPA Score">
                     <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
                     <input type="text" id="sScore" placeholder="Score">
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">SEARCH</button>
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-600/20">SEARCH COURSES</button>
                 </div>
-                <div class="lg:col-span-3" id="resultsArea"></div>
-            </div>
-        </div>
-
-        <div id="history" class="content-section">
-            <div class="glass p-6 rounded-2xl overflow-x-auto">
-                <h2 class="text-xl font-bold mb-6 text-blue-400">File Tracking</h2>
-                <table class="w-full text-left text-xs">
-                    <thead class="text-slate-500 border-b border-white/5">
-                        <tr><th class="pb-4">STUDENT</th><th class="pb-4">PASSPORT</th><th class="pb-4">UNIVERSITY</th><th class="pb-4">COMMISSION</th><th class="pb-4">STATUS</th></tr>
-                    </thead>
-                    <tbody id="historyList"></tbody>
-                </table>
+                <div class="lg:col-span-3 space-y-4" id="resultsArea">
+                    <div class="glass p-20 text-center text-slate-600">Enter requirements to see matches...</div>
+                </div>
             </div>
         </div>
 
@@ -80,30 +70,36 @@
                         <p class="text-4xl font-bold text-amber-500">$<span id="pPendingBig">0.00</span></p>
                     </div>
                     <div class="glass p-10 rounded-3xl text-center border-t-4 border-emerald-500">
-                        <p class="text-slate-500 mb-2">Final Wallet</p>
+                        <p class="text-slate-500 mb-2 font-bold">Available Final Wallet</p>
                         <p class="text-4xl font-bold text-emerald-500">$<span id="pFinalBig">0.00</span></p>
                     </div>
                 </div>
-
-                <div class="glass p-8 rounded-3xl max-w-lg mx-auto border border-white/5">
-                    <h2 class="text-xl font-bold mb-6"><i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> Withdraw</h2>
+                <div class="glass p-10 rounded-3xl max-w-lg mx-auto border border-white/5">
+                    <h3 class="text-xl font-bold mb-6 text-center">Withdraw Funds</h3>
                     <div class="space-y-4">
                         <select id="wMethod"><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option><option value="Bank">Bank Transfer</option></select>
-                        <input type="text" id="wAccount" placeholder="Account Number">
+                        <input type="text" id="wAccount" placeholder="Account Details">
                         <input type="number" id="wAmount" placeholder="Amount ($)">
-                        <button onclick="requestWithdraw()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold hover:bg-emerald-700">CONFIRM WITHDRAW</button>
+                        <button onclick="requestWithdraw()" class="w-full bg-emerald-600 py-4 rounded-2xl font-bold">SUBMIT WITHDRAW</button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <div id="history" class="content-section">
+            <div class="glass p-6 rounded-2xl overflow-x-auto">
+                <h2 class="text-xl font-bold mb-6 text-blue-400">File Tracking</h2>
+                <table class="w-full text-left text-[11px]"><thead class="text-slate-500 border-b border-white/5"><tr><th class="pb-4">STUDENT</th><th class="pb-4">PASSPORT</th><th class="pb-4">UNIVERSITY</th><th class="pb-4">COMMISSION</th><th class="pb-4">STATUS</th></tr></thead><tbody id="historyList"></tbody></table>
+            </div>
+        </div>
+
         <div id="subscription" class="content-section">
-            <div class="max-w-2xl mx-auto glass p-10 rounded-3xl border border-blue-500/20">
-                <h2 class="text-2xl font-bold mb-10">Subscription Details</h2>
-                <div class="grid grid-cols-3 gap-8">
+            <div class="max-w-xl mx-auto glass p-10 rounded-3xl mt-10">
+                <h2 class="text-2xl font-bold mb-8">Your Subscription</h2>
+                <div class="grid grid-cols-2 gap-6">
                     <div><p class="text-slate-500 text-[10px]">STATUS</p><p id="subStatus" class="font-bold">--</p></div>
-                    <div><p class="text-slate-500 text-[10px]">AMOUNT</p><p class="text-xl font-bold">$<span id="subAmount">0.00</span></p></div>
-                    <div><p class="text-slate-500 text-[10px]">EXPIRES</p><p id="subExpire" class="text-xl font-bold text-blue-400">--</p></div>
+                    <div><p class="text-slate-500 text-[10px]">AMOUNT</p><p class="text-xl font-bold text-emerald-400">$<span id="subAmount">0.00</span></p></div>
+                    <div class="col-span-2"><p class="text-slate-500 text-[10px]">EXPIRY DATE</p><p id="subExpire" class="text-xl font-bold text-blue-400">--</p></div>
                 </div>
             </div>
         </div>
@@ -111,22 +107,21 @@
 
     <div id="fileModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="glass p-8 w-full max-w-md rounded-3xl">
-            <h2 class="text-xl font-bold mb-4">Submit File</h2>
+            <h2 class="text-xl font-bold mb-4">Submit Application</h2>
             <div class="space-y-3">
-                <input type="text" id="stName" placeholder="Student Name">
-                <input type="text" id="stContact" placeholder="Contact">
+                <input type="text" id="stName" placeholder="Full Name">
+                <input type="text" id="stContact" placeholder="Contact No">
                 <input type="text" id="stPassport" placeholder="Passport No">
-                <input type="email" id="stEmail" placeholder="Email">
-                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold mt-4">SUBMIT</button>
-                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-sm">Close</button>
+                <input type="email" id="stEmail" placeholder="Email Address">
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold mt-4">CONFIRM SUBMISSION</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-xs">CLOSE</button>
             </div>
         </div>
     </div>
 
     <script>
         const pId = localStorage.getItem('partnerId');
-        if (!pId) window.location.href = '/login';
-        
+        if(!pId) window.location.href = '/login';
         document.getElementById('userName').innerText = localStorage.getItem('partnerName') || 'Partner';
 
         function logout() { localStorage.clear(); window.location.href = '/login'; }
@@ -141,46 +136,45 @@
         async function loadData() {
             const res = await fetch('/api/partner/details/' + pId);
             const p = await res.json();
-            document.getElementById('pPending').innerText = (p.pendingBalance || 0).toFixed(2);
-            document.getElementById('pFinal').innerText = (p.walletBalance || 0).toFixed(2);
-            document.getElementById('pPendingBig').innerText = (p.pendingBalance || 0).toFixed(2);
-            document.getElementById('pFinalBig').innerText = (p.walletBalance || 0).toFixed(2);
-            document.getElementById('subStatus').innerText = p.subStatus || 'Inactive';
-            document.getElementById('subAmount').innerText = (p.subAmount || 0).toFixed(2);
-            document.getElementById('subExpire').innerText = p.subExpireDate || 'N/A';
+            document.getElementById('pPending').innerText = p.pendingBalance.toFixed(2);
+            document.getElementById('pFinal').innerText = p.walletBalance.toFixed(2);
+            document.getElementById('pPendingBig').innerText = p.pendingBalance.toFixed(2);
+            document.getElementById('pFinalBig').innerText = p.walletBalance.toFixed(2);
+            document.getElementById('subStatus').innerText = p.subStatus;
+            document.getElementById('subAmount').innerText = p.subAmount.toFixed(2);
+            document.getElementById('subExpire').innerText = p.subExpireDate;
 
             const hRes = await fetch('/api/partner/history/' + pId);
             const history = await hRes.json();
             document.getElementById('historyList').innerHTML = history.map(h => `
-                <tr class="border-b border-white/5"><td class="py-4 font-bold text-slate-300">${h.studentName}</td><td>${h.passportNo}</td><td>${h.uniName}</td><td class="text-blue-400">$${h.commission}</td><td><span class="text-amber-500">${h.status}</span></td></tr>
+                <tr class="border-b border-white/5"><td class="py-4 font-bold">${h.studentName}</td><td>${h.passportNo}</td><td>${h.uniName}</td><td class="text-blue-400 font-bold">$${h.commission}</td><td><span class="text-amber-500">${h.status}</span></td></tr>
             `).join('');
-        }
-
-        async function requestWithdraw() {
-            const amount = parseFloat(document.getElementById('wAmount').value);
-            const method = document.getElementById('wMethod').value;
-            const accountNo = document.getElementById('wAccount').value;
-            const finalBal = parseFloat(document.getElementById('pFinalBig').innerText);
-
-            if (!amount || amount < 10) return alert("Min withdraw $10");
-            if (amount > finalBal) return alert("Insufficient Final Balance!");
-
-            const res = await fetch('/api/partner/withdraw', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ partnerId: pId, amount, method, accountNo })
-            });
-            if (res.ok) { alert("Withdraw Request Sent!"); location.reload(); }
         }
 
         async function runAssessment() {
             const res = await fetch('/api/universities');
             const unis = await res.json();
             const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
+            
             document.getElementById('resultsArea').innerHTML = filtered.map(u => `
-                <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 mb-4 flex justify-between items-center">
-                    <div><h3 class="font-bold text-blue-300 text-lg">${u.uniName}</h3><p class="text-xs text-slate-500">${u.courseName}</p></div>
-                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-6 py-2 rounded-xl text-xs font-bold">Open File</button>
+                <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 mb-6 transition">
+                    <div class="flex justify-between items-start mb-4 border-b border-white/5 pb-3">
+                        <div><h3 class="font-bold text-blue-300 text-xl">${u.uniName}</h3><p class="text-xs text-slate-500">${u.location}, ${u.country}</p></div>
+                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-8 py-3 rounded-xl text-xs font-bold hover:bg-blue-700">OPEN FILE</button>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px]">
+                        <div><p class="text-slate-500 uppercase">Course</p><p class="font-bold">${u.courseName}</p></div>
+                        <div><p class="text-slate-500 uppercase">Intake</p><p class="font-bold">${u.intake}</p></div>
+                        <div><p class="text-slate-500 uppercase">Duration</p><p class="font-bold">${u.duration}</p></div>
+                        <div><p class="text-slate-500 uppercase">Semester Fee</p><p class="font-bold text-emerald-400">${u.currency} ${u.semesterFee}</p></div>
+                        <div><p class="text-slate-500 uppercase">Total Fee</p><p class="font-bold">${u.currency} ${u.totalFee}</p></div>
+                        <div><p class="text-slate-500 uppercase">GPA Req</p><p class="font-bold">${u.minGpa}</p></div>
+                        <div><p class="text-slate-500 uppercase">IELTS/PTE</p><p class="font-bold">${u.ieltsScore}/${u.pteScore}</p></div>
+                        <div><p class="text-slate-500 uppercase">Gap Acceptance</p><p class="font-bold">${u.gapAcceptance}</p></div>
+                        <div><p class="text-slate-500 uppercase">Bank BD</p><p class="font-bold">${u.bankNameBD}</p></div>
+                        <div><p class="text-slate-500 uppercase">Loan Amount</p><p class="font-bold">${u.loanAmount}</p></div>
+                        <div class="col-span-full pt-2 text-center border-t border-white/5"><p class="text-blue-400 font-bold">ESTIMATED COMMISSION: $${u.partnerCommission}</p></div>
+                    </div>
                 </div>
             `).join('');
         }
@@ -191,7 +185,17 @@
         async function submitFile() {
             const body = { partnerId: pId, studentName: document.getElementById('stName').value, contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value, studentEmail: document.getElementById('stEmail').value, uniName: curUni.n, commission: curUni.c };
             await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-            alert("File Sent!"); location.reload();
+            alert("File Submitted to Pending Box!"); location.reload();
+        }
+
+        async function requestWithdraw() {
+            const amount = parseFloat(document.getElementById('wAmount').value);
+            const method = document.getElementById('wMethod').value;
+            const accountNo = document.getElementById('wAccount').value;
+            const finalBal = parseFloat(document.getElementById('pFinalBig').innerText);
+            if(amount > finalBal || amount < 10) return alert("Invalid Amount or Insufficient Balance!");
+            await fetch('/api/partner/withdraw', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ partnerId: pId, amount, method, accountNo }) });
+            alert("Withdraw Request Sent!"); location.reload();
         }
 
         loadData();
