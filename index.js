@@ -40,21 +40,23 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
-// --- WALLET & FILE API ---
-app.post('/api/partner/submit-file', async (req, res) => {
-    const { partnerId, studentName, contactNo, uniName, commission } = req.body;
-    
-    // 1. Save Student File
-    const newFile = new StudentFile(req.body);
-    await newFile.save();
-
-    // 2. Add Commission to Partner Wallet
-    await Partner.findByIdAndUpdate(partnerId, { $inc: { walletBalance: commission } });
-    
-    res.json({ msg: "File Submitted & Commission Added!" });
+// --- PARTNER API (FIXED) ---
+app.get('/api/partner/details/:id', async (req, res) => {
+    try {
+        const p = await Partner.findById(req.params.id);
+        res.json(p);
+    } catch (e) { res.status(404).send(); }
 });
 
-// --- OTHER APIS (LOCKED) ---
+app.post('/api/partner/submit-file', async (req, res) => {
+    const { partnerId, studentName, contactNo, uniName, commission } = req.body;
+    const newFile = new StudentFile(req.body);
+    await newFile.save();
+    await Partner.findByIdAndUpdate(partnerId, { $inc: { walletBalance: commission } });
+    res.json({ msg: "Success" });
+});
+
+// --- AUTH & ADMIN (LOCKED) ---
 app.post('/api/partner/register', async (req, res) => {
     try { const p = new Partner(req.body); await p.save(); res.json({msg: "Success"}); } 
     catch(e) { res.status(400).send(); }
@@ -62,8 +64,8 @@ app.post('/api/partner/register', async (req, res) => {
 
 app.post('/api/partner/login', async (req, res) => {
     const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
-    if(p && p.status === 'Active') res.json({id: p._id, name: p.name, wallet: p.walletBalance});
-    else res.status(401).json({msg: "Pending or Invalid"});
+    if(p && p.status === 'Active') res.json({id: p._id, name: p.name});
+    else res.status(401).json({msg: "Error"});
 });
 
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
@@ -77,4 +79,4 @@ app.post('/api/admin/add-university', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server on ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Mission Running on Port ${PORT}`));
