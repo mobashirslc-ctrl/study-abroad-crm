@@ -8,46 +8,52 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- DATABASE CONNECTION (THE FIX) ---
+// --- DATABASE CONNECTION (FIXED) ---
 const rawURI = process.env.MONGODB_URI;
-const mongoURI = rawURI ? rawURI.trim() : null; // স্পেস রিমুভ করবে
+const mongoURI = rawURI ? rawURI.trim() : null;
 
 mongoose.connect(mongoURI)
     .then(() => console.log("✅ Database Connected & Locked"))
     .catch(err => console.error("❌ DB Connection Error:", err.message));
 
-// --- SCHEMAS ---
+// --- UNIVERSITY SCHEMA (11 FIELDS) ---
 const UniSchema = new mongoose.Schema({
     uniName: String, country: String, location: String, courseName: String,
     degreeType: String, intake: String, semesterFee: String, 
-    partnerCommission: Number, bankNameBD: String, maritalStatus: String
+    partnerCommission: Number, bankNameBD: String, loanAmount: String, 
+    maritalStatus: String
 });
 const University = mongoose.model('University', UniSchema);
 
+// --- STUDENT FILE SCHEMA ---
+const StudentFileSchema = new mongoose.Schema({
+    partnerId: String, studentName: String, contactNo: String, passportNo: String,
+    uniName: String, commission: Number, status: { type: String, default: 'Pending' },
+    date: { type: Date, default: Date.now }
+});
+const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
+
+// --- PARTNER SCHEMA ---
 const PartnerSchema = new mongoose.Schema({
     name: String, email: { type: String, unique: true }, pass: String,
-    status: { type: String, default: 'Pending' },
-    walletBalance: { type: Number, default: 0 }
+    status: { type: String, default: 'Pending' }, walletBalance: { type: Number, default: 0 }
 });
 const Partner = mongoose.model('Partner', PartnerSchema);
 
-// --- ROUTES (FIXED PATHS) ---
+// --- ROUTES ---
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
-// --- API SECTION ---
-app.post('/api/partner/login', async (req, res) => {
-    const p = await Partner.findOne({ email: req.body.email, pass: req.body.pass });
-    if (p && p.status === 'Active') res.json({ id: p._id, name: p.name });
-    else res.status(401).json({ msg: "Invalid or Pending" });
+app.post('/api/partner/submit-file', async (req, res) => {
+    try {
+        const newFile = new StudentFile(req.body);
+        await newFile.save();
+        await Partner.findByIdAndUpdate(req.body.partnerId, { $inc: { walletBalance: req.body.commission } });
+        res.json({ msg: "Success" });
+    } catch (e) { res.status(500).send(); }
 });
 
-app.get('/api/partner/details/:id', async (req, res) => {
-    const p = await Partner.findById(req.params.id);
-    res.json(p);
-});
-
+app.get('/api/partner/details/:id', async (req, res) => res.json(await Partner.findById(req.params.id)));
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
 const PORT = process.env.PORT || 10000;

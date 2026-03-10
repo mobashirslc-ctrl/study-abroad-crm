@@ -21,7 +21,7 @@
         <div class="p-6"><h2 class="text-xl font-bold text-blue-400">IHP CRM</h2></div>
         <nav class="mt-4">
             <div class="nav-item active"><i class="fas fa-search"></i> <span>Assessment</span></div>
-            <div class="nav-item"><i class="fas fa-users"></i> <span>Students</span></div>
+            <div class="nav-item"><i class="fas fa-file-invoice"></i> <span>Applications</span></div>
             <div class="mt-20 px-6"><button onclick="localStorage.clear(); location.href='/login'" class="text-red-400 text-sm">Logout</button></div>
         </nav>
     </div>
@@ -36,35 +36,42 @@
             <div class="glass-panel p-6 h-fit">
                 <h2 class="text-lg font-semibold mb-6 border-b border-white/10 pb-2">Smart Filters</h2>
                 <div class="space-y-4">
-                    <div>
-                        <label class="text-xs text-slate-400">Preferred Country (Written)</label>
-                        <input type="text" id="sCountry" placeholder="e.g. UK" class="w-full p-3 rounded-lg mt-1">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400">Language Test</label>
-                        <select id="sLang" class="w-full p-3 rounded-lg mt-1">
-                            <option value="IELTS">IELTS</option>
-                            <option value="PTE">PTE</option>
-                            <option value="DUOLINGO">DUOLINGO</option>
-                            <option value="OIETC">OIETC</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-xs text-slate-400">Score</label><input type="text" id="sScore" class="w-full p-3 rounded-lg mt-1"></div>
-                        <div><label class="text-xs text-slate-400">GPA</label><input type="text" id="sGpa" class="w-full p-3 rounded-lg mt-1"></div>
-                    </div>
+                    <input type="text" id="sCountry" placeholder="Preferred Country" class="w-full p-3 rounded-lg">
+                    <select id="sDegree" class="w-full p-3 rounded-lg">
+                        <option value="UG">UG (Under Graduate)</option>
+                        <option value="PG">PG (Post Graduate)</option>
+                        <option value="DIPLOMA">DIPLOMA</option>
+                        <option value="FOUNDATION">FOUNDATION</option>
+                        <option value="RESEARCH">RESEARCH</option>
+                        <option value="PHD">PHD</option>
+                    </select>
                     <button onclick="runAssessment()" class="w-full bg-blue-600 py-4 rounded-xl font-bold uppercase">Find Universities</button>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 glass-panel p-6 min-h-[500px]">
+            <div class="lg:col-span-2 glass-panel p-6">
                 <h2 class="text-lg font-semibold mb-6 border-b border-white/10 pb-2">Matching Results</h2>
                 <div id="resultsArea" class="space-y-4"></div>
             </div>
         </div>
     </div>
 
+    <div id="fileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[200]">
+        <div class="glass-panel p-8 w-full max-w-md border-t-4 border-blue-500">
+            <h2 class="text-2xl font-bold mb-4">Open Student File</h2>
+            <div class="space-y-4">
+                <input type="text" id="stName" placeholder="Student Full Name" class="w-full p-3 rounded-lg">
+                <input type="text" id="stContact" placeholder="Contact No" class="w-full p-3 rounded-lg">
+                <input type="text" id="stPassport" placeholder="Passport Number" class="w-full p-3 rounded-lg">
+                <p class="text-xs text-slate-400">Commission will be added to wallet upon submission.</p>
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold uppercase">Submit & Add Commission</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-400 text-sm">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let selectedUni = null;
         window.onload = () => {
             document.getElementById('partnerNameDisplay').innerText = localStorage.getItem('partnerName');
             refreshWallet();
@@ -78,25 +85,53 @@
 
         async function runAssessment() {
             const resultsArea = document.getElementById('resultsArea');
-            resultsArea.innerHTML = '<p class="text-blue-400 text-center py-20">Searching...</p>';
-            try {
-                const res = await fetch('/api/universities');
-                const unis = await res.json();
-                const country = document.getElementById('sCountry').value.toUpperCase();
-                
-                const filtered = unis.filter(u => u.country.toUpperCase().includes(country));
-                
-                if(filtered.length === 0) { resultsArea.innerHTML = '<p class="text-center py-20">No matching results.</p>'; return; }
+            resultsArea.innerHTML = '<p class="text-center py-20">Searching...</p>';
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            const country = document.getElementById('sCountry').value.toUpperCase();
+            const degree = document.getElementById('sDegree').value;
 
-                resultsArea.innerHTML = filtered.map(u => `
-                    <div class="glass-panel p-6 border-l-4 border-blue-500">
-                        <div class="flex justify-between items-center">
-                            <div><h3 class="text-xl font-bold text-blue-300">${u.uniName}</h3><p class="text-sm text-slate-400">${u.country}</p></div>
-                            <span class="text-emerald-400 font-bold">$${u.partnerCommission} COMM.</span>
-                        </div>
+            const filtered = unis.filter(u => u.country.toUpperCase().includes(country) && u.degreeType.includes(degree));
+            
+            resultsArea.innerHTML = filtered.map(u => `
+                <div class="glass-panel p-6 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-start mb-4">
+                        <div><h3 class="text-xl font-bold text-blue-300 uppercase">${u.uniName}</h3><p class="text-sm text-slate-400">${u.country} | ${u.location}</p></div>
+                        <span class="text-emerald-400 font-bold">$${u.partnerCommission} COMM.</span>
                     </div>
-                `).join('');
-            } catch(e) { resultsArea.innerHTML = '<p class="text-red-400 text-center py-20">Communication Error.</p>'; }
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-[11px] text-slate-400 mb-6">
+                        <div>INTAKE: <span class="text-white">${u.intake}</span></div>
+                        <div>FEE: <span class="text-white">${u.semesterFee}</span></div>
+                        <div>BANK: <span class="text-white">${u.bankNameBD}</span></div>
+                        <div>LOAN: <span class="text-white">${u.loanAmount}</span></div>
+                        <div>STATUS: <span class="text-white">${u.maritalStatus}</span></div>
+                        <div>COURSE: <span class="text-white">${u.courseName}</span></div>
+                    </div>
+                    <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="w-full bg-blue-600/20 hover:bg-blue-600 py-3 rounded-lg text-sm font-bold border border-blue-500/30 transition-all uppercase">Open File & Add Commission</button>
+                </div>
+            `).join('');
+        }
+
+        function openForm(name, comm) {
+            selectedUni = { name, comm };
+            document.getElementById('fileModal').classList.remove('hidden');
+        }
+
+        async function submitFile() {
+            const data = {
+                partnerId: localStorage.getItem('partnerId'),
+                studentName: document.getElementById('stName').value,
+                contactNo: document.getElementById('stContact').value,
+                passportNo: document.getElementById('stPassport').value,
+                uniName: selectedUni.name,
+                commission: selectedUni.comm
+            };
+            const res = await fetch('/api/partner/submit-file', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if(res.ok) { alert("File Opened Successfully!"); location.reload(); }
         }
     </script>
 </body>
