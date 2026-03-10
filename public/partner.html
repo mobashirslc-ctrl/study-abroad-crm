@@ -12,18 +12,16 @@
         .sidebar-item:hover, .sidebar-item.active { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .content-section { display: none; height: calc(100vh - 40px); overflow-y: auto; padding: 20px; }
         .content-section.active { display: block; }
-        input, select { background: #161b2a; border: 1px solid #2d364d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
+        input, select { background: #161b2a; border: 1px solid #2d364d; color: white; padding: 12px; border-radius: 10px; width: 100%; outline: none; }
     </style>
 </head>
 <body class="flex">
 
     <div class="w-64 h-screen glass border-r border-white/5 flex flex-col p-4">
-        <div class="mb-8 p-4 bg-white/5 rounded-2xl relative group">
-            <p class="text-[10px] text-slate-500 uppercase">Welcome back,</p>
+        <div class="mb-8 p-4 bg-white/5 rounded-2xl">
+            <p class="text-[10px] text-slate-500 uppercase">Welcome,</p>
             <h2 id="userName" class="text-sm font-bold text-blue-400">Partner</h2>
-            <button onclick="logout()" class="mt-3 text-[10px] text-red-400 hover:text-red-300 flex items-center gap-2">
-                <i class="fa-solid fa-right-from-bracket"></i> LOGOUT
-            </button>
+            <button onclick="logout()" class="mt-2 text-[10px] text-red-400 hover:underline">LOGOUT</button>
         </div>
 
         <nav class="flex-1">
@@ -35,7 +33,7 @@
 
         <div class="mt-auto space-y-2">
             <div class="glass p-3 rounded-xl border-l-4 border-amber-500">
-                <p class="text-[9px] text-slate-500 uppercase">Pending Commission</p>
+                <p class="text-[9px] text-slate-500 uppercase">Pending</p>
                 <p class="text-md font-bold text-amber-500">$<span id="pPending">0.00</span></p>
             </div>
             <div class="glass p-3 rounded-xl border-l-4 border-emerald-500">
@@ -52,19 +50,19 @@
                 <div class="glass p-6 rounded-2xl space-y-4 h-fit">
                     <h2 class="font-bold text-blue-400 border-b border-white/5 pb-2">Smart Search</h2>
                     <input type="text" id="sCountry" placeholder="Target Country">
-                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option></select>
-                    <input type="text" id="sGpa" placeholder="GPA Score">
+                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option></select>
+                    <input type="text" id="sGpa" placeholder="GPA">
                     <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
                     <input type="text" id="sScore" placeholder="Score">
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">FIND COURSES</button>
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">SEARCH</button>
                 </div>
-                <div class="lg:col-span-3" id="resultsArea"><div class="glass p-20 text-center text-slate-500">Matches appear here...</div></div>
+                <div class="lg:col-span-3" id="resultsArea"></div>
             </div>
         </div>
 
         <div id="history" class="content-section">
-            <div class="glass p-6 rounded-2xl">
-                <h2 class="text-xl font-bold mb-6 text-blue-400">File History</h2>
+            <div class="glass p-6 rounded-2xl overflow-x-auto">
+                <h2 class="text-xl font-bold mb-6 text-blue-400">File Tracking</h2>
                 <table class="w-full text-left text-xs">
                     <thead class="text-slate-500 border-b border-white/5">
                         <tr><th class="pb-4">STUDENT</th><th class="pb-4">PASSPORT</th><th class="pb-4">UNIVERSITY</th><th class="pb-4">COMMISSION</th><th class="pb-4">STATUS</th></tr>
@@ -75,29 +73,37 @@
         </div>
 
         <div id="wallet" class="content-section">
-            <div class="grid grid-cols-2 gap-6 max-w-2xl mx-auto mt-20">
-                <div class="glass p-10 rounded-3xl text-center border-t-4 border-amber-500">
-                    <p class="text-slate-500 mb-2">Pending Box</p>
-                    <p class="text-4xl font-bold text-amber-500">$<span id="pPendingBig">0.00</span></p>
+            <div class="max-w-4xl mx-auto">
+                <div class="grid grid-cols-2 gap-6 mb-10">
+                    <div class="glass p-10 rounded-3xl text-center border-t-4 border-amber-500">
+                        <p class="text-slate-500 mb-2">Pending Box</p>
+                        <p class="text-4xl font-bold text-amber-500">$<span id="pPendingBig">0.00</span></p>
+                    </div>
+                    <div class="glass p-10 rounded-3xl text-center border-t-4 border-emerald-500">
+                        <p class="text-slate-500 mb-2">Final Wallet</p>
+                        <p class="text-4xl font-bold text-emerald-500">$<span id="pFinalBig">0.00</span></p>
+                    </div>
                 </div>
-                <div class="glass p-10 rounded-3xl text-center border-t-4 border-emerald-500">
-                    <p class="text-slate-500 mb-2">Final Wallet</p>
-                    <p class="text-4xl font-bold text-emerald-500">$<span id="pFinalBig">0.00</span></p>
+
+                <div class="glass p-8 rounded-3xl max-w-lg mx-auto border border-white/5">
+                    <h2 class="text-xl font-bold mb-6"><i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> Withdraw</h2>
+                    <div class="space-y-4">
+                        <select id="wMethod"><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option><option value="Bank">Bank Transfer</option></select>
+                        <input type="text" id="wAccount" placeholder="Account Number">
+                        <input type="number" id="wAmount" placeholder="Amount ($)">
+                        <button onclick="requestWithdraw()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold hover:bg-emerald-700">CONFIRM WITHDRAW</button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="subscription" class="content-section">
-            <div class="max-w-2xl mx-auto mt-10">
-                <div class="glass p-10 rounded-3xl border border-blue-500/20">
-                    <h2 class="text-2xl font-bold mb-10 flex items-center gap-3">
-                        <i class="fa-solid fa-crown text-amber-400"></i> Subscription Details
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div><p class="text-slate-500 text-[10px] mb-1">STATUS</p><p id="subStatus" class="font-bold">--</p></div>
-                        <div><p class="text-slate-500 text-[10px] mb-1">PLAN AMOUNT</p><p class="text-xl font-bold">$<span id="subAmount">0.00</span></p></div>
-                        <div><p class="text-slate-500 text-[10px] mb-1">EXPIRES ON</p><p id="subExpire" class="text-xl font-bold text-blue-400">--</p></div>
-                    </div>
+            <div class="max-w-2xl mx-auto glass p-10 rounded-3xl border border-blue-500/20">
+                <h2 class="text-2xl font-bold mb-10">Subscription Details</h2>
+                <div class="grid grid-cols-3 gap-8">
+                    <div><p class="text-slate-500 text-[10px]">STATUS</p><p id="subStatus" class="font-bold">--</p></div>
+                    <div><p class="text-slate-500 text-[10px]">AMOUNT</p><p class="text-xl font-bold">$<span id="subAmount">0.00</span></p></div>
+                    <div><p class="text-slate-500 text-[10px]">EXPIRES</p><p id="subExpire" class="text-xl font-bold text-blue-400">--</p></div>
                 </div>
             </div>
         </div>
@@ -105,13 +111,13 @@
 
     <div id="fileModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="glass p-8 w-full max-w-md rounded-3xl">
-            <h2 class="text-xl font-bold mb-4">Open File</h2>
+            <h2 class="text-xl font-bold mb-4">Submit File</h2>
             <div class="space-y-3">
                 <input type="text" id="stName" placeholder="Student Name">
                 <input type="text" id="stContact" placeholder="Contact">
                 <input type="text" id="stPassport" placeholder="Passport No">
                 <input type="email" id="stEmail" placeholder="Email">
-                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold mt-4">SUBMIT APPLICATION</button>
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold mt-4">SUBMIT</button>
                 <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-sm">Close</button>
             </div>
         </div>
@@ -119,6 +125,8 @@
 
     <script>
         const pId = localStorage.getItem('partnerId');
+        if (!pId) window.location.href = '/login';
+        
         document.getElementById('userName').innerText = localStorage.getItem('partnerName') || 'Partner';
 
         function logout() { localStorage.clear(); window.location.href = '/login'; }
@@ -133,13 +141,10 @@
         async function loadData() {
             const res = await fetch('/api/partner/details/' + pId);
             const p = await res.json();
-            
             document.getElementById('pPending').innerText = (p.pendingBalance || 0).toFixed(2);
             document.getElementById('pFinal').innerText = (p.walletBalance || 0).toFixed(2);
             document.getElementById('pPendingBig').innerText = (p.pendingBalance || 0).toFixed(2);
             document.getElementById('pFinalBig').innerText = (p.walletBalance || 0).toFixed(2);
-            
-            // Subscription Data
             document.getElementById('subStatus').innerText = p.subStatus || 'Inactive';
             document.getElementById('subAmount').innerText = (p.subAmount || 0).toFixed(2);
             document.getElementById('subExpire').innerText = p.subExpireDate || 'N/A';
@@ -147,14 +152,25 @@
             const hRes = await fetch('/api/partner/history/' + pId);
             const history = await hRes.json();
             document.getElementById('historyList').innerHTML = history.map(h => `
-                <tr class="border-b border-white/5">
-                    <td class="py-4 font-bold text-slate-300">${h.studentName}</td>
-                    <td class="text-slate-500">${h.passportNo}</td>
-                    <td>${h.uniName}</td>
-                    <td class="font-bold text-blue-400">$${h.commission}</td>
-                    <td><span class="text-amber-500">${h.status}</span></td>
-                </tr>
+                <tr class="border-b border-white/5"><td class="py-4 font-bold text-slate-300">${h.studentName}</td><td>${h.passportNo}</td><td>${h.uniName}</td><td class="text-blue-400">$${h.commission}</td><td><span class="text-amber-500">${h.status}</span></td></tr>
             `).join('');
+        }
+
+        async function requestWithdraw() {
+            const amount = parseFloat(document.getElementById('wAmount').value);
+            const method = document.getElementById('wMethod').value;
+            const accountNo = document.getElementById('wAccount').value;
+            const finalBal = parseFloat(document.getElementById('pFinalBig').innerText);
+
+            if (!amount || amount < 10) return alert("Min withdraw $10");
+            if (amount > finalBal) return alert("Insufficient Final Balance!");
+
+            const res = await fetch('/api/partner/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ partnerId: pId, amount, method, accountNo })
+            });
+            if (res.ok) { alert("Withdraw Request Sent!"); location.reload(); }
         }
 
         async function runAssessment() {
@@ -173,13 +189,9 @@
         function openForm(n, c) { curUni={n,c}; document.getElementById('fileModal').classList.remove('hidden'); }
 
         async function submitFile() {
-            const body = {
-                partnerId: pId, studentName: document.getElementById('stName').value,
-                contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value,
-                studentEmail: document.getElementById('stEmail').value, uniName: curUni.n, commission: curUni.c
-            };
+            const body = { partnerId: pId, studentName: document.getElementById('stName').value, contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value, studentEmail: document.getElementById('stEmail').value, uniName: curUni.n, commission: curUni.c };
             await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-            alert("File Sent to Compliance!"); location.reload();
+            alert("File Sent!"); location.reload();
         }
 
         loadData();
