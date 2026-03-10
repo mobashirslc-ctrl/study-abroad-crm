@@ -8,9 +8,8 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
 
-// --- DB CONNECTION ---
 const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI).then(() => console.log("✅ DB Locked")).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log("✅ Database Locked")).catch(err => console.log(err));
 
 // --- SCHEMAS ---
 const University = mongoose.model('University', new mongoose.Schema({
@@ -28,10 +27,9 @@ const Partner = mongoose.model('Partner', new mongoose.Schema({
     status: { type: String, default: 'Pending' },
     walletBalance: { type: Number, default: 0 },
     pendingBalance: { type: Number, default: 0 },
-    // SUBSCRIPTION FIELDS
-    subStatus: { type: String, default: 'Inactive' },
-    subAmount: { type: Number, default: 0 },
-    subExpireDate: { type: String, default: 'N/A' }
+    subStatus: { type: String, default: 'Inactive' }, // Default Status
+    subAmount: { type: Number, default: 0 },         // Default Amount
+    subExpireDate: { type: String, default: 'N/A' }  // Default Date
 }));
 
 const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
@@ -46,7 +44,7 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
-// --- API ROUTES ---
+// --- APIS ---
 app.post('/api/partner/register', async (req, res) => {
     try { const p = new Partner(req.body); await p.save(); res.json({msg: "Success"}); } 
     catch(e) { res.status(400).send(); }
@@ -70,10 +68,5 @@ app.post('/api/partner/submit-file', async (req, res) => {
 app.get('/api/partner/history/:id', async (req, res) => res.json(await StudentFile.find({partnerId: req.params.id}).sort({date:-1})));
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
-// Admin/Add University API (Locked)
-app.post('/api/admin/add-university', async (req, res) => {
-    const u = new University(req.body); await u.save(); res.json({msg: "Saved"});
-});
-
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 CRM Running on Port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Mission Running on ${PORT}`));
