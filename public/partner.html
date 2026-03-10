@@ -1,63 +1,167 @@
-<div class="space-y-4">
-    <div>
-        <label class="text-xs text-slate-400">Select Degree</label>
-        <select id="sDegree" class="w-full p-2 rounded mt-1 bg-slate-800 border-slate-700">
-            <option>PG</option><option>UG</option><option>DIPLOMA</option>
-            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-        </select>
-    </div>
-    <div>
-        <label class="text-xs text-slate-400">Language Test</label>
-        <select id="sLang" class="w-full p-2 rounded mt-1 bg-slate-800 border-slate-700">
-            <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-        </select>
-    </div>
-    <input type="text" id="sScore" placeholder="Language Score" class="w-full p-2 rounded bg-slate-800 border-slate-700">
-    <input type="text" id="sGpa" placeholder="Academic Score (GPA)" class="w-full p-2 rounded bg-slate-800 border-slate-700">
-    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-lg font-bold">FIND UNIVERSITIES</button>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal | IHP CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+        }
+        input, select {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            transition: all 0.3s ease;
+        }
+        input:focus, select:focus {
+            border-color: #3b82f6 !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+        }
+        option { background: #1e293b; color: white; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
 
-<div id="fileModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-white/10 p-6 rounded-xl w-full max-w-md">
-        <h2 class="text-xl font-bold mb-4">Open Student File</h2>
-        <div class="space-y-3">
-            <input type="text" id="stName" placeholder="Student Full Name" class="w-full p-2 rounded bg-slate-800">
-            <input type="text" id="stContact" placeholder="Contact Number" class="w-full p-2 rounded bg-slate-800">
-            <p class="text-xs text-slate-400">Commission will be added: <span id="commLabel" class="text-emerald-400"></span></p>
-            <button onclick="submitStudentFile()" class="w-full bg-emerald-600 py-3 rounded font-bold">SUBMIT & ADD COMMISSION</button>
-            <button onclick="closeModal()" class="w-full text-slate-400 text-sm">Cancel</button>
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-10 glass-panel p-6 shadow-2xl">
+            <div>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                    IHP Partner Dashboard
+                </h1>
+                <p class="text-slate-400 text-xs mt-1 uppercase tracking-widest">Global Recruitment Intelligence</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Wallet Balance</p>
+                <p class="text-3xl font-mono font-bold text-emerald-400">$<span id="walletBal">0.00</span></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="glass-panel p-6 shadow-xl h-fit">
+                <h2 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                    <span class="w-2 h-6 bg-blue-500 rounded-full"></span> Smart Assessment
+                </h2>
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs text-slate-400 ml-1">Select Degree</label>
+                        <select id="sDegree" class="w-full p-3 rounded-xl mt-1">
+                            <option value="PG">PG (Post Graduate)</option>
+                            <option value="UG">UG (Under Graduate)</option>
+                            <option value="DIPLOMA">DIPLOMA</option>
+                            <option value="FOUNDATION">FOUNDATION</option>
+                            <option value="RESEARCH">RESEARCH</option>
+                            <option value="PHD">PHD</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 ml-1">Language Test</label>
+                        <select id="sLang" class="w-full p-3 rounded-xl mt-1">
+                            <option value="IELTS">IELTS</option>
+                            <option value="PTE">PTE</option>
+                            <option value="DUOLINGO">DUOLINGO</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 ml-1">Lang Score</label>
+                            <input type="text" id="sScore" placeholder="e.g. 6.5" class="w-full p-3 rounded-xl mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 ml-1">Academic GPA</label>
+                            <input type="text" id="sGpa" placeholder="e.g. 3.50" class="w-full p-3 rounded-xl mt-1">
+                        </div>
+                    </div>
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold mt-4 shadow-lg shadow-blue-900/20 transition-all uppercase tracking-wider text-sm">
+                        Find Universities
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 glass-panel p-6 min-h-[400px]">
+                <h2 class="text-lg font-semibold mb-6 border-b border-white/5 pb-4">Eligible Options</h2>
+                <div id="resultsArea" class="space-y-4">
+                    <div class="text-center py-20 opacity-30 italic">No search results to display.</div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-let selectedUni = null;
+    <div id="fileModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
+        <div class="glass-panel p-8 w-full max-w-md border-t-4 border-blue-500">
+            <h2 class="text-2xl font-bold mb-1">Open Student File</h2>
+            <p id="uniSub" class="text-blue-400 text-xs font-semibold mb-6"></p>
+            
+            <div class="space-y-4">
+                <input type="text" id="stName" placeholder="Student Full Name" class="w-full p-4 rounded-xl">
+                <input type="text" id="stContact" placeholder="Contact Number / WhatsApp" class="w-full p-4 rounded-xl">
+                
+                <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
+                    <p class="text-[10px] text-emerald-300 uppercase font-bold tracking-widest">Commission Reward</p>
+                    <p class="text-2xl font-bold text-emerald-400" id="commLabel">$0</p>
+                </div>
+                
+                <button onclick="submitStudentFile()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-xl font-bold transition-all shadow-lg shadow-emerald-900/20 uppercase tracking-widest text-sm">
+                    Submit & Add Commission
+                </button>
+                <button onclick="closeModal()" class="w-full text-slate-500 text-xs hover:text-white mt-2">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-function openFileForm(uniName, commission) {
-    selectedUni = { uniName, commission };
-    document.getElementById('commLabel').innerText = "$" + commission;
-    document.getElementById('fileModal').classList.remove('hidden');
-}
+    <script>
+        let activeUni = null;
 
-async function submitStudentFile() {
-    const data = {
-        partnerId: localStorage.getItem('partnerId'),
-        studentName: document.getElementById('stName').value,
-        contactNo: document.getElementById('stContact').value,
-        uniName: selectedUni.uniName,
-        commission: selectedUni.commission
-    };
+        async function runAssessment() {
+            const resultsArea = document.getElementById('resultsArea');
+            resultsArea.innerHTML = '<div class="text-center py-20 text-blue-400">Filtering database...</div>';
+            
+            const res = await fetch('/api/universities');
+            const data = await res.json();
+            const filtered = data.filter(u => u.degreeType === document.getElementById('sDegree').value);
 
-    const res = await fetch('/api/partner/submit-file', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
+            if(filtered.length === 0) {
+                resultsArea.innerHTML = '<div class="text-center py-20 opacity-50">No universities found for this criteria.</div>';
+                return;
+            }
 
-    if(res.ok) {
-        alert("Success! Commission added to wallet.");
-        location.reload();
-    }
-}
-// ... [Existing runAssessment function will now use openFileForm(u.uniName, u.partnerCommission)]
-</script>
+            resultsArea.innerHTML = filtered.map(u => `
+                <div class="glass-panel p-6 border-l-4 border-blue-500 hover:scale-[1.01] transition-transform">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-bold text-blue-300">${u.uniName}</h3>
+                            <p class="text-sm text-slate-400">${u.courseName}</p>
+                        </div>
+                        <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-1 rounded-md font-bold uppercase tracking-wider">
+                            Comm: $${u.partnerCommission}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 text-[11px] text-slate-300">
+                        <div><p class="text-slate-500 mb-1 uppercase">Country</p><p class="font-bold text-white">${u.country}</p></div>
+                        <div><p class="text-slate-500 mb-1 uppercase">Intake</p><p class="font-bold text-white">${u.intake}</p></div>
+                        <div><p class="text-slate-500 mb-1 uppercase">Semester Fee</p><p class="font-bold text-white">${u.semesterFee}</p></div>
+                    </div>
+                    <button onclick="openModal('${u.uniName}', ${u.partnerCommission})" class="w-full mt-6 bg-white/5 hover:bg-white/10 py-3 rounded-lg font-bold border border-white/10 text-xs transition-all uppercase tracking-widest">
+                        Open File & Apply
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function openModal(name, comm) {
+            activeUni = { name, comm };
+            document.getElementById('uniSub').innerText = "Target: " + name;
+            document.getElementById('commLabel').innerText = "$" + comm;
+            document.getElementById('fileModal').classList.remove('hidden');
