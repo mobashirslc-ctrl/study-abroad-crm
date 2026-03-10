@@ -8,58 +8,60 @@
     <style>
         body { background: #0b0f1a; color: white; font-family: 'Inter', sans-serif; overflow: hidden; }
         .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .sidebar-item { transition: all 0.3s; border-radius: 12px; cursor: pointer; }
+        .sidebar-item { transition: 0.3s; border-radius: 12px; cursor: pointer; padding: 15px; margin-bottom: 5px; }
         .sidebar-item:hover, .sidebar-item.active { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-        .content-section { display: none; height: calc(100vh - 40px); overflow-y: auto; }
+        .content-section { display: none; height: calc(100vh - 40px); overflow-y: auto; padding: 20px; }
         .content-section.active { display: block; }
-        input, select { background: #161b2a; border: 1px solid #2d364d; color: white; padding: 12px; border-radius: 10px; width: 100%; outline: none; }
-        .status-fixed { color: #10b981; font-weight: bold; }
-        .status-pending { color: #f59e0b; font-weight: bold; }
+        input, select { background: #161b2a; border: 1px solid #2d364d; color: white; padding: 10px; border-radius: 8px; width: 100%; outline: none; }
     </style>
 </head>
 <body class="flex">
 
     <div class="w-64 h-screen glass border-r border-white/5 flex flex-col p-4">
         <div class="mb-10 px-2">
-            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">IHP GLOBAL</h1>
-            <p class="text-[10px] text-slate-500 uppercase tracking-widest">Partner Dashboard</p>
+            <h1 class="text-xl font-bold text-blue-400">IHP GLOBAL</h1>
+            <p class="text-[10px] text-slate-500 uppercase">Partner Dashboard</p>
         </div>
 
-        <nav class="space-y-2 flex-1">
-            <div onclick="showSection('assessment')" class="sidebar-item active p-4 flex items-center gap-3">
-                <i class="fa-solid fa-magnifying-glass-chart"></i> <span>Assessment</span>
-            </div>
-            <div onclick="showSection('history')" class="sidebar-item p-4 flex items-center gap-3">
-                <i class="fa-solid fa-clock-rotate-left"></i> <span>Commission</span>
-            </div>
-            <div onclick="showSection('wallet')" class="sidebar-item p-4 flex items-center gap-3">
-                <i class="fa-solid fa-wallet"></i> <span>My Wallet</span>
-            </div>
+        <nav class="flex-1">
+            <div onclick="showSection('assessment')" class="sidebar-item active"><i class="fa-solid fa-search mr-2"></i> Assessment</div>
+            <div onclick="showSection('history')" class="sidebar-item"><i class="fa-solid fa-list mr-2"></i> Commission History</div>
+            <div onclick="showSection('wallet')" class="sidebar-item"><i class="fa-solid fa-wallet mr-2"></i> My Wallet</div>
         </nav>
 
-        <div class="mt-auto glass p-4 rounded-xl">
-            <p class="text-[10px] text-slate-500">Fixed Balance</p>
-            <p class="text-lg font-bold text-emerald-400">$<span id="pWallet">0.00</span></p>
+        <div class="mt-auto space-y-2">
+            <div class="glass p-3 rounded-xl border-l-4 border-amber-500">
+                <p class="text-[9px] text-slate-500 uppercase">Pending Commission</p>
+                <p class="text-md font-bold text-amber-500">$<span id="pPending">0.00</span></p>
+            </div>
+            <div class="glass p-3 rounded-xl border-l-4 border-emerald-500">
+                <p class="text-[9px] text-slate-500 uppercase">Final Wallet</p>
+                <p class="text-md font-bold text-emerald-500">$<span id="pFinal">0.00</span></p>
+            </div>
         </div>
     </div>
 
-    <div class="flex-1 p-6 relative">
+    <div class="flex-1">
         
         <div id="assessment" class="content-section active">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass p-6 rounded-2xl h-fit space-y-4">
-                    <h2 class="text-lg font-bold mb-2">Smart Search</h2>
-                    <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option></select>
-                    <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
-                    <input type="text" id="sScore" placeholder="Language Score">
-                    <input type="text" id="sGpa" placeholder="Academic GPA">
-                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all">FIND UNIVERSITIES</button>
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="glass p-6 rounded-2xl space-y-4 h-fit">
+                    <h2 class="font-bold text-blue-400 mb-2 underline">Search Criteria</h2>
+                    <div><label class="text-[10px] text-slate-500">Target Country</label><input type="text" id="sCountry" placeholder="e.g. UK"></div>
+                    <div><label class="text-[10px] text-slate-500">Degree</label>
+                        <select id="sDegree"><option>PG</option><option>UG</option><option>DIPLOMA</option><option>FOUNDATION</option><option>PHD</option></select>
+                    </div>
+                    <div><label class="text-[10px] text-slate-500">Academic GPA</label><input type="text" id="sGpa" placeholder="e.g. 3.50"></div>
+                    <div><label class="text-[10px] text-slate-500">Language Test</label>
+                        <select id="sLang"><option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option></select>
+                    </div>
+                    <div><label class="text-[10px] text-slate-500">Language Score</label><input type="text" id="sScore" placeholder="e.g. 6.5"></div>
+                    <button onclick="runAssessment()" class="w-full bg-blue-600 py-3 rounded-xl font-bold mt-2">FIND COURSES</button>
                 </div>
 
-                <div class="lg:col-span-2 glass p-6 rounded-2xl">
-                    <h2 class="text-lg font-bold mb-4">Matching Results</h2>
+                <div class="lg:col-span-3">
                     <div id="resultsArea" class="space-y-4">
-                        <p class="text-slate-500 text-center py-20">Enter details to see results</p>
+                        <div class="glass p-20 text-center text-slate-500 rounded-2xl">Enter details to generate results</div>
                     </div>
                 </div>
             </div>
@@ -67,45 +69,41 @@
 
         <div id="history" class="content-section">
             <div class="glass p-6 rounded-2xl">
-                <h2 class="text-xl font-bold mb-6">Commission Escrow History</h2>
-                <table class="w-full text-left">
-                    <thead><tr class="text-slate-500 text-xs border-b border-white/5"><th class="pb-4">STUDENT</th><th class="pb-4">UNIVERSITY</th><th class="pb-4">COMMISSION</th><th class="pb-4">STATUS</th></tr></thead>
-                    <tbody id="historyArea" class="text-sm"></tbody>
-                </table>
+                <h2 class="text-xl font-bold mb-6">Commission & File History</h2>
+                <div id="historyList" class="space-y-3"></div>
             </div>
         </div>
 
         <div id="wallet" class="content-section">
-            <div class="max-w-md mx-auto glass p-10 rounded-3xl text-center">
-                <div class="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                    <i class="fa-solid fa-building-columns"></i>
+            <div class="grid grid-cols-2 gap-6 max-w-2xl mx-auto mt-20">
+                <div class="glass p-10 rounded-3xl text-center border-t-4 border-amber-500">
+                    <p class="text-slate-500 mb-2">Pending Box</p>
+                    <p class="text-4xl font-bold text-amber-500">$<span id="pPendingBig">0.00</span></p>
                 </div>
-                <h2 class="text-slate-400 mb-2">Total Fixed Balance</h2>
-                <p class="text-5xl font-bold text-white mb-8">$<span id="pWalletLarge">0.00</span></p>
-                <button class="w-full bg-white/5 border border-white/10 py-4 rounded-2xl text-slate-400 cursor-not-allowed">Request Withdrawal</button>
-                <p class="text-[10px] text-slate-600 mt-4">Minimum withdrawal amount: $500</p>
+                <div class="glass p-10 rounded-3xl text-center border-t-4 border-emerald-500">
+                    <p class="text-slate-500 mb-2">Final Commission</p>
+                    <p class="text-4xl font-bold text-emerald-500">$<span id="pFinalBig">0.00</span></p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="fileModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="glass p-8 w-full max-w-md bg-[#161b2a] rounded-3xl">
-            <h2 class="text-xl font-bold mb-6">Open Student File</h2>
-            <div class="space-y-4">
-                <input type="text" id="stName" placeholder="Student Full Name">
+    <div id="fileModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div class="glass p-8 w-full max-w-md rounded-3xl">
+            <h2 class="text-xl font-bold mb-4">Student Details</h2>
+            <div class="space-y-3">
+                <input type="text" id="stName" placeholder="Student Name">
                 <input type="text" id="stContact" placeholder="Contact Number">
-                <input type="text" id="stPassport" placeholder="Passport Number">
-                <input type="email" id="stEmail" placeholder="Student Email">
-                <div class="p-4 bg-blue-500/10 rounded-xl"><p class="text-xs text-blue-400">Your commission for this file will be added as <b>Pending</b>.</p></div>
-                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold shadow-lg">SUBMIT TO COMPLIANCE</button>
-                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2 text-sm">Cancel</button>
+                <input type="text" id="stPassport" placeholder="Passport No">
+                <input type="email" id="stEmail" placeholder="Email Address">
+                <button onclick="submitFile()" class="w-full bg-emerald-600 py-4 rounded-xl font-bold">SUBMIT TO PENDING BOX</button>
+                <button onclick="document.getElementById('fileModal').classList.add('hidden')" class="w-full text-slate-500 mt-2">Close</button>
             </div>
         </div>
     </div>
 
     <script>
         const pId = localStorage.getItem('partnerId');
-        
         function showSection(id) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -114,23 +112,20 @@
         }
 
         async function loadData() {
-            const res = await fetch('/api/partner/history/' + pId);
-            const data = await res.json();
-            
-            // Update Wallet
-            const pRes = await fetch('/api/partner/details/' + pId); // You need this API in index.js
-            const pData = await pRes.json();
-            document.getElementById('pWallet').innerText = pData.walletBalance.toFixed(2);
-            document.getElementById('pWalletLarge').innerText = pData.walletBalance.toFixed(2);
+            const res = await fetch('/api/partner/details/' + pId);
+            const p = await res.json();
+            document.getElementById('pPending').innerText = p.pendingBalance.toFixed(2);
+            document.getElementById('pFinal').innerText = p.walletBalance.toFixed(2);
+            document.getElementById('pPendingBig').innerText = p.pendingBalance.toFixed(2);
+            document.getElementById('pFinalBig').innerText = p.walletBalance.toFixed(2);
 
-            // Update History
-            document.getElementById('historyArea').innerHTML = data.map(h => `
-                <tr class="border-b border-white/5">
-                    <td class="py-4 font-medium">${h.studentName}<br><span class="text-[10px] text-slate-500">${h.studentEmail}</span></td>
-                    <td>${h.uniName}</td>
-                    <td>$${h.commission}</td>
-                    <td><span class="status-${h.status.toLowerCase()}">${h.status}</span><br><span class="text-[10px] text-slate-500">${h.complianceStatus}</span></td>
-                </tr>
+            const hRes = await fetch('/api/partner/history/' + pId);
+            const history = await hRes.json();
+            document.getElementById('historyList').innerHTML = history.map(h => `
+                <div class="glass p-4 rounded-xl flex justify-between items-center">
+                    <div><p class="font-bold">${h.studentName}</p><p class="text-[10px] text-slate-500">${h.uniName}</p></div>
+                    <div class="text-right"><p class="font-bold text-blue-400">$${h.commission}</p><p class="text-[10px] text-amber-500">${h.status}</p></div>
+                </div>
             `).join('');
         }
 
@@ -139,30 +134,41 @@
             const unis = await res.json();
             const filtered = unis.filter(u => u.degreeType === document.getElementById('sDegree').value);
             
-            document.getElementById('resultsArea').innerHTML = filtered.length ? filtered.map(u => `
-                <div class="glass p-5 rounded-2xl flex justify-between items-center border-l-4 border-blue-500">
-                    <div><h3 class="font-bold text-blue-100">${u.uniName}</h3><p class="text-xs text-slate-500">${u.courseName} | ${u.intake}</p></div>
-                    <div class="text-right">
-                        <p class="text-xs text-emerald-400 mb-2">Comm: $${u.partnerCommission}</p>
-                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition">Open File</button>
+            document.getElementById('resultsArea').innerHTML = filtered.map(u => `
+                <div class="glass p-6 rounded-2xl border-l-4 border-blue-500 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full flex justify-between">
+                        <h3 class="text-xl font-bold text-blue-400">${u.uniName}</h3>
+                        <button onclick="openForm('${u.uniName}', ${u.partnerCommission})" class="bg-blue-600 px-4 py-2 rounded-lg text-xs font-bold">Open File</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                        <p><span class="text-slate-500">Country:</span> ${u.country}</p>
+                        <p><span class="text-slate-500">Location:</span> ${u.location}</p>
+                        <p><span class="text-slate-500">Course:</span> ${u.courseName}</p>
+                        <p><span class="text-slate-500">Intake:</span> ${u.intake}</p>
+                        <p><span class="text-slate-500">Duration:</span> ${u.duration}</p>
+                        <p><span class="text-slate-500">Semester Fee:</span> ${u.semesterFee}</p>
+                        <p><span class="text-slate-500">Total Fee:</span> ${u.totalFee}</p>
+                        <p><span class="text-slate-500">Bank Req:</span> ${u.bankNameBD}</p>
+                        <p><span class="text-slate-500">Loan:</span> ${u.loanAmount}</p>
+                        <p><span class="text-slate-500">Marital:</span> ${u.maritalStatus}</p>
+                        <p><span class="text-emerald-400">Commission:</span> $${u.partnerCommission}</p>
                     </div>
                 </div>
-            `).join('') : '<p class="text-center py-20 text-slate-500">No universities found matching your criteria.</p>';
+            `).join('');
         }
 
-        let currentUni = null;
-        function openForm(name, comm) { currentUni = {name, comm}; document.getElementById('fileModal').classList.remove('hidden'); }
+        let curUni = null;
+        function openForm(n, c) { curUni={n,c}; document.getElementById('fileModal').classList.remove('hidden'); }
 
         async function submitFile() {
             const body = {
                 partnerId: pId, studentName: document.getElementById('stName').value,
                 contactNo: document.getElementById('stContact').value, passportNo: document.getElementById('stPassport').value,
-                studentEmail: document.getElementById('stEmail').value, uniName: currentUni.name, commission: currentUni.comm
+                studentEmail: document.getElementById('stEmail').value, uniName: curUni.n, commission: curUni.c
             };
             await fetch('/api/partner/submit-file', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
-            alert("File Sent to Compliance!"); location.reload();
+            alert("Sent to Pending Box!"); location.reload();
         }
-
         loadData();
     </script>
 </body>
