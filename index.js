@@ -10,80 +10,89 @@ app.use(express.static('public'));
 
 // --- DB CONNECTION ---
 const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI).then(() => console.log("✅ DB Locked & Connected")).catch(err => console.log(err));
+mongoose.connect(mongoURI).then(() => console.log("✅ Mission Database Locked")).catch(err => console.log(err));
 
 // --- SCHEMAS (LOCKED) ---
-const University = mongoose.model('University', new mongoose.Schema({
-    uniName: String, country: String, location: String, courseName: String,
-    degreeType: String, intake: String, duration: String,
-    currency: String, semesterFee: String, totalFee: String,
-    bankNameBD: String, loanAmount: String, partnerCommission: Number,
-    minGpa: String, ieltsScore: String, pteScore: String, duolingoScore: String,
-    moiAvailable: String, maritalStatus: String, gapAcceptance: String,
-    bankType: String
-}));
+const UniSchema = new mongoose.Schema({
+    uniName: String, country: String, courseName: String, degreeType: String,
+    intake: String, semesterFee: String, partnerCommission: Number,
+    bankNameBD: String, loanAmount: String, maritalStatus: String
+});
+const University = mongoose.model('University', UniSchema);
 
-const Partner = mongoose.model('Partner', new mongoose.Schema({
+const PartnerSchema = new mongoose.Schema({
     name: String, email: { type: String, unique: true }, pass: String,
     status: { type: String, default: 'Pending' },
-    walletBalance: { type: Number, default: 0 },
-    pendingBalance: { type: Number, default: 0 },
-    subStatus: { type: String, default: 'Inactive' },
-    subAmount: { type: Number, default: 0 },
-    subExpireDate: { type: String, default: 'N/A' }
-}));
+    walletBalance: { type: Number, default: 0 }
+});
+const Partner = mongoose.model('Partner', PartnerSchema);
 
-const StudentFile = mongoose.model('StudentFile', new mongoose.Schema({
-    partnerId: String, studentName: String, contactNo: String, passportNo: String,
-    studentEmail: String, uniName: String, commission: Number,
-    status: { type: String, default: 'Observation' }, 
+const StudentFileSchema = new mongoose.Schema({
+    partnerId: String, studentName: String, contactNo: String, 
+    passportNo: String, studentEmail: String,
+    uniName: String, commission: Number,
+    status: { type: String, default: 'Pending' }, 
+    complianceStatus: { type: String, default: 'File Received' },
     date: { type: Date, default: Date.now }
-}));
+});
+const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
 
-const Withdraw = mongoose.model('Withdraw', new mongoose.Schema({
-    partnerId: String, partnerName: String, amount: Number,
-    method: String, accountNo: String,
-    status: { type: String, default: 'Pending' },
-    date: { type: Date, default: Date.now }
-}));
+// --- HTML ROUTES ---
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
 
-// --- APIS (LOCKED REQUIREMENTS) ---
+// --- AUTH API ---
+app.post('/api/partner/register', async (req, res) => {
+    try { const p = new Partner(req.body); await p.save(); res.json({msg: "Success"}); } 
+    catch(e) { res.status(400).json({msg: "Email exists"}); }
+});
+
 app.post('/api/partner/login', async (req, res) => {
     const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
-    if(p && p.status === 'Active') res.json({id: p._id, name: p.name});
-    else res.status(401).json({msg: "Access Denied"});
+    if(p && p.status === 'Active') res.json({id: p._id, name: p.name, wallet: p.walletBalance});
+    else res.status(401).json({msg: "Account Pending or Invalid"});
 });
 
-app.get('/api/partner/details/:id', async (req, res) => res.json(await Partner.findById(req.params.id)));
-
-// কমিশন লজিক: ফাইল সাবমিট করলে শুধু পেন্ডিং বক্সে যোগ হবে
+// --- PARTNER & ESCROW API ---
 app.post('/api/partner/submit-file', async (req, res) => {
-    try {
-        const newFile = new StudentFile(req.body);
-        await newFile.save();
-        await Partner.findByIdAndUpdate(req.body.partnerId, { 
-            $inc: { pendingBalance: req.body.commission } 
-        });
-        res.json({ msg: "Success" });
-    } catch (err) { res.status(500).send(err); }
+    try { const f = new StudentFile(req.body); await f.save(); res.json({msg: "Success"}); }
+    catch(e) { res.status(500).send(); }
 });
 
-app.post('/api/partner/withdraw', async (req, res) => {
-    const { partnerId, amount, method, accountNo } = req.body;
-    const partner = await Partner.findById(partnerId);
-    if (!partner || partner.walletBalance < amount) return res.status(400).json({ msg: "Insufficient Balance" });
-    partner.walletBalance -= amount;
-    await partner.save();
-    const request = new Withdraw({ partnerId, partnerName: partner.name, amount, method, accountNo });
-    await request.save();
-    res.json({ msg: "Withdraw Request Sent!" });
+app.get('/api/partner/history/:id', async (req, res) => {
+    const history = await StudentFile.find({ partnerId: req.params.id }).sort({date: -1});
+    res.json(history);
 });
 
-app.get('/api/partner/history/:id', async (req, res) => res.json(await StudentFile.find({partnerId: req.params.id}).sort({date:-1})));
+// --- ADMIN & COMPLIANCE API ---
+app.get('/api/admin/partners', async (req, res) => res.json(await Partner.find()));
+app.put('/api/admin/partner-status/:id', async (req, res) => {
+    await Partner.findByIdAndUpdate(req.params.id, {status: req.body.status});
+    res.json({msg: "Updated"});
+});
+app.post('/api/admin/add-university', async (req, res) => {
+    const u = new University(req.body); await u.save(); res.json({msg: "Saved"});
+});
 app.get('/api/universities', async (req, res) => res.json(await University.find()));
 
-// --- PORT FIX FOR RENDER ---
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
+// Compliance Verification
+app.put('/api/admin/verify-file/:fileId', async (req, res) => {
+    const { action } = req.body; 
+    const file = await StudentFile.findById(req.params.fileId);
+    if (!file || file.status !== 'Pending') return res.status(400).send();
+
+    if (action === 'Fix') {
+        file.status = 'Fixed';
+        file.complianceStatus = 'File Opening Start';
+        await Partner.findByIdAndUpdate(file.partnerId, { $inc: { walletBalance: file.commission } });
+    } else {
+        file.status = 'Rejected';
+        file.complianceStatus = 'File Rejected';
+    }
+    await file.save();
+    res.json({ msg: "Done" });
 });
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Mission Running on Port ${PORT}`));
