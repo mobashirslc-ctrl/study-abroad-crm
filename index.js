@@ -8,6 +8,7 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static('public'));
 
+// --- DB CONNECTION ---
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI).then(() => console.log("✅ DB Locked & Connected")).catch(err => console.log(err));
 
@@ -46,7 +47,9 @@ const Withdraw = mongoose.model('Withdraw', new mongoose.Schema({
     date: { type: Date, default: Date.now }
 }));
 
-// --- APIS ---
+// --- ROUTES & APIS ---
+app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
+
 app.post('/api/partner/login', async (req, res) => {
     const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
     if(p && p.status === 'Active') res.json({id: p._id, name: p.name});
@@ -54,3 +57,30 @@ app.post('/api/partner/login', async (req, res) => {
 });
 
 app.get('/api/partner/details/:id', async (req, res) => res.json(await Partner.findById(req.params.id)));
+
+// কমিশন লজিক: ফাইল সাবমিট করলে শুধু পেন্ডিং বক্সে যোগ হবে
+app.post('/api/partner/submit-file', async (req, res) => {
+    const newFile = new StudentFile(req.body);
+    await newFile.save();
+    await Partner.findByIdAndUpdate(req.body.partnerId, { 
+        $inc: { pendingBalance: req.body.commission } 
+    });
+    res.json({ msg: "Success" });
+});
+
+app.post('/api/partner/withdraw', async (req, res) => {
+    const { partnerId, amount, method, accountNo } = req.body;
+    const partner = await Partner.findById(partnerId);
+    if (!partner || partner.walletBalance < amount) return res.status(400).json({ msg: "Insufficient Balance" });
+    partner.walletBalance -= amount;
+    await partner.save();
+    const request = new Withdraw({ partnerId, partnerName: partner.name, amount, method, accountNo });
+    await request.save();
+    res.json({ msg: "Withdraw Request Sent!" });
+});
+
+app.get('/api/partner/history/:id', async (req, res) => res.json(await StudentFile.find({partnerId: req.params.id}).sort({date:-1})));
+app.get('/api/universities', async (req, res) => res.json(await University.find()));
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 CRM Running on ${PORT}`));
