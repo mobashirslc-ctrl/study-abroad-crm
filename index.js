@@ -1,49 +1,122 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const path = require('path');
 const app = express();
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
+app.use(express.static('public'));
 
-// Database Connection
-const DB_URI = process.env.MONGODB_URI || "mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority";
-mongoose.connect(DB_URI).then(() => console.log("IHP CRM: Locked & Loaded")).catch(err => console.error(err));
+// --- DATABASE CONNECTION ---
+mongoose.connect('YOUR_MONGODB_URI_HERE', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+}).then(() => console.log("✅ Database Connected & Locked")).catch(err => console.log(err));
 
-// --- Schemas ---
-const University = mongoose.model('University', new mongoose.Schema({
-    country: String, uniName: String, courseName: String, intake: String, degree: String, 
-    languageType: String, academicScore: String, languageScore: String, studyGap: String, 
-    semesterFee: String, currency: String, bankType: String, maritalStatus: String, 
-    bankNameBD: String, loanAmount: String, partnerCommission: { type: Number, default: 0 },
-    appFee: String, deadline: String, scholarship: String, workRights: String, location: String
-}));
-
-const Partner = mongoose.model('Partner', new mongoose.Schema({
-    name: String, contact: String, orgName: String, email: { type: String, unique: true }, 
-    status: { type: String, default: 'Inactive' },
-    walletBalance: { type: Number, default: 0 }
-}));
-
-// --- Routing ---
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-
-// --- Admin APIs ---
-app.post('/api/admin/add-university', async (req, res) => {
-    try { await new University(req.body).save(); res.json({ success: true }); }
-    catch (e) { res.status(500).json({ success: false }); }
+// --- 1. UNIVERSITY SCHEMA (LOCKED: 21 FIELDS) ---
+const UniversitySchema = new mongoose.Schema({
+    // Academic & Basic
+    uniName: String, location: String, country: String, courseName: String,
+    degreeType: String, intake: String, duration: String,
+    
+    // Financials
+    currency: String, semesterFee: String, totalFee: String,
+    bankNameBD: String, loanAmount: String, partnerCommission: String,
+    
+    // Requirements
+    minGpa: String, ieltsScore: String, pteScore: String, duolingoScore: String,
+    moiAvailable: String, maritalStatus: String, gapAcceptance: String,
+    bankType: String // (Fixed/Transactional)
 });
+const University = mongoose.model('University', UniversitySchema);
 
-app.get('/api/admin/partners', async (req, res) => {
-    try { const data = await Partner.find(); res.json(data); }
-    catch (e) { res.status(500).json([]); }
+// --- 2. PARTNER SCHEMA (LOCKED: AUTH & WALLET) ---
+const PartnerSchema = new mongoose.Schema({
+    name: String,
+    email: { type: String, unique: true },
+    pass: String,
+    status: { type: String, default: 'Pending' }, // Pending / Active
+    walletBalance: { type: Number, default: 0 },
+    registrationDate: { type: Date, default: Date.now }
 });
+const Partner = mongoose.model('Partner', PartnerSchema);
 
-app.patch('/api/admin/update-partner/:id', async (req, res) => {
+// ==========================================
+// API ROUTES (PART 1, 2 & 3)
+// ==========================================
+
+// --- PARTNER AUTHENTICATION (PART 1 & 2) ---
+
+// Registration
+app.post('/api/partner/register', async (req, res) => {
     try {
-        const { status } = req.body;
-        await Partner.findByIdAndUpdate(req.params.id, { status: status });
-        res.json({ success: true, message: `Partner is now ${status}` });
-    } catch (e)
+        const { name, email, pass } = req.body;
+        const existing = await Partner.findOne({ email });
+        if (existing) return res.status(400).json({ msg: "Email already exists" });
+
+        const newPartner = new Partner({ name, email, pass });
+        await newPartner.save();
+        res.json({ msg: "Registration Successful! Waiting for Admin Approval." });
+    } catch (e) {
+        res.status(500).json({ msg: "Server Error" });
+    }
+});
+
+// Login
+app.post('/api/partner/login', async (req, res) => {
+    try {
+        const { email, pass } = req.body;
+        const p = await Partner.findOne({ email, pass });
+        
+        if (!p) return res.status(401).json({ msg: "Invalid Credentials" });
+        if (p.status !== 'Active') return res.status(401).json({ msg: "Account Pending Approval" });
+
+        res.json({ id: p._id, name: p.name });
+    } catch (e) {
+        res.status(500).json({ msg: "Login Error" });
+    }
+});
+
+// --- ADMIN CONTROL: PARTNER STATUS (PART 2) ---
+app.get('/api/admin/partners', async (req, res) => {
+    const partners = await Partner.find();
+    res.json(partners);
+});
+
+app.put('/api/admin/partner-status/:id', async (req, res) => {
+    const { status } = req.body;
+    await Partner.findByIdAndUpdate(req.params.id, { status });
+    res.json({ msg: "Status Updated" });
+});
+
+// --- UNIVERSITY MANAGEMENT (PART 3 - LOCKED 21 FIELDS) ---
+
+// Add University
+app.post('/api/admin/add-university', async (req, res) => {
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.json({ msg: "University Data Locked & Saved Successfully!" });
+    } catch (e) {
+        res.status(500).json({ msg: "Error saving university" });
+    }
+});
+
+// Get All Universities
+app.get('/api/universities', async (req, res) => {
+    const unis = await University.find();
+    res.json(unis);
+});
+
+// --- PARTNER PORTAL: GET DETAILS (PART 4 PREP) ---
+app.get('/api/partner/details/:id', async (req, res) => {
+    const p = await Partner.findById(req.params.id);
+    res.json(p);
+});
+
+// --- SERVER START ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Mission Running on Port ${PORT}`);
+});

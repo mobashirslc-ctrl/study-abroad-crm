@@ -3,103 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Login & Register | IHP CRM</title>
+    <title>Partner Gateway | IHP CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .tab-btn.active { border-bottom: 2px solid #2563eb; color: #2563eb; }
-        .hidden { display: none; }
+        body {
+            background: linear-gradient(45deg, #0f172a, #1e293b, #334155);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+        input {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: white !important;
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.5); }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4" style="background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80'); background-size: cover; background-blend-mode: overlay;">
+<body>
 
-    <div class="glass w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-        <div class="flex border-b">
-            <button onclick="switchTab('login')" id="loginTab" class="tab-btn active w-1/2 py-4 font-bold uppercase text-xs tracking-widest">Login</button>
-            <button onclick="switchTab('register')" id="registerTab" class="tab-btn w-1/2 py-4 font-bold uppercase text-xs tracking-widest text-slate-400">Register</button>
-        </div>
+<div class="glass-card p-8 w-full max-w-md mx-4">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-white tracking-tight">IHP PARTNER</h1>
+        <p class="text-slate-400 text-sm mt-2">Access your global recruitment portal</p>
+    </div>
 
-        <div class="p-8">
-            <div id="loginForm">
-                <h2 class="text-2xl font-black text-slate-800 mb-2">Welcome Back</h2>
-                <p class="text-slate-500 text-sm mb-6">Enter your email to access partner dashboard.</p>
-                <div class="space-y-4">
-                    <input type="email" id="lEmail" placeholder="Email Address" class="w-full border p-3 rounded-lg outline-none focus:border-blue-500">
-                    <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-lg uppercase text-sm">Sign In</button>
-                </div>
-            </div>
+    <div class="flex mb-6 border-b border-white/10">
+        <button onclick="switchTab('login')" id="loginTab" class="flex-1 py-2 text-white font-medium tab-active">Login</button>
+        <button onclick="switchTab('reg')" id="regTab" class="flex-1 py-2 text-slate-400 font-medium">Register</button>
+    </div>
 
-            <div id="registerForm" class="hidden">
-                <h2 class="text-2xl font-black text-slate-800 mb-2">Partner Inquiry</h2>
-                <p class="text-slate-500 text-sm mb-6">Fill up the form to request partnership.</p>
-                <div class="space-y-4">
-                    <input type="text" id="rName" placeholder="Full Name" class="w-full border p-3 rounded-lg outline-none focus:border-blue-500">
-                    <input type="text" id="rOrg" placeholder="Organization Name" class="w-full border p-3 rounded-lg outline-none focus:border-blue-500">
-                    <input type="email" id="rEmail" placeholder="Email Address" class="w-full border p-3 rounded-lg outline-none focus:border-blue-500">
-                    <input type="text" id="rContact" placeholder="Contact Number" class="w-full border p-3 rounded-lg outline-none focus:border-blue-500">
-                    <button onclick="handleRegister()" class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-900 transition shadow-lg uppercase text-sm">Submit Request</button>
-                </div>
-            </div>
+    <div id="loginForm">
+        <div class="space-y-4">
+            <input type="email" id="lEmail" placeholder="Email Address" class="w-full p-3 rounded-lg outline-none">
+            <input type="password" id="lPass" placeholder="Password" class="w-full p-3 rounded-lg outline-none">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-500/30">
+                SIGN IN
+            </button>
         </div>
     </div>
 
-    <script>
-        function switchTab(type) {
-            if(type === 'login') {
-                document.getElementById('loginForm').classList.remove('hidden');
-                document.getElementById('registerForm').classList.add('hidden');
-                document.getElementById('loginTab').classList.add('active');
-                document.getElementById('registerTab').classList.remove('active');
-            } else {
-                document.getElementById('loginForm').classList.add('hidden');
-                document.getElementById('registerForm').classList.remove('hidden');
-                document.getElementById('registerTab').classList.add('active');
-                document.getElementById('loginTab').classList.remove('active');
-            }
+    <div id="regForm" class="hidden">
+        <div class="space-y-4">
+            <input type="text" id="rName" placeholder="Full Name / Organization" class="w-full p-3 rounded-lg outline-none">
+            <input type="email" id="rEmail" placeholder="Email Address" class="w-full p-3 rounded-lg outline-none">
+            <input type="password" id="rPass" placeholder="Create Password" class="w-full p-3 rounded-lg outline-none">
+            <button onclick="handleReg()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg transition-all">
+                REQUEST ACCESS
+            </button>
+        </div>
+    </div>
+
+    <div id="msgBox" class="mt-6 p-3 rounded-lg text-sm text-center hidden"></div>
+</div>
+
+<script>
+    function switchTab(type) {
+        if(type === 'login') {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('regForm').classList.add('hidden');
+            document.getElementById('loginTab').classList.add('tab-active');
+            document.getElementById('regTab').classList.remove('tab-active');
+        } else {
+            document.getElementById('regForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('regTab').classList.add('tab-active');
+            document.getElementById('loginTab').classList.remove('tab-active');
         }
+    }
 
-        async function handleLogin() {
-            const email = document.getElementById('lEmail').value;
-            if(!email) return alert("Please enter email");
+    function showMsg(text, type) {
+        const box = document.getElementById('msgBox');
+        box.innerText = text;
+        box.className = `mt-6 p-3 rounded-lg text-sm text-center ${type === 'err' ? 'bg-red-500/20 text-red-200' : 'bg-emerald-500/20 text-emerald-200'}`;
+        box.classList.remove('hidden');
+    }
 
-            const res = await fetch('/api/partner/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email })
-            });
+    async function handleLogin() {
+        const email = document.getElementById('lEmail').value;
+        const pass = document.getElementById('lPass').value;
+        
+        const res = await fetch('/api/partner/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, pass})
+        });
+        const data = await res.json();
 
-            const data = await res.json();
-            if(res.ok) {
-                localStorage.setItem('partnerId', data._id);
-                localStorage.setItem('partnerName', data.name);
-                window.location.href = '/partner'; // সফল হলে ড্যাশবোর্ডে নিয়ে যাবে
-            } else {
-                alert(data.message || "Login Failed");
-            }
+        if(res.ok) {
+            localStorage.setItem('partnerId', data.id);
+            localStorage.setItem('partnerName', data.name);
+            window.location.href = '/partner.html';
+        } else {
+            showMsg(data.msg || "Login Failed", "err");
         }
+    }
 
-        async function handleRegister() {
-            const data = {
-                name: document.getElementById('rName').value,
-                orgName: document.getElementById('rOrg').value,
-                email: document.getElementById('rEmail').value,
-                contact: document.getElementById('rContact').value
-            };
+    async function handleReg() {
+        const name = document.getElementById('rName').value;
+        const email = document.getElementById('rEmail').value;
+        const pass = document.getElementById('rPass').value;
 
-            const res = await fetch('/api/partner/register', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
+        const res = await fetch('/api/partner/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, email, pass})
+        });
 
-            if(res.ok) {
-                alert("✅ Registration Successful! Please wait for Admin approval.");
-                switchTab('login');
-            } else {
-                const err = await res.json();
-                alert(err.message || "Registration Failed");
-            }
+        if(res.ok) {
+            showMsg("📩 Request Sent! Waiting for Admin approval.", "success");
+        } else {
+            showMsg("Registration failed. Email might exist.", "err");
         }
-    </script>
+    }
+</script>
 </body>
 </html>
