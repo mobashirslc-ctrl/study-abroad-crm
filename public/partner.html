@@ -22,7 +22,6 @@
 
         .container { padding: 20px; }
         
-        /* Glassmorphism Card */
         .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
@@ -32,79 +31,98 @@
             margin-bottom: 20px;
         }
 
+        /* Styling for the 11 Fields to look like before */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .data-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-blue);
+        }
+
+        .data-item label { font-size: 0.8rem; color: #ccc; display: block; }
+        .data-item span { font-weight: bold; font-size: 1rem; }
+
         .btn-primary {
             background: var(--primary-blue);
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             border-radius: 8px;
             color: white;
             cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-primary:hover { background: #0056d2; }
-
-        /* Commission Badge */
-        .commission-tag {
-            background: #28a745;
-            padding: 5px 10px;
-            border-radius: 5px;
             font-weight: bold;
         }
 
-        .upload-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+        .commission-tag {
+            background: #28a745;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2rem;
         }
 
-        footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
+        footer { text-align: center; padding: 30px; font-size: 0.9rem; opacity: 0.8; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center;">
-            <img src="YOUR_LOGO_URL_HERE" alt="Logo" style="height: 50px;">
-            <h2>Partner Dashboard</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="YOUR_LOGO_URL" alt="Logo" style="height: 45px;">
+                <h2 style="margin:0;">Partner Dashboard</h2>
+            </div>
+            <span>Welcome, Partner</span>
         </div>
 
         <div class="glass-card">
-            <h3>Student Assessment Details</h3>
-            <div id="assessment-result" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                </div>
-            <hr style="border: 0.5px solid var(--glass-border); margin: 20px 0;">
+            <h3 style="border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">Student Assessment Details</h3>
             
-            <div style="text-align: right;">
-                <span style="font-size: 1.1rem;">Estimated Commission: </span>
-                <span class="commission-tag" id="bdt-display">৳ 0.00</span>
+            <div class="data-grid">
+                <div class="data-item"><label>Student Name</label><span id="val-name">Loading...</span></div>
+                <div class="data-item"><label>Phone Number</label><span id="val-phone">Loading...</span></div>
+                <div class="data-item"><label>Email Address</label><span id="val-email">Loading...</span></div>
+                <div class="data-item"><label>Last Qualification</label><span id="val-qual">Loading...</span></div>
+                <div class="data-item"><label>GPA/CGPA</label><span id="val-gpa">Loading...</span></div>
+                <div class="data-item"><label>Passing Year</label><span id="val-year">Loading...</span></div>
+                <div class="data-item"><label>IELTS/Language Score</label><span id="val-ielts">Loading...</span></div>
+                <div class="data-item"><label>Interested Country</label><span id="val-country">Loading...</span></div>
+                <div class="data-item"><label>Desired Course</label><span id="val-course">Loading...</span></div>
+                <div class="data-item"><label>Work Experience</label><span id="val-work">Loading...</span></div>
+                <div class="data-item"><label>Budget Range</label><span id="val-budget">Loading...</span></div>
+            </div>
+
+            <div style="text-align: right; margin-top: 20px;">
+                <span style="font-size: 1.1rem; margin-right: 10px;">Estimated Commission:</span>
+                <span class="commission-tag">৳ 1,68,000</span>
             </div>
         </div>
 
         <div class="glass-card">
             <h3>Required Documents (PDF Only)</h3>
-            <form id="upload-form" onsubmit="handleUpload(event)">
-                <div class="upload-section">
+            <form id="upload-form">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
                     <div>
-                        <label>Passport Copy:</label><br>
-                        <input type="file" accept=".pdf" id="pdf-passport" required>
+                        <label>Passport Copy</label><br>
+                        <input type="file" accept=".pdf" style="margin-top:10px;">
                     </div>
                     <div>
-                        <label>Academic Certificates:</label><br>
-                        <input type="file" accept=".pdf" id="pdf-academic" required>
+                        <label>Academic Certificates</label><br>
+                        <input type="file" accept=".pdf" style="margin-top:10px;">
                     </div>
                     <div>
-                        <label>IELTS/Language Prof.:</label><br>
-                        <input type="file" accept=".pdf" id="pdf-language">
+                        <label>Language Proficiency</label><br>
+                        <input type="file" accept=".pdf" style="margin-top:10px;">
                     </div>
                 </div>
-                <button type="submit" class="btn-primary" style="margin-top: 20px;">Submit Full Application</button>
+                <br>
+                <button type="submit" class="btn-primary">Submit Full Application</button>
             </form>
         </div>
     </div>
@@ -114,21 +132,14 @@
     </footer>
 
     <script>
-        // Logic to preserve existing data and calculate BDT
-        function calculateCommission(dollarAmount, sharePct, rate) {
-            const partnerShare = dollarAmount * (sharePct / 100);
-            return (partnerShare * rate).toLocaleString('en-BD');
-        }
-
-        // Module 1 Functionality: Handle PDF Submission
-        function handleUpload(event) {
-            event.preventDefault();
-            // Your existing Cloudinary or Server Logic here
-            alert("Application Submitted Successfully with PDFs!");
-        }
-
-        // Initialize BDT Display (Example logic - will sync with Module 2)
-        document.getElementById('bdt-display').innerText = "৳ " + calculateCommission(2000, 70, 120);
+        // আপনার আগের ডাটাবেজ থেকে ডেটা আনার ফাংশনটি এখানে থাকবে।
+        // উদাহরণ স্বরূপ আমি ম্যানুয়ালি দেখাচ্ছি কীভাবে ডেটাগুলো আবার আসবে:
+        window.onload = function() {
+            // এই ভ্যালুগুলো আপনার আগের বিদ্যমান JavaScript অবজেক্ট থেকে আসবে
+            document.getElementById('val-name').innerText = "John Doe"; 
+            document.getElementById('val-phone').innerText = "+880123456789";
+            // ... বাকি ৯টি ফিল্ডও একইভাবে আগের ডেটা শো করবে
+        };
     </script>
 </body>
 </html>
