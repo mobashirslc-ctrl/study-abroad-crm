@@ -10,7 +10,7 @@
         body { background: linear-gradient(145deg, var(--bg-dark), var(--primary)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
         /* SIDEBAR */
-        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
         .logo-area { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo-area img { width: 100%; max-height: 50px; background: white; padding: 5px; border-radius: 5px; }
 
@@ -19,21 +19,22 @@
 
         /* MAIN CONTENT */
         .main { flex-grow: 1; padding: 30px; overflow-y: auto; box-sizing: border-box; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
         
-        /* TABLES & TOOLS */
-        .table-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-input { background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 10px; border-radius: 8px; color: white; width: 250px; }
-        
-        table { width: 100%; border-collapse: collapse; }
+        /* 21 FIELDS GRID */
+        .admin-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        .form-group label { font-size: 0.75rem; color: var(--accent); opacity: 0.8; }
+        input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; outline: none; }
+        input:focus { border-color: var(--accent); }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
-        .btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.75rem; transition: 0.2s; }
-        .btn-edit { background: var(--blue); color: white; }
-        .btn-delete { background: var(--danger); color: white; }
-        .btn-approve { background: var(--success); color: white; }
+        .btn { border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: var(--accent); color: black; width: 100%; margin-top: 20px; }
+        .btn-action { padding: 5px 10px; font-size: 0.75rem; margin-right: 5px; }
 
         .section { display: none; }
         .active-section { display: block; animation: fadeIn 0.4s ease; }
@@ -59,19 +60,58 @@
 
         <div id="uni-manage" class="section active-section">
             <div class="card">
-                <div class="table-tools">
-                    <h3>Saved Universities</h3>
-                    <input type="text" class="search-input" placeholder="Search University...">
+                <h3><i class="fas fa-plus-circle"></i> Add University (21 Custom Fields)</h3>
+                <div class="admin-form-grid">
+                    <div class="form-group"><label>University Name</label><input type="text" placeholder="e.g. Uni of Oxford"></div>
+                    <div class="form-group"><label>Country</label><input type="text" placeholder="e.g. UK"></div>
+                    <div class="form-group"><label>Location/City</label><input type="text" placeholder="e.g. London"></div>
+                    <div class="form-group"><label>Intake Monthly</label><input type="text" placeholder="Sept, Jan, May"></div>
+                    
+                    <div class="form-group"><label>Academic Entry Req.</label><input type="text" placeholder="GPA 3.5+"></div>
+                    <div class="form-group"><label>IELTS Overall</label><input type="text" placeholder="6.5"></div>
+                    <div class="form-group"><label>IELTS No Less Than</label><input type="text" placeholder="6.0"></div>
+                    <div class="form-group"><label>Duolingo/PTE Req.</label><input type="text" placeholder="120+ / 58+"></div>
+                    
+                    <div class="form-group"><label>Course Duration</label><input type="text" placeholder="3 Years"></div>
+                    <div class="form-group"><label>Application Fee</label><input type="text" placeholder="Waiver / £50"></div>
+                    <div class="form-group"><label>Interview Required?</label><select><option>Yes</option><option>No</option></select></div>
+                    <div class="form-group"><label>Gap Acceptance</label><input type="text" placeholder="Max 2 Years"></div>
+
+                    <div class="form-group"><label>Currency</label><select id="curr"><option value="120">USD</option><option value="130">GBP</option><option value="128">EUR</option></select></div>
+                    <div class="form-group"><label>Tuition Fee (Per Year)</label><input type="number" id="tuit"></div>
+                    <div class="form-group"><label>Scholarship Amount</label><input type="text" placeholder="Up to 3000"></div>
+                    <div class="form-group"><label>Initial Deposit</label><input type="text" placeholder="£2000"></div>
+
+                    <div class="form-group"><label>Partner Comm. (%)</label><input type="number" id="c_per"></div>
+                    <div class="form-group"><label>Admin Fee (Deduction)</label><input type="number" placeholder="0"></div>
+                    <div class="form-group"><label>Processing Time</label><input type="text" placeholder="4-6 Weeks"></div>
+                    <div class="form-group"><label>MOI Acceptance</label><select><option>Yes</option><option>No</option></select></div>
+                    <div class="form-group"><label>Status</label><select><option>Active</option><option>Inactive</option></select></div>
+                </div>
+                <button class="btn btn-add" onclick="alert('University Data Saved with 21 Fields!')">Save University Data</button>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3>Managed University Database</h3>
+                    <input type="text" style="width:250px;" placeholder="Search by name or country...">
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Uni Name</th><th>Fee</th><th>Comm %</th><th>Comm (BDT)</th><th>Action</th></tr>
+                        <tr><th>Uni Name</th><th>Country</th><th>Tuition</th><th>Comm (%)</th><th>Calculated (BDT)</th><th>Action</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>University of Greenwich</td><td>£14,500</td><td>10%</td><td>৳ 1,88,500</td><td>
-                            <button class="btn btn-edit"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-delete"><i class="fas fa-trash"></i></button>
-                        </td></tr>
+                        <tr>
+                            <td>Uni of Greenwich</td>
+                            <td>UK</td>
+                            <td>£14,500</td>
+                            <td>10%</td>
+                            <td style="color:var(--success); font-weight:bold;">৳ 1,88,500</td>
+                            <td>
+                                <button class="btn btn-action" style="background:var(--blue); color:white;"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-action" style="background:var(--danger); color:white;"><i class="fas fa-trash"></i></button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -79,33 +119,14 @@
 
         <div id="partners" class="section">
             <div class="card">
-                <div class="table-tools">
-                    <h3>All Partners List</h3>
-                    <input type="text" class="search-input" placeholder="Search Partner...">
-                </div>
+                <h3>Partner Management</h3>
                 <table>
                     <thead>
-                        <tr>
-                            <th>Partner Name</th>
-                            <th>Contact</th>
-                            <th>Total Files</th>
-                            <th>Estimated Comm.</th>
-                            <th>Available Balance</th>
-                            <th>Action</th>
-                        </tr>
+                        <tr><th>Partner Name</th><th>Total Files</th><th>Balance</th><th>Status</th><th>Action</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Ahmed Global Services</td>
-                            <td>+8801712...</td>
-                            <td>12</td>
-                            <td>৳ 1,68,000</td>
-                            <td style="color:var(--success)">৳ 0.00</td>
-                            <td>
-                                <button class="btn btn-edit">Edit</button>
-                                <button class="btn btn-delete">Block</button>
-                            </td>
-                        </tr>
+                        <tr><td>Ahmed Global</td><td>12</td><td>৳ 0.00</td><td><span style="color:var(--success)">Active</span></td>
+                        <td><button class="btn btn-action" style="background:var(--danger); color:white;">Block</button></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -113,56 +134,29 @@
 
         <div id="payouts" class="section">
             <div class="card">
-                <div class="table-tools">
-                    <h3>Pending Withdrawal Requests</h3>
-                </div>
+                <h3>Payout Requests</h3>
                 <table>
                     <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Partner Name</th>
-                            <th>Requested Amount</th>
-                            <th>Method</th>
-                            <th>Account Info</th>
-                            <th>Action</th>
-                        </tr>
+                        <tr><th>Partner</th><th>Amount</th><th>Method</th><th>Status</th><th>Action</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>11 Mar, 2026</td>
-                            <td>Ahmed Global</td>
-                            <td>৳ 25,000</td>
-                            <td>bKash</td>
-                            <td>01711223344 (Personal)</td>
-                            <td>
-                                <button class="btn btn-approve">Release Payment</button>
-                                <button class="btn btn-delete">Reject</button>
-                            </td>
-                        </tr>
+                        <tr><td>Ahmed Global</td><td>৳ 25,000</td><td>bKash</td><td><span style="color:var(--accent)">Pending</span></td>
+                        <td><button class="btn btn-action" style="background:var(--success); color:white;">Release</button></td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div id="compliance-ctrl" class="section">
-            <div class="card"><h3>Staff Accounts</h3><p>Manage compliance team from here.</p></div>
-        </div>
     </div>
 
     <script>
         function showTab(tabId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(tabId).classList.add('active-section');
-            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('m-' + tabId).classList.add('active');
-
-            const titles = {
-                'uni-manage': 'University Management',
-                'partners': 'Partner Management',
-                'payouts': 'Payout & Financials',
-                'compliance-ctrl': 'Compliance Team Control'
-            };
+            
+            const titles = { 'uni-manage': 'University Management', 'partners': 'Partner Management', 'payouts': 'Financial Payouts', 'compliance-ctrl': 'Compliance Team' };
             document.getElementById('page-title').innerText = titles[tabId];
         }
     </script>
