@@ -13,37 +13,42 @@
         .sidebar { width: 260px; background: rgba(0, 0, 0, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
         .logo-area { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo-area img { width: 100%; max-height: 50px; background: white; padding: 5px; border-radius: 5px; }
+
         .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #888; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
 
-        /* MAIN CONTENT */
-        .main { flex-grow: 1; padding: 30px; overflow-y: auto; box-sizing: border-box; }
+        /* MAIN CONTENT AREA */
+        .wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .main { flex-grow: 1; padding: 30px; overflow-y: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
         
-        /* 21 FIELDS GRID */
+        /* FORM & TABLE */
         .admin-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group label { font-size: 0.75rem; color: var(--accent); opacity: 0.8; }
         input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; outline: none; }
-
-        /* TABLE STYLES */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 
-        /* BUTTONS */
-        .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 0.75rem; }
-        .btn-approve { background: var(--success); color: white; }
-        .btn-block { background: var(--danger); color: white; }
-        .btn-edit { background: var(--blue); color: white; }
-        
-        .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-        .active-tag { background: rgba(46, 204, 113, 0.2); color: var(--success); }
+        /* STATUS TOGGLE */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 20px; }
+        input:checked + .slider { background-color: var(--success); }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; }
+        .btn-approve { background: var(--success); }
+        .btn-block { background: var(--danger); }
+        .btn-edit { background: var(--blue); }
 
         .section { display: none; }
         .active-section { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* FOOTER */
+        footer { text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.4); border-top: 1px solid var(--border); color: #777; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -51,113 +56,86 @@
     <div class="sidebar">
         <div class="logo-area"><img src="logo.jpeg" alt="SCC Logo"></div>
         <div onclick="showTab('uni-manage')" id="m-uni-manage" class="nav-item active"><i class="fas fa-university"></i> University Data</div>
-        <div onclick="showTab('partners')" id="m-partners" class="nav-item"><i class="fas fa-handshake"></i> Partners</div>
+        <div onclick="showTab('partners')" id="m-partners" class="nav-item"><i class="fas fa-handshake"></i> Partners & Subscription</div>
         <div onclick="showTab('payouts')" id="m-payouts" class="nav-item"><i class="fas fa-wallet"></i> Payouts</div>
         <div onclick="showTab('compliance-ctrl')" id="m-compliance-ctrl" class="nav-item"><i class="fas fa-user-shield"></i> Compliance</div>
         <div style="margin-top:auto; padding:20px;"><div class="nav-item" style="color:var(--danger);"><i class="fas fa-power-off"></i> Logout</div></div>
     </div>
 
-    <div class="main">
-        <div class="header">
-            <h2 id="page-title">University Management</h2>
-            <div style="color:var(--accent); font-weight:bold;">Exchange Rate: 1 USD = 120 BDT</div>
-        </div>
+    <div class="wrapper">
+        <div class="main">
+            <div class="header">
+                <h2 id="page-title">University Management</h2>
+                <div style="color:var(--accent); font-weight:bold;">Exchange Rate: 1 USD = 120 BDT</div>
+            </div>
 
-        <div id="uni-manage" class="section active-section">
-            <div class="card">
-                <h3><i class="fas fa-plus-circle"></i> Add University Details</h3>
-                <div class="admin-form-grid">
-                    <div class="form-group"><label>University Name</label><input type="text"></div>
-                    <div class="form-group"><label>Country</label><input type="text"></div>
-                    <div class="form-group"><label>Location</label><input type="text"></div>
-                    <div class="form-group"><label>Intake</label><input type="text"></div>
-                    <div class="form-group"><label>Academic Req.</label><input type="text"></div>
-                    <div class="form-group"><label>IELTS Overall</label><input type="text"></div>
-                    <div class="form-group"><label>IELTS Min.</label><input type="text"></div>
-                    <div class="form-group"><label>Duolingo/PTE</label><input type="text"></div>
-                    <div class="form-group"><label>Course Duration</label><input type="text"></div>
-                    <div class="form-group"><label>App Fee</label><input type="text"></div>
-                    <div class="form-group"><label>Interview</label><select><option>No</option><option>Yes</option></select></div>
-                    <div class="form-group"><label>Gap Acceptance</label><input type="text"></div>
-                    <div class="form-group"><label>Currency</label><select id="curr"><option value="120">USD</option><option value="130">GBP</option></select></div>
-                    <div class="form-group"><label>Tuition Fee</label><input type="number"></div>
-                    <div class="form-group"><label>Scholarship</label><input type="text"></div>
-                    <div class="form-group"><label>Initial Deposit</label><input type="text"></div>
-                    <div class="form-group"><label>Partner Comm (%)</label><input type="number"></div>
-                    <div class="form-group"><label>Admin Fee</label><input type="number"></div>
-                    <div class="form-group"><label>Processing Time</label><input type="text"></div>
-                    <div class="form-group"><label>MOI Acceptance</label><select><option>Yes</option><option>No</option></select></div>
-                    <div class="form-group"><label>Visibility</label><select><option>Active</option><option>Hidden</option></select></div>
+            <div id="uni-manage" class="section active-section">
+                <div class="card">
+                    <h3>Add University (21 Fields Ready)</h3>
+                    <div class="admin-form-grid">
+                        <input type="text" placeholder="University Name">
+                        <input type="text" placeholder="Country">
+                        <select><option>USD</option><option>GBP</option></select>
+                        <input type="number" placeholder="Tuition Fee">
+                        <input type="number" placeholder="Commission %">
+                        <input type="text" placeholder="Intake">
+                        </div>
+                    <button class="btn btn-approve" style="width:100%; margin-top:20px;">Save University</button>
                 </div>
-                <button class="btn btn-approve" style="width:100%; margin-top:20px;">Save to Database</button>
-            </div>
-        </div>
-
-        <div id="partners" class="section">
-            <div class="card">
-                <h3>Partner Request & Management</h3>
-                <table>
-                    <thead>
-                        <tr><th>Partner Name</th><th>Total Files</th><th>Balance</th><th>Status</th><th>Action</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Ahmed Global Services</td>
-                            <td>12</td>
-                            <td>৳ 0.00</td>
-                            <td><span class="status-tag active-tag">Active</span></td>
-                            <td>
-                                <button class="btn btn-approve">Approve</button>
-                                <button class="btn btn-block">Block</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="payouts" class="section">
-            <div class="card">
-                <h3>Payout Requests</h3>
-                <table>
-                    <thead>
-                        <tr><th>Date</th><th>Partner</th><th>Amount</th><th>Status</th><th>Action</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>11/03/2026</td><td>Ahmed Global</td><td>৳ 25,000</td><td>Pending</td><td><button class="btn btn-approve">Release</button></td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="compliance-ctrl" class="section">
-            <div class="card">
-                <h3>Staff Control Panel</h3>
-                <div class="admin-form-grid">
-                    <input type="text" placeholder="Staff Name">
-                    <input type="email" placeholder="Staff Email">
-                    <button class="btn btn-approve">Add Staff</button>
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3>Managed Universities</h3>
+                        <input type="text" style="width:250px;" placeholder="Search saved university...">
+                    </div>
+                    <table>
+                        <thead>
+                            <tr><th>Name</th><th>Country</th><th>Tuition</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Uni of Greenwich</td>
+                                <td>UK</td>
+                                <td>£14,500</td>
+                                <td>
+                                    <button class="btn btn-edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-block"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <table>
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Processed</th><th>Status</th><th>Action</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#STF-01</td>
-                            <td>John Doe</td>
-                            <td>45 Files</td>
-                            <td><span class="status-tag active-tag">Active</span></td>
-                            <td>
-                                <button class="btn btn-edit">Toggle Status</button>
-                                <button class="btn btn-block">Delete</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
+
+            <div id="partners" class="section">
+                <div class="card">
+                    <h3>Partner Control & Subscription</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Partner</th><th>Status</th><th>Sub. Status</th><th>Expiry Date</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ahmed Global</td>
+                                <td><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></td>
+                                <td><span style="color:var(--success)">Active</span></td>
+                                <td>15 Dec 2026</td>
+                                <td>
+                                    <button class="btn btn-approve">Approve</button>
+                                    <button class="btn btn-block">Block</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="payouts" class="section"><div class="card"><h3>Payout Control</h3><p>Manage withdrawal requests here.</p></div></div>
+            <div id="compliance-ctrl" class="section"><div class="card"><h3>Compliance Team</h3><p>Staff management and activity logs.</p></div></div>
         </div>
 
+        <footer>
+            &copy; 2026 <strong>Gorun Ltd.</strong> | All Rights Reserved.
+        </footer>
     </div>
 
     <script>
@@ -167,7 +145,7 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('m-' + id).classList.add('active');
             
-            const titles = { 'uni-manage': 'University Management', 'partners': 'Partner Management', 'payouts': 'Payouts', 'compliance-ctrl': 'Compliance Team' };
+            const titles = { 'uni-manage': 'University Management', 'partners': 'Partners & Subscription', 'payouts': 'Payouts Control', 'compliance-ctrl': 'Compliance Team' };
             document.getElementById('page-title').innerText = titles[id];
         }
     </script>
