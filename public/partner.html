@@ -7,16 +7,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary-purple: #4b0082; --bg-dark: #1a0033; --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.15); }
-        body { background: linear-gradient(135deg, var(--bg-dark), var(--primary-purple)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; min-height: 100vh; }
+        body { background: linear-gradient(135deg, var(--bg-dark), var(--primary-purple)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; min-height: 100vh; overflow-x: hidden; }
         
-        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); border-right: 1px solid var(--border); position: fixed; height: 100vh; display: flex; flex-direction: column; }
+        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); border-right: 1px solid var(--border); position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 1000; }
         .logo-box { padding: 30px 20px; text-align: center; }
-        .logo-box img { width: 100%; border-radius: 8px; background: #fff; padding: 5px; }
+        .logo-box img { width: 100%; border-radius: 8px; background: #fff; padding: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .menu-list { flex-grow: 1; padding: 10px 0; }
         .menu-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #ccc; text-decoration: none; transition: 0.3s; cursor: pointer; }
         .menu-item:hover, .menu-item.active { background: var(--glass); color: white; border-left: 4px solid #fff; }
 
-        .main { margin-left: 260px; flex-grow: 1; padding: 30px; }
+        .main { margin-left: 260px; flex-grow: 1; padding: 30px; width: calc(100% - 260px); }
         .glass-card { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: #ddd; }
@@ -24,14 +24,17 @@
         
         .btn { background: white; color: var(--primary-purple); border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn:disabled { background: #555 !important; color: #888 !important; cursor: not-allowed; }
+        
         .wallet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .status-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; background: rgba(241, 196, 15, 0.2); color: #f1c40f; margin-top: 5px; display: inline-block; }
         .page { display: none; } .page.active { display: block; }
+        footer { text-align: center; margin-top: 40px; padding: 20px; opacity: 0.7; border-top: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-box"><img src="logo.jpeg" alt="Logo"></div>
+        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
         <nav class="menu-list">
             <a onclick="showPage('dashboard')" id="nav-dashboard" class="menu-item active"><i class="fas fa-home"></i> Dashboard</a>
             <a onclick="showPage('tracking')" id="nav-tracking" class="menu-item"><i class="fas fa-map-marker-alt"></i> File Tracking</a>
@@ -43,13 +46,21 @@
 
     <div class="main">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Partner Portal</h2>
+            <h2>Partner Dashboard</h2>
             <strong>MOBASHIR AHMED NASRULLAH <i class="fas fa-check-circle" style="color:#2ecc71;"></i></strong>
         </div>
 
         <div class="wallet-grid">
-            <div class="glass-card" style="text-align: center; margin:0;"><h4>Pending Commission</h4><div style="font-size: 1.8rem; color:#f1c40f;">৳ <span class="pending-sync">1,68,000</span></div></div>
-            <div class="glass-card" style="text-align: center; margin:0;"><h4>Final Balance</h4><div style="font-size: 1.8rem; color:#2ecc71;">৳ <span class="final-sync">0.00</span></div></div>
+            <div class="glass-card" style="text-align: center; margin:0;">
+                <h4>Estimated Commission</h4>
+                <div style="font-size: 1.8rem; color:#f1c40f;">৳ <span class="pending-sync">1,68,000</span></div>
+                <div class="status-badge"><i class="fas fa-clock"></i> Pending: Student Payment Awaited</div>
+            </div>
+            <div class="glass-card" style="text-align: center; margin:0;">
+                <h4>Final/Withdrawable Balance</h4>
+                <div style="font-size: 1.8rem; color:#2ecc71;">৳ <span class="final-sync">0.00</span></div>
+                <div class="status-badge" style="color:#2ecc71; background:rgba(46, 204, 113, 0.1);"><i class="fas fa-shield-alt"></i> Verified Funds</div>
+            </div>
         </div>
 
         <div id="dashboard" class="page active">
@@ -58,11 +69,11 @@
                 <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
                     <div class="input-group"><label>Country</label><input type="text" placeholder="e.g. UK"></div>
                     <div class="input-group"><label>Degree</label><select><option>UG</option><option>PG</option></select></div>
-                    <div class="input-group"><label>Academic Score</label><input type="text"></div>
+                    <div class="input-group"><label>Academic Score</label><input type="text" placeholder="CGPA"></div>
                     <div class="input-group"><label>Language Test</label><select><option>IELTS</option></select></div>
-                    <div class="input-group"><label>Score</label><input type="text"></div>
+                    <div class="input-group"><label>Score</label><input type="text" placeholder="Overall"></div>
                 </div>
-                <button class="btn" onclick="document.getElementById('res-box').style.display='block'">Run Search</button>
+                <button class="btn" onclick="document.getElementById('res-box').style.display='block'">Run Assessment</button>
             </div>
 
             <div class="glass-card" id="res-box" style="display:none;">
@@ -81,11 +92,11 @@
                     <div class="input-group"><label>Passport No</label><input type="text"></div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top:15px;">
-                    <div class="input-group"><label>Passport PDF</label><input type="file"></div>
-                    <div class="input-group"><label>Academic PDF</label><input type="file"></div>
-                    <div class="input-group"><label>Language PDF</label><input type="file"></div>
+                    <div class="input-group"><label>Passport Copy (PDF)</label><input type="file" accept=".pdf"></div>
+                    <div class="input-group"><label>Academic Docs (PDF)</label><input type="file" accept=".pdf"></div>
+                    <div class="input-group"><label>Language Cert (PDF)</label><input type="file" accept=".pdf"></div>
                 </div>
-                <button class="btn" onclick="alert('File Submitted to Compliance!')">Submit Now</button>
+                <button class="btn" onclick="alert('Student Application Saved Successfully!')">Save & Submit</button>
             </div>
         </div>
 
@@ -93,31 +104,30 @@
             <div class="glass-card">
                 <h3>File Tracking</h3>
                 <table style="width:100%; border-collapse: collapse; font-size: 0.9rem;">
-                    <tr style="border-bottom: 1px solid var(--border); text-align: left;">
-                        <th>Name</th><th>Phone</th><th>Passport</th><th>Status</th><th>Member</th><th>Date/Time</th>
+                    <tr style="border-bottom: 1px solid var(--border); text-align: left; opacity:0.6;">
+                        <th>Name</th><th>Phone</th><th>Passport</th><th>Status</th><th>Compliance</th><th>Updated</th>
                     </tr>
-                    <tr><td>John Doe</td><td>017xx</td><td>EBxx</td><td><span style="color:#f1c40f;">Pending</span></td><td>Compliance-1</td><td>11/03/26 10:50</td></tr>
+                    <tr><td>John Doe</td><td>017xx</td><td>EBxx</td><td><span style="color:#f1c40f;">Pending</span></td><td>Admin-1</td><td>11/03/26</td></tr>
                 </table>
             </div>
         </div>
 
         <div id="wallet" class="page">
             <div class="glass-card">
-                <h3>Withdrawal</h3>
-                <div class="input-group"><label>Method</label><select><option>BKASH</option><option>NAGAD</option></select></div>
-                <div class="input-group"><label>Account Details</label><input type="text"></div>
-                <div class="input-group"><label>Amount</label><input type="number"></div>
-                <button class="btn" id="main-withdraw-btn" disabled>Withdraw Inactive (Verify Compliance First)</button>
+                <h3>Withdrawal Request</h3>
+                <div class="input-group"><label>Select Method</label><select><option>BKASH</option><option>NAGAD</option><option>BANK TRANSFER</option></select></div>
+                <div class="input-group"><label>Account Details</label><input type="text" placeholder="Account Number / Details"></div>
+                <div class="input-group"><label>Withdrawal Amount</label><input type="number" placeholder="Enter Amount"></div>
+                <button class="btn" id="withdraw-btn" disabled>Withdrawal Locked (Insufficient Verified Balance)</button>
             </div>
         </div>
 
         <div id="sub" class="page">
             <div class="glass-card">
-                <h3>Subscription Details</h3>
+                <h3>Subscription Info</h3>
                 <div style="padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                    <p><strong>Plan:</strong> Partner Premium</p>
-                    <p><strong>Status:</strong> <span style="color:#2ecc71;">Active</span></p>
-                    <p><strong>Expires On:</strong> 11 March 2027, 12:00 PM</p>
+                    <p><strong>Current Plan:</strong> Gold Partner</p>
+                    <p><strong>Expiry:</strong> 11 March 2027</p>
                 </div>
             </div>
         </div>
@@ -138,7 +148,7 @@
                 document.getElementById('result-fields').innerHTML = fields.map(f => `<div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:5px;"><label style="font-size:0.7rem; color:#aaa;">${f}</label><br><span>Match Found</span></div>`).join('');
             }
         }
-        function logout() { if(confirm("Are you sure you want to logout?")) { alert("Logging out..."); window.location.reload(); } }
+        function logout() { if(confirm("Do you want to logout?")) { window.location.reload(); } }
     </script>
 </body>
 </html>
