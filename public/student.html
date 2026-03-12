@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Your File | SCC</title>
+    <title>Track Your Application | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
@@ -13,27 +13,28 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #0b012d;
+            background-color: #0b012d; /* Your Dark Purple/Blue */
             font-family: 'Poppins', sans-serif;
         }
 
         .card {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            padding: 50px 40px;
+            backdrop-filter: blur(15px);
+            padding: 40px;
             border-radius: 25px;
             text-align: center;
             width: 90%;
-            max-width: 450px;
+            max-width: 420px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
         .logo-box {
             background: white;
-            padding: 10px;
+            padding: 10px 20px;
             border-radius: 12px;
             display: inline-block;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .logo-box img {
@@ -41,15 +42,16 @@
         }
 
         h2 {
-            color: #ffcc00;
-            margin-bottom: 10px;
+            color: #ffcc00; /* Yellow/Gold */
+            margin-bottom: 8px;
             font-size: 24px;
+            letter-spacing: 1px;
         }
 
         .desc {
-            color: #ccc;
+            color: #bdc3c7;
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .input-container {
@@ -60,26 +62,33 @@
         /* Passport Icon */
         .input-container i {
             position: absolute;
-            left: 20px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: #ffcc00;
+            font-size: 18px;
         }
 
         input {
             width: 100%;
-            padding: 15px 15px 15px 50px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 15px 15px 55px;
+            background: rgba(255, 255, 255, 0.07);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             color: white;
             font-size: 16px;
             outline: none;
             box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #ffcc00;
+            background: rgba(255, 255, 255, 0.1);
         }
 
         input::placeholder {
-            color: #666;
+            color: #777;
         }
 
         .btn {
@@ -93,10 +102,12 @@
             font-size: 18px;
             cursor: pointer;
             transition: 0.3s;
+            text-transform: uppercase;
         }
 
         .btn:hover {
             background: #e6b800;
+            transform: translateY(-2px);
         }
 
         .footer-text {
@@ -114,28 +125,28 @@
         </div>
 
         <h2>Track Your File</h2>
-        <p class="desc">Enter your passport number to check your application status.</p>
+        <p class="desc">Please enter your <b>Passport Number</b> to see live updates.</p>
 
         <div class="input-container">
             <i class="fa-solid fa-passport"></i>
-            <input type="text" id="passportNumber" placeholder="e.g. A01234567" required>
+            <input type="text" id="passportNumber" placeholder="Ex: A01234567" required>
         </div>
 
-        <button class="btn" onclick="checkStatus()">Check Status</button>
+        <button class="btn" onclick="checkStatus()">Track Status</button>
 
         <div class="footer-text">
-            © 2026 Gorun Ltd. | All Rights Reserved.
+            © 2026 Gorun Ltd. | Secure System
         </div>
     </div>
 
     <script>
         function checkStatus() {
-            const passport = document.getElementById('passportNumber').value;
+            const passport = document.getElementById('passportNumber').value.trim();
             if(!passport) {
-                alert("Please enter your Passport Number");
+                alert("Please enter a valid Passport Number.");
                 return;
             }
-            alert("Tracking System Connected: Searching for " + passport);
+            alert("System Status: Fetching data for Passport " + passport);
         }
     </script>
 </body>
