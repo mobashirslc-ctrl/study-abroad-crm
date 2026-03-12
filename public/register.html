@@ -2,29 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Sign Up | IHP CRM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Registration | SCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0; padding: 0; display: flex; justify-content: center; align-items: center;
+            height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
+            padding: 40px; border-radius: 25px; text-align: center;
+            width: 90%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; }
+        .logo-box img { height: 40px; }
+        h2 { color: #ffcc00; margin-bottom: 20px; letter-spacing: 1px; }
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
+        input {
+            width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box;
+        }
+        .btn {
+            width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none;
+            border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase;
+        }
+        .btn:hover { background: #e6b800; transform: translateY(-2px); }
+        p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
+        a { color: #ffcc00; text-decoration: none; font-weight: bold; }
+    </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600">
-        <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">Join as Partner</h2>
-        <p class="text-gray-500 text-sm text-center mb-6">Create your account for IHP CRM access</p>
-        <form id="regForm" class="space-y-4">
-            <input type="text" id="name" placeholder="Full Name" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
-            <input type="email" id="email" placeholder="Email Address" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
-            <input type="text" id="contact" placeholder="Contact Number" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
-            <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-400" required>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">SUBMIT REGISTRATION</button>
+<body>
+    <div class="card">
+        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
+        <h2>Partner Join</h2>
+        <form id="registerForm">
+            <div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="fullName" placeholder="Full Name" required></div>
+            <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="email" placeholder="Email Address" required></div>
+            <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
+            <button type="submit" class="btn">Register Now</button>
         </form>
-        <p class="mt-4 text-center text-sm">Already a partner? <a href="/login" class="text-blue-600 font-bold underline">Login here</a></p>
+        <p>Already have an account? <a href="login.html">Login here</a></p>
     </div>
+
     <script>
-        document.getElementById('regForm').onsubmit = async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const data = { name: document.getElementById('name').value, email: document.getElementById('email').value, contactNo: document.getElementById('contact').value, password: document.getElementById('password').value };
-            const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
-            if(res.ok) { alert("Registration Success! Please wait for Admin Activation."); window.location.href = '/login'; }
-        };
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, email, password })
+            });
+
+            const data = await res.json();
+            if (res.status === 201) {
+                alert("✅ Registration Successful!");
+                window.location.href = "login.html";
+            } else {
+                alert("❌ " + (data.msg || "Error occurred"));
+            }
+        });
     </script>
 </body>
 </html>

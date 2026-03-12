@@ -1,88 +1,51 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const dotenv = require('dotenv');
 const path = require('path');
+
+dotenv.config();
 const app = express();
 
+// Middleware
 app.use(express.json());
-app.use(cors());
 app.use(express.static('public'));
 
-// --- DB CONNECTION ---
-const mongoURI = process.env.MONGODB_URI;
-mongoose.connect(mongoURI).then(() => console.log("✅ DB Connected")).catch(err => console.log(err));
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority')
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.log('❌ DB Error:', err));
 
-// --- SCHEMAS ---
-const UniSchema = new mongoose.Schema({
-    uniName: String, country: String, courseName: String, degreeType: String,
-    intake: String, semesterFee: String, partnerCommission: Number,
-    bankNameBD: String, loanAmount: String, maritalStatus: String, location: String
-});
-const University = mongoose.model('University', UniSchema);
+// User Model (Inline for simplicity)
+const User = mongoose.model('User', new mongoose.Schema({
+    fullName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, default: 'partner' }
+}));
 
-const PartnerSchema = new mongoose.Schema({
-    name: String, email: { type: String, unique: true }, pass: String,
-    status: { type: String, default: 'Pending' },
-    walletBalance: { type: Number, default: 0 }
-});
-const Partner = mongoose.model('Partner', PartnerSchema);
+// API: Registration
+app.post('/api/register', async (req, res) => {
+    try {
+        const { fullName, email, password } = req.body;
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ msg: 'User already exists' });
 
-const StudentFileSchema = new mongoose.Schema({
-    partnerId: String, studentName: String, contactNo: String, 
-    passportNo: String, degree: String, gpa: String, langScore: String,
-    uniName: String, commission: Number,
-    status: { type: String, default: 'Pending' }, 
-    complianceStatus: { type: String, default: 'File Received' },
-    date: { type: Date, default: Date.now }
-});
-const StudentFile = mongoose.model('StudentFile', StudentFileSchema);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-const WithdrawSchema = new mongoose.Schema({
-    partnerId: String, amount: Number, method: String, accNo: String, 
-    status: { type: String, default: 'Pending' }, date: { type: Date, default: Date.now }
-});
-const Withdrawal = mongoose.model('Withdrawal', WithdrawSchema);
-
-// --- ROUTES FOR HTML PAGES ---
-app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public/partner.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public/login.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public/admin.html')));
-
-// --- PARTNER API ---
-app.post('/api/partner/register', async (req, res) => {
-    try { const p = new Partner(req.body); await p.save(); res.json({msg: "Registration Successful. Wait for Admin Approval."}); } 
-    catch(e) { res.status(400).json({msg: "Email already exists"}); }
+        user = new User({ fullName, email, password: hashedPassword });
+        await user.save();
+        res.status(201).json({ msg: 'Registration Successful' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.post('/api/partner/login', async (req, res) => {
-    const p = await Partner.findOne({email: req.body.email, pass: req.body.pass});
-    if(!p) return res.status(401).json({msg: "Invalid Credentials"});
-    if(p.status !== 'Active') return res.status(403).json({msg: "Account Inactive. Contact Admin."});
-    res.json({id: p._id, name: p.name});
+// Serve Frontend
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/api/partner/stats/:id', async (req, res) => {
-    const files = await StudentFile.find({ partnerId: req.params.id }).sort({date: -1});
-    const pending = files.filter(f => f.status === 'Pending').reduce((acc, curr) => acc + curr.commission, 0);
-    const partner = await Partner.findById(req.params.id);
-    res.json({ pending, fixed: partner.walletBalance, history: files });
-});
-
-app.post('/api/partner/submit-file', async (req, res) => {
-    const f = new StudentFile(req.body); await f.save();
-    res.json({msg: "Success"});
-});
-
-app.post('/api/partner/withdraw', async (req, res) => {
-    const { partnerId, amount, method, accNo } = req.body;
-    const p = await Partner.findById(partnerId);
-    if(p.walletBalance < amount) return res.status(400).json({msg: "Insufficient Balance"});
-    const w = new Withdrawal({ partnerId, amount, method, accNo });
-    await w.save();
-    res.json({msg: "Withdrawal request sent!"});
-});
-
-app.get('/api/universities', async (req, res) => res.json(await University.find()));
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server on ${PORT}`));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

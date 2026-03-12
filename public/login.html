@@ -2,50 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login | IHP CRM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>body { background: #0b0f1a; color: white; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Login | SCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* CSS Same as Register Page for consistency */
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; }
+        .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; }
+        .logo-box img { height: 40px; }
+        h2 { color: #ffcc00; margin-bottom: 20px; }
+        .input-group { position: relative; margin-bottom: 15px; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
+        input { width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
+        a { color: #ffcc00; text-decoration: none; }
+    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-    <div class="w-full max-w-md bg-white/5 p-8 rounded-2xl border border-white/10">
-        <h2 class="text-2xl font-bold text-center text-blue-500 mb-8" id="title">Partner Login</h2>
-        <div id="msg" class="hidden p-3 rounded mb-4 text-xs text-center"></div>
-        
-        <div id="loginForm" class="space-y-4">
-            <input type="email" id="lEmail" placeholder="Email" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
-            <input type="password" id="lPass" placeholder="Password" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
-            <button onclick="handleLogin()" class="w-full bg-blue-600 py-3 rounded font-bold">LOGIN</button>
-            <p class="text-center text-xs text-slate-500 mt-4">New? <a href="javascript:toggleForm()" class="text-blue-400">Register</a></p>
-        </div>
-
-        <div id="regForm" class="hidden space-y-4">
-            <input type="text" id="rName" placeholder="Name" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
-            <input type="email" id="rEmail" placeholder="Email" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
-            <input type="password" id="rPass" placeholder="Password" class="w-full p-3 bg-slate-800 rounded border border-slate-700 outline-none">
-            <button onclick="handleRegister()" class="w-full bg-emerald-600 py-3 rounded font-bold">REGISTER</button>
-            <p class="text-center text-xs text-slate-500 mt-4">Back to <a href="javascript:toggleForm()" class="text-blue-400">Login</a></p>
-        </div>
+<body>
+    <div class="card">
+        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
+        <h2>Partner Login</h2>
+        <form id="loginForm">
+            <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="email" placeholder="Email Address" required></div>
+            <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+        <p>Don't have an account? <a href="register.html">Register here</a></p>
     </div>
-
-    <script>
-        function toggleForm() { 
-            document.getElementById('loginForm').classList.toggle('hidden'); 
-            document.getElementById('regForm').classList.toggle('hidden');
-            document.getElementById('title').innerText = document.getElementById('loginForm').classList.contains('hidden') ? "Partner Registration" : "Partner Login";
-        }
-
-        async function handleLogin() {
-            const res = await fetch('/api/partner/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ email: lEmail.value, pass: lPass.value }) });
-            const data = await res.json();
-            if(res.ok) { localStorage.setItem('partnerId', data.id); localStorage.setItem('partnerName', data.name); window.location.href='/partner'; }
-            else { alert(data.msg); }
-        }
-
-        async function handleRegister() {
-            const res = await fetch('/api/partner/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: rName.value, email: rEmail.value, pass: rPass.value }) });
-            const data = await res.json();
-            alert(data.msg); toggleForm();
-        }
-    </script>
 </body>
 </html>
