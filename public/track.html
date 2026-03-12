@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Your Application | SCC</title>
+    <title>Track Your Application | Student Career Consultancy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
@@ -13,7 +13,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #0b012d; /* Your Exact Dark Purple */
+            background-color: #0b012d;
             font-family: 'Poppins', sans-serif;
         }
 
@@ -29,7 +29,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
 
-        /* লোগো বক্সের ডিজাইন আপনার অরিজিনালটাই রাখা হয়েছে */
         .logo-box {
             background: white;
             padding: 10px 20px;
@@ -44,7 +43,7 @@
         }
 
         h2 {
-            color: #ffcc00; /* Gold Title */
+            color: #ffcc00;
             margin-bottom: 8px;
             font-size: 24px;
             letter-spacing: 1px;
@@ -96,7 +95,6 @@
             text-transform: uppercase;
         }
 
-        /* রেজাল্ট বক্সের ডিজাইন */
         #resultArea {
             margin-top: 25px;
             padding: 15px;
@@ -120,7 +118,7 @@
 
     <div class="card">
         <div class="logo-box">
-            <img src="https://i.ibb.co/VWV0Vp7/scc-logo.png" alt="SCC Logo">
+            <img src="logo.jpeg" alt="SCC Logo">
         </div>
 
         <h2>Track Your File</h2>
@@ -131,7 +129,7 @@
             <input type="text" id="passportNumber" placeholder="Ex: A01234567" required>
         </div>
 
-        <button class="btn" onclick="checkStatus()">Track Status</button>
+        <button class="btn" onclick="checkStatus()">Check Status</button>
 
         <div id="resultArea"></div>
 
@@ -146,21 +144,21 @@
             const resultArea = document.getElementById('resultArea');
 
             if(!passport) {
-                alert("Please enter a valid Passport Number.");
+                alert("Please enter your Passport Number");
                 return;
             }
 
             resultArea.style.display = "block";
-            resultArea.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Searching for Passport: <b>${passport}</b>...`;
+            resultArea.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Checking Database for <b>${passport}</b>...`;
             
             setTimeout(() => {
                 resultArea.innerHTML = `
                     <div style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
-                        <i class="fa-solid fa-circle-exclamation"></i> <b>Status:</b> Not Found
+                        <i class="fa-solid fa-circle-info"></i> <b>Status:</b> No Record Found
                     </div>
-                    <span style="font-size: 12px; color: #bdc3c7;">The passport number <b>${passport}</b> is not in our database yet.</span>
+                    <span style="font-size: 12px; color: #bdc3c7;">If you recently submitted, please wait 24-48 hours for data update.</span>
                 `;
-            }, 1200);
+            }, 1500);
         }
     </script>
 </body>
