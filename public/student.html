@@ -3,67 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Application Tracking</title>
+    <title>Student Tracking | Passport Search</title>
     <style>
-        /* আপনার বর্তমান গ্লাস-মরফিজম ডিজাইন অক্ষুণ্ণ থাকবে */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
-        .tracking-card {
-            max-width: 500px;
-            margin: 100px auto;
-            padding: 30px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
+        /* আপনার গ্লাস-মরফিজম ডিজাইন মেইনটেইন করা হয়েছে */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             text-align: center;
-        }
-        .tracking-input {
-            width: 80%;
-            padding: 12px;
-            margin: 20px 0;
-            border-radius: 10px;
-            border: 1px solid #ddd;
-            outline: none;
-        }
-        .track-btn {
-            padding: 12px 30px;
-            background: #007bff;
             color: white;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        h2 { margin-bottom: 20px; font-weight: 500; }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label { display: block; margin-bottom: 8px; font-size: 14px; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input::placeholder { color: rgba(255, 255, 255, 0.7); }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
             border: none;
             border-radius: 10px;
+            background: #ffffff;
+            color: #764ba2;
+            font-weight: bold;
+            font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.3s ease;
         }
-        .track-btn:hover { background: #0056b3; }
+
+        .btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        #statusMessage {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #e0e0e0;
+        }
     </style>
 </head>
 <body>
 
-    <div class="tracking-card">
-        <h2>Track Your Application</h2>
-        <p>Enter your details below to check real-time status</p>
+    <div class="container">
+        <h2>Track Application</h2>
+        <p style="font-size: 13px; margin-bottom: 25px; opacity: 0.8;">Enter your details to see real-time status</p>
         
-        <input type="text" id="passportNumber" placeholder="Enter Passport Number" class="tracking-input">
-        
-        <br>
-        <button onclick="trackStatus()" class="track-btn">Track Now</button>
+        <div class="input-group">
+            <label for="passportNumber">Passport Number</label>
+            <input type="text" id="passportNumber" placeholder="Ex: A12345678" required>
+        </div>
 
-        <div id="statusResult" style="margin-top: 20px; font-weight: bold; color: #333;"></div>
+        <button class="btn" onclick="handleTracking()">Track Now</button>
+
+        <div id="statusMessage"></div>
     </div>
 
     <script>
-        function trackStatus() {
+        function handleTracking() {
             const passport = document.getElementById('passportNumber').value;
-            const resultDiv = document.getElementById('statusResult');
+            const display = document.getElementById('statusMessage');
 
-            if(passport === "") {
-                alert("Please enter your Passport Number to track.");
+            if (!passport) {
+                alert("Please enter your Passport Number");
                 return;
             }
 
-            // আগামীকাল এখানে আমরা রিয়েল ডেটা কানেকশন দেব
-            resultDiv.innerHTML = "Searching for Passport: " + passport + "...";
-            console.log("Tracking request sent for:", passport);
+            // আগামীকাল এখানে রিয়েল ডাটাবেজ কানেক্ট হবে
+            display.innerHTML = `Searching for Passport: <b>${passport}</b>...`;
+            console.log("Tracking Request for:", passport);
         }
     </script>
 </body>
