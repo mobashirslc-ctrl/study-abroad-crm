@@ -6,18 +6,17 @@
     <title>Partner Login | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* CSS Same as Register Page for consistency */
         body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; }
         .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); }
         .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; }
         .logo-box img { height: 40px; }
-        h2 { color: #ffcc00; margin-bottom: 20px; }
+        h2 { color: #ffcc00; margin-bottom: 20px; letter-spacing: 1px; }
         .input-group { position: relative; margin-bottom: 15px; }
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
         input { width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
         p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
-        a { color: #ffcc00; text-decoration: none; }
+        a { color: #ffcc00; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -29,7 +28,23 @@
             <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
             <button type="submit" class="btn">Login</button>
         </form>
-        <p>Don't have an account? <a href="register.html">Register here</a></p>
+        <p>New Partner? <a href="/register">Join Now</a></p>
     </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            const data = await res.json();
+            if (res.ok) { alert("Login Success!"); window.location.href = "/partner"; }
+            else { alert(data.msg); }
+        });
+    </script>
 </body>
 </html>
