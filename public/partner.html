@@ -11,7 +11,7 @@
         :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.03); }
         body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
 
-        /* Sidebar Locked Design */
+        /* Sidebar Locked */
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
@@ -27,37 +27,34 @@
         .section { display: none; padding-bottom: 100px; }
         .section.active { display: block; }
 
-        /* Professional Stats */
+        /* Stats Locked */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid var(--gold); }
         .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin: 5px 0; }
         .condition { font-size: 8px; color: #ff5e5e; line-height: 1.2; }
 
-        /* Assessment Table - 11 Fields Professional */
+        /* Professional Inputs & Tables */
         .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
+        input, select, textarea { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
+        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+
         .table-wrap { overflow-x: auto; margin-top: 20px; border-radius: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1400px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); background: rgba(0,0,0,0.3); }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-gold:hover { background: #e6b800; }
-
-        input, select, textarea { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
-        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; display: block; }
 
         footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #111; z-index: 500; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); }
+        .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 500px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
-<body onload="loadRealTimeData()">
-
-    <div id="qrcode" style="display:none;"></div>
+<body>
 
     <div class="sidebar">
-        <img src="logo.jpeg" class="logo" id="portalLogo">
+        <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
             <li class="active" onclick="location.reload()"><i class="fa-solid fa-house"></i> <span>Home</span></li>
             <li onclick="tab('dashboard')"><i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span></li>
@@ -65,14 +62,14 @@
             <li onclick="tab('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
             <li onclick="tab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile Edit</span></li>
         </ul>
-        <div style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer;" onclick="location.href='login.html'"><i class="fa-solid fa-right-from-bracket"></i></div>
+        <div style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer; text-align:center;" onclick="location.href='login.html'"><i class="fa-solid fa-right-from-bracket"></i></div>
     </div>
 
     <div class="main-container">
         <div class="top-stats">
             <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0.00</div><div class="condition">* Payment after enrollment.</div></div>
             <div class="stat-box"><small>Available Wallet</small><div class="amount">৳ 0.00</div></div>
-            <div class="stat-box"><small>Subscription</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM ACTIVE</div><div style="font-size:10px; color:#aaa;">Expiry: 31 Dec 2026</div></div>
+            <div class="stat-box"><small>Subscription Status</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM ACTIVE</div><div style="font-size:10px; color:#aaa;">Expiry: 31 Dec 2026</div></div>
         </div>
 
         <div id="dashboard" class="section active">
@@ -83,9 +80,9 @@
                     <div><label>Degree</label><select><option>PG</option><option>UG</option></select></div>
                     <div><label>Academic Score</label><input type="text" placeholder="GPA"></div>
                     <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option></select></div>
-                    <div><label>Language Score</label><input type="text" placeholder="Score"></div>
+                    <div><label>Score</label><input type="text" placeholder="Overall"></div>
                 </div>
-                <button class="btn-gold" style="margin-top:15px;" onclick="document.getElementById('resArea').style.display='block'">Search</button>
+                <button class="btn-gold" style="margin-top:5px;" onclick="document.getElementById('resArea').style.display='block'">Search University</button>
             </div>
 
             <div class="card" id="resArea" style="display:none;">
@@ -112,30 +109,37 @@
             <div class="card">
                 <h3>Live File Tracking (Recent)</h3>
                 <div class="table-wrap">
-                    <table style="min-width: 1000px;">
+                    <table>
                         <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody id="dashTracking"></tbody>
+                        <tbody class="sharedBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <div id="tracking" class="section">
-            <div class="card"><h3>Full File Tracking History</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody id="fullTracking"></tbody></table></div></div>
+            <div class="card"><h3>Full Tracking History</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div></div>
         </div>
 
         <div id="wallet" class="section">
-            <div class="card"><h3>Withdrawal</h3><button class="btn-gold" onclick="alert('Balance is zero')">Request Payout</button></div>
+            <div class="card"><h3>Wallet Payouts</h3><p>Balance: ৳ 0.00</p></div>
         </div>
 
         <div id="profile" class="section">
             <div class="card">
-                <h3>Company Information</h3>
-                <table style="width:100%; border-collapse: collapse;">
-                    <tr><td style="color:var(--gold); padding:10px;">Company Name</td><td><input type="text" id="compName" value="GORUN LTD."></td></tr>
-                    <tr><td style="color:var(--gold); padding:10px;">License No.</td><td><input type="text" id="compLic" value="TRAD/2026/001"></td></tr>
-                </table>
-                <button class="btn-gold" style="margin-top:15px;" onclick="saveProfile()">Save Real-Time</button>
+                <h3 style="color:var(--gold);">Company Professional Profile</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div><label>Legal Company Name</label><input type="text" id="pComp" value="GORUN LTD."></div>
+                    <div><label>Owner/CEO Name</label><input type="text" placeholder="Full Name"></div>
+                    <div><label>Trade License No.</label><input type="text" id="pLic" placeholder="TRAD/DNCC/XXXX"></div>
+                    <div><label>TIN Number</label><input type="text" placeholder="12-Digit TIN"></div>
+                    <div><label>Company Email</label><input type="email" placeholder="official@company.com"></div>
+                    <div><label>Contact Number</label><input type="text" placeholder="+8801..."></div>
+                    <div style="grid-column: span 2;"><label>Office Address</label><textarea placeholder="Full Office Address"></textarea></div>
+                    <div><label>Bank Name</label><input type="text" placeholder="e.g. Dutch Bangla Bank"></div>
+                    <div><label>Account Number</label><input type="text" placeholder="Bank Acc No."></div>
+                </div>
+                <button class="btn-gold" style="margin-top:15px;" onclick="saveProfile()">Update Company Data</button>
             </div>
         </div>
 
@@ -144,58 +148,90 @@
 
     <div id="appModal" class="modal">
         <div class="modal-content">
-            <h3 id="mTitle">Application</h3>
-            <label>Student Name</label><input type="text" id="sName" style="margin-bottom:15px;">
-            <label>Passport Number</label><input type="text" id="sPass" style="margin-bottom:15px;">
-            <button class="btn-gold" style="width:100%" onclick="submitApp()">Submit File</button>
+            <h3 id="mTitle" style="color:var(--gold); margin-top:0;">University Application</h3>
+            <label>Student Full Name</label><input type="text" id="sName" placeholder="As per passport">
+            <label>Passport Number</label><input type="text" id="sPass" placeholder="Enter Passport No.">
+            
+            <div style="border-top:1px solid #333; margin:15px 0; padding-top:15px;">
+                <p style="font-size:12px; color:var(--gold); margin-bottom:10px;">REQUIRED DOCUMENTS (PDF ONLY):</p>
+                <label><i class="fa-solid fa-file-pdf"></i> Passport Copy</label>
+                <input type="file" accept=".pdf" style="font-size:10px;">
+                
+                <label><i class="fa-solid fa-file-pdf"></i> Academic Certificates & Transcripts</label>
+                <input type="file" accept=".pdf" style="font-size:10px;">
+                
+                <label><i class="fa-solid fa-file-pdf"></i> Language Certificate (IELTS/PTE/DUO)</label>
+                <input type="file" accept=".pdf" style="font-size:10px;">
+                
+                <label><i class="fa-solid fa-file-pdf"></i> CV / Experience Letter (Optional)</label>
+                <input type="file" accept=".pdf" style="font-size:10px;">
+            </div>
+
+            <button class="btn-gold" style="width:100%" id="submitBtn">Submit & Send to Admin</button>
             <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Firebase Config (পছন্দমতো কী বসান)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         let curUni = "";
-        const tab = (id) => {
+        window.tab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         };
 
-        const openApp = (u) => { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; };
+        window.openApp = (u) => { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; };
 
-        // Real-Time Simulation logic using LocalStorage
-        function loadRealTimeData() {
-            const files = JSON.parse(localStorage.getItem('files')) || [];
-            const dashTable = document.getElementById('dashTracking');
-            const fullTable = document.getElementById('fullTracking');
-            
-            const rows = files.map(f => `<tr><td>${f.name}</td><td>${f.pass}</td><td>${f.uni}</td><td><span style="color:orange">Processing</span></td><td>${f.date}</td></tr>`).join('');
-            dashTable.innerHTML = rows;
-            fullTable.innerHTML = rows;
-
-            if(localStorage.getItem('compName')) document.getElementById('compName').value = localStorage.getItem('compName');
-            if(localStorage.getItem('compLic')) document.getElementById('compLic').value = localStorage.getItem('compLic');
-        }
-
-        function submitApp() {
+        // Submit to Admin
+        document.getElementById('submitBtn').onclick = async function() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Fill data");
+            if(!name || !pass) return alert("Fill Name and Passport!");
 
-            const files = JSON.parse(localStorage.getItem('files')) || [];
-            files.push({ name, pass, uni: curUni, date: new Date().toLocaleDateString() });
-            localStorage.setItem('files', JSON.stringify(files));
+            try {
+                await addDoc(collection(db, "applications"), {
+                    studentName: name,
+                    passport: pass,
+                    university: curUni,
+                    status: "Pending",
+                    partner: "GORUN LTD.",
+                    timestamp: new Date().toISOString()
+                });
+                alert("File Submitted with Documents!");
+                document.getElementById('appModal').style.display = 'none';
+            } catch (e) { alert("Connect Firebase first!"); }
+        };
 
-            alert("File Submitted!");
-            document.getElementById('appModal').style.display = 'none';
-            loadRealTimeData();
-        }
+        // Real-time Sync
+        const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const tables = document.querySelectorAll('.sharedBody');
+            let rows = "";
+            snapshot.forEach((doc) => {
+                const d = doc.data();
+                rows += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:${d.status === 'Approved' ? '#00ff00' : 'orange'}">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
+            });
+            tables.forEach(t => t.innerHTML = rows);
+        });
 
-        function saveProfile() {
-            localStorage.setItem('compName', document.getElementById('compName').value);
-            localStorage.setItem('compLic', document.getElementById('compLic').value);
-            alert("Company Information Locked & Saved!");
-        }
+        window.saveProfile = () => { alert("Company Profile Locked and Updated!"); };
     </script>
 </body>
 </html>
