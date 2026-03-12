@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | Student Career Consultancy</title>
+    <title>Partner Portal | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -23,7 +23,7 @@
 
         /* Content Area */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 25px; position: relative; }
-        .section { display: none; padding-bottom: 60px; }
+        .section { display: none; padding-bottom: 80px; }
         .section.active { display: block; }
 
         /* Top Header Stats */
@@ -67,7 +67,7 @@
             <li onclick="tab('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
             <li onclick="tab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile Edit</span></li>
         </ul>
-        <div style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer;" onclick="location.href='login.html'">
+        <div style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer; text-align:center;" onclick="location.href='login.html'">
             <i class="fa-solid fa-right-from-bracket"></i>
         </div>
     </div>
@@ -75,84 +75,72 @@
     <div class="main-container">
         
         <div class="top-stats">
-            <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0.00</div><div class="condition">* Depends on student payment & uni disbursement.</div></div>
+            <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0.00</div><div class="condition">* Based on student payment.</div></div>
             <div class="stat-box"><small>Available Wallet</small><div class="amount">৳ 0.00</div></div>
             <div class="stat-box"><small>Subscription</small><div class="amount" style="font-size:14px; color:#00ff00;">ACTIVE PREMIUM</div></div>
         </div>
 
         <div id="dashboard" class="section active">
             <div class="card">
-                <h3>Smart Assessment (11 Fields)</h3>
+                <h3>Smart Assessment (11 Parameters)</h3>
                 <div class="grid-11">
-                    <div><label>Country</label><input type="text" placeholder="UK/USA"></div>
-                    <div><label>Degree</label><select><option>UG</option><option>PG</option><option>Diploma</option><option>Foundation</option><option>PhD</option></select></div>
-                    <div><label>GPA/Score</label><input type="text"></div>
-                    <div><label>Language</label><select><option>IELTS</option><option>PTE</option><option>Duolingo</option></select></div>
+                    <div><label>Preferred Country</label><input type="text" placeholder="e.g. UK"></div>
+                    <div><label>Degree Level</label><select><option>UG</option><option>PG</option><option>Diploma</option><option>PhD</option></select></div>
+                    <div><label>Academic Score</label><input type="text"></div>
+                    <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option><option>Duolingo</option></select></div>
                     <div><label>Test Score</label><input type="text"></div>
                     <div><label>Gap Year</label><input type="number"></div>
-                    <div><label>Budget</label><input type="text"></div>
+                    <div><label>Total Budget</label><input type="text"></div>
                     <div><label>Desired Subject</label><input type="text"></div>
-                    <div><label>Last Qual.</label><input type="text"></div>
-                    <div><label>Work Exp.</label><input type="text"></div>
-                    <div><label>Intake</label><input type="text"></div>
+                    <div><label>Last Qualification</label><input type="text"></div>
+                    <div><label>Work Experience</label><input type="text"></div>
+                    <div><label>Preferred Intake</label><input type="text"></div>
                 </div>
-                <button class="btn-gold" onclick="document.getElementById('resTbl').style.display='block'">Search University</button>
+                <button class="btn-gold" onclick="document.getElementById('resTbl').style.display='block'">SEARCH UNIVERSITY</button>
             </div>
 
             <div class="card" id="resTbl" style="display:none;">
-                <div style="overflow-x:auto;">
-                    <table>
-                        <thead><tr><th>University</th><th>Course</th><th>Commission</th><th>Action</th></tr></thead>
-                        <tbody>
-                            <tr><td>Hertfordshire University</td><td>MSc CS</td><td>৳ 75,000</td><td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('Hertfordshire')">Open File</button></td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <table>
+                    <thead><tr><th>University</th><th>Course</th><th>Commission</th><th>Action</th></tr></thead>
+                    <tbody>
+                        <tr><td>Hertfordshire University</td><td>MSc CS</td><td>৳ 75,000</td><td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('Hertfordshire')">Open File</button></td></tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="card">
                 <h3>Live File Tracking</h3>
-                <div style="overflow-x:auto;">
-                    <table>
-                        <thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody class="sharedBody"></tbody>
-                    </table>
-                </div>
+                <div style="overflow-x:auto;"><table id="liveTrack"><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div>
             </div>
         </div>
 
         <div id="tracking" class="section">
             <div class="card">
-                <h3>Master Tracking Table</h3>
-                <div style="overflow-x:auto;">
-                    <table>
-                        <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody class="sharedBody"></tbody>
-                    </table>
-                </div>
+                <h3>All Submitted Applications</h3>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div>
             </div>
         </div>
 
         <div id="wallet" class="section">
             <div class="card">
-                <h3>Withdrawal Requirement</h3>
+                <h3>Withdrawal Request</h3>
                 <div class="grid-11">
-                    <div><label>Method</label><select><option>Bank</option><option>bKash</option><option>Nagad</option></select></div>
-                    <div><label>Account Info</label><input type="text" placeholder="A/C No or Phone"></div>
-                    <div><label>Amount</label><input type="number" placeholder="৳ 0.00"></div>
+                    <div><label>Method</label><select><option>bKash</option><option>Nagad</option><option>Bank</option></select></div>
+                    <div><label>Account No</label><input type="text"></div>
+                    <div><label>Amount</label><input type="number"></div>
                 </div>
-                <button class="btn-gold" onclick="alert('Withdrawal Request Sent!')">Request Withdraw</button>
+                <button class="btn-gold" onclick="alert('Request Submitted')">Submit Request</button>
             </div>
         </div>
 
         <div id="profile" class="section">
             <div class="card">
-                <h3>Profile Edit</h3>
+                <h3>Company Profile Details</h3>
                 <div style="max-width:500px;">
                     <div style="margin-bottom:12px;"><label>Company Name</label><input type="text" id="pComp" value="Gorun Ltd."></div>
-                    <div style="margin-bottom:12px;"><label>Contact Number</label><input type="text" placeholder="+880"></div>
-                    <div style="margin-bottom:12px;"><label>Office Address</label><textarea style="background:#050118; color:white; border:1px solid #333; width:100%; border-radius:5px; padding:10px;"></textarea></div>
-                    <button class="btn-gold">Save Profile</button>
+                    <div style="margin-bottom:12px;"><label>Contact Number</label><input type="text" id="pPhone" placeholder="+880"></div>
+                    <div style="margin-bottom:12px;"><label>Office Address</label><textarea id="pAddr" style="background:#050118; color:white; border:1px solid #333; width:100%; border-radius:5px; padding:10px;"></textarea></div>
+                    <button class="btn-gold" onclick="saveProfile()">SAVE CHANGES</button>
                 </div>
             </div>
         </div>
@@ -162,20 +150,12 @@
 
     <div id="appModal" class="modal">
         <div class="modal-content">
-            <h3 id="mTitle" style="color:var(--gold); margin-top:0;">Open File</h3>
+            <h3 id="mTitle" style="color:var(--gold); margin-top:0;">Apply</h3>
             <div style="margin-bottom:12px;"><label>Student Name</label><input type="text" id="sName"></div>
             <div style="margin-bottom:12px;"><label>Passport Number</label><input type="text" id="sPass"></div>
-            
-            <div style="border:1px dashed #444; padding:10px; margin-bottom:10px; border-radius:5px;">
-                <label>Passport Copy (PDF)</label><input type="file" id="pdf1" accept=".pdf">
-            </div>
-            <div style="border:1px dashed #444; padding:10px; margin-bottom:10px; border-radius:5px;">
-                <label>Academic Certs (PDF)</label><input type="file" id="pdf2" accept=".pdf">
-            </div>
-            <div style="border:1px dashed #444; padding:10px; margin-bottom:15px; border-radius:5px;">
-                <label>Language Proof (PDF)</label><input type="file" id="pdf3" accept=".pdf">
-            </div>
-
+            <div style="margin-bottom:10px;"><label>Passport (PDF)</label><input type="file" id="pdf1" accept=".pdf"></div>
+            <div style="margin-bottom:10px;"><label>Academic (PDF)</label><input type="file" id="pdf2" accept=".pdf"></div>
+            <div style="margin-bottom:15px;"><label>Language (PDF)</label><input type="file" id="pdf3" accept=".pdf"></div>
             <button class="btn-gold" style="width:100%" onclick="submitApp()">Submit & Get Slip</button>
             <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
@@ -192,10 +172,15 @@
 
         function openApp(u) { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; }
 
+        function saveProfile() {
+            const comp = document.getElementById('pComp').value;
+            alert("Success: Profile for " + comp + " has been updated and saved!");
+        }
+
         function submitApp() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass || !document.getElementById('pdf1').files[0]) return alert("Fill all fields and upload PDFs!");
+            if(!name || !pass || !document.getElementById('pdf1').files[0]) return alert("Fill Name, Passport & Upload PDF");
 
             const trackURL = "https://study-abroad-crm.onrender.com/track.html?id=" + pass;
             document.getElementById('qrcode').innerHTML = "";
@@ -206,7 +191,6 @@
                 const doc = new jsPDF();
                 const logo = document.getElementById('portalLogo');
 
-                // Official Header
                 doc.setFillColor(11, 1, 45); doc.rect(0, 0, 210, 50, 'F');
                 try { doc.addImage(logo, 'JPEG', 15, 12, 25, 25); } catch(e){}
                 doc.setTextColor(255, 204, 0); doc.setFontSize(22); doc.setFont(undefined, 'bold');
@@ -220,12 +204,12 @@
                 
                 const qrImg = document.querySelector("#qrcode img").src;
                 doc.addImage(qrImg, 'PNG', 85, 130, 40, 40);
-                doc.text("Scan to Track Status", 105, 175, null, null, "center");
-
                 doc.save(`SCC_Slip_${pass}.pdf`);
+                
                 const row = `<tr><td>${name}</td><td>${pass}</td><td>${curUni}</td><td><span style="color:orange">Pending</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
                 document.querySelectorAll('.sharedBody').forEach(b => b.innerHTML += row);
                 document.getElementById('appModal').style.display = 'none';
+                alert("Application Submitted!");
             }, 800);
         }
     </script>
