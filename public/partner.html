@@ -31,29 +31,28 @@
         .amount { font-size: 26px; font-weight: bold; color: var(--gold); margin: 5px 0; }
         .condition-text { font-size: 9px; color: #ff5e5e; margin-top: 5px; font-style: italic; }
 
-        /* Dashboard Components */
+        /* Sections */
         .section { display: none; }
         .section.active { display: block; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px; }
         
-        .grid-11 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
-        label { display: block; margin-bottom: 5px; color: var(--gold); font-size: 10px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 10px; background: var(--darker); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; font-size: 13px; }
+        .grid-custom { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        label { display: block; margin-bottom: 8px; color: var(--gold); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        input, select, textarea { width: 100%; padding: 12px; background: var(--darker); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; font-size: 13px; box-sizing: border-box; }
         
-        .btn-gold { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; text-transform: uppercase; }
+        .btn-gold { background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
 
         .table-responsive { overflow-x: auto; margin-top: 15px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1100px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1000px; }
         th { text-align: left; padding: 15px; background: rgba(255, 204, 0, 0.1); color: var(--gold); border-bottom: 2px solid var(--gold); }
         td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
 
         footer { background: var(--darker); text-align: center; padding: 15px; font-size: 11px; color: #555; border-top: 1px solid rgba(255, 255, 255, 0.05); position: fixed; bottom: 0; width: 100%; z-index: 10; }
-        
+
         /* Modal Doc Uploads */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 30px; border-radius: 15px; width: 450px; border: 1px solid var(--gold); }
-        .doc-label { font-size: 9px; color: #bbb; margin-top: 10px; display: block; }
-
+        
         #qrcode { display: none; }
     </style>
 </head>
@@ -88,60 +87,104 @@
             <div id="dashboard" class="section active">
                 <div class="card">
                     <h3>Smart Assessment (11 Fields)</h3>
-                    <div class="grid-11">
-                        <div><label>Preferred Country</label><input type="text" id="pCountry" placeholder="UK/USA"></div>
-                        <div><label>Degree</label><select id="pDeg"><option>UG</option><option>PG</option><option>Diploma</option></select></div>
-                        <div><label>Academic Score (%)</label><input type="number" id="pAca"></div>
-                        <div><label>Language Test</label><select id="pLang"><option>IELTS</option><option>PTE</option><option>Duolingo</option></select></div>
-                        <div><label>Language Score</label><input type="text" id="pLScore"></div>
+                    <div class="grid-custom" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                        <div><label>Preferred Country</label><input type="text" placeholder="e.g. UK"></div>
+                        <div><label>Degree</label><select><option>UG</option><option>PG</option></select></div>
+                        <div><label>Academic Score (%)</label><input type="number"></div>
+                        <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option></select></div>
+                        <div><label>Language Score</label><input type="text"></div>
                         <div><label>Gap Years</label><input type="number"></div>
                         <div><label>Budget</label><input type="text"></div>
                         <div><label>Subject</label><input type="text"></div>
-                        <div><label>Last Qualification</label><input type="text"></div>
-                        <div><label>Work Exp</label><input type="text"></div>
-                        <div><label>Intake Preference</label><input type="text"></div>
+                        <div><label>Last Qual.</label><input type="text"></div>
+                        <div><label>Work Exp.</label><input type="text"></div>
+                        <div><label>Intake</label><input type="text"></div>
                     </div>
                     <button class="btn-gold" onclick="searchUni()">Search Universities</button>
                 </div>
 
                 <div id="uniSection" class="card" style="display:none;">
-                    <h3>Available Universities</h3>
+                    <h3>Search Results</h3>
                     <div class="table-responsive">
                         <table>
                             <thead>
-                                <tr><th>University</th><th>Country</th><th>Course</th><th>Intake</th><th>Fee</th><th>Scholarship</th><th>Requirement</th><th>Location</th><th>Duration</th><th>Campus</th><th>Commission (৳)</th><th>Action</th></tr>
+                                <tr><th>University</th><th>Country</th><th>Course</th><th>Intake</th><th>Fee</th><th>Commission (৳)</th><th>Action</th></tr>
                             </thead>
-                            <tbody id="uniBody">
-                                <tr>
-                                    <td>Coventry University</td><td>UK</td><td>MSc Data Science</td><td>Jan 2026</td><td>£16,500</td><td>£2,000</td><td>6.5 IELTS</td><td>London</td><td>1 Year</td><td>Main</td><td>৳ 75,000</td>
-                                    <td><button class="btn-gold" style="margin:0; padding:5px; font-size:10px;" onclick="openFileForm('Coventry', 'Jan 2026', 'MSc Data Science', 75000)">Open File</button></td>
-                                </tr>
+                            <tbody>
+                                <tr><td>Coventry University</td><td>UK</td><td>MSc Data Science</td><td>Jan 2026</td><td>£16,500</td><td>৳ 75,000</td><td><button class="btn-gold" style="margin:0; padding:5px 10px; font-size:10px;" onclick="openFileForm('Coventry', 'Jan 2026', 'MSc Data Science', 75000)">Open File</button></td></tr>
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3>Dashboard Live File Tracking</h3>
-                    <div class="table-responsive" style="min-width: 100%;">
-                        <table style="min-width: 100%;">
-                            <thead><tr><th>Student Name</th><th>Passport</th><th>Status</th><th>Last Update</th></tr></thead>
-                            <tbody id="dashTrackBody"><tr><td colspan="4" style="text-align:center; color:#555;">No recent submissions.</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
             <div id="tracking" class="section">
-                <div class="card"><h3>Complete File Tracking</h3><div class="table-responsive"><table><thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead><tbody id="mainTrackBody"></tbody></table></div></div>
+                <div class="card">
+                    <h3>Live File Tracking</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Student Name</th><th>Passport</th><th>Status</th><th>Last Update</th></tr></thead>
+                            <tbody id="trackBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <div id="wallet" class="section">
-                <div class="card"><h3>Withdraw Funds</h3><div class="grid-11"><div><label>Account</label><input type="text"></div><div><label>Amount</label><input type="number"></div></div><button class="btn-gold" style="width:200px;">Request</button></div>
+                <div class="card">
+                    <h3>Withdraw Funds</h3>
+                    <div class="grid-custom">
+                        <div>
+                            <label>Payment Method (Account Dropbox)</label>
+                            <select id="payMethod">
+                                <option>bKash (Personal)</option>
+                                <option>Nagad (Personal)</option>
+                                <option>Bank Account (Brac/City)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Account Number</label>
+                            <input type="text" placeholder="Enter number/account info">
+                        </div>
+                        <div>
+                            <label>Amount (৳)</label>
+                            <input type="number" placeholder="Enter amount">
+                        </div>
+                    </div>
+                    <button class="btn-gold">Request Withdrawal</button>
+                </div>
             </div>
 
             <div id="profile" class="section">
-                <div class="card"><h3>Profile Settings</h3><div class="grid-11"><div><label>Company</label><input type="text" value="Gorun Ltd."></div></div><button class="btn-gold" style="width:150px;">Save</button></div>
+                <div class="card">
+                    <h3>Company Profile Settings</h3>
+                    <div class="table-responsive" style="min-width: 100%;">
+                        <table style="min-width: 100%;">
+                            <thead>
+                                <tr><th>Field</th><th>Input Details</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><label>Company Name</label></td>
+                                    <td><input type="text" value="Gorun Ltd."></td>
+                                </tr>
+                                <tr>
+                                    <td><label>Contact No</label></td>
+                                    <td><input type="text" placeholder="+8801xxxxxxxxx"></td>
+                                </tr>
+                                <tr>
+                                    <td><label>Address</label></td>
+                                    <td><textarea rows="2" placeholder="Full Office Address"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td><label>Company Logo</label></td>
+                                    <td><input type="file" accept="image/*"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn-gold">Save Profile</button>
+                </div>
             </div>
 
         </div>
@@ -150,16 +193,10 @@
     <div id="fileModal" class="modal">
         <div class="modal-content">
             <h3 id="mTitle" style="color:var(--gold); margin-top:0;"></h3>
-            <input type="text" id="sName" placeholder="Student Full Name" style="margin-bottom:12px;">
-            <input type="text" id="sPass" placeholder="Passport Number" style="margin-bottom:12px;">
-            
-            <span class="doc-label">1. Academic Certificates (PDF)</span>
-            <input type="file" accept=".pdf">
-            <span class="doc-label">2. Passport Copy (PDF)</span>
-            <input type="file" accept=".pdf">
-            <span class="doc-label">3. Language Score (PDF)</span>
-            <input type="file" accept=".pdf">
-
+            <input type="text" id="sName" placeholder="Student Full Name" style="margin-bottom:10px;">
+            <input type="text" id="sPass" placeholder="Passport Number" style="margin-bottom:10px;">
+            <p style="font-size: 9px; color: #888; margin-top:10px;">Upload Docs (PDF Only): Academic, Passport, Score</p>
+            <input type="file" multiple accept=".pdf">
             <button class="btn-gold" onclick="submitFile()">Submit & Generate Slip</button>
             <button class="btn-gold" onclick="closeModal()" style="background:#444; color:#fff;">Cancel</button>
         </div>
@@ -188,7 +225,7 @@
         function submitFile() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Please fill student details.");
+            if(!name || !pass) return alert("Required fields missing");
 
             const qrData = "https://scc-tracking.com/id=" + pass;
             document.getElementById('qrcode').innerHTML = "";
@@ -199,7 +236,6 @@
                 const doc = new jsPDF();
                 const qrImg = document.querySelector("#qrcode img").src;
 
-                // PDF DESIGN
                 doc.setFillColor(11, 1, 45); doc.rect(0, 0, 210, 45, 'F');
                 doc.setTextColor(255, 204, 0); doc.setFontSize(22); doc.setFont(undefined, 'bold');
                 doc.text("STUDENT CAREER CONSULTANCY", 105, 20, null, null, "center");
@@ -208,29 +244,23 @@
 
                 doc.setTextColor(0, 0, 0); doc.setFontSize(14); 
                 doc.text("Congratulations Dear Student " + name + "!", 20, 60);
-                doc.setFontSize(10); doc.setFont(undefined, 'normal');
-                doc.text("Your application has been successfully initiated via Gorun Ltd.", 20, 68);
+                doc.setFontSize(10); doc.text("Application initiated via Gorun Ltd.", 20, 68);
                 
-                doc.setFont(undefined, 'bold'); doc.text("APPLICATION DETAILS:", 20, 85);
+                doc.setFont(undefined, 'bold'); doc.text("DETAILS:", 20, 85);
                 doc.setFont(undefined, 'normal');
-                doc.text("Passport No: " + pass, 25, 93);
+                doc.text("Passport: " + pass, 25, 93);
                 doc.text("University: " + currentUni, 25, 100);
-                doc.text("Intake: " + currentIntake, 25, 107);
 
-                doc.setFont(undefined, 'bold'); doc.text("TRACK YOUR FILE:", 105, 135, null, null, "center");
                 doc.addImage(qrImg, 'PNG', 85, 140, 40, 40);
-
                 doc.save(`SCC_Slip_${pass}.pdf`);
 
-                // Update UI
                 const row = `<tr><td>${name}</td><td>${pass}</td><td><span style="color:orange;">Processing</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
-                document.getElementById('dashTrackBody').innerHTML = row;
-                document.getElementById('mainTrackBody').innerHTML += row;
+                document.getElementById('trackBody').innerHTML += row;
                 
                 let pnd = parseFloat(document.getElementById('pndAmt').innerText.replace(/,/g, ''));
                 document.getElementById('pndAmt').innerText = (pnd + currentComm).toLocaleString();
 
-                alert("Submitted Successfully!");
+                alert("Submitted!");
                 closeModal();
             }, 600);
         }
