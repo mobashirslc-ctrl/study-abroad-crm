@@ -20,34 +20,29 @@
         .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
         .sidebar:hover .nav-links li span { display: inline; }
         .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.05); }
-        
-        /* Subscription Status in Sidebar */
-        .sub-status { font-size: 9px; color: #00ff00; padding: 10px; text-align: center; border-top: 1px solid #222; width: 100%; display: none; }
-        .sidebar:hover .sub-status { display: block; }
 
         /* Main Content */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 30px; padding-bottom: 100px; }
         .section { display: none; }
         .section.active { display: block; }
 
-        /* Wallet Boxes (Fixed at top for all sections as requested) */
+        /* Fixed Top Wallet Stats */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 10px; border: 1px solid var(--gold); text-align: center; }
-        .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin-top: 5px; }
+        .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 10px; border: 1px solid var(--gold); }
+        .stat-box small { font-size: 9px; color: #aaa; text-transform: uppercase; display: block; }
+        .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); }
+        .condition { font-size: 8px; color: #ff5e5e; margin-top: 5px; line-height: 1.2; }
 
-        /* Grid for 11 Fields */
+        /* Forms & Tables */
         .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .grid-11 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .grid-11 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
         label { font-size: 9px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        input, select { background: #050118; border: 1px solid #333; padding: 10px; color: white; border-radius: 5px; width: 100%; box-sizing: border-box; outline: none; font-size: 12px; }
-        
+        input, select, textarea { background: #050118; border: 1px solid #333; padding: 10px; color: white; border-radius: 5px; width: 100%; box-sizing: border-box; outline: none; font-size: 12px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-gold:hover { background: #e6b800; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-        th { text-align: left; color: var(--gold); padding: 10px; border-bottom: 2px solid var(--gold); }
-        td { padding: 10px; border-bottom: 1px solid #222; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; min-width: 800px; }
+        th { text-align: left; color: var(--gold); padding: 12px; border-bottom: 2px solid var(--gold); }
+        td { padding: 12px; border-bottom: 1px solid #222; }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
@@ -63,83 +58,129 @@
         <img src="logo.jpeg" class="logo" id="portalLogo">
         <ul class="nav-links">
             <li class="active" onclick="showTab('dashboard')"><i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span></li>
-            <li onclick="showTab('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>Track Files</span></li>
+            <li onclick="showTab('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
             <li onclick="showTab('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
-            <li onclick="showTab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile</span></li>
+            <li onclick="showTab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile Edit</span></li>
         </ul>
-        <div class="sub-status"><i class="fa-solid fa-circle-check"></i> Active Subscription</div>
         <div class="logout-btn" onclick="location.href='login.html'"><i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span></div>
     </div>
 
     <div class="main-container">
+        
         <div class="top-stats">
-            <div class="stat-box"><small>Pending</small><div class="amount">৳ 0.00</div></div>
-            <div class="stat-box"><small>Disbursed</small><div class="amount">৳ 0.00</div></div>
-            <div class="stat-box"><small>Status</small><div class="amount" style="font-size:14px; color:#00ff00;">PREMIUM</div></div>
+            <div class="stat-box">
+                <small>Estimated Pending</small>
+                <div class="amount">৳ 0.00</div>
+                <div class="condition">* Depend on student payment & university disbursement.</div>
+            </div>
+            <div class="stat-box">
+                <small>Available Wallet</small>
+                <div class="amount">৳ 0.00</div>
+            </div>
+            <div class="stat-box">
+                <small>Subscription</small>
+                <div class="amount" style="font-size: 14px; color: #00ff00;">ACTIVE PREMIUM</div>
+            </div>
         </div>
 
         <div id="dashboard" class="section active">
             <div class="card">
                 <h3>Smart Assessment (11 Parameters)</h3>
                 <div class="grid-11">
-                    <div><label>Preferred Country</label><input type="text" placeholder="e.g. UK"></div>
-                    <div><label>Degree Level</label>
+                    <div><label>Country</label><input type="text" placeholder="e.g. UK"></div>
+                    <div><label>Degree</label>
                         <select>
-                            <option>UG (Bachelor)</option><option>PG (Masters)</option>
-                            <option>Diploma</option><option>Foundation</option>
-                            <option>Research</option><option>PhD</option>
+                            <option>UG</option><option>PG</option><option>Diploma</option>
+                            <option>Foundation</option><option>Research</option><option>PhD</option>
                         </select>
                     </div>
-                    <div><label>Academic Score (%)</label><input type="text"></div>
-                    <div><label>Language Test</label>
+                    <div><label>GPA/Score</label><input type="text"></div>
+                    <div><label>Language</label>
                         <select>
                             <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
                         </select>
                     </div>
-                    <div><label>Test Score</label><input type="text"></div>
-                    <div><label>Gap Years</label><input type="number"></div>
-                    <div><label>Budget (Total)</label><input type="text"></div>
-                    <div><label>Desired Subject</label><input type="text"></div>
-                    <div><label>Last Qualification</label><input type="text"></div>
-                    <div><label>Work Experience</label><input type="text"></div>
-                    <div><label>Intake Preference</label><input type="text" placeholder="e.g. Jan 2026"></div>
+                    <div><label>Score</label><input type="text"></div>
+                    <div><label>Gap Year</label><input type="number"></div>
+                    <div><label>Budget</label><input type="text"></div>
+                    <div><label>Subject</label><input type="text"></div>
+                    <div><label>Last Qual.</label><input type="text"></div>
+                    <div><label>Work Exp.</label><input type="text"></div>
+                    <div><label>Intake</label><input type="text"></div>
                 </div>
-                <button class="btn-gold" style="margin-top:20px;" onclick="document.getElementById('resTbl').style.display='block'">Find Universities</button>
+                <button class="btn-gold" style="margin-top:15px;" onclick="document.getElementById('searchRes').style.display='block'">SEARCH</button>
             </div>
 
-            <div class="card" id="resTbl" style="display:none;">
+            <div class="card" id="searchRes" style="display:none;">
                 <table>
-                    <thead><tr><th>University</th><th>Course</th><th>Action</th></tr></thead>
+                    <thead><tr><th>University</th><th>Course</th><th>Commission</th><th>Action</th></tr></thead>
                     <tbody>
-                        <tr><td>Hertfordshire University</td><td>MSc Computer Science</td><td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('Hertfordshire')">Apply</button></td></tr>
+                        <tr><td>Hertfordshire University</td><td>MSc CS</td><td>৳ 75,000</td><td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('Hertfordshire')">Apply</button></td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="card">
+                <h3>File Tracking (Recent Submissions)</h3>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody class="sharedBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tracking" class="section">
+            <div class="card">
+                <h3>Master File Tracking Table</h3>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th>Student Name</th><th>Passport</th><th>University</th><th>Current Status</th><th>Submit Date</th></tr></thead>
+                        <tbody class="sharedBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div id="wallet" class="section">
-            <div class="card"><h3>Withdrawal Request</h3><p>Submit your payment request here.</p></div>
+            <div class="card">
+                <h3>Request Funds Withdrawal</h3>
+                <div class="grid-11">
+                    <div><label>Withdraw Method</label><select><option>bKash</option><option>Nagad</option><option>Bank Transfer</option></select></div>
+                    <div><label>Account Info</label><input type="text" id="wAcc" placeholder="Number/IBAN"></div>
+                    <div><label>Amount (৳)</label><input type="number" id="wAmt" placeholder="0.00"></div>
+                </div>
+                <button class="btn-gold" style="margin-top:20px;" onclick="alert('Withdrawal request submitted for approval.')">WITHDRAW NOW</button>
+            </div>
         </div>
-        <div id="tracking" class="section">
-            <div class="card"><h3>File Tracking</h3><table id="trackList"><thead><tr><th>Name</th><th>Passport</th><th>Status</th></tr></thead><tbody class="sharedBody"></tbody></table></div>
-        </div>
+
         <div id="profile" class="section">
-            <div class="card"><h3>Partner Settings</h3><input type="text" id="pComp" value="Gorun Ltd."></div>
+            <div class="card">
+                <h3>Partner Profile Details</h3>
+                <div style="max-width:500px;">
+                    <div style="margin-bottom:15px;"><label>Company Name</label><input type="text" id="pComp" value="Gorun Ltd."></div>
+                    <div style="margin-bottom:15px;"><label>Contact Number</label><input type="text" placeholder="+880..."></div>
+                    <div style="margin-bottom:15px;"><label>Office Address</label><textarea style="background:#050118; border:1px solid #333; color:white; width:100%; border-radius:5px; padding:10px;"></textarea></div>
+                    <button class="btn-gold">SAVE CHANGES</button>
+                </div>
+            </div>
         </div>
+
     </div>
 
     <div id="appModal" class="modal">
         <div class="modal-content">
             <h3 id="mTitle" style="color:var(--gold); margin-top:0;">Apply</h3>
-            <label>Student Name</label><input type="text" id="sName" style="margin-bottom:10px;">
-            <label>Passport Number</label><input type="text" id="sPass" style="margin-bottom:10px;">
-            <button class="btn-gold" style="width:100%" onclick="submitFinal()">GENERATE OFFICIAL SLIP</button>
+            <label>Student Full Name</label><input type="text" id="sName" style="margin-bottom:12px;">
+            <label>Passport Number</label><input type="text" id="sPass" style="margin-bottom:12px;">
+            <button class="btn-gold" style="width:100%" onclick="submitFinal()">SUBMIT & GET SLIP</button>
             <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">CANCEL</button>
         </div>
     </div>
 
     <script>
-        let currentUni = "";
+        let curUni = "";
         function showTab(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
@@ -147,12 +188,12 @@
             event.currentTarget.classList.add('active');
         }
 
-        function openApp(u) { currentUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; }
+        function openApp(u) { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; }
 
         function submitFinal() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Fill Name/Passport");
+            if(!name || !pass) return alert("Fill Name and Passport");
 
             const trackURL = "https://study-abroad-crm.onrender.com/track.html?id=" + pass;
             document.getElementById('qrcode').innerHTML = "";
@@ -163,7 +204,7 @@
                 const doc = new jsPDF();
                 const logo = document.getElementById('portalLogo');
 
-                // OFFICIAL FORMAT HEADER (TOUCH FIXED)
+                // Header Design
                 doc.setFillColor(11, 1, 45); doc.rect(0, 0, 210, 50, 'F');
                 try { doc.addImage(logo, 'JPEG', 15, 12, 25, 25); } catch(e){}
                 doc.setTextColor(255, 204, 0); doc.setFontSize(22); doc.setFont(undefined, 'bold');
@@ -171,19 +212,19 @@
                 doc.setFontSize(10); doc.setTextColor(255, 255, 255);
                 doc.text("OFFICIAL ACKNOWLEDGMENT SLIP", 110, 38, null, null, "center");
 
-                // CONTENT
+                // Info
                 doc.setTextColor(0,0,0); doc.setFontSize(12);
                 doc.text("Student: " + name, 20, 70);
                 doc.text("Passport: " + pass, 20, 80);
-                doc.text("University: " + currentUni, 20, 90);
+                doc.text("University: " + curUni, 20, 90);
                 doc.text("Partner: " + document.getElementById('pComp').value, 20, 100);
                 
                 const qrImg = document.querySelector("#qrcode img").src;
                 doc.addImage(qrImg, 'PNG', 85, 130, 40, 40);
-                doc.text("Scan to Track Status", 105, 175, null, null, "center");
+                doc.setFontSize(8); doc.text("Scan to Track Live Status", 105, 175, null, null, "center");
 
                 doc.save(`SCC_Slip_${pass}.pdf`);
-                const row = `<tr><td>${name}</td><td>${pass}</td><td><span style="color:orange">Pending</span></td></tr>`;
+                const row = `<tr><td>${name}</td><td>${pass}</td><td>${curUni}</td><td><span style="color:orange">Pending</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
                 document.querySelectorAll('.sharedBody').forEach(b => b.innerHTML += row);
                 document.getElementById('appModal').style.display = 'none';
             }, 800);
