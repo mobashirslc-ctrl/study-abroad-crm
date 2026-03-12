@@ -2,74 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Student Portal - IHP CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Application Tracking</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h2 { color: #1a73e8; text-align: center; margin-bottom: 20px; }
-        
-        .status-card { background: #e8f0fe; padding: 15px; border-radius: 10px; margin-bottom: 25px; text-align: center; border: 1px dashed #1a73e8; }
-        .status-title { font-size: 14px; color: #666; }
-        .status-now { font-size: 20px; font-weight: bold; color: #1a73e8; margin-top: 5px; }
-
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
-        
-        button { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #1557b0; }
-        
-        #msg { margin-top: 15px; text-align: center; font-weight: bold; }
+        /* আপনার বর্তমান গ্লাস-মরফিজম ডিজাইন অক্ষুণ্ণ থাকবে */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
+        .tracking-card {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .tracking-input {
+            width: 80%;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            outline: none;
+        }
+        .track-btn {
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .track-btn:hover { background: #0056b3; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>🎓 Student Dashboard</h2>
+    <div class="tracking-card">
+        <h2>Track Your Application</h2>
+        <p>Enter your details below to check real-time status</p>
+        
+        <input type="text" id="passportNumber" placeholder="Enter Passport Number" class="tracking-input">
+        
+        <br>
+        <button onclick="trackStatus()" class="track-btn">Track Now</button>
 
-    <div class="status-card">
-        <div class="status-title">Current File Status</div>
-        <div class="status-now">✅ Applied / In Review</div>
+        <div id="statusResult" style="margin-top: 20px; font-weight: bold; color: #333;"></div>
     </div>
 
-    <form id="stForm">
-        <div class="form-group">
-            <label>Student Full Name</label>
-            <input type="text" name="name" placeholder="Enter your registered name" required>
-        </div>
-        <div class="form-group">
-            <label>Upload New Document (if any)</label>
-            <input type="file" name="document" required>
-        </div>
-        <button type="submit">UPLOAD NOW</button>
-    </form>
-    <div id="msg"></div>
-</div>
+    <script>
+        function trackStatus() {
+            const passport = document.getElementById('passportNumber').value;
+            const resultDiv = document.getElementById('statusResult');
 
-<script>
-    document.getElementById('stForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const msg = document.getElementById('msg');
-        msg.innerText = "Processing upload...";
-        const formData = new FormData(e.target);
-        
-        try {
-            const res = await fetch('/submit-partner', { method: 'POST', body: formData });
-            if(res.ok) {
-                msg.innerText = "✅ Document Submitted Successfully!";
-                msg.style.color = "green";
-                e.target.reset();
-            } else {
-                msg.innerText = "❌ Submission failed!";
-                msg.style.color = "red";
+            if(passport === "") {
+                alert("Please enter your Passport Number to track.");
+                return;
             }
-        } catch (err) {
-            msg.innerText = "Error connecting to server!";
-        }
-    };
-</script>
 
+            // আগামীকাল এখানে আমরা রিয়েল ডেটা কানেকশন দেব
+            resultDiv.innerHTML = "Searching for Passport: " + passport + "...";
+            console.log("Tracking request sent for:", passport);
+        }
+    </script>
 </body>
 </html>
