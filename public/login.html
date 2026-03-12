@@ -6,45 +6,175 @@
     <title>Partner Login | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; }
-        .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; }
-        .logo-box img { height: 40px; }
-        h2 { color: #ffcc00; margin-bottom: 20px; letter-spacing: 1px; }
-        .input-group { position: relative; margin-bottom: 15px; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
-        input { width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
-        p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
-        a { color: #ffcc00; text-decoration: none; font-weight: bold; }
+        :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 204, 0, 0.1);
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-box {
+            background: white;
+            display: inline-block;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .logo-box img {
+            height: 40px;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+            color: var(--gold);
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            color: var(--gold);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            color: #666;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            background: var(--darker);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--gold);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--gold);
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: #e6b800;
+            transform: translateY(-2px);
+        }
+
+        .footer-text {
+            margin-top: 25px;
+            font-size: 11px;
+            color: #777;
+        }
+
+        /* Error message style */
+        #errorMsg {
+            color: #ff5e5e;
+            font-size: 12px;
+            margin-bottom: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
-        <h2>Partner Login</h2>
+
+    <div class="login-card">
+        <div class="logo-box">
+            <img src="logo.jpeg" alt="SCC Logo">
+        </div>
+        
+        <h2>PARTNER LOGIN</h2>
+
+        <div id="errorMsg">Invalid Username or Password!</div>
+
         <form id="loginForm">
-            <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="email" placeholder="Email Address" required></div>
-            <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
-            <button type="submit" class="btn">Login</button>
+            <div class="input-group">
+                <label>Username</label>
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="username" placeholder="Enter username" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <i class="fa-solid fa-lock"></i>
+                <input type="password" id="password" placeholder="Enter password" required>
+            </div>
+
+            <button type="submit" class="login-btn">LOGIN NOW</button>
         </form>
-        <p>New Partner? <a href="/register">Join Now</a></p>
+
+        <div class="footer-text">
+            Authorized Partner Access Only <br>
+            Student Career Consultancy &copy; 2026
+        </div>
     </div>
+
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                })
-            });
-            const data = await res.json();
-            if (res.ok) { alert("Login Success!"); window.location.href = "/partner"; }
-            else { alert(data.msg); }
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const error = document.getElementById('errorMsg');
+
+            // Simple Logic: Username 'partner' and Password 'scc123'
+            // You can change these values or link to your database later
+            if (user === 'partner' && pass === 'scc123') {
+                error.style.display = 'none';
+                // Success: Redirecting to partner.html
+                window.location.href = 'partner.html';
+            } else {
+                error.style.display = 'block';
+                // Clear password field
+                document.getElementById('password').value = '';
+            }
         });
     </script>
+
 </body>
 </html>
