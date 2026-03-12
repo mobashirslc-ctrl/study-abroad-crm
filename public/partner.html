@@ -11,7 +11,7 @@
         :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.03); }
         body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
 
-        /* Sidebar */
+        /* Sidebar Locked Design */
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
@@ -27,25 +27,24 @@
         .section { display: none; padding-bottom: 100px; }
         .section.active { display: block; }
 
-        /* Stats */
+        /* Professional Stats */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid var(--gold); }
         .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin: 5px 0; }
         .condition { font-size: 8px; color: #ff5e5e; line-height: 1.2; }
 
-        /* Cards & Professional Tables */
+        /* Assessment Table - 11 Fields Professional */
         .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
-        .search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; display: block; }
-        input, select, textarea { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
-
         .table-wrap { overflow-x: auto; margin-top: 20px; border-radius: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1400px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); background: rgba(0,0,0,0.3); }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .comm-tag { color: #00ff00; font-weight: bold; font-size: 13px; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-gold:hover { background: #e6b800; }
+
+        input, select, textarea { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
+        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 8px; display: block; }
 
         footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #111; z-index: 500; }
 
@@ -53,7 +52,7 @@
         .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); }
     </style>
 </head>
-<body>
+<body onload="loadRealTimeData()">
 
     <div id="qrcode" style="display:none;"></div>
 
@@ -70,40 +69,23 @@
     </div>
 
     <div class="main-container">
-        
         <div class="top-stats">
-            <div class="stat-box">
-                <small>Estimated Pending</small>
-                <div class="amount">৳ 0.00</div>
-                <div class="condition">* Condition: Payment after enrollment.</div>
-            </div>
-            <div class="stat-box">
-                <small>Available Wallet</small>
-                <div class="amount">৳ 0.00</div>
-            </div>
-            <div class="stat-box">
-                <small>Subscription Status</small>
-                <div class="amount" style="font-size:16px; color:#00ff00;">PREMIUM ACTIVE</div>
-                <div style="font-size:10px; color:#aaa;">Expiry: 31 Dec 2026</div>
-            </div>
+            <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0.00</div><div class="condition">* Payment after enrollment.</div></div>
+            <div class="stat-box"><small>Available Wallet</small><div class="amount">৳ 0.00</div></div>
+            <div class="stat-box"><small>Subscription</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM ACTIVE</div><div style="font-size:10px; color:#aaa;">Expiry: 31 Dec 2026</div></div>
         </div>
 
         <div id="dashboard" class="section active">
             <div class="card">
                 <h3>Smart Assessment Search</h3>
-                <div class="search-grid">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                     <div><label>Country Name</label><input type="text" placeholder="e.g. UK"></div>
-                    <div><label>Degree</label>
-                        <select>
-                            <option>PG (Masters)</option><option>UG (Bachelor)</option><option>DIPLOMA</option>
-                            <option>FOUNDATION</option><option>RESEARCH</option><option>PHD</option>
-                        </select>
-                    </div>
+                    <div><label>Degree</label><select><option>PG</option><option>UG</option></select></div>
                     <div><label>Academic Score</label><input type="text" placeholder="GPA"></div>
-                    <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select></div>
-                    <div><label>Language Score</label><input type="text" placeholder="Overall Score"></div>
+                    <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option></select></div>
+                    <div><label>Language Score</label><input type="text" placeholder="Score"></div>
                 </div>
-                <button class="btn-gold" onclick="document.getElementById('resArea').style.display='block'">Search University</button>
+                <button class="btn-gold" style="margin-top:15px;" onclick="document.getElementById('resArea').style.display='block'">Search</button>
             </div>
 
             <div class="card" id="resArea" style="display:none;">
@@ -118,10 +100,9 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td>University of East London</td><td>PG</td><td>MSc Data Science</td><td>£ 15,500</td>
-                                <td class="comm-tag">৳ 68,000</td>
-                                <td>5 Years</td><td>2.75</td><td>6.5 (5.5)</td><td>£ 2,500</td><td>Sept 2026</td>
-                                <td><button class="btn-gold" style="padding:5px 10px; margin:0;" onclick="openApp('UEL')">Open File</button></td>
+                                <td>University of East London</td><td>PG</td><td>Data Science</td><td>£ 15,500</td>
+                                <td style="color:#00ff00; font-weight:bold;">৳ 68,000</td><td>5 Yrs</td><td>2.75</td><td>6.5 (5.5)</td><td>£ 2,500</td><td>Sept 2026</td>
+                                <td><button class="btn-gold" onclick="openApp('UEL')">Open File</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -131,85 +112,30 @@
             <div class="card">
                 <h3>Live File Tracking (Recent)</h3>
                 <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Student Name</th><th>Passport</th><th>University</th><th>Status</th><th>Update Date</th>
-                            </tr>
-                        </thead>
-                        <tbody class="sharedBody"></tbody>
+                    <table style="min-width: 1000px;">
+                        <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody id="dashTracking"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <div id="tracking" class="section">
-            <div class="card">
-                <h3>Full File Tracking History</h3>
-                <div class="table-wrap">
-                    <table style="min-width: 1000px;">
-                        <thead>
-                            <tr>
-                                <th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody class="sharedBody"></tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="card"><h3>Full File Tracking History</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody id="fullTracking"></tbody></table></div></div>
         </div>
 
         <div id="wallet" class="section">
-            <div class="card">
-                <h3>Withdrawal Request</h3>
-                <div class="search-grid">
-                    <div><label>Method</label><select><option>bKash</option><option>Nagad</option><option>Bank</option></select></div>
-                    <div><label>Account Info</label><input type="text" placeholder="Acc Number"></div>
-                    <div><label>Amount (৳)</label><input type="number" placeholder="Min. 5000"></div>
-                </div>
-                <button class="btn-gold" onclick="alert('Withdrawal Request Submitted!')">Confirm Request</button>
-            </div>
+            <div class="card"><h3>Withdrawal</h3><button class="btn-gold" onclick="alert('Balance is zero')">Request Payout</button></div>
         </div>
 
         <div id="profile" class="section">
             <div class="card">
-                <h3>Profile Edit</h3>
-                <div class="search-grid">
-                    <div><label>First Name</label><input type="text" value="Partner"></div>
-                    <div><label>Last Name</label><input type="text" value="User"></div>
-                    <div><label>Email Address</label><input type="email" value="partner@gorun.com"></div>
-                    <div><label>Phone Number</label><input type="text" value="+8801xxxxxxxxx"></div>
-                </div>
-                <button class="btn-gold" onclick="saveData('Personal Profile')">Update Personal Info</button>
-            </div>
-
-            <div class="card">
                 <h3>Company Information</h3>
-                <div class="table-wrap">
-                    <table style="min-width: 100%; border: 1px solid rgba(255,255,255,0.1);">
-                        <tr>
-                            <td style="color:var(--gold); font-weight:bold; width:30%;">Legal Company Name</td>
-                            <td><input type="text" value="GORUN LTD."></td>
-                        </tr>
-                        <tr>
-                            <td style="color:var(--gold); font-weight:bold;">Business License No.</td>
-                            <td><input type="text" value="TRAD/DNCC/00123/2026"></td>
-                        </tr>
-                        <tr>
-                            <td style="color:var(--gold); font-weight:bold;">Country of Operation</td>
-                            <td><input type="text" value="Bangladesh"></td>
-                        </tr>
-                        <tr>
-                            <td style="color:var(--gold); font-weight:bold;">Official Office Address</td>
-                            <td><textarea>Level 4, Corporate Plaza, Dhaka 1212</textarea></td>
-                        </tr>
-                        <tr>
-                            <td style="color:var(--gold); font-weight:bold;">Tax Identification (TIN)</td>
-                            <td><input type="text" value="5482-XXXX-XXXX"></td>
-                        </tr>
-                    </table>
-                </div>
-                <button class="btn-gold" onclick="saveData('Company Information')">Save Company Data</button>
+                <table style="width:100%; border-collapse: collapse;">
+                    <tr><td style="color:var(--gold); padding:10px;">Company Name</td><td><input type="text" id="compName" value="GORUN LTD."></td></tr>
+                    <tr><td style="color:var(--gold); padding:10px;">License No.</td><td><input type="text" id="compLic" value="TRAD/2026/001"></td></tr>
+                </table>
+                <button class="btn-gold" style="margin-top:15px;" onclick="saveProfile()">Save Real-Time</button>
             </div>
         </div>
 
@@ -218,44 +144,57 @@
 
     <div id="appModal" class="modal">
         <div class="modal-content">
-            <h3 id="mTitle">University Application</h3>
-            <label>Student Full Name</label><input type="text" id="sName" style="margin-bottom:15px;">
+            <h3 id="mTitle">Application</h3>
+            <label>Student Name</label><input type="text" id="sName" style="margin-bottom:15px;">
             <label>Passport Number</label><input type="text" id="sPass" style="margin-bottom:15px;">
-            <div style="margin-bottom:20px;"><label>Academic Documents (PDF)</label><input type="file" accept=".pdf"></div>
-            <button class="btn-gold" style="width:100%" onclick="submitApp()">Submit & Generate Slip</button>
+            <button class="btn-gold" style="width:100%" onclick="submitApp()">Submit File</button>
             <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
     </div>
 
     <script>
         let curUni = "";
-        function tab(id) {
+        const tab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
+        };
+
+        const openApp = (u) => { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; };
+
+        // Real-Time Simulation logic using LocalStorage
+        function loadRealTimeData() {
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            const dashTable = document.getElementById('dashTracking');
+            const fullTable = document.getElementById('fullTracking');
+            
+            const rows = files.map(f => `<tr><td>${f.name}</td><td>${f.pass}</td><td>${f.uni}</td><td><span style="color:orange">Processing</span></td><td>${f.date}</td></tr>`).join('');
+            dashTable.innerHTML = rows;
+            fullTable.innerHTML = rows;
+
+            if(localStorage.getItem('compName')) document.getElementById('compName').value = localStorage.getItem('compName');
+            if(localStorage.getItem('compLic')) document.getElementById('compLic').value = localStorage.getItem('compLic');
         }
 
-        function saveData(type) {
-            alert(type + " updated successfully!");
-        }
-
-        function openApp(u) { 
-            curUni = u; 
-            document.getElementById('mTitle').innerText = u; 
-            document.getElementById('appModal').style.display = 'flex'; 
-        }
-        
         function submitApp() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Please input name and passport!");
+            if(!name || !pass) return alert("Fill data");
 
-            const row = `<tr><td>${name}</td><td>${pass}</td><td>${curUni}</td><td><span style="color:orange">Processing</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
-            document.querySelectorAll('.sharedBody').forEach(b => b.innerHTML += row);
-            
+            const files = JSON.parse(localStorage.getItem('files')) || [];
+            files.push({ name, pass, uni: curUni, date: new Date().toLocaleDateString() });
+            localStorage.setItem('files', JSON.stringify(files));
+
+            alert("File Submitted!");
             document.getElementById('appModal').style.display = 'none';
-            alert("Application Submitted & Tracking Started!");
+            loadRealTimeData();
+        }
+
+        function saveProfile() {
+            localStorage.setItem('compName', document.getElementById('compName').value);
+            localStorage.setItem('compLic', document.getElementById('compLic').value);
+            alert("Company Information Locked & Saved!");
         }
     </script>
 </body>
