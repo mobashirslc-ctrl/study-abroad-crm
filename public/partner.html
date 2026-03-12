@@ -18,7 +18,7 @@
         .logo-box { background: white; padding: 5px; border-radius: 8px; margin-bottom: 40px; }
         .logo-box img { height: 30px; }
         .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
-        .nav-links li { padding: 15px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #bdc3c7; }
+        .nav-links li { padding: 15px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 15px; color: #bdc3c7; transition: 0.2s; }
         .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
         .sidebar:hover .nav-links li span { display: inline; }
         .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.05); }
@@ -26,30 +26,34 @@
 
         .main-content { flex-grow: 1; padding: 25px; overflow-y: auto; padding-bottom: 80px; }
         
-        /* Wallet & Cards */
+        /* Wallet UI */
         .wallet-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .wallet-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 20px; border-radius: 12px; border: 1px solid var(--gold); }
-        .amount { font-size: 26px; font-weight: bold; color: var(--gold); }
-        .condition { font-size: 9px; color: #ff5e5e; margin-top: 5px; font-style: italic; }
+        .amount { font-size: 26px; font-weight: bold; color: var(--gold); margin: 5px 0; }
+        .condition-text { font-size: 9px; color: #ff5e5e; font-style: italic; }
 
+        /* Sections */
         .section { display: none; }
         .section.active { display: block; }
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 20px; }
-        .grid-11 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .grid-11 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
         label { display: block; margin-bottom: 5px; color: var(--gold); font-size: 10px; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 10px; background: var(--darker); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 5px; color: white; font-size: 12px; }
         
         .btn-gold { background: var(--gold); color: #000; border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+
+        /* Tables */
         .table-responsive { overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1100px; }
         th { text-align: left; padding: 12px; background: rgba(255, 204, 0, 0.1); color: var(--gold); border-bottom: 2px solid var(--gold); }
         td { padding: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
 
+        footer { background: var(--darker); text-align: center; padding: 15px; font-size: 11px; color: #555; border-top: 1px solid rgba(255, 255, 255, 0.05); position: fixed; bottom: 0; width: 100%; z-index: 10; }
+        
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 30px; border-radius: 15px; width: 450px; border: 1px solid var(--gold); }
         
-        footer { background: var(--darker); text-align: center; padding: 15px; font-size: 11px; color: #555; border-top: 1px solid rgba(255, 255, 255, 0.05); position: fixed; bottom: 0; width: 100%; z-index: 10; }
         #qrcode { display: none; }
     </style>
 </head>
@@ -72,12 +76,12 @@
         <div class="main-content">
             <div class="wallet-row">
                 <div class="wallet-box">
-                    <small>Estimated Earning (Pending)</small>
+                    <small>Pending Earning</small>
                     <div class="amount">৳ <span id="pndAmt">0.00</span></div>
-                    <div class="condition">* Student payment er oopor depend kor disbusres hobe</div>
+                    <div class="condition-text">* Subject to student payment disbursement</div>
                 </div>
                 <div class="wallet-box">
-                    <small>Final Wallet (Disbursed)</small>
+                    <small>Final Disbursed Wallet</small>
                     <div class="amount">৳ <span id="fnlAmt">0.00</span></div>
                 </div>
             </div>
@@ -86,7 +90,7 @@
                 <div class="card">
                     <h3>Smart Assessment (11 Fields)</h3>
                     <div class="grid-11">
-                        <div><label>Preferred Country</label><input type="text"></div>
+                        <div><label>Preferred Country</label><input type="text" placeholder="UK/USA"></div>
                         <div><label>Degree</label><select><option>UG</option><option>PG</option></select></div>
                         <div><label>Academic Score</label><input type="text"></div>
                         <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option></select></div>
@@ -98,15 +102,19 @@
                         <div><label>Work Exp.</label><input type="text"></div>
                         <div><label>Intake</label><input type="text"></div>
                     </div>
-                    <button class="btn-gold" onclick="searchUni()" style="margin-top:15px;">Search Universities</button>
+                    <button class="btn-gold" onclick="searchUni()" style="margin-top:20px;">Find Best Match</button>
                 </div>
 
                 <div id="uniSection" class="card" style="display:none;">
-                    <h3>Assessment Result (11 Fields)</h3>
+                    <h3>Search Results</h3>
                     <div class="table-responsive">
                         <table>
-                            <thead><tr><th>University</th><th>Country</th><th>Course</th><th>Intake</th><th>Fee</th><th>Scholarship</th><th>Requirement</th><th>Location</th><th>Duration</th><th>Campus</th><th>Commission (৳)</th><th>Action</th></tr></thead>
-                            <tbody><tr><td>Coventry University</td><td>UK</td><td>MSc Data Science</td><td>Jan 2026</td><td>£16,500</td><td>£2000</td><td>6.5 IELTS</td><td>London</td><td>1 Year</td><td>Main</td><td>৳ 75,000</td><td><button class="btn-gold" style="padding:5px 10px; font-size:10px;" onclick="openFileForm('Coventry', 'Jan 2026', 'MSc Data Science', 75000)">Open File</button></td></tr></tbody>
+                            <thead>
+                                <tr><th>University</th><th>Country</th><th>Course</th><th>Intake</th><th>Fee</th><th>Scholarship</th><th>Requirement</th><th>Location</th><th>Duration</th><th>Campus</th><th>Commission (৳)</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Hertfordshire University</td><td>UK</td><td>MSc CS</td><td>Jan 2026</td><td>£15,500</td><td>£2000</td><td>6.5 IELTS</td><td>Hatfield</td><td>1 Year</td><td>Main</td><td>৳ 75,000</td><td><button class="btn-gold" style="padding:5px 10px; font-size:10px;" onclick="openFileForm('Hertfordshire', 'Jan 2026', 'MSc CS', 75000)">Open File</button></td></tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -124,7 +132,7 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3>All Files Tracking</h3>
+                    <h3>All Student Files</h3>
                     <div class="table-responsive">
                         <table>
                             <thead><tr><th>Name</th><th>Passport</th><th>Contact No</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
@@ -136,24 +144,23 @@
 
             <div id="wallet" class="section">
                 <div class="card">
-                    <h3>Withdraw Funds</h3>
+                    <h3>Request Funds Withdrawal</h3>
                     <div class="grid-11">
-                        <div><label>Payment Method</label><select id="payMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select></div>
-                        <div><label>Account Number</label><input type="text" id="drawAcc" placeholder="Acc/Phone No"></div>
-                        <div><label>Amount (৳)</label><input type="number" id="drawVal"></div>
+                        <div><label>Method</label><select><option>bKash</option><option>Nagad</option><option>Bank</option></select></div>
+                        <div><label>Account Info</label><input type="text" id="wAcc" placeholder="Number"></div>
+                        <div><label>Amount (৳)</label><input type="number" id="wAmt"></div>
                     </div>
-                    <button class="btn-gold" onclick="requestWithdrawal()" style="margin-top:20px; width:200px;">Submit Request</button>
+                    <button class="btn-gold" onclick="requestWithdrawal()" style="margin-top:20px;">Submit Withdrawal</button>
                 </div>
             </div>
 
             <div id="profile" class="section">
                 <div class="card">
-                    <h3>Company Profile Settings</h3>
+                    <h3>Partner Profile Settings</h3>
                     <table style="width:100%; border-spacing: 0 10px;">
-                        <tr><td><label>Company Name</label></td><td><input type="text" id="pCName" value="Gorun Ltd."></td></tr>
-                        <tr><td><label>Contact No</label></td><td><input type="text" id="pCPhone" placeholder="+880..."></td></tr>
-                        <tr><td><label>Address</label></td><td><textarea id="pCAddr" rows="2"></textarea></td></tr>
-                        <tr><td><label>Logo</label></td><td><input type="file" accept="image/*"></td></tr>
+                        <tr><td><label>Company Name</label></td><td><input type="text" id="compName" value="Gorun Ltd."></td></tr>
+                        <tr><td><label>Authorized Contact</label></td><td><input type="text"></td></tr>
+                        <tr><td><label>Address</label></td><td><textarea rows="2"></textarea></td></tr>
                     </table>
                     <button class="btn-gold" onclick="saveProfile()" style="margin-top:15px; width:150px;">Save Changes</button>
                 </div>
@@ -164,10 +171,10 @@
     <div id="fileModal" class="modal">
         <div class="modal-content">
             <h3 id="mTitle" style="color:var(--gold); margin-top:0;"></h3>
-            <input type="text" id="sName" placeholder="Student Full Name" style="margin-bottom:10px;">
-            <input type="text" id="sPass" placeholder="Passport Number" style="margin-bottom:10px;">
-            <input type="text" id="sPhone" placeholder="Contact Number" style="margin-bottom:10px;">
-            <p style="font-size:9px; color:#888;">Upload PDFs: Academic, Passport, Score</p>
+            <input type="text" id="sName" placeholder="Student Full Name" style="margin-bottom:12px;">
+            <input type="text" id="sPass" placeholder="Passport Number" style="margin-bottom:12px;">
+            <input type="text" id="sPhone" placeholder="Contact No" style="margin-bottom:12px;">
+            <p style="font-size:9px; color:#888;">Upload Docs (PDF Only): Academic, Passport, Lang Score</p>
             <input type="file" multiple accept=".pdf">
             <button class="btn-gold" onclick="submitFile()">Submit & Generate Slip</button>
             <button class="btn-gold" onclick="closeModal()" style="background:#444; color:#fff;">Cancel</button>
@@ -188,34 +195,28 @@
         function openFileForm(u, i, c, co) { currentUni = u; currentIntake = i; currentCourse = c; currentComm = co; document.getElementById('mTitle').innerText = "Apply: " + u; document.getElementById('fileModal').style.display = 'flex'; }
         function closeModal() { document.getElementById('fileModal').style.display = 'none'; }
 
-        // ফিক্সড লগআউট - সরাসরি login.html এ নিয়ে যাবে
         function handleLogout() {
-            if(confirm("Confirm Logout?")) {
+            if(confirm("Logout from Partner Portal?")) {
                 window.location.href = 'login.html'; 
             }
         }
 
-        // ওয়ালেট উইথড্র বাটন ফিক্স
         function requestWithdrawal() {
-            const acc = document.getElementById('drawAcc').value;
-            const amt = document.getElementById('drawVal').value;
-            if(!acc || !amt) return alert("Please fill account and amount.");
-            alert("Request for ৳" + amt + " has been submitted!");
-            document.getElementById('drawAcc').value = "";
-            document.getElementById('drawVal').value = "";
+            const amt = document.getElementById('wAmt').value;
+            if(!amt) return alert("Enter amount!");
+            alert("Withdrawal request for ৳" + amt + " submitted to admin.");
+            document.getElementById('wAmt').value = ""; document.getElementById('wAcc').value = "";
         }
 
-        // প্রোফাইল সেভ বাটন ফিক্স
         function saveProfile() {
-            const name = document.getElementById('pCName').value;
-            alert("Profile for " + name + " saved successfully!");
+            alert("Profile for " + document.getElementById('compName').value + " updated successfully!");
         }
 
         function submitFile() {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
             const phone = document.getElementById('sPhone').value;
-            if(!name || !pass || !phone) return alert("Missing fields!");
+            if(!name || !pass || !phone) return alert("Fill all data!");
 
             const qrData = "https://scc-tracking.com/id=" + pass;
             document.getElementById('qrcode').innerHTML = "";
@@ -225,22 +226,44 @@
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 const qrImg = document.querySelector("#qrcode img").src;
-                
-                // Slip Format Update
-                doc.setFillColor(11, 1, 45); doc.rect(0, 0, 210, 50, 'F');
-                doc.setTextColor(255, 204, 0); doc.setFontSize(22); doc.text("STUDENT CAREER CONSULTANCY", 105, 25, null, null, "center");
-                doc.setFontSize(10); doc.setTextColor(255, 255, 255); doc.text("OFFICIAL ACKNOWLEDGMENT SLIP", 105, 35, null, null, "center");
-                
-                doc.setTextColor(0,0,0); doc.setFontSize(14); doc.text("Congratulations Dear Student " + name + "!", 20, 65);
-                doc.setFontSize(10); doc.text("Passport: " + pass, 20, 80);
-                doc.text("University: " + currentUni, 20, 90);
-                doc.text("Partner: Gorun Ltd.", 20, 100);
-                
-                doc.addImage(qrImg, 'PNG', 85, 130, 40, 40);
-                doc.save(`Slip_${pass}.pdf`);
 
-                const row = `<tr><td>${name}</td><td>${pass}</td><td>${phone}</td><td>${currentUni}</td><td><span style='color:orange'>Pending</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
+                // PROFESSIONAL SLIP FORMAT
+                doc.setFillColor(11, 1, 45); doc.rect(0, 0, 210, 45, 'F');
+                doc.setTextColor(255, 204, 0); doc.setFontSize(22); doc.setFont(undefined, 'bold');
+                doc.text("SCC - GLOBAL EDUCATION", 105, 20, null, null, "center");
+                doc.setFontSize(10); doc.setTextColor(255, 255, 255);
+                doc.text("OFFICIAL STUDENT ACKNOWLEDGMENT SLIP", 105, 30, null, null, "center");
+                doc.setFontSize(8); doc.text("Date: " + new Date().toLocaleString(), 105, 38, null, null, "center");
+
+                doc.setTextColor(0, 0, 0); doc.setFontSize(14); doc.text("Dear " + name + ",", 20, 60);
+                doc.setFontSize(10); doc.setFont(undefined, 'normal');
+                doc.text("Your application has been successfully initiated via our authorized partner Gorun Ltd.", 20, 68);
+                
+                doc.setFont(undefined, 'bold'); doc.text("APPLICATION DETAILS:", 20, 85);
+                doc.setFont(undefined, 'normal');
+                doc.text("Passport No: " + pass, 25, 93);
+                doc.text("University: " + currentUni, 25, 100);
+                doc.text("Course: " + currentCourse, 25, 107);
+
+                doc.setFont(undefined, 'bold'); doc.text("PARTNER RESPONSIBILITIES:", 20, 130);
+                doc.setFont(undefined, 'normal');
+                doc.text("1. Verification of academic documents.", 25, 138);
+                doc.text("2. Interview guidance and regular updates.", 25, 145);
+
+                doc.setFont(undefined, 'bold'); doc.text("LIVE TRACKING:", 105, 175, null, null, "center");
+                doc.addImage(qrImg, 'PNG', 85, 180, 40, 40);
+
+                doc.setFontSize(8); doc.setTextColor(150);
+                doc.text("Electronically generated by SCC & Gorun Ltd.", 105, 240, null, null, "center");
+
+                doc.save(`SCC_Slip_${pass}.pdf`);
+
+                const row = `<tr><td>${name}</td><td>${pass}</td><td>${phone}</td><td>${currentUni}</td><td><span style="color:orange">Pending</span></td><td>${new Date().toLocaleDateString()}</td></tr>`;
                 document.querySelectorAll('.sharedTrackBody').forEach(el => el.innerHTML += row);
+                
+                let pnd = parseFloat(document.getElementById('pndAmt').innerText.replace(/,/g, ''));
+                document.getElementById('pndAmt').innerText = (pnd + currentComm).toLocaleString();
+
                 alert("Submitted!");
                 closeModal();
             }, 600);

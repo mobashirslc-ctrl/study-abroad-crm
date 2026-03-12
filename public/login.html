@@ -3,178 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Login | SCC</title>
+    <title>Partner Portal | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; }
+        :root { --gold: #ffcc00; --bg: #0b012d; --dark: #080120; }
+        body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; background: var(--bg); height: 100vh; display: flex; justify-content: center; align-items: center; color: white; }
         
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-        }
+        .container { background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 20px; border: 1px solid rgba(255, 204, 0, 0.1); width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        .logo-box { text-align: center; margin-bottom: 20px; }
+        .logo-box img { height: 45px; background: white; padding: 5px; border-radius: 8px; }
+        
+        .tab-btn { display: flex; justify-content: space-around; margin-bottom: 25px; border-bottom: 1px solid #333; }
+        .tab-btn span { padding: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; color: #777; }
+        .tab-btn span.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
-        .login-card {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 204, 0, 0.1);
-            width: 350px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-        }
+        form { display: none; }
+        form.active { display: block; }
 
-        .logo-box {
-            background: white;
-            display: inline-block;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; }
+        .input-group input { width: 100%; padding: 10px; background: var(--dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; color: white; box-sizing: border-box; outline: none; }
+        .input-group input:focus { border-color: var(--gold); }
 
-        .logo-box img {
-            height: 40px;
-        }
-
-        h2 {
-            margin-bottom: 30px;
-            color: var(--gold);
-            font-size: 22px;
-            letter-spacing: 1px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            position: relative;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 11px;
-            color: var(--gold);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-
-        .input-group i {
-            position: absolute;
-            left: 15px;
-            top: 32px;
-            color: #666;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 12px 12px 40px;
-            background: var(--darker);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            color: white;
-            box-sizing: border-box;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .input-group input:focus {
-            border-color: var(--gold);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: var(--gold);
-            border: none;
-            border-radius: 8px;
-            color: #000;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-
-        .login-btn:hover {
-            background: #e6b800;
-            transform: translateY(-2px);
-        }
-
-        .footer-text {
-            margin-top: 25px;
-            font-size: 11px;
-            color: #777;
-        }
-
-        /* Error message style */
-        #errorMsg {
-            color: #ff5e5e;
-            font-size: 12px;
-            margin-bottom: 15px;
-            display: none;
-        }
+        .btn-main { width: 100%; padding: 12px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-main:hover { background: #e6b800; transform: translateY(-2px); }
+        
+        .footer-note { font-size: 10px; color: #555; text-align: center; margin-top: 20px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="logo-box">
-            <img src="logo.jpeg" alt="SCC Logo">
-        </div>
+    <div class="container">
+        <div class="logo-box"><img src="logo.jpeg" alt="SCC"></div>
         
-        <h2>PARTNER LOGIN</h2>
+        <div class="tab-btn">
+            <span id="loginTab" class="active" onclick="toggleForm('login')">LOGIN</span>
+            <span id="regTab" onclick="toggleForm('register')">REGISTRATION</span>
+        </div>
 
-        <div id="errorMsg">Invalid Username or Password!</div>
-
-        <form id="loginForm">
+        <form id="loginForm" class="active">
             <div class="input-group">
-                <label>Username</label>
-                <i class="fa-solid fa-user"></i>
-                <input type="text" id="username" placeholder="Enter username" required>
+                <label>Gmail / Username</label>
+                <input type="email" id="lEmail" placeholder="partner@gmail.com" required>
             </div>
-
             <div class="input-group">
                 <label>Password</label>
-                <i class="fa-solid fa-lock"></i>
-                <input type="password" id="password" placeholder="Enter password" required>
+                <input type="password" id="lPass" placeholder="******" required>
             </div>
-
-            <button type="submit" class="login-btn">LOGIN NOW</button>
+            <button type="submit" class="btn-main">LOGIN AS PARTNER</button>
         </form>
 
-        <div class="footer-text">
-            Authorized Partner Access Only <br>
+        <form id="regForm">
+            <div class="input-group">
+                <label>Company Name</label>
+                <input type="text" placeholder="e.g. Gorun Ltd." required>
+            </div>
+            <div class="input-group">
+                <label>Authorized Person Name</label>
+                <input type="text" placeholder="Full Name" required>
+            </div>
+            <div class="input-group">
+                <label>Contact Number</label>
+                <input type="text" placeholder="+880..." required>
+            </div>
+            <div class="input-group">
+                <label>Address</label>
+                <input type="text" placeholder="Office Location" required>
+            </div>
+            <div class="input-group">
+                <label>Gmail</label>
+                <input type="email" placeholder="official@gmail.com" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" placeholder="Create Password" required>
+            </div>
+            <button type="submit" class="btn-main">SUBMIT APPLICATION</button>
+        </form>
+
+        <div class="footer-note">
+            Authorized Partner Portal <br>
             Student Career Consultancy &copy; 2026
         </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        function toggleForm(type) {
+            document.querySelectorAll('form').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.tab-btn span').forEach(s => s.classList.remove('active'));
             
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            const error = document.getElementById('errorMsg');
-
-            // Simple Logic: Username 'partner' and Password 'scc123'
-            // You can change these values or link to your database later
-            if (user === 'partner' && pass === 'scc123') {
-                error.style.display = 'none';
-                // Success: Redirecting to partner.html
-                window.location.href = 'partner.html';
+            if(type === 'login') {
+                document.getElementById('loginForm').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
             } else {
-                error.style.display = 'block';
-                // Clear password field
-                document.getElementById('password').value = '';
+                document.getElementById('regForm').classList.add('active');
+                document.getElementById('regTab').classList.add('active');
             }
-        });
-    </script>
+        }
 
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            window.location.href = 'partner.html';
+        };
+
+        document.getElementById('regForm').onsubmit = (e) => {
+            e.preventDefault();
+            alert("Registration request sent to SCC Admin. You will receive a confirmation mail soon.");
+            toggleForm('login');
+        };
+    </script>
 </body>
 </html>
