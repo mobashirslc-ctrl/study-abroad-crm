@@ -6,143 +6,139 @@
     <title>Partner Dashboard | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* আপনার গতকালকের অরিজিনাল লকড ডিজাইন CSS */
         body {
             margin: 0; padding: 0; display: flex;
-            min-height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; color: white;
+            height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; color: white;
+            overflow: hidden;
         }
-        /* Sidebar Styling */
-        .sidebar {
-            width: 250px; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1); padding: 20px;
-            display: flex; flex-direction: column;
-        }
-        .logo-box { background: white; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 30px; }
-        .logo-box img { height: 35px; }
-        
-        .nav-links { list-style: none; padding: 0; flex-grow: 1; }
-        .nav-links li { padding: 15px; margin-bottom: 10px; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px; }
-        .nav-links li:hover, .nav-links li.active { background: #ffcc00; color: #0b012d; font-weight: bold; }
-        
-        .logout-btn {
-            background: #ff4444; color: white; border: none; padding: 12px;
-            border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-        }
-        .logout-btn:hover { background: #cc0000; }
 
-        /* Main Content */
-        .main-content { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h1 { color: #ffcc00; margin: 0; }
+        .sidebar {
+            width: 80px; background: #080120; border-right: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex; flex-direction: column; align-items: center; padding: 20px 0;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 20px; }
+        
+        .logo-box { background: white; padding: 5px; border-radius: 8px; margin-bottom: 40px; }
+        .logo-box img { height: 30px; }
+
+        .nav-links { list-style: none; padding: 0; width: 100%; }
+        .nav-links li { 
+            padding: 15px; margin-bottom: 15px; cursor: pointer; display: flex; 
+            align-items: center; gap: 15px; color: #bdc3c7; transition: 0.3s;
+        }
+        .nav-links li i { font-size: 20px; min-width: 30px; text-align: center; }
+        .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
+        .sidebar:hover .nav-links li span { display: inline; }
+        
+        .nav-links li:hover, .nav-links li.active { color: #ffcc00; background: rgba(255, 204, 0, 0.05); border-left: 3px solid #ffcc00; }
+
+        .logout-btn {
+            margin-top: auto; background: none; border: none; color: #ff5e5e;
+            cursor: pointer; display: flex; align-items: center; gap: 15px; padding: 15px; width: 100%;
+        }
+        .logout-btn span { display: none; }
+        .sidebar:hover .logout-btn span { display: inline; }
+
+        .main-content { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .header h1 { color: #ffcc00; font-size: 22px; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
 
         .card {
-            background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02); padding: 35px; border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05); max-width: 850px;
         }
 
-        /* Form Styling */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; color: #ffcc00; font-size: 14px; }
+        /* আজ যে ফিল্ডগুলো ঠিক করলাম সেগুলোর গ্রিড স্টাইল */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .full-width { grid-column: span 2; }
+        
+        label { display: block; margin-bottom: 10px; color: #ffcc00; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; }
+        
         input, select {
-            width: 100%; padding: 12px; background: rgba(255, 255, 255, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; outline: none; box-sizing: border-box;
+            width: 100%; padding: 14px; background: #080120;
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; color: white; outline: none; font-size: 14px;
         }
+        
+        input:focus { border-color: #ffcc00; background: #0a0229; }
+
         .submit-btn {
-            grid-column: span 2; padding: 15px; background: #ffcc00; color: #0b012d;
-            border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px;
+            width: 100%; padding: 16px; background: #ffcc00; color: #0b012d;
+            border: none; border-radius: 4px; font-weight: bold; font-size: 14px; 
+            cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 15px;
+            letter-spacing: 1px;
         }
-        .submit-btn:hover { background: #e6b800; transform: translateY(-2px); }
+        .submit-btn:hover { background: #e6b800; transform: translateY(-1px); box-shadow: 0 5px 15px rgba(255, 204, 0, 0.1); }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
+        <div class="logo-box"><img src="logo.jpeg" alt="S"></div>
         <ul class="nav-links">
-            <li class="active"><i class="fa-solid fa-user-plus"></i> Add Student</li>
-            <li><i class="fa-solid fa-list-check"></i> Student List</li>
-            <li><i class="fa-solid fa-file-contract"></i> Agreements</li>
-            <li><i class="fa-solid fa-gear"></i> Settings</li>
+            <li class="active"><i class="fa-solid fa-plus-circle"></i> <span>Add Student</span></li>
+            <li><i class="fa-solid fa-users-line"></i> <span>File Status</span></li>
+            <li><i class="fa-solid fa-folder-open"></i> <span>My Applications</span></li>
+            <li><i class="fa-solid fa-user-gear"></i> <span>Profile</span></li>
         </ul>
         <button class="logout-btn" onclick="handleLogout()">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
+            <i class="fa-solid fa-power-off"></i> <span>Logout</span>
         </button>
     </div>
 
     <div class="main-content">
         <div class="header">
-            <h1>Partner Dashboard</h1>
-            <div id="welcomeUser" style="color: #bdc3c7;">Welcome, Partner</div>
+            <h1>Partner Portal</h1>
+            <div style="font-size: 11px; color: #3d3461;">System: Online | v1.0.2</div>
         </div>
 
         <div class="card">
-            <h3 style="margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Register New Student File</h3>
-            <form id="studentForm">
-                <div class="form-grid">
-                    <div class="input-group">
-                        <label>Student Full Name</label>
-                        <input type="text" id="studentName" placeholder="Enter Full Name" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Passport Number</label>
-                        <input type="text" id="passportNumber" placeholder="Ex: A01234567" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Course/Program</label>
-                        <input type="text" id="course" placeholder="Ex: Bachelor of Science" required>
-                    </div>
-                    <div class="input-group">
-                        <label>Target Country</label>
-                        <select id="country">
-                            <option value="UK">United Kingdom</option>
-                            <option value="USA">USA</option>
-                            <option value="Canada">Canada</option>
-                            <option value="Australia">Australia</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Initial Status</label>
-                        <input type="text" value="File Received" readonly style="color: #bdc3c7;">
-                    </div>
-                    <button type="submit" class="submit-btn">Save Student File</button>
+            <h2 style="font-size: 15px; margin-bottom: 30px; color: #bdc3c7; font-weight: 400; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">Enter New Student Information</h2>
+            
+            <form id="studentForm" class="form-grid">
+                <div class="input-group">
+                    <label>Student Full Name</label>
+                    <input type="text" id="studentName" placeholder="As per passport" required>
+                </div>
+                <div class="input-group">
+                    <label>Passport Number</label>
+                    <input type="text" id="passportNumber" placeholder="Ex: A01234567" required>
+                </div>
+                <div class="input-group">
+                    <label>Course Name</label>
+                    <input type="text" id="course" placeholder="Applied Course" required>
+                </div>
+                <div class="input-group">
+                    <label>Destination Country</label>
+                    <select id="country">
+                        <option value="UK">United Kingdom</option>
+                        <option value="USA">USA</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Australia">Australia</option>
+                    </select>
+                </div>
+                <div class="full-width">
+                    <button type="submit" class="submit-btn">Save & Create File</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Logout ফাংশন
         function handleLogout() {
-            if(confirm("Are you sure you want to logout?")) {
+            if(confirm("Logout from system?")) {
                 localStorage.clear();
-                sessionStorage.clear();
                 window.location.href = "/login";
             }
         }
 
-        // Student Form সাবমিট লজিক (ভবিষ্যতের জন্য কানেক্টেড)
-        document.getElementById('studentForm').addEventListener('submit', async (e) => {
+        // ফর্ম ডাটা হ্যান্ডেলিং (নেক্সট স্টেপ ডাটাবেজ)
+        document.getElementById('studentForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            
-            const studentData = {
-                name: document.getElementById('studentName').value,
-                passport: document.getElementById('passportNumber').value,
-                course: document.getElementById('course').value,
-                country: document.getElementById('country').value
-            };
-
-            console.log("Saving Student Data:", studentData);
-            alert("✅ Student File Saved Successfully! (Database connection coming soon)");
+            alert("✅ Student File Data Received Locally.");
             e.target.reset();
         });
-
-        // ব্রাউজার ব্যাক বাটন প্রিভেন্ট করা লগআউট অবস্থায়
-        window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function () {
-            window.history.go(1);
-        };
     </script>
-
 </body>
 </html>
