@@ -6,109 +6,81 @@
     <title>Admin Dashboard | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* আপনার অরিজিনাল গ্লাস ডিজাইন */
         :root {
-            --brand-green: #2ecc71;
-            --brand-purple: #2c003e;
-            --glass: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(46, 204, 113, 0.25);
+            --primary-green: #2ecc71;
+            --deep-purple: #1a0026;
         }
-
         body {
-            background: radial-gradient(circle at top right, #3d005e, #1a0026);
-            color: #ffffff;
+            background: radial-gradient(circle at top right, #2c003e, #12001a);
+            color: #fff;
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            min-height: 100vh;
             display: flex;
         }
-
-        /* Sidebar - Your Original Design */
         .sidebar {
             width: 280px;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(20px);
-            border-right: 1px solid var(--glass-border);
-            padding: 25px;
+            border-right: 1px solid rgba(46, 204, 113, 0.2);
             height: 100vh;
+            padding: 30px;
             position: fixed;
         }
-
-        .logo-area {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--brand-green);
-            text-align: center;
+        .logo-text {
+            color: var(--primary-green);
+            font-size: 22px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--primary-green);
+            padding-bottom: 10px;
             margin-bottom: 40px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--brand-green);
         }
-
-        .nav-link {
+        .nav-item {
             display: flex;
             align-items: center;
-            padding: 14px 18px;
+            padding: 15px;
+            margin-bottom: 10px;
             color: rgba(255,255,255,0.7);
             text-decoration: none;
             border-radius: 12px;
-            margin-bottom: 8px;
             transition: 0.3s;
         }
-
-        .nav-link:hover, .nav-link.active {
-            background: rgba(46, 204, 113, 0.15);
-            color: var(--brand-green);
-            box-shadow: inset 4px 0 0 var(--brand-green);
+        .nav-item.active, .nav-item:hover {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--primary-green);
+            box-shadow: inset 4px 0 0 var(--primary-green);
         }
-
-        .nav-link i { margin-right: 15px; font-size: 18px; }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 280px;
-            flex: 1;
-            padding: 40px;
-        }
-
+        .main-content { margin-left: 280px; flex: 1; padding: 40px; }
         .glass-card {
-            background: var(--glass);
+            background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(25px);
-            border: 1px solid var(--glass-border);
+            border: 1px solid rgba(46, 204, 113, 0.2);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
-
-        .btn-green {
-            background: var(--brand-green);
+        .btn-update {
+            background: var(--primary-green);
             color: #000;
+            font-weight: bold;
             border: none;
             padding: 12px 25px;
-            border-radius: 10px;
-            font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
-            transition: 0.3s;
         }
-
-        .btn-green:hover { box-shadow: 0 0 20px rgba(46, 204, 113, 0.4); transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <aside class="sidebar">
-        <div class="logo-area">ASG ADMIN</div>
-        <nav>
-            <a href="admin.html" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a>
-            <a href="#" class="nav-link"><i class="fas fa-university"></i> Universities</a>
-            <a href="partner.html" class="nav-link"><i class="fas fa-handshake"></i> Partners</a>
-            <a href="compliance.html" class="nav-link"><i class="fas fa-shield-alt"></i> Compliance</a>
-        </nav>
-    </aside>
-    
-    <main class="main-content">
+    <div class="sidebar">
+        <div class="logo-text">ASG GLOBAL</div>
+        <a href="admin.html" class="nav-item active"><i class="fas fa-home"></i>&nbsp;&nbsp;Dashboard</a>
+        <a href="partner.html" class="nav-item"><i class="fas fa-handshake"></i>&nbsp;&nbsp;Partners</a>
+        <a href="compliance.html" class="nav-item"><i class="fas fa-shield-alt"></i>&nbsp;&nbsp;Compliance</a>
+    </div>
+    <div class="main-content">
         <div class="glass-card">
-            <h1 style="margin-top:0;">Welcome back, Admin</h1>
-            <p style="opacity: 0.8;">Admin link error fixed. Frontend is ready for Part 1.</p>
-            <div id="connection-status" style="color: var(--brand-green); font-weight: bold;">● Firebase System: Connected</div>
+            <h2 style="color: var(--primary-green);">Admin Overview</h2>
+            <p>Design 100% Restored. Yellow replaced with Brand Green.</p>
         </div>
-    </main>
+    </div>
 </body>
 </html>

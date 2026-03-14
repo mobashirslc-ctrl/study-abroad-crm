@@ -2,108 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compliance Portal | ASG Global</title>
+    <title>Partner Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --brand-green: #2ecc71;
-            --brand-purple: #2c003e;
-            --glass-bg: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(46, 204, 113, 0.3);
-        }
-
-        body {
-            background: radial-gradient(circle at top right, #3d005e, #1a0026);
-            color: #ffffff;
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 40px;
-            min-height: 100vh;
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; }
-
-        .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 35px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--brand-green);
-            padding-bottom: 20px;
-            margin-bottom: 35px;
-        }
-
-        .file-list-item {
-            background: rgba(255, 255, 255, 0.04);
-            border-left: 5px solid var(--brand-green);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.3s ease;
-        }
-
-        .file-list-item:hover {
-            transform: scale(1.01);
-            background: rgba(46, 204, 113, 0.05);
-        }
-
-        .action-btn {
-            background: var(--brand-green);
-            color: #000;
-            border: none;
-            padding: 12px 25px;
+        :root { --p-green: #2ecc71; }
+        body { background: #12001a; color: #fff; font-family: sans-serif; margin: 0; display: flex; }
+        .sidebar { width: 260px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid rgba(46, 204, 113, 0.2); }
+        .main { flex: 1; padding: 30px; }
+        /* সার্চ বার যা ভিডিওতে হলুদ ছিল */
+        .search-university {
+            border: 1.5px solid var(--p-green);
+            background: rgba(255,255,255,0.05);
             border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            display: flex;
+            overflow: hidden;
+            margin: 20px 0;
         }
-
-        .action-btn:hover {
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        .search-btn { background: var(--p-green); color: #000; border: none; padding: 10px 20px; font-weight: bold; }
+        .glass-table {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            border-collapse: collapse;
         }
-
-        .status-badge {
-            background: rgba(46, 204, 113, 0.1);
-            color: var(--brand-green);
-            border: 1px solid var(--brand-green);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 13px;
-        }
+        .glass-table th { color: var(--p-green); border-bottom: 1px solid var(--p-green); padding: 15px; text-align: left; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="glass-panel">
-            <div class="header-flex">
-                <h1>Compliance Dashboard</h1>
-                <div class="status-badge">Staff Authorization: Active</div>
-            </div>
-
-            <div id="pending-tasks">
-                <h3 style="color: var(--brand-green);">Pending File Verifications</h3>
-                
-                <div class="file-list-item">
-                    <div>
-                        <h4 style="margin: 0 0 5px 0;">Student ID: #ASG-8849</h4>
-                        <small style="color: rgba(255,255,255,0.6);">Partner: Global Admissions | Submitted: 2 Hours Ago</small>
-                    </div>
-                    <button class="action-btn">Review & Approve</button>
-                </div>
-            </div>
+    <div class="sidebar"></div>
+    <div class="main">
+        <div class="search-university">
+            <input type="text" style="flex:1; background:transparent; border:none; color:white; padding:10px;" placeholder="Search University...">
+            <button class="search-btn">SEARCH</button>
         </div>
+        <table class="glass-table">
+            <thead>
+                <tr><th>University Name</th><th>Commission</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>University of East London</td><td style="color:var(--p-green);">£ 15,000</td><td><button class="search-btn" style="padding:5px 10px;">OPEN FILE</button></td></tr>
+            </tbody>
+        </table>
     </div>
 </body>
 </html>

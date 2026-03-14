@@ -2,41 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Dashboard | ASG Global</title>
+    <title>Partner Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --brand-green: #2ecc71; --glass: rgba(255, 255, 255, 0.05); }
-        body { background: #1a0026; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: rgba(0,0,0,0.3); backdrop-filter: blur(15px); border-right: 1px solid rgba(46, 204, 113, 0.2); height: 100vh; padding: 25px; position: fixed; }
-        .main { margin-left: 260px; flex: 1; padding: 35px; }
-        .glass-card { background: var(--glass); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 15px; padding: 25px; backdrop-filter: blur(10px); }
-        .btn-green { background: var(--brand-green); color: black; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
-        table thead { color: var(--brand-green); border-bottom: 2px solid var(--brand-green); text-align: left; }
-        table th, table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        :root { --p-green: #2ecc71; }
+        body { background: #12001a; color: #fff; font-family: sans-serif; margin: 0; display: flex; }
+        .sidebar { width: 260px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid rgba(46, 204, 113, 0.2); }
+        .main { flex: 1; padding: 30px; }
+        /* সার্চ বার যা ভিডিওতে হলুদ ছিল */
+        .search-university {
+            border: 1.5px solid var(--p-green);
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            display: flex;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .search-btn { background: var(--p-green); color: #000; border: none; padding: 10px 20px; font-weight: bold; }
+        .glass-table {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            border-collapse: collapse;
+        }
+        .glass-table th { color: var(--p-green); border-bottom: 1px solid var(--p-green); padding: 15px; text-align: left; }
     </style>
 </head>
 <body>
-    <aside class="sidebar">
-        <h2 style="color: var(--brand-green); border-bottom: 1px solid var(--brand-green); padding-bottom: 10px;">PARTNER</h2>
-        <nav style="margin-top: 30px;">
-            <a href="#" style="color: var(--brand-green); text-decoration: none; display: block; margin-bottom: 15px;"><i class="fas fa-home"></i> Home</a>
-        </nav>
-    </aside>
-    <main class="main">
-        <div class="glass-card">
-            <h2>Partner Control Panel</h2>
-            <button class="btn-green">+ New Application</button>
-            <table>
-                <thead>
-                    <tr><th>Student Name</th><th>Passport</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>John Doe</td><td>A1234567</td><td style="color: var(--brand-green);">Verified</td></tr>
-                </tbody>
-            </table>
+    <div class="sidebar"></div>
+    <div class="main">
+        <div class="search-university">
+            <input type="text" style="flex:1; background:transparent; border:none; color:white; padding:10px;" placeholder="Search University...">
+            <button class="search-btn">SEARCH</button>
         </div>
-    </main>
+        <table class="glass-table">
+            <thead>
+                <tr><th>University Name</th><th>Commission</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>University of East London</td><td style="color:var(--p-green);">£ 15,000</td><td><button class="search-btn" style="padding:5px 10px;">OPEN FILE</button></td></tr>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
