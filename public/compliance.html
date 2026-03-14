@@ -15,49 +15,64 @@
         
         body { background: var(--bg-deep); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 240px; background: rgba(0,0,0,0.3); backdrop-filter: blur(15px); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+        /* Sidebar */
+        .sidebar { width: 260px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
         .nav-item { padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; color: #ccc; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-size: 14px; }
         .nav-item.active { background: rgba(255,255,255,0.05); color: #fff; border-left: 3px solid var(--gold); }
 
-        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        /* Main Content */
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
         
-        .top-info { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-        .staff-badge { background: var(--gold); color: #000; padding: 6px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+        /* সার্চ বার যা ভিডিওতে হলুদ ছিল */
+        .search-university {
+            border: 1.5px solid var(--p-green);
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            display: flex;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .search-btn { background: var(--p-green); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; }
 
-        .queue-card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.05); }
-        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; color: var(--gold); font-size: 18px; font-weight: bold; }
+        /* Queue Card & Table */
+        .queue-card { background: var(--card-bg); border-radius: 15px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--gold); font-size: 18px; font-weight: bold; }
 
-        .glass-table { width: 100%; border-collapse: collapse; }
-        .glass-table th { text-align: left; color: var(--gold); font-size: 11px; text-transform: uppercase; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .glass-table td { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 13px; color: #eee; }
+        .glass-table {
+            width: 100%;
+            background: transparent;
+            border-collapse: collapse;
+        }
+        .glass-table th { color: var(--gold); border-bottom: 1px solid var(--p-green); padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; }
+        .glass-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
 
-        .claim-btn { background: var(--gold); color: #000; border: none; padding: 8px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .claim-btn:hover { transform: scale(1.05); }
-
-        .status-tag { font-weight: bold; font-size: 11px; color: var(--gold); }
+        .claim-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .status-text { font-weight: bold; color: var(--p-green); }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <img src="logo.png" style="height: 40px; margin-bottom: 40px;">
-        <div class="nav-item active"><i class="fas fa-folder-open"></i> Incoming Files</div>
-        <div class="nav-item"><i class="fas fa-history"></i> Processed History</div>
-        <div class="nav-item" style="margin-top: auto; color: #ff4757;"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        <div style="padding: 20px 0; font-weight: bold; color: var(--gold); font-size: 20px;">SCC ADMIN</div>
+        <div class="nav-item active"><i class="fas fa-folder-open"></i> Active Queue</div>
+        <div class="nav-item"><i class="fas fa-history"></i> My History</div>
+        <div class="nav-item" style="margin-top: auto; color: #ff4757;"><i class="fas fa-sign-out-alt"></i> Logout Staff</div>
     </aside>
 
     <div class="main">
-        <div class="top-info">
-            <div class="staff-badge"><i class="fas fa-shield-alt"></i> COMPLIANCE_OFFICER: MOBASHIR</div>
+        <div class="search-university">
+            <input type="text" style="flex:1; background:transparent; border:none; color:white; padding:10px;" placeholder="Search Student or Passport...">
+            <button class="search-btn">SEARCH</button>
         </div>
 
         <div class="queue-card">
-            <div class="card-header"><i class="fas fa-folder"></i> Active File Queue</div>
+            <div class="card-header"><i class="fas fa-list-ul"></i> Active Application Queue</div>
             <table class="glass-table">
                 <thead>
                     <tr>
-                        <th>Student Information</th>
-                        <th>Partner Agency</th>
+                        <th>Student Name</th>
+                        <th>Passport</th>
+                        <th>Agency</th>
                         <th>Compliance Status</th>
                         <th>Action</th>
                     </tr>
@@ -81,7 +96,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // ১. ডাটা লোড করা
         function fetchQueue() {
             db.ref('applications').on('value', (snapshot) => {
                 const tbody = document.getElementById('adminTableBody');
@@ -93,11 +107,12 @@
                     
                     const row = `
                         <tr>
-                            <td><b>${data.studentName}</b><br><small>${data.passport}</small></td>
+                            <td>${data.studentName}</td>
+                            <td>${data.passport}</td>
                             <td>${data.partnerOrg}</td>
-                            <td class="status-tag">${data.compliance || 'Pending'}</td>
+                            <td><span class="status-text">${data.compliance || 'Pending'}</span></td>
                             <td>
-                                <button class="claim-btn" onclick="updateFlow('${id}')">Claim & Review</button>
+                                <button class="claim-btn" onclick="updateStatusFlow('${id}')">Claim & Review</button>
                             </td>
                         </tr>
                     `;
@@ -106,36 +121,21 @@
             });
         }
 
-        // ২. স্ট্যাটাস আপডেট ফ্লো (আপনার দেওয়া ৫টি স্টেজ অনুযায়ী)
-        function updateFlow(id) {
-            const options = [
-                "Pending Review",
-                "SOP/GS Under Review",
-                "Correction Required",
-                "File Received",
-                "Application Submitted",
-                "Visa Applied",
-                "Visa Approved",
-                "Visa Rejection",
-                "Ready to Collect",
-                "Paid",
-                "Refund Processed"
+        function updateStatusFlow(id) {
+            const stages = [
+                "Pending Review", "SOP/GS Under Review", "Correction Required",
+                "File Received", "Application Submitted", "Visa Applied",
+                "Visa Approved", "Visa Rejection", "Ready to Collect", "Paid", "Refund Processed"
             ];
 
-            let msg = "Select New Status (Type number):\n";
-            options.forEach((opt, idx) => msg += `${idx + 1}. ${opt}\n`);
+            let menu = "Select New Status (Enter Number):\n";
+            stages.forEach((s, i) => menu += `${i+1}. ${s}\n`);
 
-            const choice = prompt(msg);
-            if (choice && options[choice - 1]) {
-                const newStatus = options[choice - 1];
-                
-                // ডাটাবেজ আপডেট
-                db.ref('applications/' + id).update({
-                    compliance: newStatus,
-                    handledBy: "Mobashir"
-                }).then(() => {
-                    alert("Status changed to: " + newStatus);
-                });
+            const choice = prompt(menu);
+            if(choice && stages[choice-1]) {
+                const newStatus = stages[choice-1];
+                db.ref('applications/' + id).update({ compliance: newStatus })
+                .then(() => alert("Updated to: " + newStatus));
             }
         }
 
