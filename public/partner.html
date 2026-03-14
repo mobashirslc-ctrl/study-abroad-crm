@@ -16,7 +16,7 @@
         .nav-icon.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
         .logout-icon { margin-top: auto; color: #ff4757; margin-bottom: 20px; }
 
-        .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; }
+        .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; display: none; /* Hidden until approved */ }
         .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
         /* Stats Grid */
@@ -40,9 +40,17 @@
 
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .section { display: none; } .section.active { display: block; }
+
+        /* Loading Overlay */
+        #auth-loading { position: fixed; inset: 0; background: #060212; z-index: 3000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
 <body>
+
+    <div id="auth-loading">
+        <i class="fas fa-circle-notch fa-spin" style="font-size: 40px; color: var(--accent); margin-bottom: 15px;"></i>
+        <p>Verifying Security Status...</p>
+    </div>
 
     <aside class="sidebar">
         <div class="nav-icon active" onclick="showSec('home', this)"><i class="fas fa-home"></i></div>
@@ -51,7 +59,7 @@
         <div class="nav-icon logout-icon" onclick="logout()"><i class="fas fa-sign-out-alt"></i></div>
     </aside>
 
-    <main class="main-container">
+    <main class="main-container" id="mainDashboard">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
             <img src="logo.jpeg" style="height: 50px;">
             <div style="text-align: right;">
@@ -139,11 +147,29 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // 1. Auth & Real-time Profile
+        // 1. Auth & Approval Verification
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById('userMailDisplay').innerText = user.email;
-                loadRealtimeData();
+                // Check database for approval status
+                db.ref('users/' + user.uid).on('value', snapshot => {
+                    const userData = snapshot.val();
+                    
+                    if (userData && userData.approved === true) {
+                        // User is approved - Show Dashboard
+                        document.getElementById('auth-loading').style.display = 'none';
+                        document.getElementById('mainDashboard').style.display = 'block';
+                        document.getElementById('userMailDisplay').innerText = user.email;
+                        loadRealtimeData();
+                    } else {
+                        // User exists but not approved
+                        alert("Your account is pending for Admin Approval. Please contact SCC Compliance.");
+                        auth.signOut();
+                    }
+                }, (error) => {
+                    // This triggers if rules prevent reading (e.g., user not in database)
+                    alert("Unauthorized Access. Contact Admin.");
+                    auth.signOut();
+                });
             } else {
                 window.location.href = 'index.html';
             }
@@ -189,6 +215,7 @@
             }).then(() => {
                 document.getElementById('slipModal').style.display = 'flex';
                 document.getElementById('resName').innerText = n;
+                document.getElementById('qrcode').innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), { text: p, width: 120, height: 120 });
             });
         }
