@@ -27,25 +27,62 @@
             <div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="fullName" placeholder="Full Name" required></div>
             <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="email" placeholder="Email Address" required></div>
             <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
-            <button type="submit" class="btn">Register Now</button>
+            <button type="submit" class="btn" id="regBtn">Register Now</button>
         </form>
-        <p>Already have an account? <a href="/login">Login here</a></p>
+        <p>Already have an account? <a href="index.html">Login here</a></p>
     </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
     <script>
-        document.getElementById('regForm').addEventListener('submit', async (e) => {
+        // Firebase Config (আপনার প্রোজেক্টের ডিটেইলস)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+            authDomain: "scc-partner-portal.firebaseapp.com",
+            projectId: "scc-partner-portal",
+            databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        document.getElementById('regForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fullName: document.getElementById('fullName').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
-                })
+            
+            const name = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('regBtn');
+
+            btn.innerText = "Registering...";
+            btn.disabled = true;
+
+            // ১. Firebase Auth-এ ইউজার তৈরি করা
+            auth.createUserWithEmailAndPassword(email, pass)
+            .then((userCredential) => {
+                const user = userCredential.user;
+
+                // ২. Realtime Database-এ ইউজারের ডাটা সেভ করা
+                return db.ref('users/' + user.uid).set({
+                    fullName: name,
+                    email: email,
+                    role: "partner",
+                    approved: false, // ডিফল্টভাবে এপ্রুভড থাকবে না
+                    joinedAt: new Date().toLocaleString()
+                });
+            })
+            .then(() => {
+                alert("Registration Success! Wait for Admin Approval.");
+                auth.signOut(); // এপ্রুভ হওয়ার আগ পর্যন্ত তাকে বের করে দিন
+                window.location.href = "index.html"; // লগইন পেজে পাঠিয়ে দিন
+            })
+            .catch((error) => {
+                alert(error.message);
+                btn.innerText = "Register Now";
+                btn.disabled = false;
             });
-            const data = await res.json();
-            if (res.ok) { alert("Registration Success!"); window.location.href = "/login"; }
-            else { alert(data.msg); }
         });
     </script>
 </body>
