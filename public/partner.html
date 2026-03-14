@@ -7,155 +7,138 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --accent: #2ecc71; --bg: #0a0a0b; --glass: rgba(255, 255, 255, 0.05); }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1a002e, #0a0a0b); color: #fff; display: flex; }
+        :root { --accent: #2ecc71; --glass: rgba(255, 255, 255, 0.05); --border: rgba(46, 204, 113, 0.2); }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1a002e, #0a0a0b); color: #fff; display: flex; min-height: 100vh; }
         
         /* Sidebar */
-        .sidebar { width: 80px; height: 100vh; background: rgba(0,0,0,0.5); border-right: 1px solid rgba(46, 204, 113, 0.2); position: fixed; display: flex; flex-direction: column; align-items: center; padding: 25px 0; }
-        .nav-icon { color: rgba(255,255,255,0.4); font-size: 22px; margin-bottom: 40px; cursor: pointer; }
-        .nav-icon.active { color: var(--accent); }
+        .sidebar { width: 80px; height: 100vh; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); position: fixed; display: flex; flex-direction: column; align-items: center; padding: 25px 0; }
+        .nav-icon { color: rgba(255,255,255,0.4); font-size: 22px; margin-bottom: 40px; cursor: pointer; transition: 0.3s; }
+        .nav-icon.active, .nav-icon:hover { color: var(--accent); }
 
         .main { margin-left: 80px; flex: 1; padding: 30px; }
-        .glass-card { background: var(--glass); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
+        .glass-card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
-        /* Wallet Box */
+        /* Wallet Section */
         .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .stat-card { background: var(--glass); border: 1px solid var(--accent); border-radius: 12px; padding: 20px; position: relative; }
-        .condition-text { color: #ff4d4d; font-size: 10px; margin-top: 8px; font-weight: bold; }
+        .stat-card { background: var(--glass); border: 1px solid var(--border); border-radius: 12px; padding: 20px; border-left: 4px solid var(--accent); }
+        .cond-text { color: #ff4d4d; font-size: 10px; font-weight: bold; margin-top: 10px; }
 
-        /* Form Controls */
-        .field-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0; }
-        .field label { font-size: 11px; color: var(--accent); display: block; margin-bottom: 8px; }
-        .field input, .field select { width: 100%; background: #111113; border: 1px solid rgba(46, 204, 113, 0.3); color: #fff; padding: 10px; border-radius: 8px; outline: none; }
-        
-        .btn-green { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-green:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
+        /* Assessment Form */
+        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0; }
+        .field label { font-size: 10px; color: var(--accent); display: block; margin-bottom: 8px; font-weight: bold; }
+        .field input, .field select { width: 100%; background: #111113; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; }
 
-        /* Modal / Slip */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
-        .slip-content { background: #fff; color: #000; width: 400px; margin: 50px auto; padding: 30px; border-radius: 10px; position: relative; font-family: 'Courier New', Courier, monospace; }
-        #qrcode { margin: 20px 0; display: flex; justify-content: center; }
+        /* Result Table (11 Fields) */
+        .table-wrapper { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { text-align: left; color: var(--accent); font-size: 10px; padding: 15px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+
+        .btn-green { background: var(--accent); color: #000; border: none; padding: 10px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 10px; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+        .modal-content { background: #111113; border: 1px solid var(--accent); width: 550px; margin: 50px auto; padding: 30px; border-radius: 15px; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="nav-icon active"><i class="fas fa-home"></i></div>
-        <div class="nav-icon"><i class="fas fa-university"></i></div>
-        <div class="nav-icon"><i class="fas fa-wallet"></i></div>
+        <div class="nav-icon active"><i class="fas fa-th-large"></i></div> <div class="nav-icon"><i class="fas fa-file-invoice"></i></div> <div class="nav-icon"><i class="fas fa-wallet"></i></div> <div class="nav-icon" style="margin-top:auto;"><i class="fas fa-cog"></i></div>
     </aside>
 
     <main class="main">
         <div class="stat-grid">
             <div class="stat-card">
-                <h4 style="color:#a1a1aa; margin:0;">ESTIMATED PENDING</h4>
+                <h4 style="margin:0; font-size:12px; color:#a1a1aa;">ESTIMATED PENDING</h4>
                 <h2 style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
-                <div class="condition-text">* Condition: Student Payment er upor depend kore.</div>
+                <div class="cond-text">* Payment depends on student enrollment.</div>
             </div>
             <div class="stat-card">
-                <h4>AVAILABLE WALLET</h4>
-                <h2 style="color:var(--accent)">৳ 0.00</h2>
+                <h4 style="margin:0; font-size:12px; color:#a1a1aa;">AVAILABLE WALLET</h4>
+                <h2 style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
             </div>
             <div class="stat-card">
-                <h4>SUBSCRIPTION</h4>
-                <h2 style="color:var(--accent)">PREMIUM</h2>
+                <h4 style="margin:0; font-size:12px; color:#a1a1aa;">ACTIVE SUBSCRIPTION</h4>
+                <h2 style="color:var(--accent); margin:10px 0;">PREMIUM</h2>
             </div>
         </div>
 
         <div class="glass-card">
-            <h3>Smart Assessment Search</h3>
-            <div class="field-grid">
-                <div class="field"><label>COUNTRY</label><input type="text" placeholder="UK"></div>
+            <h3><i class="fas fa-search-location" style="color:var(--accent)"></i> Smart Assessment</h3>
+            <div class="search-grid">
+                <div class="field"><label>COUNTRY</label><input type="text" placeholder="e.g. UK"></div>
                 <div class="field">
                     <label>DEGREE</label>
-                    <select>
-                        <option>UG</option><option>PG</option><option>FOUNDATION</option>
-                        <option>DIPLOMA</option><option>PHD</option><option>RESEARCH</option>
-                    </select>
+                    <select><option>UG</option><option>PG</option><option>FOUNDATION</option><option>DIPLOMA</option><option>PHD</option></select>
                 </div>
-                <div class="field"><label>GPA / RESULT</label><input type="text"></div>
+                <div class="field"><label>GPA / RESULT</label><input type="text" placeholder="3.50"></div>
                 <div class="field">
                     <label>LANGUAGE TEST</label>
-                    <select>
-                        <option>IELTS</option><option>PTE</option><option>DUOLINGO</option>
-                    </select>
+                    <select><option>IELTS</option><option>PTE</option><option>DUOLINGO</option></select>
                 </div>
-                <div class="field"><label>SCORE</label><input type="text"></div>
+                <div class="field"><label>SCORE</label><input type="text" placeholder="6.5"></div>
             </div>
-            <button class="btn-green" onclick="document.getElementById('result-table').style.display='block'">SEARCH</button>
+            <button class="btn-green" onclick="document.getElementById('assessment-results').style.display='block'">Search University</button>
 
-            <div id="result-table" style="display:none; margin-top:30px;">
-                <table style="width:100%; text-align:left; border-collapse: collapse;">
-                    <thead style="color:var(--accent); border-bottom: 2px solid var(--accent);">
-                        <tr><th>University</th><th>Deposit</th><th>Commission (BDT)</th><th>Action</th></tr>
+            <div id="assessment-results" class="table-wrapper" style="display:none;">
+                <h4 style="color:var(--accent); margin-top:30px;">Available Options</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>University</th><th>Course</th><th>Total Fee</th><th>Scholarship</th><th>Final Fee</th>
+                            <th>Deposit</th><th>IELTS</th><th>Academic</th><th>Gap</th><th>Time</th><th>Comm.(৳)</th><th>Action</th>
+                        </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Coventry University</td>
-                            <td>£4,000</td>
-                            <td style="font-weight:bold; color:var(--accent);">৳ 25,500</td> <td><button class="btn-green" onclick="showApplyForm()">OPEN FILE</button></td>
+                            <td>University of Dundee</td><td>MSc Data Science</td><td>£18,000</td><td>£4,000</td><td>£14,000</td>
+                            <td>£5,000</td><td>6.5 (5.5)</td><td>60%</td><td>2 Yrs</td><td>3 Weeks</td>
+                            <td style="color:var(--accent); font-weight:bold;">৳ 28,000</td>
+                            <td><button class="btn-green" onclick="openAppForm()">Open File</button></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
+        <div class="glass-card">
+            <h3><i class="fas fa-sync-alt" style="color:var(--accent)"></i> Live File Tracking</h3>
+            <table>
+                <thead>
+                    <tr><th>Student Name</th><th>Passport</th><th>University</th><th>Current Status</th><th>Update Date</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Rahim Uddin</td><td>A09876543</td><td>Coventry University</td>
+                        <td><span style="border:1px solid var(--accent); color:var(--accent); padding:3px 10px; border-radius:20px; font-size:11px;">Documents Received</span></td>
+                        <td>14 Mar 2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 
-    <div id="applyModal" class="modal">
-        <div style="background: #111113; width: 500px; margin: 50px auto; padding: 30px; border-radius: 15px; border: 1px solid var(--accent);">
-            <h3 style="color:var(--accent)">Open New Student File</h3>
+    <div id="appModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--accent); margin-top:0;">Student Application Form</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                <input type="text" id="s_name" placeholder="Student Name" style="padding:10px; background:#000; color:#fff; border:1px solid #333;">
-                <input type="text" id="p_name" placeholder="Partner Name" style="padding:10px; background:#000; color:#fff; border:1px solid #333;">
-                <input type="text" id="pass_no" placeholder="Passport No" style="padding:10px; background:#000; color:#fff; border:1px solid #333;">
-                <input type="file" title="Academic Result">
-                <input type="file" title="Passport Copy">
-                <input type="file" title="Language Score">
+                <input type="text" placeholder="Student Full Name" style="padding:12px; background:#000; color:#fff; border:1px solid #333;">
+                <input type="text" placeholder="Partner Name" style="padding:12px; background:#000; color:#fff; border:1px solid #333;">
+                <input type="text" placeholder="Passport Number" style="padding:12px; background:#000; color:#fff; border:1px solid #333;">
+                <div style="color:#71717a; font-size:11px;">Upload Academic (PDF)<input type="file" style="margin-top:5px;"></div>
+                <div style="color:#71717a; font-size:11px;">Upload Passport (PDF)<input type="file" style="margin-top:5px;"></div>
+                <div style="color:#71717a; font-size:11px;">Upload Language (PDF)<input type="file" style="margin-top:5px;"></div>
             </div>
-            <button class="btn-green" style="width:100%; margin-top:20px;" onclick="generateSlip()">SUBMIT & GENERATE SLIP</button>
-        </div>
-    </div>
-
-    <div id="slipModal" class="modal">
-        <div class="slip-content">
-            <div style="text-align:center;">
-                <h2 style="margin:0;">ASG GLOBAL</h2>
-                <p style="font-size:12px;">ACKNOWLEDGEMENT SLIP</p>
-                <hr>
+            <div style="margin-top:25px; display:flex; gap:10px;">
+                <button class="btn-green" style="flex:1;">Submit Application</button>
+                <button class="btn-green" onclick="document.getElementById('appModal').style.display='none'" style="background:#444; color:#fff;">Cancel</button>
             </div>
-            <p><strong>Partner:</strong> <span id="slip-p-name"></span></p>
-            <p><strong>Student:</strong> <span id="slip-s-name"></span></p>
-            <p><strong>Passport:</strong> <span id="slip-pass"></span></p>
-            <p><strong>Date:</strong> 14 March 2026</p>
-            <div id="qrcode"></div>
-            <p style="font-size:10px; text-align:center;">Scan QR to Track Live Status</p>
-            <button onclick="window.print()" style="width:100%; padding:10px; background:#000; color:#fff; cursor:pointer;">PRINT SLIP</button>
-            <button onclick="location.reload()" style="width:100%; padding:10px; margin-top:5px; cursor:pointer;">CLOSE</button>
         </div>
     </div>
 
     <script>
-        function showApplyForm() { document.getElementById('applyModal').style.display='block'; }
-        function generateSlip() {
-            const sName = document.getElementById('s_name').value;
-            const pName = document.getElementById('p_name').value;
-            const pass = document.getElementById('pass_no').value;
-            
-            document.getElementById('slip-s-name').innerText = sName;
-            document.getElementById('slip-p-name').innerText = pName;
-            document.getElementById('slip-pass').innerText = pass;
-            
-            // QR Code Generation with Render Link
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: "https://study-abroad-crm.onrender.com/track.html?pass=" + pass,
-                width: 128,
-                height: 128
-            });
-            
-            document.getElementById('applyModal').style.display='none';
-            document.getElementById('slipModal').style.display='block';
-        }
+        function openAppForm() { document.getElementById('appModal').style.display='block'; }
     </script>
 </body>
 </html>
