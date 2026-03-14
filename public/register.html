@@ -15,6 +15,7 @@
         .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
         input { width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box; }
         .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
+        .btn:disabled { background: #555; cursor: not-allowed; }
         p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
         a { color: #ffcc00; text-decoration: none; font-weight: bold; }
     </style>
@@ -37,17 +38,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase Config (আপনার প্রোজেক্টের ডিটেইলস)
+        // 1. Firebase Configuration (Matches your SCC Portal)
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
             projectId: "scc-partner-portal",
             databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com/"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.database();
 
+        // 2. Registration Logic
         document.getElementById('regForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
@@ -56,30 +62,32 @@
             const pass = document.getElementById('password').value;
             const btn = document.getElementById('regBtn');
 
-            btn.innerText = "Registering...";
+            btn.innerText = "Processing...";
             btn.disabled = true;
 
-            // ১. Firebase Auth-এ ইউজার তৈরি করা
+            // Step A: Create User in Firebase Authentication
             auth.createUserWithEmailAndPassword(email, pass)
             .then((userCredential) => {
                 const user = userCredential.user;
 
-                // ২. Realtime Database-এ ইউজারের ডাটা সেভ করা
-                return db.ref('users/' + user.uid).set({
-                    fullName: name,
+                // Step B: Save Partner data into 'partners' node
+                return db.ref('partners/' + user.uid).set({
+                    name: name,
                     email: email,
-                    role: "partner",
-                    approved: false, // ডিফল্টভাবে এপ্রুভড থাকবে না
+                    status: "Pending", // User must be approved by admin
+                    company: "N/A",
+                    uid: user.uid,
                     joinedAt: new Date().toLocaleString()
                 });
             })
             .then(() => {
-                alert("Registration Success! Wait for Admin Approval.");
-                auth.signOut(); // এপ্রুভ হওয়ার আগ পর্যন্ত তাকে বের করে দিন
-                window.location.href = "index.html"; // লগইন পেজে পাঠিয়ে দিন
+                alert("Registration Success! Please wait for Admin Approval.");
+                auth.signOut(); // Ensure they can't access dashboard until approved
+                window.location.href = "index.html"; // Redirect to login page
             })
             .catch((error) => {
-                alert(error.message);
+                // Handle Errors (e.g. Email already in use)
+                alert("Error: " + error.message);
                 btn.innerText = "Register Now";
                 btn.disabled = false;
             });
