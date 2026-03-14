@@ -2,93 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compliance Dashboard | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --p-green: #2ecc71; 
-            --gold: #f1c40f; /* ইমেজের গোল্ডেন কালার */
-            --bg-deep: #12001a; 
-        }
-        body { background: var(--bg-deep); color: #fff; font-family: sans-serif; margin: 0; display: flex; }
-        
-        /* Sidebar */
-        .sidebar { 
-            width: 260px; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); 
-            height: 100vh; border-right: 1px solid rgba(241, 196, 15, 0.1); 
-            display: flex; flex-direction: column; padding: 20px;
-        }
-        .sidebar-item { padding: 15px; color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        .sidebar-item.active { background: rgba(255,255,255,0.05); color: #fff; border-radius: 8px; }
+        :root { --gold: #ffcc00; --purple-bg: #1a0033; --card-bg: #2d004d; --text-gray: #b3b3b3; }
+        body { background-color: var(--purple-bg); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; }
 
-        .main { flex: 1; padding: 30px; }
+        /* Sidebar Design */
+        .sidebar { width: 260px; background-color: #000; display: flex; flex-direction: column; padding: 20px 0; border-right: 1px solid #333; }
+        .logo-box { background: white; margin: 0 20px 40px; padding: 10px; border-radius: 5px; text-align: center; }
+        .nav-link { padding: 15px 30px; color: var(--text-gray); text-decoration: none; display: flex; align-items: center; gap: 15px; font-size: 14px; transition: 0.3s; }
+        .nav-link:hover, .nav-link.active { background: #2d004d; color: white; border-left: 4px solid var(--gold); }
+        .logout { margin-top: auto; color: #ff4d4d; }
 
-        /* Top Header Area */
-        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .staff-id { background: var(--gold); color: #000; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 12px; }
+        /* Main Content */
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .staff-badge { background: var(--gold); color: black; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 8px; }
 
-        /* Search Bar */
-        .search-university {
-            border: 1.5px solid var(--gold);
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px; display: flex; overflow: hidden; margin: 20px 0;
-        }
-        .search-btn { background: var(--gold); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; }
+        /* Queue Table Card */
+        .queue-card { background: var(--card-bg); border-radius: 15px; padding: 30px; border: 1px solid #4d0080; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card-title { display: flex; align-items: center; gap: 10px; color: var(--gold); font-size: 18px; margin-bottom: 25px; }
 
-        /* Active File Queue Table */
-        .queue-container { background: rgba(255,255,255,0.03); padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .table-title { color: var(--gold); font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--gold); font-size: 12px; text-transform: uppercase; padding: 15px; border-bottom: 1px solid #4d0080; }
+        td { padding: 20px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
 
-        .glass-table { width: 100%; border-collapse: collapse; }
-        .glass-table th { color: var(--gold); border-bottom: 1px solid rgba(241, 196, 15, 0.3); padding: 15px; text-align: left; font-size: 12px; }
-        .glass-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-
-        /* Buttons */
-        .claim-btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
+        /* Status Colors */
         .status-unclaimed { color: var(--gold); font-weight: bold; }
-        .status-processing { color: var(--p-green); font-weight: bold; }
+        .status-processing { color: #2ecc71; font-weight: bold; }
+        
+        /* Buttons */
+        .btn-claim { background: var(--gold); color: black; border: none; padding: 8px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 12px; }
+        .btn-claim:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3); }
+        .btn-locked { background: #444; color: #888; border: none; padding: 8px 18px; border-radius: 8px; cursor: not-allowed; font-size: 12px; }
+
+        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 50px; }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
-        <div style="background: white; padding: 10px; border-radius: 5px; margin-bottom: 30px;">
-            <img src="logo.png" alt="Logo" style="width: 100%;">
-        </div>
-        <div class="sidebar-item active"><i class="fas fa-list"></i> Incoming Files</div>
-        <div class="sidebar-item"><i class="fas fa-history"></i> My History</div>
-        <div class="sidebar-item"><i class="fas fa-user"></i> Profile</div>
-        <div class="sidebar-item" style="margin-top: auto; color: #ff4757;"><i class="fas fa-sign-out-alt"></i> Logout Staff</div>
+        <div class="logo-box"><img src="logo.png" style="width: 100%;" alt="SCC Logo"></div>
+        <a href="#" class="nav-link active"><i class="fas fa-list"></i> Incoming Files</a>
+        <a href="#" class="nav-link"><i class="fas fa-history"></i> My History</a>
+        <a href="#" class="nav-link"><i class="fas fa-user"></i> Profile</a>
+        <a href="#" class="nav-link logout"><i class="fas fa-sign-out-alt"></i> Logout Staff</a>
     </div>
 
-    <div class="main">
-        <div class="top-header">
-            <h2 style="font-weight: 300;">Compliance Dashboard</h2>
-            <div class="staff-id"><i class="fas fa-shield-alt"></i> STAFF_ID: #01 (MOBASHIR)</div>
+    <div class="main-content">
+        <div class="header">
+            <h1 style="font-weight: 400; font-size: 24px;">Compliance Dashboard</h1>
+            <div class="staff-badge"><i class="fas fa-shield-alt"></i> STAFF_ID: #01 (<span id="staffNameDisplay">...</span>)</div>
         </div>
 
-        <div class="queue-container">
-            <div class="table-title"><i class="fas fa-folder-open"></i> Active File Queue</div>
-            <table class="glass-table">
+        <div class="queue-card">
+            <div class="card-title"><i class="fas fa-folder-open"></i> Active File Queue</div>
+            <table>
                 <thead>
                     <tr>
-                        <th>STUDENT NAME</th>
-                        <th>AGENCY</th>
-                        <th>CURRENT STATUS</th>
-                        <th>HANDLED BY</th>
-                        <th>ACTION</th>
+                        <th>Student Name</th>
+                        <th>Agency</th>
+                        <th>Current Status</th>
+                        <th>Handled By</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="adminTableBody">
-                    </tbody>
+                    <tr><td colspan="5" style="text-align: center; padding: 50px; color: #888;">Connecting to Real-time Database...</td></tr>
+                </tbody>
             </table>
         </div>
+        <div class="footer">© 2026 Gorun Ltd. All Rights Reserved.</div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // আপনার Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -98,60 +90,92 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // রিয়েল টাইম ডাটা লোড
-        function loadQueue() {
+        // ১. স্টাফের নাম সেট করা
+        const myName = localStorage.getItem("staffName") || prompt("Please enter your name (Staff Name):");
+        if(myName) {
+            localStorage.setItem("staffName", myName);
+            document.getElementById('staffNameDisplay').innerText = myName.toUpperCase();
+        }
+
+        // ২. রিয়েল টাইম ডাটা রিড এবং লকিং লজিক
+        function listenToQueue() {
             db.ref('applications').on('value', (snapshot) => {
                 const tbody = document.getElementById('adminTableBody');
                 tbody.innerHTML = "";
-                
+
+                if(!snapshot.exists()) {
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No active files found.</td></tr>";
+                    return;
+                }
+
                 snapshot.forEach((child) => {
                     const data = child.val();
                     const id = child.key;
                     
-                    const statusClass = (data.compliance === 'Unclaimed' || !data.compliance) ? 'status-unclaimed' : 'status-processing';
-                    
-                    const row = `
+                    let actionBtn = "";
+                    let handledByText = data.handledBy || "No one yet";
+                    let statusColor = "status-unclaimed";
+
+                    // কন্ডিশন: যদি কেউ ফাইল না ধরে থাকে (Unclaimed)
+                    if (!data.handledBy || data.handledBy === "") {
+                        actionBtn = `<button class="btn-claim" onclick="claimFile('${id}')">Claim & Review</button>`;
+                        statusColor = "status-unclaimed";
+                    } 
+                    // কন্ডিশন: যদি ফাইলটি আমার নিজের হয়
+                    else if (data.handledBy === myName) {
+                        actionBtn = `<button class="btn-claim" style="background:#2ecc71" onclick="updateStatus('${id}')">Update Status</button>`;
+                        statusColor = "status-processing";
+                        handledByText = "Picked by You";
+                    } 
+                    // কন্ডিশন: যদি অন্য কেউ ধরে ফেলে (Locked)
+                    else {
+                        actionBtn = `<button class="btn-locked" disabled>File Locked</button>`;
+                        statusColor = "status-processing";
+                        handledByText = `<i class="fas fa-user-lock"></i> ${data.handledBy}`;
+                    }
+
+                    tbody.innerHTML += `
                         <tr>
                             <td>${data.studentName}</td>
-                            <td>${data.partnerOrg || 'Agency Name'}</td>
-                            <td><span class="${statusClass}">${data.compliance || 'UNCLAIMED'}</span></td>
-                            <td style="color:#888;">${data.handledBy || 'No one yet'}</td>
-                            <td>
-                                <button class="claim-btn" onclick="openReviewFlow('${id}')">Claim & Review</button>
-                            </td>
+                            <td>${data.partnerOrg || 'General Agency'}</td>
+                            <td class="${statusColor}">${data.compliance || 'UNCLAIMED'}</td>
+                            <td>${handledByText}</td>
+                            <td>${actionBtn}</td>
                         </tr>
                     `;
-                    tbody.innerHTML += row;
                 });
             });
         }
 
-        // ক্লেইম এবং স্ট্যাটাস চেঞ্জ লজিক
-        function openReviewFlow(id) {
+        // ৩. ফাইল ক্লেইম করার ফাংশন
+        function claimFile(id) {
+            db.ref('applications/' + id).update({
+                handledBy: myName,
+                compliance: "PROCESSING"
+            }).then(() => {
+                alert("File claimed successfully! Now you can update its status.");
+            });
+        }
+
+        // ৪. স্ট্যাটাস আপডেট করার ফাংশন
+        function updateStatus(id) {
             const stages = [
                 "Pending Review", "SOP/GS Under Review", "Correction Required",
                 "File Received", "Application Submitted", "Visa Applied",
                 "Visa Approved", "Visa Rejection", "Ready to Collect", "Paid", "Refund Processed"
             ];
-
-            let menu = "Select New Status (Type the number):\n";
+            let menu = "Select New Compliance Status:\n";
             stages.forEach((s, i) => menu += `${i+1}. ${s}\n`);
-
+            
             const choice = prompt(menu);
             if(choice && stages[choice-1]) {
-                const newStatus = stages[choice-1];
-                
-                // আপডেট লজিক
                 db.ref('applications/' + id).update({
-                    compliance: newStatus,
-                    handledBy: "Mobashir" // Staff Name
-                }).then(() => {
-                    alert("Status successfully updated to: " + newStatus);
+                    compliance: stages[choice-1]
                 });
             }
         }
 
-        window.onload = loadQueue;
+        window.onload = listenToQueue;
     </script>
 </body>
 </html>
