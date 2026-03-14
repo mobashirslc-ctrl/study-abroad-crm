@@ -2,45 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal</title>
+    <title>Partner Portal | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --p-green: #2ecc71; }
-        body { background: #12001a; color: #fff; font-family: sans-serif; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: rgba(255,255,255,0.03); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid rgba(46, 204, 113, 0.2); }
-        .main { flex: 1; padding: 30px; }
-        /* সার্চ বার যা ভিডিওতে হলুদ ছিল */
-        .search-university {
-            border: 1.5px solid var(--p-green);
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            display: flex;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-        .search-btn { background: var(--p-green); color: #000; border: none; padding: 10px 20px; font-weight: bold; }
-        .glass-table {
-            width: 100%;
-            background: rgba(255,255,255,0.03);
-            border-radius: 15px;
-            border-collapse: collapse;
-        }
-        .glass-table th { color: var(--p-green); border-bottom: 1px solid var(--p-green); padding: 15px; text-align: left; }
+        :root { --brand-green: #2ecc71; }
+        body { background: #12001a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; }
+        .sidebar { width: 260px; background: rgba(0,0,0,0.3); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid rgba(46, 204, 113, 0.2); padding: 25px; position: fixed; }
+        .main { margin-left: 260px; flex: 1; padding: 40px; }
+        .search-university { display: flex; background: rgba(255,255,255,0.05); border: 1.5px solid var(--brand-green); border-radius: 12px; overflow: hidden; margin-bottom: 30px; }
+        .search-university input { flex: 1; background: transparent; border: none; padding: 15px; color: #fff; outline: none; }
+        .btn-search { background: var(--brand-green); color: #000; border: none; padding: 0 25px; font-weight: bold; cursor: pointer; }
+        /* অরিজিনাল টেবিল ডিজাইন */
+        .uni-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); border-radius: 15px; overflow: hidden; }
+        .uni-table th { background: rgba(46, 204, 113, 0.1); color: var(--brand-green); padding: 20px; text-align: left; border-bottom: 1.5px solid var(--brand-green); }
+        .uni-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
-    <div class="sidebar"></div>
+    <div class="sidebar">
+        <h2 style="color: var(--brand-green); text-align: center;">ASG PARTNER</h2>
+        <nav style="margin-top:40px;">
+            <a href="#" style="color:var(--brand-green); text-decoration: none;"><i class="fas fa-search"></i> Find University</a>
+        </nav>
+    </div>
     <div class="main">
+        <h3>Welcome, Partner! Find your university below:</h3>
         <div class="search-university">
-            <input type="text" style="flex:1; background:transparent; border:none; color:white; padding:10px;" placeholder="Search University...">
-            <button class="search-btn">SEARCH</button>
+            <input type="text" placeholder="Search by University name or Country...">
+            <button class="btn-search">SEARCH</button>
         </div>
-        <table class="glass-table">
+        <table class="uni-table">
             <thead>
-                <tr><th>University Name</th><th>Commission</th><th>Action</th></tr>
+                <tr><th>University</th><th>Course</th><th>Deposit</th><th>Commission</th><th>Action</th></tr>
             </thead>
             <tbody>
-                <tr><td>University of East London</td><td style="color:var(--p-green);">£ 15,000</td><td><button class="search-btn" style="padding:5px 10px;">OPEN FILE</button></td></tr>
+                <tr><td>Coventry University</td><td>BSc Computing</td><td>£ 4,000</td><td style="color:var(--brand-green);">£ 1,500</td><td><button class="btn-search" style="padding:5px 10px; font-size:12px;">APPLY</button></td></tr>
             </tbody>
         </table>
     </div>
