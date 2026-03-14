@@ -2,52 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --brand-green: #2ecc71; --glass: rgba(255, 255, 255, 0.05); }
-        body { background: radial-gradient(circle at top right, #2c003e, #0d0014); color: #fff; font-family: 'Poppins', sans-serif; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px); border-right: 1px solid rgba(46, 204, 113, 0.2); height: 100vh; padding: 25px; position: fixed; }
-        .logo { font-size: 22px; font-weight: bold; color: var(--brand-green); border-bottom: 2px solid var(--brand-green); padding-bottom: 15px; margin-bottom: 30px; text-align: center; }
-        .nav-link { display: flex; align-items: center; padding: 15px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; }
-        .nav-link.active, .nav-link:hover { background: rgba(46, 204, 113, 0.1); color: var(--brand-green); box-shadow: inset 4px 0 0 var(--brand-green); }
-        .main-content { margin-left: 260px; flex: 1; padding: 40px; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 20px; padding: 30px; }
-        
-        /* ২১টি ফিল্ডের জন্য গ্রিড লেআউট */
-        .admin-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        body { background: #0a0a0b; color: #fff; font-family: 'Inter', sans-serif; display: flex; margin: 0; }
+        .sidebar { width: 260px; background: #111113; height: 100vh; border-right: 1px solid #27272a; padding: 20px; position: fixed; }
+        .main { margin-left: 260px; flex: 1; padding: 40px; }
+        .form-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            background: #111113;
+            border: 1px solid #27272a;
+            padding: 30px;
+            border-radius: 12px;
+        }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 12px; margin-bottom: 5px; color: var(--brand-green); }
-        .form-group input, .form-group select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); padding: 10px; color: #fff; border-radius: 8px; outline: none; }
-        .form-group input:focus { border-color: var(--brand-green); }
-        .full-width { grid-column: span 3; }
-        .submit-btn { background: var(--brand-green); color: #000; font-weight: bold; border: none; padding: 15px; border-radius: 10px; cursor: pointer; margin-top: 10px; }
+        .form-group label { font-size: 13px; color: #71717a; margin-bottom: 8px; }
+        .form-group input, .form-group select {
+            background: #18181b;
+            border: 1px solid #27272a;
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .submit-btn {
+            grid-column: span 3;
+            background: #facc15;
+            color: #000;
+            font-weight: bold;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="logo">ASG ADMIN</div>
-        <nav>
-            <a href="admin.html" class="nav-link active"><i class="fas fa-university"></i> University Entry</a>
-            <a href="partner.html" class="nav-link"><i class="fas fa-handshake"></i> Partners</a>
-            <a href="compliance.html" class="nav-link"><i class="fas fa-user-shield"></i> Compliance</a>
-        </nav>
-    </div>
-
-    <div class="main-content">
-        <div class="glass-card">
-            <h3>Add New University (Master Control)</h3>
-            <form class="admin-form">
-                <div class="form-group"><label>University Name</label><input type="text" placeholder="e.g. Coventry University"></div>
-                <div class="form-group"><label>Country</label><select><option>UK</option><option>USA</option><option>Canada</option></select></div>
-                <div class="form-group"><label>Intake Month</label><input type="text" placeholder="September"></div>
-                <div class="form-group"><label>Course Level</label><input type="text" placeholder="Bachelors / Masters"></div>
-                <div class="form-group"><label>Tuition Fee</label><input type="text" placeholder="£ 15,000"></div>
-                <div class="form-group"><label>Initial Deposit</label><input type="text" placeholder="£ 4,000"></div>
-                <div class="form-group"><label>English Test Requirement</label><input type="text" placeholder="IELTS 6.5 / Duolingo"></div>
-                <button type="submit" class="submit-btn full-width">SAVE UNIVERSITY DATA</button>
-            </form>
+        <h2 style="color: #facc15;">Admin Panel</h2>
+        </div>
+    <div class="main">
+        <h3>Add New University Data</h3>
+        <div class="form-container">
+            <div class="form-group"><label>University Name</label><input type="text"></div>
+            <div class="form-group"><label>Country</label><input type="text"></div>
+            <div class="form-group"><label>Location/City</label><input type="text"></div>
+            <div class="form-group"><label>Intake (Month)</label><input type="text"></div>
+            <div class="form-group"><label>Intake (Year)</label><input type="text"></div>
+            <div class="form-group"><label>Course Level</label><input type="text"></div>
+            <div class="form-group"><label>Course Name</label><input type="text"></div>
+            <div class="form-group"><label>Tuition Fee (Total)</label><input type="text"></div>
+            <div class="form-group"><label>Scholarship</label><input type="text"></div>
+            <div class="form-group"><label>After Scholarship Fee</label><input type="text"></div>
+            <div class="form-group"><label>Initial Deposit</label><input type="text"></div>
+            <div class="form-group"><label>IELTS Requirement</label><input type="text"></div>
+            <div class="form-group"><label>Alternative English Test</label><input type="text"></div>
+            <div class="form-group"><label>MOI Status</label><input type="text"></div>
+            <div class="form-group"><label>Academic Requirement</label><input type="text"></div>
+            <div class="form-group"><label>Gap Acceptability</label><input type="text"></div>
+            <div class="form-group"><label>Application Fee</label><input type="text"></div>
+            <div class="form-group"><label>Commission</label><input type="text"></div>
+            <div class="form-group"><label>Processing Time</label><input type="text"></div>
+            <div class="form-group"><label>Contact Person</label><input type="text"></div>
+            <div class="form-group"><label>Special Notes</label><input type="text"></div>
+            <button class="submit-btn">UPLOAD DATA TO DATABASE</button>
         </div>
     </div>
 </body>

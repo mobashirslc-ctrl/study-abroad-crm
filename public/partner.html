@@ -2,43 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal | ASG Global</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --brand-green: #2ecc71; }
-        body { background: #12001a; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: rgba(0,0,0,0.3); backdrop-filter: blur(15px); height: 100vh; border-right: 1px solid rgba(46, 204, 113, 0.2); padding: 25px; position: fixed; }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0b;
+            color: #e4e4e7;
+            display: flex;
+        }
+        /* Sidebar Restored */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: #111113;
+            border-right: 1px solid #27272a;
+            position: fixed;
+            padding: 20px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: #a1a1aa;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .nav-item.active { background: #27272a; color: #fff; }
+        .nav-item i { margin-right: 12px; width: 20px; }
+
+        /* Main Content */
         .main { margin-left: 260px; flex: 1; padding: 40px; }
-        .search-university { display: flex; background: rgba(255,255,255,0.05); border: 1.5px solid var(--brand-green); border-radius: 12px; overflow: hidden; margin-bottom: 30px; }
-        .search-university input { flex: 1; background: transparent; border: none; padding: 15px; color: #fff; outline: none; }
-        .btn-search { background: var(--brand-green); color: #000; border: none; padding: 0 25px; font-weight: bold; cursor: pointer; }
-        /* অরিজিনাল টেবিল ডিজাইন */
-        .uni-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.02); border-radius: 15px; overflow: hidden; }
-        .uni-table th { background: rgba(46, 204, 113, 0.1); color: var(--brand-green); padding: 20px; text-align: left; border-bottom: 1.5px solid var(--brand-green); }
-        .uni-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .glass-card {
+            background: #111113;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .search-bar {
+            display: flex;
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 24px;
+        }
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: #fff;
+            width: 100%;
+            outline: none;
+        }
+        /* Your Original Table Design */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #27272a;
+            color: #71717a;
+            font-size: 13px;
+        }
+        .data-table td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #27272a;
+            font-size: 14px;
+        }
+        .btn-yellow { background: #facc15; color: #000; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <h2 style="color: var(--brand-green); text-align: center;">ASG PARTNER</h2>
-        <nav style="margin-top:40px;">
-            <a href="#" style="color:var(--brand-green); text-decoration: none;"><i class="fas fa-search"></i> Find University</a>
-        </nav>
+        <h2 style="margin-bottom: 30px; font-size: 20px;">ASG Global</h2>
+        <a href="#" class="nav-item active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="#" class="nav-item"><i class="fas fa-university"></i> Universities</a>
+        <a href="#" class="nav-item"><i class="fas fa-file-alt"></i> My Files</a>
     </div>
     <div class="main">
-        <h3>Welcome, Partner! Find your university below:</h3>
-        <div class="search-university">
-            <input type="text" placeholder="Search by University name or Country...">
-            <button class="btn-search">SEARCH</button>
+        <div class="glass-card">
+            <h3>University Search</h3>
+            <div class="search-bar">
+                <i class="fas fa-search" style="color: #71717a; margin-right: 10px; padding-top: 3px;"></i>
+                <input type="text" placeholder="Search by name, country or intake...">
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr><th>UNIVERSITY</th><th>INTAKE</th><th>COURSE</th><th>DEPOSIT</th><th>ACTION</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Coventry University</td>
+                        <td>Sep 2026</td>
+                        <td>MSc Data Science</td>
+                        <td>£4,000</td>
+                        <td><button class="btn-yellow">Apply</button></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-        <table class="uni-table">
-            <thead>
-                <tr><th>University</th><th>Course</th><th>Deposit</th><th>Commission</th><th>Action</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>Coventry University</td><td>BSc Computing</td><td>£ 4,000</td><td style="color:var(--brand-green);">£ 1,500</td><td><button class="btn-search" style="padding:5px 10px; font-size:12px;">APPLY</button></td></tr>
-            </tbody>
-        </table>
     </div>
 </body>
 </html>
