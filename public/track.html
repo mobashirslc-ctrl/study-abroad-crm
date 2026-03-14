@@ -3,43 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Your Application | SCC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Track Your Application | ASG Global</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; }
-        .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px; border-radius: 25px; text-align: center; width: 90%; max-width: 420px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 25px; }
-        .logo-box img { height: 45px; }
-        h2 { color: #ffcc00; margin-bottom: 8px; }
-        .desc { color: #bdc3c7; font-size: 14px; margin-bottom: 25px; }
-        .input-container { position: relative; margin-bottom: 20px; }
-        .input-container i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
-        input { width: 100%; padding: 15px 15px 15px 55px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; background: #ffcc00; color: #0b012d; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        #resultArea { margin-top: 25px; color: #ffcc00; display: none; }
+        :root { --brand-green: #2ecc71; }
+        body {
+            background: #0d0014;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .track-card {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            margin-top: 30px;
+            border: 1px solid var(--brand-green);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .search-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 15px;
+            color: #fff;
+            outline: none;
+        }
+
+        .search-box button {
+            background: var(--brand-green);
+            border: none;
+            padding: 0 25px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .step-active { color: var(--brand-green) !important; font-weight: bold; }
+        .bullet-active { background: var(--brand-green) !important; box-shadow: 0 0 10px var(--brand-green); }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
-        <h2>Track Your File</h2>
-        <p class="desc">Enter your Passport Number to check status.</p>
-        <div class="input-container">
-            <i class="fa-solid fa-passport"></i>
-            <input type="text" id="passportNumber" placeholder="Ex: A01234567">
+    <div class="track-card">
+        <h2 style="color: var(--brand-green);">Track Application</h2>
+        <p>Enter your Passport Number to see live status.</p>
+        
+        <div class="search-box">
+            <input type="text" placeholder="Enter Passport No...">
+            <button><i class="fas fa-search"></i> Search</button>
         </div>
-        <button class="btn" onclick="checkStatus()">Check Status</button>
-        <div id="resultArea"></div>
+
+        <div style="margin-top: 40px; text-align: left;">
+            <div style="margin-bottom: 20px;" class="step-active">
+                <span style="display:inline-block; width:12px; height:12px; border-radius:50%;" class="bullet-active"></span>
+                File Received & Verified
+            </div>
+            <div style="opacity: 0.4;">
+                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background: #555;"></span>
+                University Assessment
+            </div>
+        </div>
     </div>
-    <script>
-        function checkStatus() {
-            const passport = document.getElementById('passportNumber').value;
-            const res = document.getElementById('resultArea');
-            if(!passport) return alert("Enter Passport Number");
-            res.style.display = "block";
-            res.innerHTML = "Searching database...";
-            setTimeout(() => { res.innerHTML = "No Record Found. Contact your agent."; }, 1500);
-        }
-    </script>
 </body>
 </html>
