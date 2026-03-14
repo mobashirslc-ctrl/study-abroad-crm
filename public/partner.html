@@ -2,35 +2,124 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Partner Portal | ASG Global</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Dashboard | Study Abroad CRM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 0; background: #0a0a0b; color: #fff; font-family: 'Inter', sans-serif; display: flex; }
-        .sidebar { width: 260px; height: 100vh; background: #111113; border-right: 1px solid #27272a; position: fixed; padding: 20px; }
-        .main { margin-left: 260px; flex: 1; padding: 40px; }
-        .search-container { background: #111113; border: 1.5px solid #facc15; border-radius: 10px; display: flex; margin-bottom: 30px; }
-        .search-container input { flex: 1; background: transparent; border: none; color: #fff; padding: 15px; outline: none; }
-        .btn-search { background: #facc15; border: none; padding: 0 25px; font-weight: bold; cursor: pointer; }
-        .data-table { width: 100%; border-collapse: collapse; background: #111113; border-radius: 12px; overflow: hidden; border: 1px solid #27272a; }
-        .data-table th { text-align: left; padding: 15px; border-bottom: 2px solid #facc15; color: #facc15; }
-        .data-table td { padding: 15px; border-bottom: 1px solid #27272a; }
+        :root {
+            --accent-green: #2ecc71;
+            --bg-deep: #0d001a;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-glass: rgba(46, 204, 113, 0.2);
+            --input-bg: #111113;
+        }
+
+        body {
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1a002e, #0a0a0b);
+            color: #fff; display: flex; min-height: 100vh;
+        }
+
+        /* Sidebar - Exact as Video */
+        .sidebar {
+            width: 80px; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-glass); display: flex;
+            flex-direction: column; align-items: center; padding: 25px 0;
+            position: fixed; height: 100vh; z-index: 100;
+        }
+
+        .nav-icon {
+            color: rgba(255, 255, 255, 0.4); font-size: 22px;
+            margin-bottom: 40px; cursor: pointer; transition: 0.3s;
+        }
+
+        .nav-icon.active, .nav-icon:hover { color: var(--accent-green); }
+
+        /* Main Area */
+        .main { margin-left: 80px; flex: 1; padding: 30px; }
+
+        /* Top Statistics Boxes */
+        .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--border-glass);
+            border-radius: 12px; padding: 20px; position: relative;
+        }
+        .stat-card h4 { color: #a1a1aa; font-size: 11px; margin: 0 0 10px 0; text-transform: uppercase; }
+        .stat-card .amount { font-size: 26px; font-weight: bold; color: var(--accent-green); }
+        .condition-text { font-size: 10px; color: #ff4d4d; position: absolute; bottom: 10px; }
+
+        /* Sections from Video */
+        .glass-card {
+            background: var(--card-bg); border: 1px solid var(--border-glass);
+            border-radius: 15px; padding: 25px; margin-bottom: 25px;
+        }
+
+        /* Form Design */
+        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 15px; }
+        .field label { font-size: 11px; color: var(--accent-green); margin-bottom: 8px; display: block; }
+        .field input, .field select {
+            width: 100%; background: var(--input-bg); border: 1px solid var(--border-glass);
+            color: #fff; padding: 12px; border-radius: 8px; outline: none;
+        }
+
+        .btn-green {
+            background: var(--accent-green); color: #000; border: none;
+            padding: 14px 25px; border-radius: 8px; font-weight: bold;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; color: var(--accent-green); font-size: 12px; padding: 15px; border-bottom: 2px solid var(--border-glass); }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="sidebar"><h2 style="color:#facc15;">Partner Dashboard</h2></div>
-    <div class="main">
-        <div class="search-container">
-            <input type="text" placeholder="Search University by Name or Country...">
-            <button class="btn-search">SEARCH</button>
+    <aside class="sidebar">
+        <div class="nav-icon active"><i class="fas fa-home"></i></div>
+        <div class="nav-icon"><i class="fas fa-tachometer-alt"></i></div> <div class="nav-icon"><i class="fas fa-file-contract"></i></div> <div class="nav-icon"><i class="fas fa-wallet"></i></div> <div class="nav-icon"><i class="fas fa-user-edit"></i></div> <div class="nav-icon" style="margin-top: auto; color: #ff4d4d;"><i class="fas fa-sign-out-alt"></i></div>
+    </aside>
+
+    <main class="main">
+        <div class="top-stats">
+            <div class="stat-card">
+                <h4>ESTIMATED PENDING</h4>
+                <div class="amount" id="pending-box">৳ 0.00</div>
+                <div class="condition-text">* Condition: Payment after enrollment.</div>
+            </div>
+            <div class="stat-card">
+                <h4>AVAILABLE WALLET</h4>
+                <div class="amount" id="final-box">৳ 0.00</div>
+            </div>
+            <div class="stat-card">
+                <h4>SUBSCRIPTION STATUS</h4>
+                <div style="color:var(--accent-green); font-size: 20px; font-weight:bold;">PREMIUM ACTIVE</div>
+                <div style="font-size: 11px; color: #a1a1aa;">Expiry: 31 Dec 2026</div>
+            </div>
         </div>
-        <table class="data-table">
-            <thead>
-                <tr><th>UNIVERSITY</th><th>LEVEL</th><th>DEPOSIT</th><th>COMMISSION</th><th>ACTION</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>University of Hull</td><td>Masters</td><td>£3,000</td><td style="color:#facc15;">£1,500</td><td><button class="btn-search" style="padding:8px 15px; border-radius:5px;">Apply</button></td></tr>
-            </tbody>
-        </table>
-    </div>
+
+        <div class="glass-card">
+            <h3 style="margin-top:0;">Smart Assessment Search</h3>
+            <div class="search-grid">
+                <div class="field"><label>COUNTRY NAME</label><input type="text" placeholder="e.g. UK"></div>
+                <div class="field"><label>DEGREE</label><select><option>PG</option><option>UG</option></select></div>
+                <div class="field"><label>ACADEMIC SCORE</label><input type="text" placeholder="GPA"></div>
+                <div class="field"><label>LANGUAGE TEST</label><select><option>IELTS</option><option>PTE</option></select></div>
+                <div class="field"><label>SCORE</label><input type="text" placeholder="Overall"></div>
+            </div>
+            <button class="btn-green">SEARCH UNIVERSITY</button>
+        </div>
+
+        <div class="glass-card">
+            <h3 style="margin-top:0;">Live File Tracking (Recent)</h3>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr>
+                </thead>
+                <tbody id="tracking-table">
+                    </tbody>
+            </table>
+        </div>
+    </main>
 </body>
 </html>
