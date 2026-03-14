@@ -10,38 +10,31 @@
         :root { --accent: #2ecc71; --bg: #060212; --glass: rgba(255, 255, 255, 0.03); --border: rgba(46, 204, 113, 0.15); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #060212; color: #fff; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
+        /* Sidebar & Layout */
         .sidebar { width: 70px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; z-index: 1000; }
         .nav-icon { color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 10px; }
-        .nav-icon.active, .nav-icon:hover { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
-        .logout-btn { margin-top: auto; color: #ff4d4d; }
-
+        .nav-icon.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
         .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; }
         .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
-        /* Stats Grid */
+        /* Stats & Conditions */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
         .stat-card { border-left: 4px solid var(--accent); }
         .cond-text { color: #ff4d4d; font-size: 10px; font-weight: bold; margin-top: 8px; display: block; }
 
-        /* Inputs & Buttons */
-        .input-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 15px 0; }
-        .field label { font-size: 10px; color: var(--accent); display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; outline: none; font-size: 12px; }
-        .main-btn { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.3s; }
-        
+        /* Buttons & Inputs */
+        .main-btn { background: var(--accent); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .main-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+        input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; outline: none; margin-top: 5px; box-sizing: border-box; }
+
         /* Tables */
         .table-wrapper { overflow-x: auto; margin-top: 15px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th { text-align: left; color: var(--accent); font-size: 10px; padding: 15px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th { text-align: left; color: var(--accent); font-size: 9px; padding: 12px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
 
         .section { display: none; } .section.active { display: block; }
         .footer { background: #000; border-top: 1px solid var(--border); padding: 15px; text-align: center; font-size: 11px; color: #555; width: 100%; position: fixed; bottom: 0; left: 0; }
-
-        /* Modals */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .slip-box { background: #fff; width: 450px; padding: 30px; border-radius: 12px; color: #000; text-align: center; border: 2px dashed var(--accent); }
     </style>
 </head>
 <body>
@@ -50,13 +43,12 @@
         <div class="nav-icon active" onclick="showSec('home', this)"><i class="fas fa-home"></i></div>
         <div class="nav-icon" onclick="showSec('manage', this)"><i class="fas fa-history"></i></div>
         <div class="nav-icon" onclick="showSec('wallet', this)"><i class="fas fa-wallet"></i></div>
-        <div class="nav-icon logout-btn" onclick="window.location.href='index.html'"><i class="fas fa-sign-out-alt"></i></div>
     </aside>
 
     <main class="main-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <span>Welcome, <b style="color:var(--accent)">GORUN LTD.</b> 👋</span>
-            <button class="main-btn" style="padding: 5px 15px;" onclick="location.reload()"><i class="fas fa-sync"></i> Refresh</button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+            <div style="font-size: 18px;">Welcome, <b style="color:var(--accent)">GORUN LTD.</b></div>
+            <div style="font-size: 12px; color:#888;">March 14, 2026</div>
         </div>
 
         <div class="stats-grid">
@@ -67,51 +59,63 @@
             </div>
             <div class="glass-box stat-card">
                 <small style="color:#888;">AVAILABLE WALLET</small>
-                <h2 style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
+                <h2 id="availableAmount" style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
             </div>
             <div class="glass-box stat-card" style="border-left-color: #3498db;">
-                <small style="color:#888;">PLAN STATUS</small>
+                <small style="color:#888;">SUBSCRIPTION PLAN</small>
                 <h2 style="color:#3498db; margin:10px 0;">PREMIUM</h2>
             </div>
         </div>
 
         <section id="home" class="section active">
             <div class="glass-box">
-                <h3>Smart Assessment Search</h3>
-                <div class="input-grid">
-                    <div class="field"><label>Country</label><input type="text" placeholder="UK"></div>
-                    <div class="field"><label>Degree</label>
-                        <select>
-                            <option>SSC</option><option>HSC</option><option>Diploma</option>
-                            <option>Bachelor</option><option>Masters</option><option>PhD</option>
-                        </select>
-                    </div>
-                    <div class="field"><label>GPA</label><input type="text"></div>
-                    <div class="field"><label>Language</label>
-                        <select>
-                            <option>IELTS</option><option>PTE</option><option>Duolingo</option><option>MOI</option>
-                        </select>
-                    </div>
-                    <div class="field"><label>Score</label><input type="text"></div>
-                </div>
-                <button class="main-btn" onclick="document.getElementById('resTable').style.display='block'">Search University</button>
-                
-                <div id="resTable" class="table-wrapper" style="display:none;">
+                <h3>Assessment Results</h3>
+                <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>University</th><th>Fee</th><th>Deposit</th><th>Commission</th><th>Action</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>University</th><th>Course</th><th>Total Fee</th><th>Scholarship</th><th>Final Fee</th>
+                                <th>Deposit</th><th>IELTS</th><th>Academic</th><th>Gap</th><th>Time</th><th>Action</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr><td>Hull University</td><td>£16k</td><td>£4k</td><td>৳ 25,000</td><td><button class="main-btn" style="padding:5px 10px;" onclick="openForm()">Open File</button></td></tr>
+                            <tr>
+                                <td>University of Hull</td><td>MSc Data Science</td><td>£16,000</td><td>£3,000</td><td>£13,000</td>
+                                <td>£4,000</td><td>6.5 (5.5)</td><td>60%</td><td>2 Years</td><td>4 Weeks</td>
+                                <td><button class="main-btn" onclick="alert('Form Opening...')">Open File</button></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+        </section>
+
+        <section id="wallet" class="section">
+            <div class="glass-box">
+                <h3>Withdrawal Request</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div>
+                        <label style="font-size:10px; color:var(--accent)">METHOD</label>
+                        <select id="withdrawMethod">
+                            <option>bKash</option>
+                            <option>Nagad</option>
+                            <option>Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:10px; color:var(--accent)">AMOUNT</label>
+                        <input type="number" id="withdrawAmount" placeholder="Enter Amount">
+                    </div>
+                </div>
+                <button id="withdrawBtn" class="main-btn" style="width:100%;" disabled>Withdraw Now</button>
+            </div>
 
             <div class="glass-box">
-                <h3>Live File Tracking</h3>
+                <h3>Transaction History</h3>
                 <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Last Update</th></tr></thead>
-                        <tbody><tr><td colspan="5" style="text-align:center; color:#444; padding:20px;">No active files.</td></tr></tbody>
+                        <thead><tr><th>TXN ID</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; color:#444;">No records.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -122,28 +126,8 @@
                 <h3>Application History</h3>
                 <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>Student</th><th>Passport</th><th>Course</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody><tr><td colspan="5" style="text-align:center; color:#444;">No history available.</td></tr></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section id="wallet" class="section">
-            <div class="glass-box">
-                <h3>Withdrawal Center</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-                    <select><option>bKash</option><option>Nagad</option></select>
-                    <input type="number" placeholder="Amount (৳)">
-                </div>
-                <button class="main-btn" style="width:100%;">Submit Request</button>
-            </div>
-            <div class="glass-box">
-                <h3>Withdrawal History</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>TXN ID</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-                        <tbody><tr><td colspan="5" style="text-align:center; color:#444;">No transactions.</td></tr></tbody>
+                        <thead><tr><th>Student</th><th>Passport</th><th>Uni/Course</th><th>Status</th><th>Date</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; color:#444;">No data.</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -152,40 +136,6 @@
 
     <footer class="footer">© 2026 Student Career Consultancy | Powered by <b>GORUN LTD.</b></footer>
 
-    <div id="formModal" class="modal-overlay">
-        <div class="glass-box" style="width:480px; background:#111; border: 1px solid var(--accent);">
-            <h3 style="color:var(--accent)">New Application Form</h3>
-            <input type="text" id="s_name" placeholder="Full Name" style="margin-bottom:10px;">
-            <input type="text" id="s_pass" placeholder="Passport Number" style="margin-bottom:15px;">
-            <div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:15px;">
-                <label style="font-size:10px; color:var(--accent);">REQUIRED PDFS:</label>
-                <input type="file" accept=".pdf" style="margin-top:5px; font-size:11px;">
-                <input type="file" accept=".pdf" style="margin-top:5px; font-size:11px;">
-                <input type="file" accept=".pdf" style="margin-top:5px; font-size:11px;">
-            </div>
-            <button class="main-btn" style="width:100%" onclick="generateSlip()">Submit & Generate Slip</button>
-            <button class="main-btn" style="width:100%; margin-top:10px; background:#333; color:#fff;" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="slipModal" class="modal-overlay">
-        <div class="slip-box">
-            <img src="logo.jpeg" style="height:35px; margin-bottom:5px;">
-            <h2 style="margin:5px 0; font-size:20px; font-weight:800;">STUDENT CAREER CONSULTANCY</h2>
-            <p style="font-size:9px; letter-spacing: 2px; color:#666; border-bottom:1px solid #eee; padding-bottom:10px;">OFFICIAL ACKNOWLEDGMENT SLIP</p>
-            <h3 id="slipCongrats" style="margin:15px 0;"></h3>
-            <div style="background:#f9f9f9; padding:20px; text-align:left; border-radius:10px; font-family:monospace; font-size:12px; line-height:1.6;">
-                <b>STUDENT INFO:</b><br>
-                Name: <span id="resName"></span><br>Passport: <span id="resPass"></span><br>Date: 3/14/2026<br><br>
-                <b>PARTNER INFO:</b><br>
-                Agent: GORUN LTD.<br>Status: Processing Started
-            </div>
-            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
-            <button class="main-btn" onclick="window.print()" style="width:100%; margin-bottom:5px;">PRINT SLIP</button>
-            <button class="main-btn" style="background:#eee; color:#333; width:100%;" onclick="location.reload()">CLOSE</button>
-        </div>
-    </div>
-
     <script>
         function showSec(id, btn) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -193,19 +143,22 @@
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
         }
-        function openForm() { document.getElementById('formModal').style.display='flex'; }
-        function closeModal() { document.getElementById('formModal').style.display='none'; }
-        function generateSlip() {
-            const name = document.getElementById('s_name').value;
-            const pass = document.getElementById('s_pass').value;
-            if(!name || !pass) return alert("Required!");
-            document.getElementById('formModal').style.display = 'none';
-            document.getElementById('slipModal').style.display = 'flex';
-            document.getElementById('slipCongrats').innerText = "Congratulations " + name + "!";
-            document.getElementById('resName').innerText = name;
-            document.getElementById('resPass').innerText = pass;
-            new QRCode(document.getElementById("qrcode"), { text: "TRACK-"+pass, width: 100, height: 100 });
+
+        // Wallet Logic Check
+        function checkWallet() {
+            const availableText = document.getElementById('availableAmount').innerText;
+            const amount = parseFloat(availableText.replace('৳', '').trim());
+            const btn = document.getElementById('withdrawBtn');
+            
+            if (amount > 0) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
         }
+
+        // Run check on load
+        window.onload = checkWallet;
     </script>
 </body>
 </html>
