@@ -3,385 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | SCC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>Partner Dashboard | SCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-<<<<<<< HEAD
-        :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.03); }
-        body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
-=======
-        :root { --accent: #2ecc71; --bg: #060212; --glass: rgba(255, 255, 255, 0.03); --border: rgba(46, 204, 113, 0.15); }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar Navigation */
-        .sidebar { width: 70px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; z-index: 1000; }
-        .nav-icon { color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 10px; }
-        .nav-icon.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
-        
-        /* Logout Icon Style */
-        .logout-icon { margin-top: auto; color: #ff4757; margin-bottom: 20px; }
-        .logout-icon:hover { background: rgba(255, 71, 87, 0.1); color: #ff6b81; }
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
+        :root { --p-green: #2ecc71; --bg-deep: #0a0118; --card-bg: #12002b; }
+        body { background: var(--bg-deep); color: #fff; font-family: sans-serif; margin: 0; display: flex; min-height: 100vh; }
 
-        /* Sidebar Locked Design */
-        .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
-        .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
-        .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
-        .sidebar:hover img.logo { width: 85px; margin-left: 10px; }
+        /* Fixed Sidebar */
+        .sidebar { width: 80px; background: rgba(0,0,0,0.3); border-right: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; padding: 20px 0; position: sticky; top: 0; height: 100vh; }
+        .sidebar img { width: 40px; margin-bottom: 30px; }
+        .nav-icon { color: #888; font-size: 20px; margin: 20px 0; cursor: pointer; transition: 0.3s; }
+        .nav-icon:hover, .nav-icon.active { color: var(--p-green); }
 
-        .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
-        .nav-links li { padding: 18px; cursor: pointer; color: #bdc3c7; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
-        .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
-        .sidebar:hover .nav-links li span { display: inline; }
-        .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); }
+        /* Main Content Wrapper */
+        .main-container { flex: 1; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
 
-        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 25px; position: relative; }
-        .section { display: none; padding-bottom: 100px; }
-        .section.active { display: block; }
+        /* Wallet Cards */
+        .wallet-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .wallet-card { background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        .wallet-card h4 { margin: 0; color: #aaa; font-size: 12px; text-transform: uppercase; }
+        .wallet-card h2 { margin: 10px 0; font-size: 24px; color: var(--p-green); }
 
-<<<<<<< HEAD
-        /* Professional Stats */
-        .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid var(--gold); }
-        .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin: 5px 0; }
-        .condition { font-size: 8px; color: #ff5e5e; line-height: 1.2; }
-=======
-        /* Modal Slip Styling */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .slip-box { background: #fff; width: 450px; padding: 40px; border-radius: 20px; color: #000; text-align: center; border: 2px dashed #2ecc71; position: relative; }
-        .slip-info-card { background: #f8f9fa; padding: 25px; border-radius: 12px; text-align: left; margin: 20px 0; font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.8; color: #000; }
-        .print-btn { background: #2ecc71; color: white; width: 100%; padding: 16px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 12px; }
-        .close-btn { background: #e9e9e9; color: #333; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; }
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
+        /* Form / Search Section */
+        .action-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 12px; }
+        select, input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+        select:focus, input:focus { border-color: var(--p-green); }
 
-        /* Cards & Tables (11 Fields Ready) */
-        .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
-        input, select, textarea { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
-        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .submit-btn { background: var(--p-green); color: #000; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        .table-wrap { overflow-x: auto; margin-top: 20px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1400px; }
-        th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); background: rgba(0,0,0,0.3); }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #111; z-index: 500; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 500px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
+        .status-badge { color: #00ff00; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
-<<<<<<< HEAD
     <div class="sidebar">
-        <img src="logo.jpeg" class="logo">
-        <ul class="nav-links">
-            <li class="active" onclick="location.reload()"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="tab('dashboard')"><i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span></li>
-            <li onclick="tab('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
-            <li onclick="tab('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
-            <li onclick="tab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile Edit</span></li>
-        </ul>
-        <div style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer; text-align:center;" onclick="location.href='login.html'"><i class="fa-solid fa-right-from-bracket"></i></div>
+        <img src="logo.png" alt="Logo">
+        <div class="nav-icon active"><i class="fas fa-home"></i></div>
+        <div class="nav-icon"><i class="fas fa-chart-line"></i></div>
+        <div class="nav-icon"><i class="fas fa-wallet"></i></div>
+        <div class="nav-icon" style="margin-top: auto; color: #ff4757;"><i class="fas fa-sign-out-alt"></i></div>
     </div>
 
     <div class="main-container">
         
-        <div class="top-stats">
-            <div class="stat-box"><small>Estimated Pending</small><div class="amount" id="pendingAm">৳ 0.00</div><div class="condition">* Condition: Payment after enrollment.</div></div>
-            <div class="stat-box"><small>Available Wallet</small><div class="amount" id="availAm">৳ 0.00</div></div>
-            <div class="stat-box"><small>Subscription Status</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM ACTIVE</div><div style="font-size:10px; color:#aaa;">Expiry: 31 Dec 2026</div></div>
-        </div>
-
-        <div id="dashboard" class="section active">
-            <div class="card">
-                <h3>Smart Assessment Search</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
-                    <div><label>Country Name</label><input type="text" placeholder="e.g. UK"></div>
-                    <div><label>Degree</label><select><option>PG</option><option>UG</option></select></div>
-                    <div><label>Academic Score</label><input type="text" placeholder="GPA"></div>
-                    <div><label>Language Test</label><select><option>IELTS</option><option>PTE</option></select></div>
-                    <div><label>Score</label><input type="text" placeholder="Overall"></div>
-=======
-    <aside class="sidebar">
-        <div class="nav-icon active" onclick="showSec('home', this)"><i class="fas fa-home"></i></div>
-        <div class="nav-icon" onclick="showSec('tracking', this)"><i class="fas fa-history"></i></div>
-        <div class="nav-icon" onclick="showSec('wallet', this)"><i class="fas fa-wallet"></i></div>
-        
-        <div class="nav-icon logout-icon" onclick="logout()"><i class="fas fa-sign-out-alt"></i></div>
-    </aside>
-
-    <main class="main-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <img src="logo.jpeg" alt="Logo" style="height: 50px;">
-            <div style="text-align: right;">
-                <b style="color:var(--accent)" id="partnerBrand">LOADING...</b><br>
-                <small id="userMailDisplay" style="font-size: 10px; color: #888;"></small>
+        <div class="wallet-section">
+            <div class="wallet-card">
+                <h4>Estimated Pending</h4>
+                <h2>৳ 0.00</h2>
+                <small style="color: #ff4757;">* Condition: Payment after enrollment.</small>
+            </div>
+            <div class="wallet-card">
+                <h4>Available Wallet</h4>
+                <h2>৳ 0.00</h2>
+            </div>
+            <div class="wallet-card">
+                <h4>Subscription Status</h4>
+                <div class="status-badge">PREMIUM ACTIVE</div>
+                <small>Expiry: 31 Dec 2026</small>
             </div>
         </div>
 
-        <section id="home" class="section active">
-            <div class="stats-grid">
-                <div class="glass-box stat-card">
-                    <small>ESTIMATED PENDING</small>
-                    <h2 style="color:var(--accent);">৳ 0.00</h2>
-                    <span class="cond-tag">* Valid only if student completes full payment.</span>
-                </div>
-                <div class="glass-box stat-card"><small>AVAILABLE WALLET</small><h2 style="color:var(--accent);">৳ 0.00</h2></div>
-                <div class="glass-box stat-card" style="border-left-color: #3498db;">
-                    <small>SUBSCRIPTION</small>
-                    <h2 style="color:#3498db; margin: 5px 0 2px 0;">ACTIVE</h2>
-                    <div style="font-size: 9px; color: #888;"><i class="fas fa-calendar-check"></i> Expiry: <span style="color:#3498db">14 Mar 2027</span></div>
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
-                </div>
-                <button class="btn-gold" style="margin-top:10px;" onclick="document.getElementById('resArea').style.display='block'">Search University</button>
-            </div>
-
-<<<<<<< HEAD
-            <div class="card" id="resArea" style="display:none;">
-                <div class="table-wrap">
-=======
-            <div class="glass-box">
-                <h3>Smart Assessment Searching</h3>
-                <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:12px;">
-                    <input type="text" placeholder="Country">
-                    <select><option>Degree</option><option>Masters</option><option>Bachelor</option></select>
-                    <input type="text" placeholder="Academic Score">
-                    <select><option>IELTS</option><option>PTE</option></select>
-                    <input type="text" placeholder="Language Score">
-                </div>
-                <button class="main-btn" style="margin-top:15px;" onclick="document.getElementById('resT').style.display='block'">Check Eligibility</button>
-
-                <div id="resT" class="table-wrapper" style="display:none;">
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>University Name</th><th>Degree</th><th>Subject Area</th><th>Tuition Fee</th>
-                                <th>Partner Commission (৳)</th><th>Gap Allowed</th><th>Min. GPA</th>
-                                <th>IELTS Req.</th><th>Scholarship</th><th>Intake</th><th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>University of East London</td><td>PG</td><td>Data Science</td><td>£ 15,500</td>
-                                <td style="color:#00ff00; font-weight:bold;">৳ 68,000</td><td>5 Yrs</td><td>2.75</td><td>6.5 (5.5)</td><td>£ 2,500</td><td>Sept 2026</td>
-                                <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('UEL')">Open File</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Live File Tracking (Recent)</h3>
-                <div class="table-wrap"><table style="min-width:1000px;"><thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div>
-            </div>
+        <div class="action-bar">
+            <input type="text" placeholder="e.g. UK">
+            <select>
+                <option>PG</option>
+                <option>UG</option>
+            </select>
+            <input type="text" placeholder="GPA">
+            <select>
+                <option>IELTS</option>
+                <option>OIETC</option>
+            </select>
+            <input type="text" placeholder="Overall Score">
+            <button class="submit-btn">Search University</button>
         </div>
 
-<<<<<<< HEAD
-        <div id="tracking" class="section">
-            <div class="card"><h3>Full Tracking History</h3><div class="table-wrap"><table style="min-width:1000px;"><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div></div>
-        </div>
-
-        <div id="wallet" class="section">
-            <div class="card">
-                <h3 style="color:var(--gold);">Withdraw Commission</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div><label>Method</label><select id="wMethod"><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="bank">Bank</option></select></div>
-                    <div><label>Account / Phone</label><input type="text" id="wAcc" placeholder="017XXXXXXXX"></div>
-                    <div><label>Amount (৳)</label><input type="number" id="wAm" placeholder="Min 5000"></div>
-                    <div><label>Security Pin</label><input type="password" id="wPin" placeholder="****"></div>
-                </div>
-                <button class="btn-gold" style="margin-top:10px; width:100%;" onclick="requestWithdraw()">Submit Withdrawal Request</button>
-=======
-        <section id="tracking" class="section">
-            <div class="glass-box">
-                <h3>Application Tracking List</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Partner Name</th><th>Contact No</th><th>Org Name</th><th>Status</th><th>Compliance</th><th>Date/Time</th></tr></thead>
-                        <tbody>
-                             <tr><td>GORUN LTD</td><td>017XXXXXXXX</td><td>GORUN GROUP</td><td><span style="color:var(--accent)">Active</span></td><td>Compliance Dept</td><td>14/03/2026</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section id="wallet" class="section">
-            <div class="stats-grid">
-                <div class="glass-box stat-card"><small>TOTAL EARNED</small><h2 style="color:var(--accent);">৳ 0.00</h2></div>
-                <div class="glass-box stat-card"><small>FINAL BALANCE</small><h2 style="color:var(--accent);">৳ 0.00</h2></div>
-            </div>
-            <div class="glass-box">
-                <h3>Withdrawal Box</h3>
-                <button class="main-btn" style="width:100%" disabled>Withdrawal Locked</button>
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
-            </div>
-            <div class="card">
-                <h3>Withdrawal History</h3>
-                <div class="table-wrap"><table style="min-width:800px;"><thead><tr><th>Date</th><th>Method</th><th>Account</th><th>Amount</th><th>Status</th></tr></thead><tbody id="wHistory"></tbody></table></div>
-            </div>
-        </div>
-
-<<<<<<< HEAD
-        <div id="profile" class="section">
-            <div class="card">
-                <h3 style="color:var(--gold);">Company Professional Profile</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div><label>Legal Company Name</label><input type="text" value="GORUN LTD."></div>
-                    <div><label>Owner/CEO Name</label><input type="text"></div>
-                    <div><label>Trade License No.</label><input type="text"></div>
-                    <div><label>TIN Number</label><input type="text"></div>
-                    <div><label>Bank Name</label><input type="text"></div>
-                    <div><label>Account Number</label><input type="text"></div>
-                </div>
-                <button class="btn-gold" style="margin-top:15px;">Update Company Data</button>
-            </div>
-        </div>
-
-        <footer>© Rights & Reserved 2026 GORUN LTD. All Rights Reserved.</footer>
     </div>
 
-    <div id="appModal" class="modal">
-        <div class="modal-content">
-            <h3 id="mTitle" style="color:var(--gold);">Application Form</h3>
-            <label>Student Full Name</label><input type="text" id="sName">
-            <label>Passport Number</label><input type="text" id="sPass">
-            <p style="font-size:10px; color:var(--gold);">REQUIRED PDF DOCUMENTS:</p>
-            <label>Passport Copy</label><input type="file" accept=".pdf">
-            <label>Academic Papers</label><input type="file" accept=".pdf">
-            <button class="btn-gold" style="width:100%" id="submitBtn">Submit to Admin</button>
-            <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = { apiKey: "YOUR_KEY", authDomain: "YOUR_DOMAIN", projectId: "YOUR_ID", storageBucket: "YOUR_BUCKET", messagingSenderId: "YOUR_SENDER", appId: "YOUR_APP" };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let curUni = "";
-        window.tab = (id) => {
-=======
-    <div id="formModal" class="modal-overlay">
-        <div style="background:#111; padding:30px; border-radius:15px; border:1px solid var(--accent); width:400px;">
-            <h3>New Application Form</h3>
-            <input type="text" id="sName" placeholder="Student Name"><br><br>
-            <input type="text" id="sCont" placeholder="Contact No"><br><br>
-            <input type="text" id="sPass" placeholder="Passport No"><br><br>
-            <button class="main-btn" style="width:100%" onclick="submitFinal()">Submit Application</button>
-            <button class="main-btn" style="width:100%; margin-top:10px; background:#333; color:#fff;" onclick="document.getElementById('formModal').style.display='none'">Cancel</button>
-        </div>
-    </div>
-
-    <div id="slipModal" class="modal-overlay">
-        <div class="slip-box">
-            <img src="logo.jpeg" style="height:45px; margin-bottom:10px;">
-            <h2 style="font-size:20px; font-weight:bold;">STUDENT CAREER CONSULTANCY</h2>
-            <div class="slip-info-card">
-                <b>STUDENT INFORMATION:</b><br>
-                Name: <span id="resName"></span><br>
-                Passport: <span id="resPass"></span><br>
-                <b>PARTNER: GORUN LTD.</b>
-            </div>
-            <div id="qrcode" style="display:flex; justify-content:center; margin:25px 0;"></div>
-            <button class="print-btn" onclick="window.print()">PRINT SLIP</button>
-            <button class="close-btn" onclick="location.reload()">CLOSE</button>
-        </div>
-    </div>
-
-    <footer class="footer">© 2026 Student Career Consultancy. All Rights Reserved</footer>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-
-    <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-
-        // 1. Security Check (Monitor Auth State)
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('userMailDisplay').innerText = user.email;
-                document.getElementById('partnerBrand').innerText = "GORUN LTD."; // Static for now
-            } else {
-                // If not logged in, redirect to index.html
-                window.location.href = 'index.html';
-            }
-        });
-
-        // 2. Logout Function
-        function logout() {
-            if(confirm("Are you sure you want to logout?")) {
-                auth.signOut().then(() => {
-                    window.location.href = 'index.html';
-                });
-            }
-        }
-
-        // Original UI Functions
-        function showSec(id, btn) {
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-<<<<<<< HEAD
-            event.currentTarget.classList.add('active');
-        };
-
-        window.openApp = (u) => { curUni = u; document.getElementById('mTitle').innerText = u; document.getElementById('appModal').style.display = 'flex'; };
-
-        document.getElementById('submitBtn').onclick = async function() {
-            const name = document.getElementById('sName').value;
-            const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Required!");
-            await addDoc(collection(db, "applications"), { studentName: name, passport: pass, university: curUni, status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString() });
-            alert("Sent!"); document.getElementById('appModal').style.display = 'none';
-        };
-
-        onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
-            let r = ""; snap.forEach(doc => { const d = doc.data(); r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`; });
-            document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
-        });
-
-        window.requestWithdraw = () => {
-            const am = document.getElementById('wAm').value;
-            if(!am || am < 5000) return alert("Min 5000 required!");
-            const row = `<tr><td>${new Date().toLocaleDateString()}</td><td>${document.getElementById('wMethod').value}</td><td>${document.getElementById('wAcc').value}</td><td>৳ ${am}</td><td><b style="color:orange">Pending</b></td></tr>`;
-            document.getElementById('wHistory').innerHTML += row;
-            alert("Withdrawal request sent!");
-        };
-=======
-            btn.classList.add('active');
-        }
-        function openPopup() { document.getElementById('formModal').style.display='flex'; }
-        function submitFinal() {
-            const n = document.getElementById('sName').value;
-            const p = document.getElementById('sPass').value;
-            if(!n || !p) return alert("Missing Data!");
-            
-            document.getElementById('slipModal').style.display='flex';
-            document.getElementById('resName').innerText = n;
-            document.getElementById('resPass').innerText = p;
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: p, width: 120, height: 120 });
-        }
->>>>>>> 44a9f4d (Added logout button and security check to partner dashboard)
-    </script>
 </body>
 </html>
