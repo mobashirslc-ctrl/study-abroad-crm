@@ -10,6 +10,7 @@
         :root { --accent: #2ecc71; --bg: #060212; --glass: rgba(255, 255, 255, 0.03); --border: rgba(46, 204, 113, 0.15); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
         
+        /* Navigation Sidebar */
         .sidebar { width: 70px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; z-index: 1000; }
         .nav-icon { color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 10px; }
         .nav-icon.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
@@ -17,16 +18,25 @@
         .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; }
         .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { border-left: 4px solid var(--accent); }
+        .cond-text { color: #ff4d4d; font-size: 9px; font-weight: bold; margin-top: 5px; display: block; }
+
+        /* Tables & UI */
         .table-wrapper { overflow-x: auto; margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
-        th { text-align: left; color: var(--accent); font-size: 9px; padding: 12px; border-bottom: 2px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+        th { text-align: left; color: var(--accent); font-size: 9px; padding: 12px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        
+        .commission-cell { color: #f1c40f !important; font-weight: bold; background: rgba(241, 196, 15, 0.05); }
         
         input, select { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; font-size: 12px; margin-bottom: 10px; }
         .main-btn { background: var(--accent); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .main-btn:disabled { background: #333 !important; color: #777 !important; cursor: not-allowed; }
 
+        /* Slip & Modal */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .popup-card { background: #111; border: 1px solid var(--accent); width: 420px; padding: 25px; border-radius: 15px; }
         .slip-box { background: #fff; width: 480px; padding: 40px; border-radius: 15px; color: #000; text-align: center; border: 2px dashed var(--accent); }
 
         .section { display: none; } .section.active { display: block; }
@@ -43,36 +53,66 @@
 
     <main class="main-container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <img src="logo.jpeg" alt="SCC Logo" style="height: 50px;">
-            <div style="text-align: right;"><b style="color:var(--accent)">GORUN LTD.</b></div>
+            <img src="logo.jpeg" alt="Logo" style="height: 55px;">
+            <div style="text-align: right;"><b style="color:var(--accent)">GORUN LTD.</b><br><small>Verified Partner</small></div>
         </div>
 
         <section id="home" class="section active">
-            <div class="glass-box">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin:0;">Assessment Filter</h3>
-                    <button class="main-btn" onclick="location.reload()" style="background:transparent; border:1px solid var(--border); color:var(--accent);">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
+            <div class="stats-grid">
+                <div class="glass-box stat-card">
+                    <small style="color:#888;">ESTIMATED PENDING</small>
+                    <h2 style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
+                    <span class="cond-text">* Payment depends on student payment status. Only valid after 100% confirmation.</span>
                 </div>
-                <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; margin-top:15px;">
-                    <input type="text" placeholder="Country">
-                    <select><option>Masters</option><option>Bachelor</option></select>
-                    <input type="text" placeholder="GPA">
-                    <select><option>IELTS</option><option>PTE</option></select>
-                    <input type="text" placeholder="Score">
+                <div class="glass-box stat-card">
+                    <small style="color:#888;">AVAILABLE WALLET</small>
+                    <h2 id="availWallet" style="color:var(--accent); margin:10px 0;">৳ 0.00</h2>
                 </div>
-                <button class="main-btn" style="margin-top:15px;" onclick="document.getElementById('resT').style.display='block'">Search Now</button>
+                <div class="glass-box stat-card" style="border-left-color: #3498db;">
+                    <small style="color:#888;">SUBSCRIPTION</small>
+                    <h2 style="color:#3498db; margin:10px 0;">PREMIUM</h2>
+                </div>
+            </div>
 
-                <div id="resT" class="table-wrapper" style="display:none;">
+            <div class="glass-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+                    <h3 style="margin:0;">Assessment Search</h3>
+                    <button class="main-btn" onclick="location.reload()" style="background:transparent; border:1px solid var(--border); color:var(--accent);"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:12px;">
+                    <div><label style="font-size:9px;">COUNTRY</label><input type="text" placeholder="e.g. UK"></div>
+                    <div>
+                        <label style="font-size:9px;">DEGREE</label>
+                        <select>
+                            <option>Masters</option><option>Bachelor</option><option>MBA</option><option>M.Phil</option><option>PhD</option><option>Diploma</option><option>Foundation</option><option>Pre-Masters</option><option>O-Level</option><option>A-Level</option><option>Short Course</option><option>Other</option>
+                        </select>
+                    </div>
+                    <div><label style="font-size:9px;">GPA</label><input type="text" placeholder="5.00"></div>
+                    <div>
+                        <label style="font-size:9px;">LANGUAGE</label>
+                        <select>
+                            <option>IELTS</option><option>PTE</option><option>Duolingo</option><option>TOEFL</option><option>ELLT</option><option>MOI</option><option>OIETC</option>
+                        </select>
+                    </div>
+                    <div><label style="font-size:9px;">SCORE</label><input type="text" placeholder="6.5"></div>
+                </div>
+                <button class="main-btn" style="margin-top:20px;" onclick="document.getElementById('resTable').style.display='block'">Check Eligibility</button>
+
+                <div id="resTable" class="table-wrapper" style="display:none;">
                     <table>
                         <thead>
-                            <tr><th>University</th><th>Course</th><th>Total Fee</th><th>Partner Commission (৳)</th><th>Action</th></tr>
+                            <tr>
+                                <th>University</th><th>Course</th><th>Total Fee</th><th>Scholarship</th>
+                                <th>Final Fee</th><th>Deposit</th><th>IELTS</th><th>Academic</th>
+                                <th class="commission-cell">Partner Commission (৳)</th>
+                                <th>Action</th>
+                            </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Hull University</td><td>MSc Data Science</td><td>£16,000</td>
-                                <td style="color:#f1c40f; font-weight:bold;">৳ 25,000</td>
+                                <td>Hull University</td><td>MSc Data Science</td><td>£16,000</td><td>£3,000</td>
+                                <td>£13,000</td><td>£4,000</td><td>6.5 (6.0)</td><td>65%</td>
+                                <td class="commission-cell">৳ 25,000</td>
                                 <td><button class="main-btn" onclick="openPopup()">Open File</button></td>
                             </tr>
                         </tbody>
@@ -81,34 +121,39 @@
             </div>
         </section>
 
-        </main>
+        <section id="wallet" class="section">
+            <div class="glass-box">
+                <h3>Withdrawal</h3>
+                <button class="main-btn" style="width:100%" disabled>Withdraw Locked (৳ 0.00)</button>
+            </div>
+        </section>
+    </main>
 
     <div id="formModal" class="modal-overlay">
-        <div class="popup-card">
-            <h3 style="color:var(--accent);">Registration Form</h3>
+        <div style="background:#111; padding:30px; border-radius:15px; border:1px solid var(--accent); width:400px;">
+            <h3>New Registration</h3>
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="sPass" placeholder="Passport No">
-            <div style="margin:10px 0; border:1px dashed var(--border); padding:10px;">
-                <label style="font-size:10px; color:var(--accent)">Upload 3 PDF Files</label>
+            <div style="border:1px dashed var(--border); padding:10px; margin-bottom:15px;">
+                <small style="color:var(--accent)">Upload 3 PDFs</small>
                 <input type="file" accept=".pdf" style="margin-top:5px;"><input type="file" accept=".pdf"><input type="file" accept=".pdf">
             </div>
-            <button class="main-btn" style="width:100%; margin-top:10px;" onclick="submitAndShowSlip()">Submit & Generate Slip</button>
-            <button class="main-btn" style="width:100%; margin-top:10px; background:#333; color:#fff;" onclick="closePopup()">Cancel</button>
+            <button class="main-btn" style="width:100%" onclick="submitAndSlip()">Submit & Generate Slip</button>
         </div>
     </div>
 
     <div id="slipModal" class="modal-overlay">
         <div class="slip-box">
             <img src="logo.jpeg" style="height:50px; margin-bottom:10px;">
-            <h2>STUDENT CAREER CONSULTANCY</h2>
+            <h2 style="margin:0;">STUDENT CAREER CONSULTANCY</h2>
             <hr style="border:0.5px solid #eee; margin:20px 0;">
             <h3 id="resTitle" style="font-size:24px;"></h3>
-            <div style="background:#f9f9f9; padding:20px; border-radius:12px; text-align:left; font-family:monospace; font-size:13px;">
+            <div style="background:#f9f9f9; padding:25px; border-radius:12px; text-align:left; font-family:monospace; font-size:13px;">
                 <b>STUDENT:</b> <span id="resName"></span><br>
                 <b>PASSPORT:</b> <span id="resPass"></span><br>
                 <b>PARTNER:</b> GORUN LTD.
             </div>
-            <div id="qrcode" style="display:flex; justify-content:center; margin:25px 0;"></div>
+            <div id="qrcode" style="display:flex; justify-content:center; margin:30px 0;"></div>
             <button class="main-btn" onclick="window.print()">PRINT SLIP</button>
             <button class="main-btn" style="background:#eee; color:#333;" onclick="location.reload()">CLOSE</button>
         </div>
@@ -125,21 +170,16 @@
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
         }
-
-        function openPopup() { document.getElementById('formModal').style.display = 'flex'; }
-        function closePopup() { document.getElementById('formModal').style.display = 'none'; }
-
-        function submitAndShowSlip() {
+        function openPopup() { document.getElementById('formModal').style.display='flex'; }
+        function submitAndSlip() {
             const n = document.getElementById('sName').value;
             const p = document.getElementById('sPass').value;
             if(!n || !p) return alert("Fill all fields!");
-
-            document.getElementById('formModal').style.display = 'none';
-            document.getElementById('slipModal').style.display = 'flex';
+            document.getElementById('formModal').style.display='none';
+            document.getElementById('slipModal').style.display='flex';
             document.getElementById('resTitle').innerText = "Congratulations, " + n + "!";
             document.getElementById('resName').innerText = n;
             document.getElementById('resPass').innerText = p;
-
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById("qrcode"), { text: p, width: 120, height: 120 });
         }
