@@ -10,49 +10,50 @@
         :root { --accent: #2ecc71; --bg: #060212; --glass: rgba(255, 255, 255, 0.03); --border: rgba(46, 204, 113, 0.15); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #060212; color: #fff; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
         .sidebar { width: 70px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; z-index: 1000; }
         .nav-icon { color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 10px; }
         .nav-icon.active, .nav-icon:hover { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
         .logout-btn { margin-top: auto; color: #ff4d4d; }
 
         .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; }
-        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); position: relative; }
+        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
-        /* Titles & Buttons */
+        /* Titles & Tables */
         .sec-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .refresh-btn { background: transparent; border: 1px solid var(--border); color: var(--accent); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; transition: 0.3s; }
-        .refresh-btn:hover { background: var(--accent); color: #000; }
-
-        /* Tables */
-        .table-wrapper { overflow-x: auto; margin-top: 10px; border-radius: 10px; }
+        .refresh-btn { background: transparent; border: 1px solid var(--border); color: var(--accent); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+        
+        .table-wrapper { overflow-x: auto; margin-top: 15px; border-radius: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th { text-align: left; color: var(--accent); font-size: 10px; padding: 12px; border-bottom: 2px solid var(--border); text-transform: uppercase; background: rgba(0,0,0,0.2); }
+        th { text-align: left; color: var(--accent); font-size: 10px; padding: 12px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
 
-        .main-btn { background: var(--accent); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .input-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .main-btn { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        
+        /* Assessment Fields */
+        .input-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin: 20px 0; }
+        .field label { font-size: 10px; color: var(--accent); display: block; margin-bottom: 6px; font-weight: bold; }
         input, select { width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; outline: none; box-sizing: border-box; }
 
         .section { display: none; } .section.active { display: block; }
         .footer { background: #000; border-top: 1px solid var(--border); padding: 15px; text-align: center; font-size: 11px; color: #555; width: 100%; position: fixed; bottom: 0; left: 0; }
-        
+
+        /* Modals */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; justify-content: center; align-items: center; }
-        .slip-box { background: #fff; width: 450px; padding: 30px; border-radius: 12px; color: #000; text-align: center; }
+        .slip-box { background: #fff; width: 460px; padding: 25px; border-radius: 12px; color: #000; text-align: center; border: 2px dashed var(--accent); }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div class="nav-icon active" onclick="showSec('home', this)"><i class="fas fa-home"></i></div>
-        <div class="nav-icon" onclick="showSec('manage', this)"><i class="fas fa-user-edit"></i></div>
+        <div class="nav-icon" onclick="showSec('manage', this)"><i class="fas fa-file-invoice"></i></div>
         <div class="nav-icon" onclick="showSec('wallet', this)"><i class="fas fa-wallet"></i></div>
         <div class="nav-icon logout-btn" onclick="window.location.href='index.html'"><i class="fas fa-sign-out-alt"></i></div>
     </aside>
 
     <main class="main-container">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <div>Welcome, <b style="color:var(--accent)">GORUN LTD.</b></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+            <div style="font-size: 18px;">Welcome, <b style="color:var(--accent)">GORUN LTD.</b></div>
             <div style="font-size: 12px; color:#888;">March 14, 2026</div>
         </div>
 
@@ -64,83 +65,100 @@
                 </div>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr><th>Student Name</th><th>Passport</th><th>University</th><th>Current Status</th><th>Update Time</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>No files in tracking</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
-                        </tbody>
+                        <thead><tr><th>Student Name</th><th>Passport</th><th>University</th><th>Current Status</th><th>Update Time</th></tr></thead>
+                        <tbody><tr><td colspan="5" style="text-align:center; color:#555; padding:20px;">No files being tracked at the moment.</td></tr></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="glass-box">
-                <h3>Quick Assessment Search</h3>
-                <button class="main-btn" onclick="alert('Search feature loading...')">Start New Assessment</button>
+                <div class="sec-title">
+                    <h3>Quick Assessment Search</h3>
+                </div>
+                <button id="startBtn" class="main-btn" onclick="toggleAssessment()">Start New Assessment</button>
+                
+                <div id="searchFields" style="display:none; margin-top:20px;">
+                    <div class="input-grid">
+                        <div class="field"><label>COUNTRY</label><input type="text" placeholder="e.g. UK"></div>
+                        <div class="field"><label>DEGREE</label>
+                            <select><option>SSC</option><option>HSC</option><option>UG</option><option>PG</option><option>Masters</option></select>
+                        </div>
+                        <div class="field"><label>GPA</label><input type="text"></div>
+                        <div class="field"><label>LANGUAGE</label>
+                            <select><option>IELTS</option><option>PTE</option><option>MOI</option><option>Duolingo</option></select>
+                        </div>
+                        <div class="field"><label>SCORE</label><input type="text"></div>
+                    </div>
+                    <button class="main-btn" onclick="showResults()">Search University</button>
+                </div>
+
+                <div id="resultsTable" class="table-wrapper" style="display:none;">
+                    <table>
+                        <thead><tr><th>University</th><th>Fee</th><th>Deposit</th><th>Action</th></tr></thead>
+                        <tbody>
+                            <tr><td>Coventry University</td><td>£15k</td><td>£4k</td><td><button class="main-btn" style="padding:5px 15px;" onclick="openAppForm()">OPEN FILE</button></td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <section id="manage" class="section">
-            <div class="glass-box">
-                <h3>Update Partner Profile</h3>
-                <div class="input-grid">
-                    <div><label style="font-size:10px; color:var(--accent)">COMPANY NAME</label><input type="text" value="GORUN LTD."></div>
-                    <div><label style="font-size:10px; color:var(--accent)">PHONE NUMBER</label><input type="text" value="+88017XXXXXXXX"></div>
-                    <div style="grid-column: span 2;"><label style="font-size:10px; color:var(--accent)">OFFICE ADDRESS</label><input type="text" value="Dhaka, Bangladesh"></div>
-                </div>
-                <button class="main-btn" style="margin-top:15px;">Save Profile</button>
-            </div>
-
-            <div class="glass-box">
-                <h3>Application History</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Name</th><th>Contact</th><th>Passport</th><th>Country</th><th>Course</th><th>Action</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>Example Student</td><td>01800...</td><td>A123456</td><td>UK</td><td>MSc Data Science</td><td><button class="refresh-btn">Details</button></td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="glass-box"><h3>Application History</h3><p style="color:#555">No previous data found.</p></div>
         </section>
 
         <section id="wallet" class="section">
-            <div class="glass-box">
-                <h3>Wallet Overview</h3>
-                <div style="display:flex; gap:20px;">
-                    <div style="flex:1; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
-                        <span style="font-size:10px; color:#888;">Available Balance</span>
-                        <h2 style="color:var(--accent); margin:5px 0;">৳ 0.00</h2>
-                    </div>
-                    <div style="flex:1; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;">
-                        <span style="font-size:10px; color:#888;">Pending Commission</span>
-                        <h2 style="color:#ff4d4d; margin:5px 0;">৳ 0.00</h2>
-                    </div>
-                </div>
-                <button class="main-btn" style="margin-top:15px; width:100%;">Request Withdrawal</button>
-            </div>
-
-            <div class="glass-box">
-                <h3>Withdrawal History</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Transaction ID</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="5" style="text-align:center; color:#444;">No transactions found.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div class="glass-box"><h3>Wallet & Withdraw</h3><p style="color:#555">Balance: ৳ 0.00</p></div>
         </section>
     </main>
 
-    <footer class="footer">
-        © 2026 Student Career Consultancy. Powered by <b>GORUN LTD.</b>
-    </footer>
+    <footer class="footer">© 2026 Student Career Consultancy. All Rights Reserved. Powered by <b>GORUN LTD.</b></footer>
+
+    <div id="formModal" class="modal-overlay">
+        <div class="glass-box" style="width:480px; background:#111; border: 1px solid var(--accent);">
+            <h3 style="color:var(--accent)">New Application Form</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:15px;">
+                <input type="text" id="s_name" placeholder="Full Name">
+                <input type="text" id="s_contact" placeholder="Contact Number">
+                <input type="text" id="s_pass" placeholder="Passport Number" style="grid-column: span 2;">
+            </div>
+            <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px;">
+                <label style="font-size:11px; color:var(--accent);">REQUIRED PDFS:</label>
+                <input type="file" accept=".pdf" style="margin-top:10px; display:block; font-size:11px;">
+                <input type="file" accept=".pdf" style="margin-top:5px; display:block; font-size:11px;">
+                <input type="file" accept=".pdf" style="margin-top:5px; display:block; font-size:11px;">
+            </div>
+            <button class="main-btn" style="width:100%" onclick="submitAndGenerateSlip()">Submit & Generate Slip</button>
+            <button class="main-btn" style="width:100%; margin-top:10px; background:#333; color:#fff;" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="slipModal" class="modal-overlay">
+        <div class="slip-box">
+            <img src="logo.jpeg" style="height:35px; margin-bottom:5px;">
+            <h2 style="margin:5px 0 0 0; font-size:20px; font-weight:800;">STUDENT CAREER CONSULTANCY</h2>
+            <p style="font-size:9px; letter-spacing: 2px; color:#666; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:15px;">OFFICIAL ACKNOWLEDGMENT SLIP</p>
+            
+            <h3 id="slipCongrats" style="margin:10px 0; font-size:16px;"></h3>
+            <p style="font-size:11px; color:#555;">Your file opening process has <b>successfully started</b>. Scan the QR to track updates.</p>
+
+            <div style="background:#f9f9f9; padding:20px; text-align:left; border-radius:10px; margin-top:15px; font-family:monospace; font-size:12px; line-height:1.6;">
+                <b>STUDENT INFORMATION:</b><br>
+                Name: <span id="slipName"></span><br>
+                Passport: <span id="slipPass"></span><br>
+                Date: 3/14/2026<br><br>
+                <b>PARTNER DETAILS:</b><br>
+                Authorized Partner: GORUN LTD.<br>
+                Contact: +88017XXXXXXXX<br>
+                Address: Dhaka, Bangladesh
+            </div>
+
+            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
+
+            <button class="main-btn" onclick="window.print()" style="width:100%; height:45px; margin-bottom:10px;">PRINT SLIP</button>
+            <button class="main-btn" style="background:#eee; color:#333; width:100%;" onclick="location.reload()">CLOSE</button>
+        </div>
+    </div>
 
     <script>
         function showSec(id, btn) {
@@ -148,6 +166,39 @@
             document.querySelectorAll('.nav-icon').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
+        }
+
+        function toggleAssessment() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('searchFields').style.display = 'block';
+        }
+
+        function showResults() {
+            document.getElementById('resultsTable').style.display = 'block';
+        }
+
+        function openAppForm() {
+            document.getElementById('formModal').style.display = 'flex';
+        }
+
+        function closeModals() {
+            document.getElementById('formModal').style.display = 'none';
+        }
+
+        function submitAndGenerateSlip() {
+            const name = document.getElementById('s_name').value;
+            const pass = document.getElementById('s_pass').value;
+            if(!name || !pass) return alert("Required: Name & Passport");
+
+            document.getElementById('formModal').style.display = 'none';
+            document.getElementById('slipModal').style.display = 'flex';
+            
+            document.getElementById('slipCongrats').innerText = "Congratulations " + name + "!";
+            document.getElementById('slipName').innerText = name;
+            document.getElementById('slipPass').innerText = pass;
+
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: "SCC-TRACK-"+pass, width: 110, height: 110 });
         }
     </script>
 </body>
