@@ -7,119 +7,120 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --accent: #2ecc71; --bg: #060212; --border: rgba(46, 204, 113, 0.2); --glass: rgba(255, 255, 255, 0.03); }
+        :root { --accent: #2ecc71; --bg: #060212; --glass: rgba(255, 255, 255, 0.03); --border: rgba(46, 204, 113, 0.15); }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Layout Fix: বডিকে ফিক্সড রাখা হয়েছে */
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        /* Sidebar Navigation */
+        .sidebar { width: 70px; background: rgba(0,0,0,0.5); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 20px 0; gap: 25px; z-index: 1000; flex-shrink: 0; }
+        .nav-icon { color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 10px; }
+        .nav-icon.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
+        .logout-icon { margin-top: auto; color: #ff4757; margin-bottom: 20px; }
 
-        /* Sidebar: এটা সবসময় বাম পাশে স্থির থাকবে */
-        .sidebar { width: 70px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 30px; flex-shrink: 0; z-index: 100; }
-        .nav-item { color: #444; font-size: 22px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 12px; }
-        .nav-item.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
+        .main-container { flex: 1; overflow-y: auto; padding: 25px; padding-bottom: 80px; }
+        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
-        /* Main Content: শুধু এই অংশটুকু স্ক্রল হবে */
-        .main-content { flex: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
-        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { border-left: 4px solid var(--accent); position: relative; padding-bottom: 30px; }
 
-        /* Form Grid Fix */
-        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        input { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 10px; width: 100%; box-sizing: border-box; outline: none; font-size: 14px; }
-        
         /* PDF Upload UI */
-        .file-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .file-upload { border: 1px dashed var(--border); padding: 15px; text-align: center; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.01); }
-        .file-upload i { font-size: 20px; color: var(--accent); margin-bottom: 8px; }
-        .file-upload input { display: none; }
-        .file-upload span { display: block; font-size: 10px; color: #888; text-transform: uppercase; }
+        .pdf-upload-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .pdf-input { border: 1px dashed var(--border); padding: 10px; text-align: center; border-radius: 8px; font-size: 10px; cursor: pointer; background: rgba(0,0,0,0.2); }
+        .pdf-input input { display: none; }
+        .pdf-input i { font-size: 16px; color: var(--accent); display: block; margin-bottom: 5px; }
 
-        .btn-submit { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; font-size: 14px; }
-        .btn-submit:hover { background: #27ae60; transform: translateY(-2px); }
+        /* Tables */
+        .table-wrapper { overflow-x: auto; margin-top: 15px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { text-align: left; color: var(--accent); font-size: 10px; padding: 12px; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        
+        input, select { background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; }
+        .main-btn { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
 
-        /* Table: Real-time Data */
-        .table-wrapper { overflow-x: auto; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; color: var(--accent); padding: 15px; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
-        td { padding: 15px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-        /* Success Popup */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .section { display: none; } .section.active { display: block; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="nav-item active"><i class="fas fa-home"></i></div>
-        <div class="nav-item"><i class="fas fa-history"></i></div>
-        <div class="nav-item" onclick="logout()" style="margin-top:auto; color:#ff4d4d;"><i class="fas fa-sign-out-alt"></i></div>
+        <div class="nav-icon active" onclick="showSec('home', this)"><i class="fas fa-home"></i></div>
+        <div class="nav-icon" onclick="showSec('tracking', this)"><i class="fas fa-history"></i></div>
+        <div class="nav-icon" onclick="showSec('wallet', this)"><i class="fas fa-wallet"></i></div>
+        <div class="nav-icon logout-icon" onclick="logout()"><i class="fas fa-sign-out-alt"></i></div>
     </aside>
 
-    <main class="main-content">
-        <div class="header">
-            <img src="logo.jpeg" height="45" alt="SCC Logo" onerror="this.src='https://via.placeholder.com/150x50?text=SCC+LOGO'">
+    <main class="main-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <img src="logo.jpeg" style="height: 50px;">
             <div style="text-align: right;">
-                <b style="color:var(--accent); letter-spacing: 1px;">GORUN LTD.</b><br>
-                <small id="userEmail" style="color:#666;"></small>
+                <b style="color:var(--accent)" id="partnerBrand">GORUN LTD.</b><br>
+                <small id="userMailDisplay" style="font-size: 10px; color: #888;"></small>
             </div>
         </div>
 
-        <div class="glass-box">
-            <h3 style="margin-top:0; color:var(--accent); font-weight: 500;"><i class="fas fa-file-signature"></i> New Student Submission</h3>
-            <div class="input-grid">
-                <input type="text" id="studentName" placeholder="Full Student Name">
-                <input type="text" id="passportNum" placeholder="Passport Number">
+        <section id="home" class="section active">
+            <div class="stats-grid">
+                <div class="glass-box stat-card"><small>AVAILABLE WALLET</small><h2 style="color:var(--accent);">৳ 0.00</h2></div>
+                <div class="glass-box stat-card" style="border-left-color: #3498db;"><small>SUBSCRIPTION</small><h2 style="color:#3498db;">ACTIVE</h2></div>
             </div>
 
-            <div class="file-row">
-                <label class="file-upload">
-                    <i class="fas fa-id-card"></i>
-                    <span>Passport PDF</span>
-                    <input type="file" accept=".pdf">
-                </label>
-                <label class="file-upload">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>Academic PDF</span>
-                    <input type="file" accept=".pdf">
-                </label>
-                <label class="file-upload">
-                    <i class="fas fa-language"></i>
-                    <span>Language PDF</span>
-                    <input type="file" accept=".pdf">
-                </label>
+            <div class="glass-box">
+                <h3>Submit Student Application</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                    <input type="text" id="sName" placeholder="Student Full Name">
+                    <input type="text" id="sPass" placeholder="Passport Number">
+                </div>
+                
+                <div class="pdf-upload-grid">
+                    <label class="pdf-input">
+                        <i class="fas fa-file-pdf"></i> Passport PDF
+                        <input type="file" id="file1" accept=".pdf">
+                    </label>
+                    <label class="pdf-input">
+                        <i class="fas fa-file-pdf"></i> Academic PDF
+                        <input type="file" id="file2" accept=".pdf">
+                    </label>
+                    <label class="pdf-input">
+                        <i class="fas fa-file-pdf"></i> Language PDF
+                        <input type="file" id="file3" accept=".pdf">
+                    </label>
+                </div>
+                <button class="main-btn" onclick="submitFinal()">Submit Application</button>
             </div>
 
-            <button class="btn-submit" onclick="submitToFirebase()">SUBMIT TO COMPLIANCE DEPT.</button>
-        </div>
-
-        <div class="glass-box">
-            <h3 style="margin-top:0; font-weight: 500;"><i class="fas fa-broadcast-tower"></i> Live Tracking Dashboard</h3>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Passport</th>
-                            <th>Status</th>
-                            <th>Staff Assigned</th>
-                            <th>Submission Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="liveTableBody">
-                        <tr><td colspan="5" style="text-align:center; padding:40px; color:#555;">Waiting for new submissions...</td></tr>
-                    </tbody>
-                </table>
+            <div class="glass-box">
+                <h3>Live Compliance Tracking</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Handled By</th><th>Updated</th></tr></thead>
+                        <tbody id="homeLiveTable"></tbody>
+                    </table>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <section id="tracking" class="section">
+            <div class="glass-box">
+                <h3>All Application History</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Date</th><th>Student Name</th><th>Passport</th><th>Compliance Status</th></tr></thead>
+                        <tbody id="historyTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <div id="successModal" class="modal">
-        <div style="background:#fff; color:#000; padding:40px; border-radius:25px; text-align:center; width:340px;">
-            <i class="fas fa-check-circle" style="font-size:60px; color:var(--accent);"></i>
-            <h2 style="margin:20px 0 10px;">Submitted!</h2>
-            <p id="modalStudentName" style="font-weight:bold; margin-bottom:20px;"></p>
-            <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:25px;"></div>
-            <button class="btn-submit" onclick="location.reload()">CLOSE & REFRESH</button>
+    <div id="slipModal" class="modal-overlay">
+        <div style="background:#fff; width:350px; padding:30px; border-radius:20px; color:#000; text-align:center;">
+            <i class="fas fa-check-circle" style="font-size:40px; color:var(--accent)"></i>
+            <h3>Submission Success</h3>
+            <p id="resName" style="font-weight:bold;"></p>
+            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
+            <button class="main-btn" onclick="location.reload()">Done</button>
         </div>
     </div>
 
@@ -138,62 +139,68 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // 1. Auth Observer
+        // 1. Auth & Real-time Profile
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById('userEmail').innerText = user.email;
-                listenToLiveUpdates();
+                document.getElementById('userMailDisplay').innerText = user.email;
+                loadRealtimeData();
             } else {
                 window.location.href = 'index.html';
             }
         });
 
-        // 2. Live Data Listener (Real-time)
-        function listenToLiveUpdates() {
+        // 2. Real-time Status Sync
+        function loadRealtimeData() {
             db.ref('applications').on('value', snapshot => {
-                const tbody = document.getElementById('liveTableBody');
-                tbody.innerHTML = "";
-                if(!snapshot.exists()) {
-                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No data available.</td></tr>";
-                    return;
-                }
+                const liveBody = document.getElementById('homeLiveTable');
+                const historyBody = document.getElementById('historyTable');
+                liveBody.innerHTML = "";
+                historyBody.innerHTML = "";
+
                 snapshot.forEach(child => {
                     const data = child.val();
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${data.studentName}</td>
-                            <td>${data.passport}</td>
-                            <td><b style="color:var(--accent)">${data.compliance || 'IN QUEUE'}</b></td>
-                            <td><i class="fas fa-user-tie"></i> ${data.handledBy || 'Pending'}</td>
-                            <td>${data.timestamp}</td>
-                        </tr>
-                    `;
+                    const row = `<tr>
+                        <td>${data.studentName}</td>
+                        <td>${data.passport}</td>
+                        <td><b style="color:var(--accent)">${data.compliance || 'IN QUEUE'}</b></td>
+                        <td>${data.handledBy || 'Wait...'}</td>
+                        <td>${data.timestamp || 'N/A'}</td>
+                    </tr>`;
+                    liveBody.innerHTML += row;
+                    historyBody.innerHTML += row;
                 });
             });
         }
 
-        // 3. Submit Data
-        function submitToFirebase() {
-            const name = document.getElementById('studentName').value;
-            const pass = document.getElementById('passportNum').value;
-            if(!name || !pass) return alert("Please fill Name and Passport!");
+        // 3. Application Submission
+        function submitFinal() {
+            const n = document.getElementById('sName').value;
+            const p = document.getElementById('sPass').value;
+            if(!n || !p) return alert("Fill Student Name and Passport!");
 
             const appId = Date.now();
             db.ref('applications/' + appId).set({
-                studentName: name,
-                passport: pass,
-                compliance: "UNCLAIMED",
+                studentName: n,
+                passport: p,
                 partnerOrg: "GORUN LTD.",
+                compliance: "UNCLAIMED",
+                handledBy: "",
                 timestamp: new Date().toLocaleString()
             }).then(() => {
-                document.getElementById('successModal').style.display = 'flex';
-                document.getElementById('modalStudentName').innerText = name;
-                document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), { text: pass, width: 120, height: 120 });
+                document.getElementById('slipModal').style.display = 'flex';
+                document.getElementById('resName').innerText = n;
+                new QRCode(document.getElementById("qrcode"), { text: p, width: 120, height: 120 });
             });
         }
 
-        function logout() { auth.signOut(); }
+        function showSec(id, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-icon').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function logout() { auth.signOut().then(() => window.location.href = 'index.html'); }
     </script>
 </body>
 </html>
