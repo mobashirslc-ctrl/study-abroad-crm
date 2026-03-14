@@ -3,82 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Your Application | ASG Global</title>
+    <title>Track Status | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --brand-green: #2ecc71; }
-        body {
-            background: #0d0014;
-            color: #fff;
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        .track-card {
-            width: 100%;
-            max-width: 500px;
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(46, 204, 113, 0.3);
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-        }
-
-        .search-box {
-            display: flex;
-            margin-top: 30px;
-            border: 1px solid var(--brand-green);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .search-box input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 15px;
-            color: #fff;
-            outline: none;
-        }
-
-        .search-box button {
-            background: var(--brand-green);
-            border: none;
-            padding: 0 25px;
-            color: #000;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .step-active { color: var(--brand-green) !important; font-weight: bold; }
-        .bullet-active { background: var(--brand-green) !important; box-shadow: 0 0 10px var(--brand-green); }
+        body { background: #12001a; color: #fff; font-family: 'Segoe UI', sans-serif; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        .track-card { width: 450px; background: rgba(255,255,255,0.05); backdrop-filter: blur(25px); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 25px; padding: 40px; text-align: center; }
+        .search-bar { display: flex; border: 1px solid var(--brand-green); border-radius: 12px; margin: 30px 0; overflow: hidden; }
+        .search-bar input { flex: 1; background: transparent; border: none; padding: 15px; color: #fff; outline: none; }
+        .search-bar button { background: var(--brand-green); color: #000; border: none; padding: 0 20px; cursor: pointer; }
+        .step { text-align: left; padding-left: 20px; border-left: 2px solid var(--brand-green); margin-left: 10px; color: var(--brand-green); }
     </style>
 </head>
 <body>
     <div class="track-card">
-        <h2 style="color: var(--brand-green);">Track Application</h2>
-        <p>Enter your Passport Number to see live status.</p>
-        
-        <div class="search-box">
-            <input type="text" placeholder="Enter Passport No...">
-            <button><i class="fas fa-search"></i> Search</button>
+        <h2 style="color:var(--brand-green);">Track Application</h2>
+        <div class="search-bar">
+            <input type="text" placeholder="Passport Number...">
+            <button><i class="fas fa-search"></i></button>
         </div>
-
-        <div style="margin-top: 40px; text-align: left;">
-            <div style="margin-bottom: 20px;" class="step-active">
-                <span style="display:inline-block; width:12px; height:12px; border-radius:50%;" class="bullet-active"></span>
-                File Received & Verified
-            </div>
-            <div style="opacity: 0.4;">
-                <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background: #555;"></span>
-                University Assessment
-            </div>
-        </div>
+        <div class="step">● Document Verified</div>
     </div>
 </body>
 </html>
