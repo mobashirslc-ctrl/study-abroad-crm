@@ -6,23 +6,103 @@
     <title>Compliance Portal | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --brand-green: #2ecc71; }
-        body { background: radial-gradient(circle at top right, #3d005e, #1a0026); color: #fff; font-family: 'Poppins', sans-serif; margin: 0; padding: 40px; }
-        .glass-panel { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 20px; padding: 30px; }
-        .header { border-bottom: 2px solid var(--brand-green); padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; }
-        .file-card { background: rgba(255,255,255,0.04); border-left: 5px solid var(--brand-green); padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-approve { background: var(--brand-green); color: #000; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        :root {
+            --brand-green: #2ecc71;
+            --brand-purple: #2c003e;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(46, 204, 113, 0.3);
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #3d005e, #1a0026);
+            color: #ffffff;
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--brand-green);
+            padding-bottom: 20px;
+            margin-bottom: 35px;
+        }
+
+        .file-list-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-left: 5px solid var(--brand-green);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .file-list-item:hover {
+            transform: scale(1.01);
+            background: rgba(46, 204, 113, 0.05);
+        }
+
+        .action-btn {
+            background: var(--brand-green);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .action-btn:hover {
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+
+        .status-badge {
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--brand-green);
+            border: 1px solid var(--brand-green);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
-    <div class="glass-panel">
-        <div class="header">
-            <h1>Compliance Management</h1>
-            <span style="border:1px solid var(--brand-green); padding:5px 15px; border-radius:20px; color:var(--brand-green);">Staff Only</span>
-        </div>
-        <div class="file-card">
-            <div><strong>Application #8849</strong><br><small>Verification Pending</small></div>
-            <button class="btn-approve">Verify Now</button>
+    <div class="container">
+        <div class="glass-panel">
+            <div class="header-flex">
+                <h1>Compliance Dashboard</h1>
+                <div class="status-badge">Staff Authorization: Active</div>
+            </div>
+
+            <div id="pending-tasks">
+                <h3 style="color: var(--brand-green);">Pending File Verifications</h3>
+                
+                <div class="file-list-item">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0;">Student ID: #ASG-8849</h4>
+                        <small style="color: rgba(255,255,255,0.6);">Partner: Global Admissions | Submitted: 2 Hours Ago</small>
+                    </div>
+                    <button class="action-btn">Review & Approve</button>
+                </div>
+            </div>
         </div>
     </div>
 </body>

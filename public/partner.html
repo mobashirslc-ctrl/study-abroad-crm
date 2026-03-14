@@ -3,37 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Portal | ASG Global</title>
+    <title>Partner Dashboard | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --brand-green: #2ecc71; --glass-bg: rgba(255, 255, 255, 0.05); }
+        :root { --brand-green: #2ecc71; --glass: rgba(255, 255, 255, 0.05); }
         body { background: #1a0026; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; }
-        .sidebar { width: 260px; background: rgba(0,0,0,0.4); height: 100vh; backdrop-filter: blur(15px); border-right: 1px solid rgba(46, 204, 113, 0.2); padding: 25px; }
-        .main { flex: 1; padding: 30px; }
-        .glass-card { background: var(--glass-bg); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 15px; padding: 25px; }
+        .sidebar { width: 260px; background: rgba(0,0,0,0.3); backdrop-filter: blur(15px); border-right: 1px solid rgba(46, 204, 113, 0.2); height: 100vh; padding: 25px; position: fixed; }
+        .main { margin-left: 260px; flex: 1; padding: 35px; }
+        .glass-card { background: var(--glass); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 15px; padding: 25px; backdrop-filter: blur(10px); }
         .btn-green { background: var(--brand-green); color: black; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
         table thead { color: var(--brand-green); border-bottom: 2px solid var(--brand-green); text-align: left; }
-        table th, table td { padding: 12px; }
+        table th, table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
     <aside class="sidebar">
-        <h2 style="color: var(--brand-green);">Partner Panel</h2>
-        <nav style="margin-top:30px;">
-            <p style="color:var(--brand-green);"><i class="fas fa-home"></i> Dashboard</p>
-        </p>
+        <h2 style="color: var(--brand-green); border-bottom: 1px solid var(--brand-green); padding-bottom: 10px;">PARTNER</h2>
+        <nav style="margin-top: 30px;">
+            <a href="#" style="color: var(--brand-green); text-decoration: none; display: block; margin-bottom: 15px;"><i class="fas fa-home"></i> Home</a>
+        </nav>
     </aside>
     <main class="main">
         <div class="glass-card">
-            <h2>Welcome, Partner</h2>
-            <button class="btn-green">Submit New File</button>
+            <h2>Partner Control Panel</h2>
+            <button class="btn-green">+ New Application</button>
             <table>
                 <thead>
-                    <tr><th>Student</th><th>Status</th></tr>
+                    <tr><th>Student Name</th><th>Passport</th><th>Status</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>John Doe</td><td style="color:var(--brand-green);">Verified</td></tr>
+                    <tr><td>John Doe</td><td>A1234567</td><td style="color: var(--brand-green);">Verified</td></tr>
                 </tbody>
             </table>
         </div>

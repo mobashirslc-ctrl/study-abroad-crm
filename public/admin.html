@@ -6,12 +6,11 @@
     <title>Admin Dashboard | ASG Global</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Restoring your Original Glassmorphism & Purple Theme */
         :root {
             --brand-green: #2ecc71;
             --brand-purple: #2c003e;
-            --glass-bg: rgba(255, 255, 255, 0.07);
-            --glass-border: rgba(46, 204, 113, 0.2);
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(46, 204, 113, 0.25);
         }
 
         body {
@@ -20,17 +19,18 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             min-height: 100vh;
+            display: flex;
         }
 
-        .dashboard-container { display: flex; min-height: 100vh; }
-
-        /* Sidebar Design Restored */
+        /* Sidebar - Your Original Design */
         .sidebar {
             width: 280px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             padding: 25px;
+            height: 100vh;
+            position: fixed;
         }
 
         .logo-area {
@@ -39,18 +39,18 @@
             color: var(--brand-green);
             text-align: center;
             margin-bottom: 40px;
-            border-bottom: 2px solid var(--brand-green);
             padding-bottom: 15px;
+            border-bottom: 2px solid var(--brand-green);
         }
 
         .nav-link {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 14px 18px;
             color: rgba(255,255,255,0.7);
             text-decoration: none;
             border-radius: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             transition: 0.3s;
         }
 
@@ -60,56 +60,55 @@
             box-shadow: inset 4px 0 0 var(--brand-green);
         }
 
-        .nav-link i { margin-right: 15px; width: 20px; }
+        .nav-link i { margin-right: 15px; font-size: 18px; }
 
-        /* Main Glass Card Area */
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px;
+        }
 
         .glass-card {
-            background: var(--glass-bg);
+            background: var(--glass);
             backdrop-filter: blur(25px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .btn-green {
             background: var(--brand-green);
             color: #000;
             border: none;
-            padding: 12px 30px;
+            padding: 12px 25px;
             border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: 0.3s;
         }
 
-        .btn-green:hover {
-            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
-            transform: translateY(-2px);
-        }
+        .btn-green:hover { box-shadow: 0 0 20px rgba(46, 204, 113, 0.4); transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="logo-area">ASG ADMIN</div>
-            <nav>
-                <a href="#" class="nav-link active"><i class="fas fa-th-large"></i> Overview</a>
-                <a href="#" class="nav-link"><i class="fas fa-university"></i> Universities</a>
-                <a href="#" class="nav-link"><i class="fas fa-handshake"></i> Partners</a>
-                <a href="#" class="nav-link"><i class="fas fa-shield-alt"></i> Compliance</a>
-            </nav>
-        </aside>
-        
-        <main class="main-content">
-            <div class="glass-card">
-                <h1>Welcome, Admin</h1>
-                <p>All links are fixed. System ready for Part 1 Data Implementation.</p>
-                <div id="fb-status" style="color: var(--brand-green);">● Firebase System: Online</div>
-            </div>
-        </main>
-    </div>
+    <aside class="sidebar">
+        <div class="logo-area">ASG ADMIN</div>
+        <nav>
+            <a href="admin.html" class="nav-link active"><i class="fas fa-th-large"></i> Dashboard</a>
+            <a href="#" class="nav-link"><i class="fas fa-university"></i> Universities</a>
+            <a href="partner.html" class="nav-link"><i class="fas fa-handshake"></i> Partners</a>
+            <a href="compliance.html" class="nav-link"><i class="fas fa-shield-alt"></i> Compliance</a>
+        </nav>
+    </aside>
+    
+    <main class="main-content">
+        <div class="glass-card">
+            <h1 style="margin-top:0;">Welcome back, Admin</h1>
+            <p style="opacity: 0.8;">Admin link error fixed. Frontend is ready for Part 1.</p>
+            <div id="connection-status" style="color: var(--brand-green); font-weight: bold;">● Firebase System: Connected</div>
+        </div>
+    </main>
 </body>
 </html>
