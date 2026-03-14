@@ -3,120 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC Partner Portal | Live</title>
+    <title>Partner Portal | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --accent: #2ecc71; --bg: #060212; --border: rgba(46, 204, 113, 0.2); --glass: rgba(255, 255, 255, 0.03); }
+        
+        /* Layout Fix: বডিকে ফিক্সড রাখা হয়েছে */
         body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar isolation fix */
-        .sidebar { width: 70px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; flex-shrink: 0; z-index: 10; }
-        .nav-item { color: #444; font-size: 20px; margin-bottom: 30px; cursor: pointer; transition: 0.3s; padding: 10px; border-radius: 10px; }
+        /* Sidebar: এটা সবসময় বাম পাশে স্থির থাকবে */
+        .sidebar { width: 70px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 25px 0; gap: 30px; flex-shrink: 0; z-index: 100; }
+        .nav-item { color: #444; font-size: 22px; cursor: pointer; transition: 0.3s; padding: 12px; border-radius: 12px; }
         .nav-item.active { color: var(--accent); background: rgba(46, 204, 113, 0.1); }
 
-        /* Content Area */
-        .content { flex: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; position: relative; }
-        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        /* Main Content: শুধু এই অংশটুকু স্ক্রল হবে */
+        .main-content { flex: 1; overflow-y: auto; padding: 30px; box-sizing: border-box; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .glass-box { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); }
 
-        /* Form Design */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; }
+        /* Form Grid Fix */
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        input { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: #fff; padding: 14px; border-radius: 10px; width: 100%; box-sizing: border-box; outline: none; font-size: 14px; }
         
         /* PDF Upload UI */
-        .file-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
-        .file-card { border: 1px dashed var(--border); padding: 15px; text-align: center; border-radius: 10px; font-size: 11px; cursor: pointer; background: rgba(46, 204, 113, 0.02); }
-        .file-card input { display: none; }
-        .file-card i { font-size: 20px; margin-bottom: 5px; color: var(--accent); }
+        .file-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .file-upload { border: 1px dashed var(--border); padding: 15px; text-align: center; border-radius: 10px; cursor: pointer; background: rgba(255,255,255,0.01); }
+        .file-upload i { font-size: 20px; color: var(--accent); margin-bottom: 8px; }
+        .file-upload input { display: none; }
+        .file-upload span { display: block; font-size: 10px; color: #888; text-transform: uppercase; }
 
-        .btn-submit { background: var(--accent); color: #000; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; }
-        .btn-submit:hover { transform: scale(1.01); background: #27ae60; }
+        .btn-submit { background: var(--accent); color: #000; border: none; padding: 16px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; font-size: 14px; }
+        .btn-submit:hover { background: #27ae60; transform: translateY(-2px); }
 
-        /* Table */
-        .table-wrapper { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border); }
+        /* Table: Real-time Data */
+        .table-wrapper { overflow-x: auto; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; color: var(--accent); font-size: 11px; padding: 15px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
-        td { padding: 15px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { text-align: left; color: var(--accent); padding: 15px; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
+        td { padding: 15px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 
-        .status-pill { padding: 4px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; background: rgba(46, 204, 113, 0.2); color: var(--accent); }
-
+        /* Success Popup */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
-        .section { display: none; } .section.active { display: block; }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
-        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i></div>
-        <div class="nav-item" onclick="showTab('track', this)"><i class="fas fa-list-ul"></i></div>
+        <div class="nav-item active"><i class="fas fa-home"></i></div>
+        <div class="nav-item"><i class="fas fa-history"></i></div>
         <div class="nav-item" onclick="logout()" style="margin-top:auto; color:#ff4d4d;"><i class="fas fa-sign-out-alt"></i></div>
     </aside>
 
-    <main class="content">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <img src="logo.jpeg" height="45" alt="Logo">
+    <main class="main-content">
+        <div class="header">
+            <img src="logo.jpeg" height="45" alt="SCC Logo" onerror="this.src='https://via.placeholder.com/150x50?text=SCC+LOGO'">
             <div style="text-align: right;">
-                <b id="pBrand" style="color:var(--accent)">GORUN LTD.</b><br>
-                <small id="pMail" style="color:#666; font-size: 11px;"></small>
+                <b style="color:var(--accent); letter-spacing: 1px;">GORUN LTD.</b><br>
+                <small id="userEmail" style="color:#666;"></small>
             </div>
         </div>
 
-        <section id="home" class="section active">
-            <div class="glass-box">
-                <h3 style="margin-top:0"><i class="fas fa-user-plus"></i> New Application Submission</h3>
-                <div class="form-grid">
-                    <input type="text" id="sName" placeholder="Student Name">
-                    <input type="text" id="sPass" placeholder="Passport Number">
-                </div>
-                
-                <div class="file-section">
-                    <label class="file-card">
-                        <i class="fas fa-id-card"></i><br>Passport PDF
-                        <input type="file" id="pdf1" accept=".pdf">
-                    </label>
-                    <label class="file-card">
-                        <i class="fas fa-graduation-cap"></i><br>Academic PDF
-                        <input type="file" id="pdf2" accept=".pdf">
-                    </label>
-                    <label class="file-card">
-                        <i class="fas fa-language"></i><br>Language PDF
-                        <input type="file" id="pdf3" accept=".pdf">
-                    </label>
-                </div>
-                <button class="btn-submit" onclick="submitApp()">SEND TO COMPLIANCE</button>
+        <div class="glass-box">
+            <h3 style="margin-top:0; color:var(--accent); font-weight: 500;"><i class="fas fa-file-signature"></i> New Student Submission</h3>
+            <div class="input-grid">
+                <input type="text" id="studentName" placeholder="Full Student Name">
+                <input type="text" id="passportNum" placeholder="Passport Number">
             </div>
 
-            <div class="glass-box">
-                <h3><i class="fas fa-bolt"></i> Real-time Queue</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr><th>Student</th><th>Passport</th><th>Status</th><th>Handled By</th></tr>
-                        </thead>
-                        <tbody id="queueTable">
-                            <tr><td colspan="4" style="text-align:center; padding:30px; color:#555;">Connecting to live database...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="file-row">
+                <label class="file-upload">
+                    <i class="fas fa-id-card"></i>
+                    <span>Passport PDF</span>
+                    <input type="file" accept=".pdf">
+                </label>
+                <label class="file-upload">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Academic PDF</span>
+                    <input type="file" accept=".pdf">
+                </label>
+                <label class="file-upload">
+                    <i class="fas fa-language"></i>
+                    <span>Language PDF</span>
+                    <input type="file" accept=".pdf">
+                </label>
             </div>
-        </section>
 
-        <section id="track" class="section">
-            <div class="glass-box">
-                <h3><i class="fas fa-history"></i> Submission History</h3>
-                <div class="table-wrapper" id="historyContent">
-                    </div>
+            <button class="btn-submit" onclick="submitToFirebase()">SUBMIT TO COMPLIANCE DEPT.</button>
+        </div>
+
+        <div class="glass-box">
+            <h3 style="margin-top:0; font-weight: 500;"><i class="fas fa-broadcast-tower"></i> Live Tracking Dashboard</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Passport</th>
+                            <th>Status</th>
+                            <th>Staff Assigned</th>
+                            <th>Submission Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTableBody">
+                        <tr><td colspan="5" style="text-align:center; padding:40px; color:#555;">Waiting for new submissions...</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </section>
+        </div>
     </main>
 
     <div id="successModal" class="modal">
-        <div style="background:#fff; color:#000; padding:40px; border-radius:20px; text-align:center; width:320px;">
-            <i class="fas fa-check-circle" style="font-size:60px; color:var(--accent)"></i>
-            <h2 style="margin:15px 0 5px;">Submitted!</h2>
-            <p id="confirmStudent" style="font-weight:bold;"></p>
-            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
-            <button class="btn-submit" onclick="location.reload()">CLOSE</button>
+        <div style="background:#fff; color:#000; padding:40px; border-radius:25px; text-align:center; width:340px;">
+            <i class="fas fa-check-circle" style="font-size:60px; color:var(--accent);"></i>
+            <h2 style="margin:20px 0 10px;">Submitted!</h2>
+            <p id="modalStudentName" style="font-weight:bold; margin-bottom:20px;"></p>
+            <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:25px;"></div>
+            <button class="btn-submit" onclick="location.reload()">CLOSE & REFRESH</button>
         </div>
     </div>
 
@@ -135,70 +138,62 @@
         const auth = firebase.auth();
         const db = firebase.database();
 
-        // 1. Auth Status & Live Sync
+        // 1. Auth Observer
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById('pMail').innerText = user.email;
-                syncQueue();
+                document.getElementById('userEmail').innerText = user.email;
+                listenToLiveUpdates();
             } else {
                 window.location.href = 'index.html';
             }
         });
 
-        // 2. Tab Switching Logic
-        function showTab(id, el) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            el.classList.add('active');
-        }
-
-        // 3. Real-time Queue & History Sync
-        function syncQueue() {
+        // 2. Live Data Listener (Real-time)
+        function listenToLiveUpdates() {
             db.ref('applications').on('value', snapshot => {
-                const table = document.getElementById('queueTable');
-                table.innerHTML = "";
+                const tbody = document.getElementById('liveTableBody');
+                tbody.innerHTML = "";
                 if(!snapshot.exists()) {
-                    table.innerHTML = "<tr><td colspan='4' style='text-align:center'>No applications found.</td></tr>";
+                    tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:20px;'>No data available.</td></tr>";
                     return;
                 }
                 snapshot.forEach(child => {
-                    const d = child.val();
-                    table.innerHTML += `
+                    const data = child.val();
+                    tbody.innerHTML += `
                         <tr>
-                            <td>${d.studentName}</td>
-                            <td>${d.passport}</td>
-                            <td><span class="status-pill">${d.compliance || 'PENDING'}</span></td>
-                            <td><i class="fas fa-user-shield"></i> ${d.handledBy || 'Wait...'}</td>
+                            <td>${data.studentName}</td>
+                            <td>${data.passport}</td>
+                            <td><b style="color:var(--accent)">${data.compliance || 'IN QUEUE'}</b></td>
+                            <td><i class="fas fa-user-tie"></i> ${data.handledBy || 'Pending'}</td>
+                            <td>${data.timestamp}</td>
                         </tr>
                     `;
                 });
             });
         }
 
-        // 4. Data Submission
-        function submitApp() {
-            const name = document.getElementById('sName').value;
-            const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Please enter Student Name & Passport!");
+        // 3. Submit Data
+        function submitToFirebase() {
+            const name = document.getElementById('studentName').value;
+            const pass = document.getElementById('passportNum').value;
+            if(!name || !pass) return alert("Please fill Name and Passport!");
 
             const appId = Date.now();
             db.ref('applications/' + appId).set({
                 studentName: name,
                 passport: pass,
-                partnerOrg: "GORUN LTD.",
                 compliance: "UNCLAIMED",
-                handledBy: "",
+                partnerOrg: "GORUN LTD.",
                 timestamp: new Date().toLocaleString()
             }).then(() => {
                 document.getElementById('successModal').style.display = 'flex';
-                document.getElementById('confirmStudent').innerText = name;
+                document.getElementById('modalStudentName').innerText = name;
                 document.getElementById('qrcode').innerHTML = "";
                 new QRCode(document.getElementById("qrcode"), { text: pass, width: 120, height: 120 });
             });
         }
 
-        function logout() { auth.signOut().then(() => window.location.href = 'index.html'); }
+        function logout() { auth.signOut(); }
     </script>
 </body>
 </html>
