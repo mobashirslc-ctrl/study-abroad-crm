@@ -57,7 +57,7 @@
                     <thead>
                         <tr>
                             <th>Student Name</th>
-                            <th>Partner</th>
+                            <th>Passport</th>
                             <th>Status</th>
                             <th>Handled By</th>
                             <th>Action</th>
@@ -74,7 +74,6 @@
         <div id="profile" class="content-section">
             <div class="card"><h3>Staff Profile</h3><p id="staffProfileDetail">Loading...</p></div>
         </div>
-        <footer>© 2026 <strong>Gorun Ltd.</strong> All Rights Reserved.</footer>
     </div>
 
     <div id="slider" class="slider">
@@ -86,21 +85,20 @@
         <div style="background:var(--glass); padding:25px; border-radius:15px; margin-bottom:30px; border: 1px solid var(--border);">
             <p style="margin:0; font-size:0.9rem; opacity:0.6;">Reviewing Student:</p>
             <div id="reviewingStudent" style="font-size:1.3rem; font-weight:bold; margin-top:5px;">---</div>
-            <div id="reviewingPartner" style="font-size:0.85rem; color:var(--accent); margin-top:5px;">Partner: ---</div>
-            <div id="reviewingComm" style="font-size:0.9rem; color:#00ff00; margin-top:5px; font-weight:bold;">Commission: ৳ 0</div>
+            <div id="reviewingComm" style="font-size:0.9rem; color:#00ff00; margin-top:5px; font-weight:bold;">Potential Commission: ৳ 0</div>
         </div>
 
         <label style="font-size:0.9rem; color:var(--accent); font-weight:bold;">Assign New Smart Status:</label>
         <select id="statusSelect">
-            <option value="review">🔍 Start In Review</option>
-            <option value="verified">✅ Verified (+ Move to Pending Wallet)</option>
-            <option value="fees">💰 Tuition Fees Paid (+ Move to Final Wallet)</option>
-            <option value="missing">📂 Missing Documents</option>
+            <option value="review">🔍 Start In Review (Wallet: ৳ 0)</option>
+            <option value="verified">✅ Verified (Move to Pending Wallet)</option>
+            <option value="fees">💰 Tuition Fees Paid (Move to Available Wallet)</option>
+            <option value="missing">📂 Missing Documents (Wallet: ৳ 0)</option>
             <option value="rejected">❌ Rejected (Clear Wallet)</option>
-            <option value="refund">⚠️ Refund (Deduct from Wallet)</option>
+            <option value="refund">⚠️ Refund (Clear Wallet)</option>
         </select>
 
-        <button style="width:100%; margin-top:40px; padding:20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; font-size:1.1rem; cursor:pointer;" id="applyStatusBtn">Apply & Lock Assignment</button>
+        <button id="applyStatusBtn" style="width:100%; margin-top:40px; padding:20px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; font-size:1.1rem; cursor:pointer;">Apply & Sync Wallet</button>
     </div>
 
     <script type="module">
@@ -123,16 +121,17 @@
 
         let currentActiveId = null;
         let currentCommission = 0;
-        let staffName = "Staff_Admin";
+        let staffName = "Staff_User";
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 staffName = user.email.split('@')[0].toUpperCase();
                 document.getElementById('staffDisplay').innerText = staffName;
-                document.getElementById('staffProfileDetail').innerText = `Username: ${user.email}\nAccess: Compliance Officer`;
+                document.getElementById('staffProfileDetail').innerText = `Email: ${user.email}`;
             }
         });
 
+        // ১. ডাটা লোড ও রিয়েল টাইম ট্র্যাকিং
         onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
             let html = "";
@@ -145,13 +144,13 @@
                 html += `
                     <tr>
                         <td>${data.studentName}</td>
-                        <td>${data.partnerName}</td>
+                        <td>${data.passport}</td>
                         <td><span style="color:${isClaimed ? '#00ff00' : 'var(--accent)'}">${data.status}</span></td>
                         <td>${isClaimed ? `<i class="fas fa-user-shield"></i> ${data.complianceMember}` : 'Unclaimed'}</td>
                         <td>
                             ${!isClaimed ? 
                                 `<button class="btn-claim" onclick="claimFile('${id}')">Claim File</button>` : 
-                                (isMine ? `<button class="btn-claim" style="background:#fff" onclick="openReviewSlider('${id}', '${data.studentName}', '${data.partnerName}', ${data.commissionBDT || 0})">Review</button>` : `<button class="btn-locked" disabled>Locked</button>`)
+                                (isMine ? `<button class="btn-claim" style="background:#fff" onclick="openReviewSlider('${id}', '${data.studentName}', ${data.commissionBDT || 0})">Review</button>` : `<button class="btn-locked" disabled>Locked</button>`)
                             }
                         </td>
                     </tr>`;
@@ -159,48 +158,46 @@
             tbody.innerHTML = html;
         });
 
+        // ২. ফাইল ক্লেইম করা
         window.claimFile = async (id) => {
             await updateDoc(doc(db, "applications", id), {
                 complianceMember: staffName,
                 status: "IN REVIEW"
             });
-            alert("File claimed!");
+            alert("File successfully claimed!");
         };
 
-        window.openReviewSlider = (id, name, partner, comm) => {
+        // ৩. স্লাইডার ওপেন
+        window.openReviewSlider = (id, name, comm) => {
             currentActiveId = id;
-            currentCommission = parseFloat(comm) || 0; // নিশ্চিত করা হচ্ছে এটি নাম্বার
+            currentCommission = parseFloat(comm) || 0;
             document.getElementById('reviewingStudent').innerText = name;
-            document.getElementById('reviewingPartner').innerText = "Partner: " + partner;
-            document.getElementById('reviewingComm').innerText = "Commission: ৳ " + currentCommission.toLocaleString();
+            document.getElementById('reviewingComm').innerText = "Potential Commission: ৳ " + currentCommission.toLocaleString();
             document.getElementById('slider').classList.add('active');
         };
 
-        // ৫. স্ট্যাটাস ও ওয়ালেট আপডেট (Fixed & Verified)
+        // ৪. মেইন ওয়ালেট লজিক (The Final Fix)
         document.getElementById('applyStatusBtn').onclick = async () => {
             if(!currentActiveId) return;
-            
             const status = document.getElementById('statusSelect').value;
             const btn = document.getElementById('applyStatusBtn');
-            
-            // ডিফল্ট আপডেট ডাটা
+
             let walletUpdate = { 
                 status: status.toUpperCase(),
                 lastUpdatedBy: staffName 
             };
 
-            // স্মার্ট ওয়ালেট লজিক
+            // স্মার্ট ওয়ালেট লজিক: স্ট্যাটাস অনুযায়ী টাকা ভাগ করা
             if (status === "verified") {
-                walletUpdate.pendingAmount = currentCommission;
+                walletUpdate.pendingAmount = currentCommission; // পেন্ডিং বক্সে জমা হবে
                 walletUpdate.finalAmount = 0;
             } else if (status === "fees") {
-                walletUpdate.pendingAmount = 0;
-                walletUpdate.finalAmount = currentCommission;
+                walletUpdate.pendingAmount = 0; // পেন্ডিং থেকে কেটে যাবে
+                walletUpdate.finalAmount = currentCommission; // এভেইলেবল ওয়ালেটে জমা হবে
             } else if (status === "rejected" || status === "refund" || status === "missing") {
-                walletUpdate.pendingAmount = 0;
+                walletUpdate.pendingAmount = 0; // সব জিরো
                 walletUpdate.finalAmount = 0;
             } else {
-                // 'review' স্ট্যাটাস হলে আগের মতই থাকবে
                 walletUpdate.pendingAmount = 0;
                 walletUpdate.finalAmount = 0;
             }
@@ -208,17 +205,11 @@
             try {
                 btn.disabled = true;
                 btn.innerText = "Syncing Wallet...";
-                
                 await updateDoc(doc(db, "applications", currentActiveId), walletUpdate);
-                
-                alert("Partner Wallet Updated Successfully!");
+                alert("Decision Applied & Wallet Updated!");
                 closeSlider();
-            } catch (e) { 
-                alert("Update Error: " + e.message); 
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Apply & Lock Assignment";
-            }
+            } catch (e) { alert("Error: " + e.message); }
+            finally { btn.disabled = false; btn.innerText = "Apply & Sync Wallet"; }
         };
 
         window.openTab = (tabId) => {
