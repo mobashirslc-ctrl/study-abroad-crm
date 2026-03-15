@@ -1,0 +1,36 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+  authDomain: "scc-partner-portal.firebaseapp.com",
+  databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
+  projectId: "scc-partner-portal",
+  storageBucket: "scc-partner-portal.firebasestorage.app",
+  messagingSenderId: "13013457431",
+  appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.checkStatus = async () => {
+    const p = document.getElementById('passportNumber').value;
+    const res = document.getElementById('resultArea');
+    if(!p) return alert("Enter Passport!");
+    
+    res.style.display = "block";
+    res.innerHTML = "Searching...";
+    
+    const q = query(collection(db, "applications"), where("passport", "==", p));
+    const snap = await getDocs(q);
+    
+    if(snap.empty) {
+        res.innerHTML = "No Record Found.";
+    } else {
+        snap.forEach(doc => {
+            const d = doc.data();
+            res.innerHTML = `Student: ${d.studentName}<br>Status: <b style="color:#00ff00">${d.status}</b>`;
+        });
+    }
+};
