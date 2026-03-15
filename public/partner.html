@@ -38,12 +38,6 @@
         footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #111; z-index: 500; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 550px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
-        #printArea { display: none; font-family: 'Courier New', Courier, monospace; color: #333; }
-        @media print {
-            body * { visibility: hidden; }
-            #printArea, #printArea * { visibility: visible; }
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
-        }
     </style>
 </head>
 <body>
@@ -92,8 +86,7 @@
                             <option value="MOI">MOI</option>
                         </select>
                     </div>
-                    <div><label>Academic Score</label><input type="text" id="fAcadScore" placeholder="GPA/CGPA"></div>
-                    <div><label>Language Score</label><input type="text" id="fLangScore" placeholder="e.g. 6.5"></div>
+                    <div><label>Academic Score (Min CGPA)</label><input type="text" id="fAcadScore" placeholder="e.g. 3.00"></div>
                 </div>
                 <button class="btn-gold" style="width:100%; margin-top:15px;" onclick="smartSearch()">Run Assessment</button>
 
@@ -102,7 +95,7 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>University</th><th>Country</th><th>Intake</th><th>Fee</th><th>Commission (Est.)</th><th>Initial Pay</th><th>Scholarship</th><th>Requirement</th><th>English</th><th>CAS/I-20</th><th>Success</th><th>Action</th>
+                                <th>University</th><th>Country</th><th>Intake</th><th>Fee</th><th>Commission</th><th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="uniResultsBody"></tbody>
@@ -113,11 +106,11 @@
 
         <div id="tracking" class="section">
             <div class="card">
-                <h3 style="color:var(--gold)">File Tracking (Compliance)</h3>
+                <h3 style="color:var(--gold)">File Tracking</h3>
                 <div class="table-wrap">
                     <table>
                         <thead>
-                            <tr><th>Student Name</th><th>Contact No</th><th>Passport</th><th>Status</th><th>Compliance Member</th><th>Date & Time</th></tr>
+                            <tr><th>Student Name</th><th>Passport</th><th>Status</th><th>Compliance Member</th><th>Date</th></tr>
                         </thead>
                         <tbody class="sharedBody"></tbody>
                     </table>
@@ -127,22 +120,29 @@
 
         <div id="wallet" class="section">
             <div class="card">
-                <h3>Commission Wallet</h3>
-                <div style="display: flex; gap: 20px; margin-top: 20px;">
-                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; flex: 1;">
-                        <small>Total Final Balance</small>
-                        <h2 style="color: var(--gold);" id="finalWalletDisplay">৳ 0</h2>
-                        <button class="btn-gold" id="withdrawBtn" disabled>Withdraw Money</button>
-                    </div>
+                <h3 style="color:var(--gold)">Commission Wallet</h3>
+                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--gold);">
+                    <small>Final Withdrawable Balance</small>
+                    <h1 style="color: var(--gold); font-size: 45px; margin: 10px 0;" id="finalWalletDisplay">৳ 0</h1>
+                    <button class="btn-gold" id="withdrawBtn" onclick="openWithdrawModal()" disabled>Request Withdrawal</button>
                 </div>
             </div>
         </div>
 
         <div id="profile" class="section">
-            <div class="card"><h3>Company Profile</h3><p id="profileName" style="color:var(--gold); font-size:18px;">Loading...</p></div>
+            <div class="card">
+                <h3 style="color:var(--gold)"><i class="fa-solid fa-user-gear"></i> Profile Settings</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div><label>Full Name</label><input type="text" id="pFullName"></div>
+                    <div><label>Agency Name</label><input type="text" id="pCompanyName"></div>
+                    <div><label>Phone</label><input type="text" id="pPhone"></div>
+                    <div><label>Address</label><input type="text" id="pAddress"></div>
+                </div>
+                <button class="btn-gold" style="margin-top:20px;" onclick="updateProfile()">Save Profile</button>
+            </div>
         </div>
 
-        <footer>© Rights Reserved 2026 GORUN LTD.</footer>
+        <footer>© 2026 GORUN LTD. All Rights Reserved.</footer>
     </div>
 
     <div id="appModal" class="modal">
@@ -151,25 +151,31 @@
             <label>Student Full Name</label><input type="text" id="sName">
             <label>Contact Number</label><input type="text" id="sPhone">
             <label>Passport Number</label><input type="text" id="sPass">
-            <button class="btn-gold" style="width:100%" id="submitBtn">Submit & Generate Slip</button>
-            <button class="btn-gold" style="width:100%; background:#333; color:#fff; margin-top:10px" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
+            
+            <p style="color:var(--gold); font-size:12px; margin-top:15px; border-bottom:1px solid #333;">PDF DOCUMENTS REQUIRED</p>
+            <label>1. Academic Certificates</label><input type="file" id="pdf1">
+            <label>2. Passport Copy</label><input type="file" id="pdf2">
+            <label>3. Recommendation Letter</label><input type="file" id="pdf3">
+            <label>4. Signed Acknowledgement Slip</label><input type="file" id="pdf4">
+
+            <button class="btn-gold" style="width:100%; margin-top:20px;" id="submitBtn">Submit Application</button>
+            <button class="btn-gold" style="width:100%; background:#333; margin-top:10px" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
     </div>
 
-    <div id="printArea">
-        <div style="max-width: 500px; margin: 0 auto; border: 2px dashed #00c853; padding: 30px; background: #fff; border-radius: 10px; text-align: center;">
-            <img src="logo.jpeg" style="width: 150px; filter: grayscale(1);">
-            <h2 style="margin: 10px 0; color: #333;">STUDENT CAREER CONSULTANCY</h2>
-            <hr>
-            <h3 style="color: #333;">Congratulations <span id="slipNameHead"></span>!</h3>
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: left; margin: 20px 0; font-family: monospace; font-size: 13px;">
-                Name: <span id="slipName"></span><br>
-                Passport: <span id="slipPass"></span><br>
-                University: <span id="slipUni"></span>
-            </div>
-            <div id="slipQR" style="margin: 20px 0;">
-                <img id="qrImg" src="" style="width: 120px;">
-            </div>
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--gold)">Withdraw Money</h3>
+            <label>Payment Method</label>
+            <select id="wMethod">
+                <option value="Bkash">Bkash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+            <label>Account Number</label><input type="text" id="wAccNo">
+            <label>Amount (BDT)</label><input type="number" id="wAmount">
+            <button class="btn-gold" style="width:100%" id="confirmWithdrawBtn">Confirm Request</button>
+            <button class="btn-gold" style="width:100%; background:#333; margin-top:10px" onclick="closeWithdrawModal()">Cancel</button>
         </div>
     </div>
 
@@ -181,6 +187,7 @@
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         };
+        window.closeWithdrawModal = () => document.getElementById('withdrawModal').style.display='none';
     </script>
 </body>
 </html>
