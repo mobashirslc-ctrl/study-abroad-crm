@@ -15,106 +15,148 @@ const db = getFirestore(app);
 
 let currentComm = 0;
 
-// 1. Wallet & Stats Logic (Based on Status)
+// --- ১. ওয়ালেট এবং পেন্ডিং লজিক (রিয়েল টাইম) ---
 onSnapshot(collection(db, "applications"), (snap) => {
-    let pending = 0;
-    let available = 0;
+    let pendingTotal = 0;
+    let availableTotal = 0;
+    
     snap.forEach(doc => {
-        const d = doc.data();
-        const comm = parseFloat(d.commission || 0);
-        if (d.status === "Pending") pending += comm;
-        if (d.status === "Approved" || d.status === "Success") available += comm;
+        const data = doc.data();
+        const amount = parseFloat(data.commission) || 0;
+        const status = (data.status || "").toLowerCase();
+
+        // যদি স্ট্যাটাস Success বা Approved হয় তবে ওয়ালেটে যোগ হবে
+        if (status === "success" || status === "approved" || status === "enrolled") {
+            availableTotal += amount;
+        } else if (status === "pending" || status === "processing") {
+            pendingTotal += amount;
+        }
     });
-    document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
-    document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
+
+    document.getElementById('pendingAm').innerText = `৳ ${pendingTotal.toLocaleString()}`;
+    document.getElementById('availAm').innerText = `৳ ${availableTotal.toLocaleString()}`;
 });
 
-// 2. Assessment Search (Fix: Admin Field Mapping)
+// --- ২. স্মার্ট অ্যাসেসমেন্ট সার্চ (অ্যাডমিন ডাটা কানেকশন ফিক্স) ---
 window.runSearch = () => {
     const fCountry = document.getElementById('fCountry').value.toLowerCase().trim();
     const fDegree = document.getElementById('fDegree').value;
     const fGPA = parseFloat(document.getElementById('fAcad').value) || 0;
     const fIELTS = parseFloat(document.getElementById('fScore').value) || 0;
 
-    document.getElementById('resArea').style.display = 'block';
     const tbody = document.getElementById('uniResultsBody');
-    tbody.innerHTML = '<tr><td colspan="10">Searching Database...</td></tr>';
+    document.getElementById('resArea').style.display = 'block';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Searching SCC Database...</td></tr>';
 
+    // অ্যাডমিনের 'universities' কালেকশন থেকে ডাটা আনা
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
         snap.forEach(doc => {
             const u = doc.data();
             
-            // Mapping fields based on admin inputs
-            const dbCountry = (u.country || "").toLowerCase();
-            const dbDegree = u.degree || "";
-            const minGPA = parseFloat(u.minGPA || 0);
-            const minIELTS = parseFloat(u.ieltsO || u.ieltsOverall || 0);
+            // ফিল্ড নেমগুলো অ্যাডমিন প্যানেলের সাথে ম্যাচ করানো হয়েছে
+            const dbCountry = (u.country || u.CountryName || "").toLowerCase();
+            const dbDegree = u.degree || u.Degree || "";
+            const minGPA = parseFloat(u.minGPA || u.GPA || 0);
+            const minIELTS = parseFloat(u.ieltsO || u.ieltsOverall || u.IELTS || 0);
 
-            if ((!fCountry || dbCountry.includes(fCountry)) && 
-                (!fDegree || dbDegree === fDegree) && 
-                (fGPA >= minGPA) && (fIELTS >= minIELTS)) {
-                
-                const comm = Math.round((parseFloat(u.semesterFee || 0) * 120 * parseFloat(u.partnerComm || 0)) / 100);
-                
+            // ম্যাচিং কন্ডিশন
+            const countryMatch = !fCountry || dbCountry.includes(fCountry);
+            const degreeMatch = !fDegree || dbDegree === fDegree;
+            const gpaMatch = fGPA >= minGPA;
+            const ieltsMatch = fIELTS >= minIELTS;
+
+            if (countryMatch && degreeMatch && gpaMatch && ieltsMatch) {
+                // কমিশন ক্যালকুলেশন (অ্যাডমিনের পার্টনার কমিশন পার্সেন্টেজ অনুযায়ী)
+                const partnerCommPercent = parseFloat(u.partnerComm || 0);
+                const semesterFee = parseFloat(u.semesterFee || 0);
+                const commCalculated = Math.round((semesterFee * 120 * partnerCommPercent) / 100);
+
                 rows += `<tr>
-                    <td><b>${u.universityName}</b></td><td>${u.country}</td><td>${u.degree}</td>
-                    <td>${u.courseName}</td><td>$${u.semesterFee}</td>
-                    <td style="color:#00ff00; font-weight:bold;">৳ ${comm.toLocaleString()}</td>
-                    <td>${u.minGPA}</td><td>${minIELTS}</td><td>${u.intake}</td>
-                    <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('${u.universityName}', ${comm})">Open File</button></td>
+                    <td><b>${u.universityName || u.University}</b></td>
+                    <td>${u.country || u.Country}</td>
+                    <td>${u.degree || u.Degree}</td>
+                    <td>${u.courseName || u.Subject}</td>
+                    <td>$${u.semesterFee || 0}</td>
+                    <td style="color:#00ff00; font-weight:bold;">৳ ${commCalculated.toLocaleString()}</td>
+                    <td>${minGPA}</td>
+                    <td>${minIELTS}</td>
+                    <td>${u.intake || 'N/A'}</td>
+                    <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('${u.universityName || u.University}', ${commCalculated})">Open File</button></td>
                 </tr>`;
             }
         });
-        tbody.innerHTML = rows || '<tr><td colspan="10">No Universities match your data.</td></tr>';
+        tbody.innerHTML = rows || '<tr><td colspan="10" style="text-align:center;">No match found for your requirements.</td></tr>';
     });
 };
 
+// --- ৩. অ্যাপ্লিকেশন সাবমিট এবং স্লিপ জেনারেট ---
 window.openApp = (uni, comm) => {
     document.getElementById('mTitle').innerText = uni;
-    currentComm = comm;
+    currentComm = comm; // কমিশনের ভ্যালু স্টোর করা হচ্ছে
     document.getElementById('appModal').style.display = 'flex';
 };
 
-// 3. Application Submission & Slip QR
 document.getElementById('submitBtn').onclick = async () => {
-    const name = document.getElementById('sName').value;
-    const pass = document.getElementById('sPass').value;
-    const uni = document.getElementById('mTitle').innerText;
+    const sName = document.getElementById('sName').value;
+    const sPass = document.getElementById('sPass').value;
+    const uniName = document.getElementById('mTitle').innerText;
 
-    if (!name || !pass) return alert("Student data missing!");
+    if (!sName || !sPass) return alert("Student Name and Passport are required!");
+
+    document.getElementById('submitBtn').innerText = "Submitting...";
+    document.getElementById('submitBtn').disabled = true;
 
     try {
         await addDoc(collection(db, "applications"), {
-            studentName: name, passport: pass, university: uni,
-            commission: currentComm, status: "Pending",
+            studentName: sName,
+            passport: sPass,
+            university: uniName,
+            commission: currentComm,
+            status: "Pending",
             timestamp: serverTimestamp()
         });
 
-        // Show Slip
-        document.getElementById('slipName').innerText = name;
-        document.getElementById('slipPass').innerText = pass;
-        document.getElementById('slipUni').innerText = uni;
+        // স্লিপ ডাটা আপডেট
+        document.getElementById('slipName').innerText = sName;
+        document.getElementById('slipPass').innerText = sPass;
+        document.getElementById('slipUni').innerText = uniName;
         document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
 
+        // QR Code জেনারেট (Passport Number দিয়ে ট্র্যাক করার জন্য)
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), {
-            text: `https://scc-track.web.app/status?pass=${pass}`,
-            width: 120, height: 120
+            text: `https://scc-track.web.app/status?id=${sPass}`,
+            width: 120,
+            height: 120
         });
 
         document.getElementById('appModal').style.display = 'none';
         document.getElementById('slipOverlay').style.display = 'flex';
-    } catch (e) { alert("Error!"); }
+
+    } catch (e) {
+        alert("Error submitting application: " + e.message);
+    } finally {
+        document.getElementById('submitBtn').innerText = "Submit to Admin";
+        document.getElementById('submitBtn').disabled = false;
+    }
 };
 
-// 4. Real-time Recent List
+// --- ৪. ফাইল ট্র্যাকিং লিস্ট (রিয়েল টাইম) ---
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
-    let r = "";
+    let html = "";
     snap.forEach(doc => {
         const d = doc.data();
-        const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'Processing';
-        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${date}</td></tr>`;
+        const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'New';
+        let statusColor = d.status === "Pending" ? "orange" : (d.status === "Success" || d.status === "Approved" ? "#00ff00" : "red");
+        
+        html += `<tr>
+            <td>${d.studentName}</td>
+            <td>${d.passport}</td>
+            <td>${d.university}</td>
+            <td><b style="color:${statusColor}">${d.status}</b></td>
+            <td>${date}</td>
+        </tr>`;
     });
-    document.getElementById('liveTrackingBody').innerHTML = r;
+    document.getElementById('liveTrackingBody').innerHTML = html;
 });
