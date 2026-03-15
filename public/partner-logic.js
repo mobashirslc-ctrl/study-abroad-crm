@@ -15,29 +15,33 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক (লুপ বন্ধ করার জন্য একবার চেক হবে)
+// ১. সিকিউরিটি চেক: লগইন না থাকলে index.html (লগইন পেজ) এ পাঠিয়ে দাও
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        if (!window.location.href.includes("login.html")) {
-            window.location.replace("login.html");
+        // যদি বর্তমানে লগইন পেজে না থাকে, তবেই রিডাইরেক্ট করো (লুপ ঠেকানোর জন্য)
+        if (!window.location.pathname.includes("index.html") && window.location.pathname !== "/") {
+            window.location.replace("index.html");
         }
     }
 });
 
-// ২. লগআউট ফিক্স (সরাসরি ক্লিক হ্যান্ডলার)
+// ২. লগআউট লজিক: index.html এ রিডাইরেক্ট হবে
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
+    logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
         try {
             await signOut(auth);
-            window.location.replace("login.html");
+            console.log("Logged out successfully");
+            window.location.replace("index.html");
         } catch (err) {
-            console.error(err);
+            console.error("Logout Error:", err);
+            alert("Logout failed!");
         }
     });
 }
 
-// ৩. ট্যাব ফাংশন (উইন্ডো অবজেক্টে রাখা হয়েছে যাতে HTML থেকে কাজ করে)
+// ৩. ট্যাব ফাংশন (Home/History স্যুইচ করার জন্য)
 window.tab = (id) => {
     const sections = document.querySelectorAll('.section');
     sections.forEach(s => s.classList.remove('active'));
@@ -45,12 +49,14 @@ window.tab = (id) => {
     if(target) target.classList.add('active');
 };
 
-// ৪. ডাটা সাবমিট এবং রিয়েল-টাইম লোড (বাকি সব আগের মতোই থাকবে)
+// ৪. অ্যাপ্লিকেশন সাবমিট লজিক
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
-    document.getElementById('mTitle').innerText = u;
-    document.getElementById('appModal').style.display = 'flex';
+    const mTitle = document.getElementById('mTitle');
+    const modal = document.getElementById('appModal');
+    if(mTitle) mTitle.innerText = u;
+    if(modal) modal.style.display = 'flex';
 };
 
 const submitBtn = document.getElementById('submitBtn');
@@ -58,23 +64,53 @@ if (submitBtn) {
     submitBtn.onclick = async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
-        if (!name || !pass) return alert("All fields required");
+        
+        if (!name || !pass) return alert("All fields are required!");
+
         try {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Sending...";
+            
             await addDoc(collection(db, "applications"), {
-                studentName: name, passport: pass, university: curUni,
-                status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
+                studentName: name,
+                passport: pass,
+                university: curUni,
+                status: "Pending",
+                partner: "GORUN LTD.",
+                timestamp: new Date().toISOString()
             });
-            alert("Success!");
+
+            alert("Application Submitted Successfully!");
             document.getElementById('appModal').style.display = 'none';
-        } catch (e) { alert(e.message); }
+            document.getElementById('sName').value = "";
+            document.getElementById('sPass').value = "";
+        } catch (e) {
+            alert("Submission Error: " + e.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Now";
+        }
     };
 }
 
-onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
+// ৫. ডাটা রিয়েল-টাইম লোড (টেবিল আপডেট)
+const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
+onSnapshot(q, (snap) => {
     let r = "";
     snap.forEach(doc => {
         const d = doc.data();
-        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:#ffcc00">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
+        r += `
+            <tr>
+                <td>${d.studentName}</td>
+                <td>${d.passport}</td>
+                <td>${d.university}</td>
+                <td><b style="color:#ffcc00">${d.status}</b></td>
+                <td>${new Date(d.timestamp).toLocaleDateString()}</td>
+            </tr>`;
     });
-    document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
+    
+    const tableBodies = document.querySelectorAll('.sharedBody');
+    tableBodies.forEach(t => {
+        t.innerHTML = r;
+    });
 });
