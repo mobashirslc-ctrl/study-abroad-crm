@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-4 border-blue-600">
         <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Partner Login</h2>
         <p class="text-gray-500 mb-6">Enter your credentials to access portal.</p>
         
@@ -20,15 +20,17 @@
         <div class="mt-6 text-center border-t pt-4">
             <p class="text-gray-600 text-sm">
                 Don't have a partner account? 
-                <a href="register.html" class="text-blue-600 font-bold hover:underline">Register here</a>
+                <a href="register.html" class="text-blue-600 font-bold hover:underline font-semibold">Register here</a>
             </p>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -40,27 +42,50 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // ইউজার লগইন থাকলে সরাসরি ড্যাশবোর্ডে রিডাইরেক্ট
-        onAuthStateChanged(auth, (user) => {
+        // ১. অটো-লগইন চেক (যদি অনুমোদিত ইউজার হয় তবেই পাঠাবে)
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                window.location.replace("partner.html");
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().status === "approved") {
+                    window.location.replace("partner.html");
+                }
             }
         });
 
-        // লগইন বাটন হ্যান্ডলার
+        // ২. লগইন বাটন ক্লিক হ্যান্ডলার
         document.getElementById('loginBtn').onclick = async () => {
-            const e = document.getElementById('email').value;
-            const p = document.getElementById('pass').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
             const btn = document.getElementById('loginBtn');
 
-            if (!e || !p) return alert("Please enter both email and password");
+            if (!email || !password) return alert("Please fill both email and password!");
 
             try {
                 btn.disabled = true;
-                btn.innerText = "Processing...";
-                await signInWithEmailAndPassword(auth, e, p);
+                btn.innerText = "Checking...";
+
+                // Firebase Auth এ লগইন
+                const userCred = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCred.user;
+
+                // ৩. Firestore থেকে এডমিন এপ্রুভাল চেক
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                
+                if (userDoc.exists() && userDoc.data().status === "approved") {
+                    // যদি এপ্রুভড হয়, ড্যাশবোর্ডে পাঠাও
+                    window.location.replace("partner.html");
+                } else {
+                    // যদি পেন্ডিং থাকে, লগআউট করে আটকে দাও
+                    await signOut(auth);
+                    alert("Your account is still pending admin approval. Please wait for SCC Admin to verify your account.");
+                    btn.disabled = false;
+                    btn.innerText = "Login Now";
+                }
+
             } catch (err) {
+                // ভুল পাসওয়ার্ড বা ইমেইল দিলে এরর দেখাবে
                 alert("Login Failed: " + err.message);
                 btn.disabled = false;
                 btn.innerText = "Login Now";

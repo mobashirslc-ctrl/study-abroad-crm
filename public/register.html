@@ -9,7 +9,7 @@
 <body class="bg-slate-900 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Create Account</h2>
-        <p class="text-gray-500 mb-6">Join as a partner to start submitting applications.</p>
+        <p class="text-gray-500 mb-6">Join as a partner. Admin will approve your account.</p>
         
         <div class="space-y-4">
             <input type="text" id="regName" placeholder="Full Name / Company Name" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
@@ -25,7 +25,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -53,20 +53,21 @@
                 btn.disabled = true;
                 btn.innerText = "Registering...";
                 
-                // ১. Firebase Auth এ ইউজার তৈরি করা
                 const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                 const user = userCredential.user;
 
-                // ২. Firestore এ ইউজারের এক্সট্রা ডাটা (নাম) সেভ করা
+                // ইউজারের ডাটা সেভ করা হচ্ছে (Status: pending)
                 await setDoc(doc(db, "users", user.uid), {
                     fullName: name,
                     email: email,
                     role: "partner",
+                    status: "pending",
                     createdAt: new Date().toISOString()
                 });
 
-                alert("Registration Successful!");
-                window.location.replace("partner.html");
+                alert("Registration Successful! Please wait for Admin Approval.");
+                await signOut(auth); // এপ্রুভালের জন্য ওয়েট করতে হবে, তাই লগআউট
+                window.location.replace("index.html");
 
             } catch (err) {
                 alert("Error: " + err.message);
