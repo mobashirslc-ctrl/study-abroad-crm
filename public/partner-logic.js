@@ -15,7 +15,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. ইউজারের নাম এবং স্টেটাস চেক
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -31,40 +30,36 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// ২. স্মার্ট অ্যাসেসমেন্ট (ফিল্টারিং লজিক)
+// ২. স্মার্ট অ্যাসেসমেন্ট (ক্যালকুলেশন সহ)
 window.smartSearch = () => {
     const country = document.getElementById('fCountry').value.toLowerCase();
-    const degree = document.getElementById('fDegree').value;
-    const langType = document.getElementById('fLangType').value;
-    const acadScore = document.getElementById('fAcadScore').value;
-    const langScore = document.getElementById('fLangScore').value;
-
     const resultsArea = document.getElementById('assessmentResults');
     const tbody = document.getElementById('uniResultsBody');
     
     resultsArea.style.display = 'block';
-    tbody.innerHTML = "<tr><td colspan='11' style='text-align:center; padding: 20px;'>Searching for matching universities...</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='12' style='text-align:center;'>Searching...</td></tr>";
 
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
-        let count = 0;
-
         snap.forEach(doc => {
             const u = doc.data();
             
-            // ফিল্টার কন্ডিশন (এখানে অ্যাডমিন থেকে আসা ২১টি ফিল্ডের ডেটা চেক করা হবে)
+            // অটো ক্যালকুলেশন লজিক
+            const semesterFee = parseFloat(u.semesterFee) || 0;
+            const commPercent = parseFloat(u.partnerCommPercent) || 0;
+            const commissionAmount = (semesterFee * commPercent) / 100;
+
             let isMatch = true;
             if (country && !u.country.toLowerCase().includes(country)) isMatch = false;
-            // এখানে আপনি চাইলে আরও কঠোর ফিল্টারিং (Score mapping) যোগ করতে পারেন
 
             if (isMatch) {
-                count++;
                 rows += `
                 <tr>
                     <td style="color:var(--gold); font-weight:bold">${u.name}</td>
                     <td>${u.country}</td>
                     <td>${u.intake}</td>
-                    <td>${u.tuitionFee}</td>
+                    <td>${u.currency || '$'} ${u.semesterFee}</td>
+                    <td style="background:rgba(0,255,0,0.1); color:#00ff00; font-weight:bold;">৳ ${commissionAmount.toFixed(2)}</td>
                     <td>${u.initialPayment || 'N/A'}</td>
                     <td>${u.scholarship || 'N/A'}</td>
                     <td>${u.requirement || 'View'}</td>
@@ -77,79 +72,69 @@ window.smartSearch = () => {
                 </tr>`;
             }
         });
-
-        if (count > 0) {
-            tbody.innerHTML = rows;
-        } else {
-            tbody.innerHTML = "<tr><td colspan='11' style='text-align:center; padding: 20px; color: #ff5e5e;'>No universities match your criteria. Please contact SCC Admin.</td></tr>";
-        }
+        tbody.innerHTML = rows || "<tr><td colspan='12'>No Matching Data</td></tr>";
     });
 };
 
-// ৩. অ্যাপ্লিকেশন মোডাল এবং সাবমিশন
 window.openApp = (uniName) => {
     document.getElementById('mTitle').innerText = uniName;
     document.getElementById('appModal').style.display = 'flex';
 };
 
+// ৩. সাবমিশন এবং স্লিপ জেনারেশন
 document.getElementById('submitBtn').onclick = async () => {
     const name = document.getElementById('sName').value;
     const phone = document.getElementById('sPhone').value;
     const pass = document.getElementById('sPass').value;
+    const uni = document.getElementById('mTitle').innerText;
     const btn = document.getElementById('submitBtn');
 
-    if (!name || !phone || !pass) return alert("Please fill all student details!");
+    if (!name || !phone || !pass) return alert("Fill all info!");
 
     try {
         btn.disabled = true;
-        btn.innerText = "Submitting...";
+        btn.innerText = "Processing...";
 
         const docRef = await addDoc(collection(db, "applications"), {
-            studentName: name,
-            contactNo: phone,
-            passportNo: pass,
-            university: document.getElementById('mTitle').innerText,
-            status: "Pending",
-            complianceMember: "Unassigned",
+            studentName: name, contactNo: phone, passportNo: pass,
+            university: uni, status: "Pending", complianceMember: "Unassigned",
             partnerName: document.getElementById('userName').innerText,
             partnerUID: auth.currentUser.uid,
             timestamp: new Date().toISOString(),
             dateTime: new Date().toLocaleString()
         });
 
-        alert("Application Submitted! ID: " + docRef.id);
+        // স্লিপ ডাটা সেট
+        document.getElementById('slipNameHead').innerText = name;
+        document.getElementById('slipName').innerText = name;
+        document.getElementById('slipPass').innerText = pass;
+        document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
+        document.getElementById('slipPartner').innerText = document.getElementById('userName').innerText;
+        document.getElementById('slipUni').innerText = uni;
         
-        // ফর্ম ক্লিয়ার করা
-        document.getElementById('sName').value = "";
-        document.getElementById('sPhone').value = "";
-        document.getElementById('sPass').value = "";
+        // QR কোড (Student Tracking Link)
+        const trackURL = `https://scc-partner-portal.web.app/track.html?id=${docRef.id}`;
+        document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackURL)}`;
+
+        alert("Application Saved! Opening Print Preview...");
+        
+        // প্রিন্ট ফাংশন
+        window.print();
+
         document.getElementById('appModal').style.display = 'none';
         
-    } catch (e) {
-        alert("Error: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Submit & Generate Slip";
-    }
+    } catch (e) { alert(e.message); }
+    finally { btn.disabled = false; btn.innerText = "Submit & Generate Slip"; }
 };
 
-// ৪. রিয়েল-টাইম ফাইল ট্র্যাকিং
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let html = "";
     snap.forEach(doc => {
         const d = doc.data();
-        html += `
-            <tr>
-                <td>${d.studentName}</td>
-                <td>${d.contactNo}</td>
-                <td>${d.passportNo}</td>
-                <td><span style="background:rgba(255,204,0,0.1); color:var(--gold); padding:4px 8px; border-radius:4px;">${d.status}</span></td>
-                <td>${d.complianceMember}</td>
-                <td>${d.dateTime}</td>
-            </tr>`;
+        html += `<tr><td>${d.studentName}</td><td>${d.contactNo}</td><td>${d.passportNo}</td>
+                <td><span style="color:var(--gold)">${d.status}</span></td><td>${d.complianceMember}</td><td>${d.dateTime}</td></tr>`;
     });
     document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = html);
 });
 
-// ৫. লগআউট
 document.getElementById('logoutBtn').onclick = () => signOut(auth);
