@@ -1,164 +1,111 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+const firebaseConfig = { 
+    apiKey: "YOUR_KEY", 
+    authDomain: "YOUR_DOMAIN", 
+    projectId: "YOUR_ID", 
+    storageBucket: "YOUR_BUCKET", 
+    messagingSenderId: "YOUR_SENDER", 
+    appId: "YOUR_APP" 
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
 
-// ১. অথেনটিকেশন এবং প্রোফাইল লোড
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().status === "approved") {
-            const data = userDoc.data();
-            document.getElementById('userName').innerText = data.fullName;
-            document.getElementById('pFullName').value = data.fullName || "";
-            document.getElementById('pCompanyName').value = data.companyName || "";
-            document.getElementById('pPhone').value = data.phone || "";
-            document.getElementById('pAddress').value = data.address || "";
-            initWalletListener(user.uid);
-            loadFileTracking(user.uid);
-        } else {
-            signOut(auth);
-            window.location.replace("index.html");
-        }
-    } else {
-        window.location.replace("index.html");
-    }
-});
+let curUni = "";
+let selectedUniCommission = 0;
 
-// ২. প্রোফাইল আপডেট
-window.updateProfile = async () => {
-    try {
-        await updateDoc(doc(db, "users", auth.currentUser.uid), {
-            fullName: document.getElementById('pFullName').value,
-            companyName: document.getElementById('pCompanyName').value,
-            phone: document.getElementById('pPhone').value,
-            address: document.getElementById('pAddress').value
-        });
-        alert("Profile Updated!");
-    } catch (e) { alert(e.message); }
-};
-
-// ৩. স্মার্ট অ্যাসেসমেন্ট (STRICT FILTERING)
-window.smartSearch = () => {
-    const country = document.getElementById('fCountry').value.toLowerCase().trim();
-    const degree = document.getElementById('fDegree').value;
-    const lang = document.getElementById('fLangType').value;
-    
+// ১. ইউনিভার্সিটি সার্চ লজিক
+window.runSearch = () => {
     const tbody = document.getElementById('uniResultsBody');
-    document.getElementById('assessmentResults').style.display = 'block';
-    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Searching...</td></tr>";
+    document.getElementById('resArea').style.display = 'block';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Loading Realtime Data...</td></tr>';
 
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
-        const rates = { 'GBP': 155, 'USD': 120, 'EUR': 132, 'BDT': 1 };
-        let found = 0;
-
-        snap.forEach(docSnap => {
-            const u = docSnap.data();
-            
-            // ফিল্টার লজিক: সব সিলেক্টেড শর্ত মিললে তবেই শো করবে
-            const matchC = !country || u.country.toLowerCase().includes(country);
-            const matchD = !degree || (u.degree && u.degree.toUpperCase() === degree.toUpperCase());
-            const matchL = !lang || (u.acceptedEnglish && u.acceptedEnglish.toUpperCase().includes(lang.toUpperCase()));
-
-            if (matchC && matchD && matchL) {
-                found++;
-                const rate = rates[u.currency] || 120;
-                const commission = (parseFloat(u.semesterFee) * rate * parseFloat(u.partnerCommPercent)) / 100;
-
-                rows += `<tr>
-                    <td>${u.name}</td><td>${u.country}</td><td>${u.intake}</td>
-                    <td>${u.currency || '$'} ${u.semesterFee}</td>
-                    <td style="color:#00ff00">৳ ${Math.round(commission).toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApp('${u.name}', ${commission})">Open File</button></td>
-                </tr>`;
-            }
+        snap.forEach(doc => {
+            const u = doc.data();
+            // এখানে আপনি আপনার ফিল্টার লজিক অ্যাড করতে পারেন
+            rows += `
+            <tr>
+                <td>${u.name}</td><td>${u.degree}</td><td>${u.subject}</td><td>${u.currency} ${u.semesterFee}</td>
+                <td style="color:#00ff00; font-weight:bold;">৳ ${Math.round(u.commission || 0).toLocaleString()}</td>
+                <td>${u.gapAllowed}</td><td>${u.minGPA}</td><td>${u.langScore}</td>
+                <td>${u.scholarship}</td><td>${u.intake}</td>
+                <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('${u.name}', ${u.commission})">Open File</button></td>
+            </tr>`;
         });
-        tbody.innerHTML = found > 0 ? rows : "<tr><td colspan='6' style='text-align:center; color:red;'>No matching university found.</td></tr>";
+        tbody.innerHTML = rows || '<tr><td colspan="11" style="text-align:center;">No Data Found</td></tr>';
     });
 };
 
-// ৪. ফাইল ওপেন এবং কিউআর স্লিপ
-let selectedUniCommission = 0;
-window.openApp = (uniName, comm) => {
-    document.getElementById('mTitle').innerText = uniName;
+// ২. পপআপ ওপেন করা
+window.openApp = (u, comm) => { 
+    curUni = u; 
     selectedUniCommission = comm;
-    document.getElementById('appModal').style.display = 'flex';
+    document.getElementById('mTitle').innerText = u; 
+    document.getElementById('appModal').style.display = 'flex'; 
 };
 
-document.getElementById('submitBtn').onclick = async () => {
-    const name = document.getElementById('sName').value;
-    const pass = document.getElementById('sPass').value;
-    const uni = document.getElementById('mTitle').innerText;
+// ৩. সাবমিট বাটন অ্যাক্টিভেশন (FIXED)
+document.getElementById('submitBtn').addEventListener('click', async () => {
+    const name = document.getElementById('sName').value.trim();
+    const pass = document.getElementById('sPass').value.trim();
+    const btn = document.getElementById('submitBtn');
 
-    if (!name || !pass) return alert("Student Name & Passport Required!");
+    if(!name || !pass) {
+        alert("Please enter Student Name and Passport Number!");
+        return;
+    }
 
     try {
-        await addDoc(collection(db, "applications"), {
-            studentName: name, contactNo: document.getElementById('sPhone').value,
-            passportNo: pass, university: uni, status: "Pending",
-            partnerUID: auth.currentUser.uid, partnerName: document.getElementById('userName').innerText,
-            commissionBDT: selectedUniCommission, pendingAmount: 0, finalAmount: 0,
-            timestamp: new Date().toISOString(), dateTime: new Date().toLocaleString()
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        // ফায়ারবেসে ডাটা সেভ
+        const docRef = await addDoc(collection(db, "applications"), { 
+            studentName: name, 
+            passport: pass, 
+            university: curUni, 
+            status: "Pending", 
+            partner: "GORUN LTD.", 
+            commission: selectedUniCommission,
+            timestamp: serverTimestamp() 
         });
+
+        // স্লিপ ডাটা আপডেট (আপনার স্ক্রিনশটের ডিজাইন অনুযায়ী)
+        document.getElementById('slipNameDisp').innerText = name;
+        document.getElementById('slipPassDisp').innerText = pass;
+        document.getElementById('slipDateDisp').innerText = new Date().toLocaleDateString('en-GB');
         
+        // QR Code জেনারেট (Tracking ID সহ)
+        const qrData = `STUDENT:${name}|PASS:${pass}|UNI:${curUni}|ID:${docRef.id}`;
+        document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+
+        // পপআপ বন্ধ করে স্লিপ দেখানো
         document.getElementById('appModal').style.display = 'none';
+        document.getElementById('slipOverlay').style.display = 'flex';
         
-        // QR Code Generation
-        document.getElementById('slipName').innerText = name;
-        document.getElementById('slipPass').innerText = pass;
-        document.getElementById('slipUni').innerText = uni;
-        document.getElementById('qrImg').src = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(name + "|" + pass + "|" + uni)}`;
-        
-        setTimeout(() => { window.print(); }, 1000);
-    } catch (e) { alert(e.message); }
-};
+        // ইনপুট রিসেট
+        document.getElementById('sName').value = "";
+        document.getElementById('sPass').value = "";
 
-// ৫. ওয়ালেট এবং ট্র্যাকিং
-function initWalletListener(uid) {
-    onSnapshot(query(collection(db, "applications"), where("partnerUID", "==", uid)), (snap) => {
-        let tp = 0, tf = 0;
-        snap.forEach(d => { tp += parseFloat(d.data().pendingAmount || 0); tf += parseFloat(d.data().finalAmount || 0); });
-        document.getElementById('pendingWalletBox').innerText = `৳ ${Math.round(tp).toLocaleString()}`;
-        document.getElementById('finalWalletBox').innerText = `৳ ${Math.round(tf).toLocaleString()}`;
-        document.getElementById('finalWalletDisplay').innerText = `৳ ${Math.round(tf).toLocaleString()}`;
-        document.getElementById('withdrawBtn').disabled = tf <= 0;
+    } catch(e) {
+        alert("Submission Error: " + e.message);
+    } finally {
+        btn.innerText = "Submit to Admin";
+        btn.disabled = false;
+    }
+});
+
+// ৪. রিয়েলটাইম ট্র্যাকিং লিস্ট
+onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
+    let r = ""; 
+    snap.forEach(doc => { 
+        const d = doc.data(); 
+        const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : 'Just now';
+        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${date}</td></tr>`; 
     });
-}
-
-function loadFileTracking(uid) {
-    onSnapshot(query(collection(db, "applications"), where("partnerUID", "==", uid), orderBy("timestamp", "desc")), (snap) => {
-        let html = "";
-        snap.forEach(d => {
-            const data = d.data();
-            html += `<tr><td>${data.studentName}</td><td>${data.passportNo}</td><td style="color:var(--gold)">${data.status}</td><td>Unassigned</td><td>${data.dateTime}</td></tr>`;
-        });
-        document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = html);
-    });
-}
-
-// উইথড্র
-window.openWithdrawModal = () => document.getElementById('withdrawModal').style.display = 'flex';
-document.getElementById('confirmWithdrawBtn').onclick = async () => {
-    await addDoc(collection(db, "withdrawals"), {
-        partnerUID: auth.currentUser.uid, amount: document.getElementById('wAmount').value,
-        method: document.getElementById('wMethod').value, accountNo: document.getElementById('wAccNo').value,
-        status: "Pending", timestamp: new Date().toISOString()
-    });
-    alert("Request Sent!");
-    document.getElementById('withdrawModal').style.display = 'none';
-};
-
-document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
+});
