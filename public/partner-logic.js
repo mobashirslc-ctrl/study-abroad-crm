@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -18,17 +18,18 @@ const auth = getAuth(app);
 // --- স্টেবিলিটি এবং অথেনটিকেশন চেক ---
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        // লগইন না থাকলে সরাসরি বের করে দেবে
-        window.location.replace("login.html");
+        // লগইন না থাকলে সরাসরি মেইন পেজে পাঠিয়ে দাও
+        window.location.replace("index.html");
     } else {
-        // লগইন থাকলে লোডার সরিয়ে মেইন পেজ দেখাবে
-        document.getElementById('loader').style.display = 'none';
+        // লগইন থাকলে লোডার সরিয়ে মেইন পেজ দেখাও
+        const loader = document.getElementById('loader');
+        if(loader) loader.style.display = 'none';
         document.body.classList.add('auth-ready');
-        startDashboard(); // ড্যাশবোর্ড ডাটা লোড শুরু করো
+        startDashboard(user); 
     }
 });
 
-function startDashboard() {
+function startDashboard(currentUser) {
     let currentComm = 0;
 
     // ১. ইউনিভার্সিটি সার্চ লজিক
@@ -72,8 +73,11 @@ function startDashboard() {
     };
     document.getElementById('runSearchBtn').onclick = window.runSearch;
 
-    // ২. ওয়ালেট এবং ট্র্যাকিং (রিয়েল-টাইম)
-    onSnapshot(collection(db, "applications"), (snap) => {
+    // ২. ওয়ালেট এবং অ্যাপ্লিকেশন ট্র্যাকিং (রিয়েল-টাইম)
+    // শুধুমাত্র বর্তমান ইউজারের অ্যাপ্লিকেশনগুলো ফিল্টার করে আনা হচ্ছে
+    const qApp = query(collection(db, "applications"), where("partnerEmail", "==", currentUser.email));
+    
+    onSnapshot(qApp, (snap) => {
         let pending = 0;
         let available = 0;
         let trackingRows = "";
@@ -95,6 +99,10 @@ function startDashboard() {
         
         document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
         document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
+        // ওয়ালেট সেকশনের ব্যালেন্সও আপডেট করো
+        if(document.getElementById('walletBalance')) {
+            document.getElementById('walletBalance').innerText = `৳ ${available.toLocaleString()}`;
+        }
         document.getElementById('liveTrackingBody').innerHTML = trackingRows;
     });
 
@@ -119,6 +127,7 @@ function startDashboard() {
                 pendingAmount: 0,
                 finalAmount: 0,
                 status: "PENDING",
+                partnerEmail: currentUser.email, // পার্টনার ট্র্যাক করার জন্য
                 timestamp: serverTimestamp()
             });
             
@@ -132,11 +141,59 @@ function startDashboard() {
         } catch (e) { alert("Submission failed: " + e.message); }
     };
 
-    // ৪. লগআউট (ব্লেজিং ফাস্ট এবং ক্লিন)
+    // ৪. উইথড্রয়াল রিকোয়েস্ট লজিক
+    if(document.getElementById('requestWithdrawBtn')) {
+        document.getElementById('requestWithdrawBtn').onclick = async () => {
+            const amount = parseFloat(document.getElementById('wAmount').value);
+            const method = document.getElementById('wMethod').value;
+            const details = document.getElementById('wDetails').value;
+            const currentBalance = parseFloat(document.getElementById('availAm').innerText.replace('৳ ', '').replace(',', '')) || 0;
+
+            if(!amount || !details) return alert("Please fill all details!");
+            if(amount < 5000) return alert("Minimum withdrawal is ৳ 5,000");
+            if(amount > currentBalance) return alert("Insufficient balance!");
+
+            try {
+                await addDoc(collection(db, "withdrawals"), {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email,
+                    amount: amount,
+                    method: method,
+                    details: details,
+                    status: "PENDING",
+                    timestamp: serverTimestamp()
+                });
+                alert("Withdrawal request sent! Wait for admin approval.");
+                document.getElementById('wAmount').value = "";
+                document.getElementById('wDetails').value = "";
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        // উইথড্রয়াল হিস্ট্রি ট্র্যাকিং
+        const qWithdraw = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid), orderBy("timestamp", "desc"));
+        onSnapshot(qWithdraw, (snap) => {
+            let historyHtml = "";
+            snap.forEach(doc => {
+                const w = doc.data();
+                const date = w.timestamp ? new Date(w.timestamp.seconds * 1000).toLocaleDateString() : 'New';
+                let statusColor = w.status === 'APPROVED' ? '#00ff00' : (w.status === 'REJECTED' ? '#ff5e5e' : '#ffcc00');
+                
+                historyHtml += `<tr>
+                    <td>${date}</td>
+                    <td>৳ ${w.amount.toLocaleString()}</td>
+                    <td>${w.method.toUpperCase()}</td>
+                    <td style="color:${statusColor}; font-weight:bold;">${w.status}</td>
+                </tr>`;
+            });
+            document.getElementById('withdrawHistoryBody').innerHTML = historyHtml || '<tr><td colspan="4" style="text-align:center;">No history found.</td></tr>';
+        });
+    }
+
+    // ৫. লগআউট (সেশন ক্লিয়ার করে সরাসরি index.html এ যাবে)
     document.getElementById('logoutBtn').onclick = () => {
         if(confirm("Are you sure you want to logout?")) {
             signOut(auth).then(() => {
-                window.location.replace("login.html");
+                window.location.replace("index.html");
             });
         }
     };
