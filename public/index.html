@@ -6,15 +6,22 @@
     <title>Partner Login | SCC</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 flex items-center justify-center min-h-screen">
+<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Partner Login</h2>
         <p class="text-gray-500 mb-6">Enter your credentials to access portal.</p>
         
         <div class="space-y-4">
-            <input type="email" id="email" placeholder="Email Address" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="pass" placeholder="Password" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
-            <button id="loginBtn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition">Login Now</button>
+            <input type="email" id="email" placeholder="Email Address" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
+            <input type="password" id="pass" placeholder="Password" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
+            <button id="loginBtn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition transform active:scale-95 shadow-lg">Login Now</button>
+        </div>
+
+        <div class="mt-6 text-center border-t pt-4">
+            <p class="text-gray-600 text-sm">
+                Don't have a partner account? 
+                <a href="register.html" class="text-blue-600 font-bold hover:underline">Register here</a>
+            </p>
         </div>
     </div>
 
@@ -34,19 +41,29 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // লগইন চেক: যদি লগইন থাকে তবে ড্যাশবোর্ডে পাঠিয়ে দাও
+        // ইউজার লগইন থাকলে সরাসরি ড্যাশবোর্ডে রিডাইরেক্ট
         onAuthStateChanged(auth, (user) => {
-            if (user) window.location.replace("partner.html");
+            if (user) {
+                window.location.replace("partner.html");
+            }
         });
 
-        // লগইন ফাংশন
+        // লগইন বাটন হ্যান্ডলার
         document.getElementById('loginBtn').onclick = async () => {
             const e = document.getElementById('email').value;
             const p = document.getElementById('pass').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!e || !p) return alert("Please enter both email and password");
+
             try {
+                btn.disabled = true;
+                btn.innerText = "Processing...";
                 await signInWithEmailAndPassword(auth, e, p);
             } catch (err) {
                 alert("Login Failed: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "Login Now";
             }
         };
     </script>

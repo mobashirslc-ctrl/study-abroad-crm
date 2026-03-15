@@ -4,94 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Registration | SCC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #0b012d; font-family: 'Poppins', sans-serif; }
-        .card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); padding: 40px; border-radius: 25px; text-align: center; width: 90%; max-width: 400px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .logo-box { background: white; padding: 10px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; }
-        .logo-box img { height: 40px; }
-        h2 { color: #ffcc00; margin-bottom: 20px; letter-spacing: 1px; }
-        .input-group { position: relative; margin-bottom: 15px; }
-        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #ffcc00; }
-        input { width: 100%; padding: 12px 12px 12px 45px; background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; color: white; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: #ffcc00; color: #0b012d; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; text-transform: uppercase; }
-        .btn:disabled { background: #555; cursor: not-allowed; }
-        p { color: #bdc3c7; font-size: 13px; margin-top: 15px; }
-        a { color: #ffcc00; text-decoration: none; font-weight: bold; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="card">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC Logo"></div>
-        <h2>Partner Join</h2>
-        <form id="regForm">
-            <div class="input-group"><i class="fa-solid fa-user"></i><input type="text" id="fullName" placeholder="Full Name" required></div>
-            <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="email" placeholder="Email Address" required></div>
-            <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
-            <button type="submit" class="btn" id="regBtn">Register Now</button>
-        </form>
-        <p>Already have an account? <a href="index.html">Login here</a></p>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+        <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Create Account</h2>
+        <p class="text-gray-500 mb-6">Join as a partner to start submitting applications.</p>
+        
+        <div class="space-y-4">
+            <input type="text" id="regName" placeholder="Full Name / Company Name" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="email" id="regEmail" placeholder="Email Address" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="regPass" placeholder="Create Password" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="registerBtn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition">Register Now</button>
+        </div>
+
+        <p class="text-center text-gray-600 mt-4 text-sm">
+            Already have an account? <a href="index.html" class="text-blue-600 font-bold hover:underline">Login here</a>
+        </p>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <script>
-        // 1. Firebase Configuration (Matches your SCC Portal)
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
             projectId: "scc-partner-portal",
-            databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com/"
+            storageBucket: "scc-partner-portal.firebasestorage.app",
+            messagingSenderId: "13013457431",
+            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
         };
-        
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.database();
 
-        // 2. Registration Logic
-        document.getElementById('regForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const name = document.getElementById('fullName').value;
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const btn = document.getElementById('regBtn');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-            btn.innerText = "Processing...";
-            btn.disabled = true;
+        document.getElementById('registerBtn').onclick = async () => {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const btn = document.getElementById('registerBtn');
 
-            // Step A: Create User in Firebase Authentication
-            auth.createUserWithEmailAndPassword(email, pass)
-            .then((userCredential) => {
+            if(!name || !email || !pass) return alert("Please fill all fields!");
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Registering...";
+                
+                // ১. Firebase Auth এ ইউজার তৈরি করা
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                 const user = userCredential.user;
 
-                // Step B: Save Partner data into 'partners' node
-                return db.ref('partners/' + user.uid).set({
-                    name: name,
+                // ২. Firestore এ ইউজারের এক্সট্রা ডাটা (নাম) সেভ করা
+                await setDoc(doc(db, "users", user.uid), {
+                    fullName: name,
                     email: email,
-                    status: "Pending", // User must be approved by admin
-                    company: "N/A",
-                    uid: user.uid,
-                    joinedAt: new Date().toLocaleString()
+                    role: "partner",
+                    createdAt: new Date().toISOString()
                 });
-            })
-            .then(() => {
-                alert("Registration Success! Please wait for Admin Approval.");
-                auth.signOut(); // Ensure they can't access dashboard until approved
-                window.location.href = "index.html"; // Redirect to login page
-            })
-            .catch((error) => {
-                // Handle Errors (e.g. Email already in use)
-                alert("Error: " + error.message);
-                btn.innerText = "Register Now";
+
+                alert("Registration Successful!");
+                window.location.replace("partner.html");
+
+            } catch (err) {
+                alert("Error: " + err.message);
                 btn.disabled = false;
-            });
-        });
+                btn.innerText = "Register Now";
+            }
+        };
     </script>
 </body>
 </html>
