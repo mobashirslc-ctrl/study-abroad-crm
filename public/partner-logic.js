@@ -15,102 +15,65 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক: লগইন না থাকলে index.html (লগইন পেজ) এ পাঠিয়ে দাও
+// ১. সিকিউরিটি চেক
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        // যদি বর্তমানে লগইন পেজে না থাকে, তবেই রিডাইরেক্ট করো (লুপ ঠেকানোর জন্য)
-        if (!window.location.pathname.includes("index.html") && window.location.pathname !== "/") {
-            window.location.replace("index.html");
-        }
+        window.location.replace("index.html");
     }
 });
 
-// ২. লগআউট লজিক: index.html এ রিডাইরেক্ট হবে
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-            await signOut(auth);
-            console.log("Logged out successfully");
-            window.location.replace("index.html");
-        } catch (err) {
-            console.error("Logout Error:", err);
-            alert("Logout failed!");
-        }
-    });
-}
-
-// ৩. ট্যাব ফাংশন (Home/History স্যুইচ করার জন্য)
+// ২. ট্যাব ফাংশন
 window.tab = (id) => {
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
     const target = document.getElementById(id);
     if(target) target.classList.add('active');
+    event.currentTarget.classList.add('active');
 };
 
-// ৪. অ্যাপ্লিকেশন সাবমিট লজিক
+// ৩. মডেল ওপেন
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
-    const mTitle = document.getElementById('mTitle');
-    const modal = document.getElementById('appModal');
-    if(mTitle) mTitle.innerText = u;
-    if(modal) modal.style.display = 'flex';
+    document.getElementById('mTitle').innerText = u;
+    document.getElementById('appModal').style.display = 'flex';
 };
 
+// ৪. সাবমিট লজিক
 const submitBtn = document.getElementById('submitBtn');
 if (submitBtn) {
     submitBtn.onclick = async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
-        
-        if (!name || !pass) return alert("All fields are required!");
-
+        if (!name || !pass) return alert("Required!");
         try {
             submitBtn.disabled = true;
             submitBtn.innerText = "Sending...";
-            
             await addDoc(collection(db, "applications"), {
-                studentName: name,
-                passport: pass,
-                university: curUni,
-                status: "Pending",
-                partner: "GORUN LTD.",
-                timestamp: new Date().toISOString()
+                studentName: name, passport: pass, university: curUni,
+                status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
             });
-
-            alert("Application Submitted Successfully!");
+            alert("Sent!");
             document.getElementById('appModal').style.display = 'none';
-            document.getElementById('sName').value = "";
-            document.getElementById('sPass').value = "";
-        } catch (e) {
-            alert("Submission Error: " + e.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Now";
-        }
+        } catch (e) { alert(e.message); }
+        finally { submitBtn.disabled = false; submitBtn.innerText = "Submit Now"; }
     };
 }
 
-// ৫. ডাটা রিয়েল-টাইম লোড (টেবিল আপডেট)
-const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
-onSnapshot(q, (snap) => {
+// ৫. ডাটা আপডেট
+onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let r = "";
     snap.forEach(doc => {
         const d = doc.data();
-        r += `
-            <tr>
-                <td>${d.studentName}</td>
-                <td>${d.passport}</td>
-                <td>${d.university}</td>
-                <td><b style="color:#ffcc00">${d.status}</b></td>
-                <td>${new Date(d.timestamp).toLocaleDateString()}</td>
-            </tr>`;
+        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
     });
-    
-    const tableBodies = document.querySelectorAll('.sharedBody');
-    tableBodies.forEach(t => {
-        t.innerHTML = r;
-    });
+    document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
 });
+
+// ৬. লগআউট (index.html এ পাঠাবে)
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.onclick = () => {
+        signOut(auth).then(() => window.location.replace("index.html"));
+    };
+}

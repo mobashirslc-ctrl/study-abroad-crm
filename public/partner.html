@@ -10,7 +10,7 @@
         body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
-        .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; }
+        .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.6); }
         .sidebar:hover img.logo { width: 85px; margin-left: 10px; }
         .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
         .nav-links li { padding: 18px; cursor: pointer; color: #bdc3c7; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
@@ -22,25 +22,29 @@
         .section.active { display: block; }
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid var(--gold); }
+        .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin: 5px 0; }
         .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
+        input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
+        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .table-wrap { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1000px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        /* Modal Design */
+        footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #111; z-index: 500; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 450px; border: 1px solid var(--gold); }
-        input { width: 100%; padding: 12px; background: #050118; border: 1px solid #333; color: white; border-radius: 8px; margin-bottom: 15px; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
-            <li class="active" onclick="tab('dashboard')"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="tab('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>History</span></li>
+            <li class="active" onclick="tab('dashboard')"><i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span></li>
+            <li onclick="tab('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
+            <li onclick="tab('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
+            <li onclick="tab('profile')"><i class="fa-solid fa-id-card"></i> <span>Profile</span></li>
         </ul>
         <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:#ff5e5e; cursor:pointer; font-size: 20px;">
             <i class="fa-solid fa-right-from-bracket"></i>
@@ -51,7 +55,7 @@
         <div class="top-stats">
             <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0.00</div></div>
             <div class="stat-box"><small>Available Wallet</small><div class="amount">৳ 0.00</div></div>
-            <div class="stat-box"><small>Status</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM</div></div>
+            <div class="stat-box"><small>Subscription Status</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM</div></div>
         </div>
 
         <div id="dashboard" class="section active">
@@ -60,7 +64,7 @@
                 <button class="btn-gold" onclick="openApp('University of East London')">Apply to UEL</button>
             </div>
             <div class="card">
-                <h3>Live Tracking</h3>
+                <h3>Recent Tracking</h3>
                 <div class="table-wrap"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div>
             </div>
         </div>
@@ -68,15 +72,25 @@
         <div id="tracking" class="section">
             <div class="card"><h3>Full History</h3><div class="table-wrap"><table><thead><tr><th>Name</th><th>Passport</th><th>Uni</th><th>Status</th><th>Date</th></tr></thead><tbody class="sharedBody"></tbody></table></div></div>
         </div>
+
+        <div id="wallet" class="section">
+            <div class="card"><h3>Withdraw Commission</h3><p>Withdrawal system coming soon...</p></div>
+        </div>
+
+        <div id="profile" class="section">
+            <div class="card"><h3>Company Profile</h3><p>GORUN LTD.</p></div>
+        </div>
+
+        <footer>© Rights & Reserved 2026 GORUN LTD.</footer>
     </div>
 
     <div id="appModal" class="modal">
         <div class="modal-content">
-            <h3 id="mTitle" style="color:var(--gold); margin-bottom:20px;"></h3>
+            <h3 id="mTitle" style="color:var(--gold);"></h3>
             <label>Student Full Name</label><input type="text" id="sName">
             <label>Passport Number</label><input type="text" id="sPass">
             <button class="btn-gold" style="width:100%" id="submitBtn">Submit Now</button>
-            <button class="btn-gold" style="width:100%; background:#444; color:white; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
+            <button class="btn-gold" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
     </div>
 
