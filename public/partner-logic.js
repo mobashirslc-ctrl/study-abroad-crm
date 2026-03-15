@@ -30,7 +30,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// ২. স্মার্ট অ্যাসেসমেন্ট (ক্যালকুলেশন সহ)
+// ২. স্মার্ট অ্যাসেসমেন্ট (আপডেটেড কারেন্সি কনভারশন লজিক)
 window.smartSearch = () => {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const resultsArea = document.getElementById('assessmentResults');
@@ -41,13 +41,23 @@ window.smartSearch = () => {
 
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
+        
+        // কারেন্সি রেট কনফিগারেশন
+        const rates = { 'GBP': 155, 'USD': 120, 'EUR': 132, 'BDT': 1 };
+
         snap.forEach(doc => {
             const u = doc.data();
             
-            // অটো ক্যালকুলেশন লজিক
-            const semesterFee = parseFloat(u.semesterFee) || 0;
+            // --- কমিশন ক্যালকুলেশন লজিক শুরু ---
+            const currentRate = rates[u.currency] || 120; // কারেন্সি না থাকলে ১২০ ডিফল্ট
+            const semesterFeeRaw = parseFloat(u.semesterFee) || 0;
             const commPercent = parseFloat(u.partnerCommPercent) || 0;
-            const commissionAmount = (semesterFee * commPercent) / 100;
+
+            // ১. আগে টাকায় কনভার্ট করা
+            const feeInBDT = semesterFeeRaw * currentRate;
+            // ২. তারপর বিডিটি অ্যামাউন্টের ওপর কমিশন বের করা
+            const commissionAmountBDT = (feeInBDT * commPercent) / 100;
+            // --- কমিশন ক্যালকুলেশন লজিক শেষ ---
 
             let isMatch = true;
             if (country && !u.country.toLowerCase().includes(country)) isMatch = false;
@@ -58,11 +68,13 @@ window.smartSearch = () => {
                     <td style="color:var(--gold); font-weight:bold">${u.name}</td>
                     <td>${u.country}</td>
                     <td>${u.intake}</td>
-                    <td>${u.currency || '$'} ${u.semesterFee}</td>
-                    <td style="background:rgba(0,255,0,0.1); color:#00ff00; font-weight:bold;">৳ ${commissionAmount.toFixed(2)}</td>
+                    <td>${u.currency || '$'} ${semesterFeeRaw.toLocaleString()}</td>
+                    <td style="background:rgba(0,255,0,0.1); color:#00ff00; font-weight:bold;">
+                        ৳ ${Math.round(commissionAmountBDT).toLocaleString()}
+                    </td>
                     <td>${u.initialPayment || 'N/A'}</td>
                     <td>${u.scholarship || 'N/A'}</td>
-                    <td>${u.requirement || 'View'}</td>
+                    <td>${u.entry || 'View'}</td>
                     <td>${u.englishScore || 'N/A'}</td>
                     <td>${u.casTime || 'N/A'}</td>
                     <td style="color:#00ff00">${u.successRate || 'High'}</td>
@@ -104,7 +116,6 @@ document.getElementById('submitBtn').onclick = async () => {
             dateTime: new Date().toLocaleString()
         });
 
-        // স্লিপ ডাটা সেট
         document.getElementById('slipNameHead').innerText = name;
         document.getElementById('slipName').innerText = name;
         document.getElementById('slipPass').innerText = pass;
@@ -112,15 +123,11 @@ document.getElementById('submitBtn').onclick = async () => {
         document.getElementById('slipPartner').innerText = document.getElementById('userName').innerText;
         document.getElementById('slipUni').innerText = uni;
         
-        // QR কোড (Student Tracking Link)
         const trackURL = `https://scc-partner-portal.web.app/track.html?id=${docRef.id}`;
         document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackURL)}`;
 
         alert("Application Saved! Opening Print Preview...");
-        
-        // প্রিন্ট ফাংশন
         window.print();
-
         document.getElementById('appModal').style.display = 'none';
         
     } catch (e) { alert(e.message); }
