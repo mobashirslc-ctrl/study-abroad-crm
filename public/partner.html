@@ -161,7 +161,8 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            const activeLi = Array.from(document.querySelectorAll('.nav-links li')).find(li => li.getAttribute('onclick')?.includes(id));
+            if(activeLi) activeLi.classList.add('active');
         }
     </script>
 </body>

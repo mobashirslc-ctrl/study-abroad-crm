@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -14,6 +14,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+// --- ০. Auth Guard (লগইন না থাকলে বের করে দেবে) ---
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.replace("login.html");
+    }
+});
 
 let currentComm = 0;
 
@@ -55,9 +62,11 @@ window.runSearch = async () => {
         tbody.innerHTML = rows || '<tr><td colspan="11" style="text-align:center;">No match found.</td></tr>';
     } catch (e) { console.error(e); }
 };
-document.getElementById('runSearchBtn').onclick = window.runSearch;
 
-// ২. ওয়ালেট আপডেট (Real-time)
+const searchBtn = document.getElementById('runSearchBtn');
+if(searchBtn) searchBtn.onclick = window.runSearch;
+
+// ২. ওয়ালেট আপডেট
 onSnapshot(collection(db, "applications"), (snap) => {
     let pending = 0;
     let available = 0;
@@ -112,14 +121,15 @@ onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), 
         const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'New';
         html += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:var(--gold)">${d.status}</b></td><td>${date}</td></tr>`;
     });
-    document.getElementById('liveTrackingBody').innerHTML = html;
+    const trackBody = document.getElementById('liveTrackingBody');
+    if(trackBody) trackBody.innerHTML = html;
 });
 
-// ৫. লগআউট ফিক্স
+// ৫. লগআউট ফিক্স (নিখুঁতভাবে কাজ করবে এখন)
 document.getElementById('logoutBtn').onclick = () => {
     if(confirm("Logout from SCC Portal?")) {
         signOut(auth).then(() => {
-            window.location.href = "login.html";
-        });
+            window.location.replace("login.html");
+        }).catch(err => alert(err.message));
     }
 };
