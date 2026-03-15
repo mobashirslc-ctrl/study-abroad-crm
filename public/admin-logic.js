@@ -53,27 +53,54 @@ document.getElementById('saveUniBtn').onclick = async () => {
         location.reload();
     } catch (e) {
         alert("Error: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save University";
     }
 };
 
-// ২. রিয়েল-টাইম ডাটা টেবিল আপডেট
+// ২. রিয়েল-টাইম ডাটা টেবিল আপডেট (Currency to BDT Conversion Logic সহ)
 onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
     const tbody = document.getElementById('uniTableBody');
     let html = "";
+    
+    // কারেন্সি কনভারশন রেট (প্রয়োজনে এখান থেকে পরিবর্তন করতে পারবেন)
+    const rates = {
+        'GBP': 155, 
+        'USD': 120, 
+        'EUR': 132,
+        'BDT': 1
+    };
+
     snap.forEach(docSnap => {
         const u = docSnap.data();
         const id = docSnap.id;
-        // কমিশন ক্যালকুলেশন
-        const commAmount = (parseFloat(u.semesterFee) * parseFloat(u.partnerCommPercent)) / 100;
+
+        // ক্যালকুলেশন পার্ট:
+        const currentRate = rates[u.currency] || 120; // কারেন্সি না মিললে ডিফল্ট ১২০ ধরবে
+        const semesterFeeNum = parseFloat(u.semesterFee) || 0;
+        const commPercentNum = parseFloat(u.partnerCommPercent) || 0;
+
+        // ১. আগে ফি-কে টাকায় কনভার্ট করা
+        const feeInBDT = semesterFeeNum * currentRate;
+
+        // ২. কনভার্টেড টাকার ওপর পার্সেন্টেজ হিসাব করা
+        const commAmountBDT = (feeInBDT * commPercentNum) / 100;
         
         html += `
             <tr>
                 <td><b>${u.name}</b></td>
                 <td>${u.country}</td>
                 <td>${u.course} (${u.degree})</td>
-                <td>${u.currency} ${u.semesterFee}</td>
-                <td style="color:#2ecc71; font-weight:bold;">৳ ${(commAmount * 120).toFixed(0)}</td>
                 <td>
+                    ${u.currency} ${semesterFeeNum.toLocaleString()} 
+                    <br><small style="color:#aaa;">(৳ ${feeInBDT.toLocaleString()})</small>
+                </td>
+                <td style="color:#2ecc71; font-weight:bold;">
+                    ৳ ${Math.round(commAmountBDT).toLocaleString()}
+                </td>
+                <td>
+                    <button class="btn btn-edit" onclick="alert('Edit logic can be added here')"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-block" onclick="deleteUni('${id}')"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
@@ -85,8 +112,12 @@ onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), 
 // ৩. ডিলিট ফাংশন
 window.deleteUni = async (id) => {
     if(confirm("Are you sure you want to delete this university?")) {
-        await deleteDoc(doc(db, "universities", id));
-        alert("Deleted!");
+        try {
+            await deleteDoc(doc(db, "universities", id));
+            alert("Deleted Successfully!");
+        } catch (err) {
+            alert("Delete failed: " + err.message);
+        }
     }
 };
 
