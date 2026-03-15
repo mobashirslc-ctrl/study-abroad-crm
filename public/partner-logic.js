@@ -15,24 +15,28 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// সিকিউরিটি: লগইন না থাকলে বের করে দাও
+// ১. সিকিউরিটি চেক: লগইন না থাকলে রিডাইরেক্ট
 onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.replace("login.html");
+    if (!user) {
+        window.location.replace("login.html");
+    }
 });
 
-// ট্যাব ফাংশন
+// ২. ট্যাব ফাংশন (গ্লোবাল স্কোপে রাখা হয়েছে)
 window.tab = (id) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active');
 };
 
-// ফাইল সাবমিশন লজিক
+// ৩. অ্যাপ্লিকেশন সাবমিট ফাংশন
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
-    document.getElementById('mTitle').innerText = u;
-    document.getElementById('appModal').style.display = 'flex';
+    const modalTitle = document.getElementById('mTitle');
+    const modal = document.getElementById('appModal');
+    if(modalTitle) modalTitle.innerText = u;
+    if(modal) modal.style.display = 'flex';
 };
 
 const submitBtn = document.getElementById('submitBtn');
@@ -40,31 +44,63 @@ if(submitBtn) {
     submitBtn.onclick = async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
-        if(!name || !pass) return alert("Required Fields!");
+        
+        if(!name || !pass) return alert("সবগুলো ঘর পূরণ করুন!");
 
         try {
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Sending...";
+            
             await addDoc(collection(db, "applications"), {
-                studentName: name, passport: pass, university: curUni,
-                status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
+                studentName: name,
+                passport: pass,
+                university: curUni,
+                status: "Pending",
+                partner: "GORUN LTD.",
+                timestamp: new Date().toISOString()
             });
-            alert("Application Submitted!");
+
+            alert("সফলভাবে সাবমিট হয়েছে!");
             document.getElementById('appModal').style.display = 'none';
-        } catch(e) { alert("Error: " + e.message); }
+            document.getElementById('sName').value = "";
+            document.getElementById('sPass').value = "";
+        } catch(e) {
+            alert("Error: " + e.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Application";
+        }
     };
 }
 
-// ডাটা লোড করা
-onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
-    let r = "";
+// ৪. ডাটা রিয়েল-টাইম আপডেট (লুপ ফিক্সড)
+const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
+onSnapshot(q, (snap) => {
+    let tableRows = "";
     snap.forEach(doc => {
         const d = doc.data();
-        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
+        tableRows += `
+            <tr>
+                <td>${d.studentName}</td>
+                <td>${d.passport}</td>
+                <td>${d.university}</td>
+                <td><b style="color:#ffcc00">${d.status}</b></td>
+                <td>${new Date(d.timestamp).toLocaleDateString()}</td>
+            </tr>`;
     });
-    document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
+    
+    // সব .sharedBody ক্লাস যুক্ত টেবিলে ডাটা পুশ করা
+    document.querySelectorAll('.sharedBody').forEach(t => {
+        t.innerHTML = tableRows;
+    });
 });
 
-// লগআউট ফিক্স
+// ৫. লগআউট বাটন
 const logoutBtn = document.getElementById('logoutBtn');
 if(logoutBtn) {
-    logoutBtn.onclick = () => signOut(auth);
+    logoutBtn.onclick = () => {
+        signOut(auth).then(() => {
+            window.location.replace("login.html");
+        });
+    };
 }
