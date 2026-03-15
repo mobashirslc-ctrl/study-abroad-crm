@@ -22,15 +22,10 @@ onAuthStateChanged(auth, async (user) => {
         if (userDoc.exists() && userDoc.data().status === "approved") {
             const data = userDoc.data();
             document.getElementById('userName').innerText = data.fullName;
-            
-            // প্রোফাইল ফিল্ডস পূরণ করা
-            if(document.getElementById('pFullName')) {
-                document.getElementById('pFullName').value = data.fullName || "";
-                document.getElementById('pCompanyName').value = data.companyName || "";
-                document.getElementById('pPhone').value = data.phone || "";
-                document.getElementById('pAddress').value = data.address || "";
-            }
-            
+            document.getElementById('pFullName').value = data.fullName || "";
+            document.getElementById('pCompanyName').value = data.companyName || "";
+            document.getElementById('pPhone').value = data.phone || "";
+            document.getElementById('pAddress').value = data.address || "";
             initWalletListener(user.uid);
             loadFileTracking(user.uid);
         } else {
@@ -45,149 +40,125 @@ onAuthStateChanged(auth, async (user) => {
 // ২. প্রোফাইল আপডেট
 window.updateProfile = async () => {
     try {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), {
             fullName: document.getElementById('pFullName').value,
             companyName: document.getElementById('pCompanyName').value,
             phone: document.getElementById('pPhone').value,
             address: document.getElementById('pAddress').value
         });
-        alert("Profile Saved!");
+        alert("Profile Updated!");
     } catch (e) { alert(e.message); }
 };
 
-// ৩. স্মার্ট অ্যাসেসমেন্ট (ম্যাচিং লজিক)
+// ৩. স্মার্ট অ্যাসেসমেন্ট (STRICT FILTERING)
 window.smartSearch = () => {
-    const country = document.getElementById('fCountry').value.toLowerCase();
+    const country = document.getElementById('fCountry').value.toLowerCase().trim();
     const degree = document.getElementById('fDegree').value;
     const lang = document.getElementById('fLangType').value;
     
-    const resultsArea = document.getElementById('assessmentResults');
     const tbody = document.getElementById('uniResultsBody');
-    resultsArea.style.display = 'block';
-    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Checking Requirements...</td></tr>";
+    document.getElementById('assessmentResults').style.display = 'block';
+    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Searching...</td></tr>";
 
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
         const rates = { 'GBP': 155, 'USD': 120, 'EUR': 132, 'BDT': 1 };
-        
+        let found = 0;
+
         snap.forEach(docSnap => {
             const u = docSnap.data();
             
-            // STRICT MATCHING: রিকোয়ারমেন্ট না মিললে শো করবে না
-            const countryMatch = !country || u.country.toLowerCase().includes(country);
-            const degreeMatch = !degree || (u.degree && u.degree.toUpperCase() === degree.toUpperCase());
-            const langMatch = !lang || (u.acceptedEnglish && u.acceptedEnglish.toUpperCase().includes(lang.toUpperCase()));
+            // ফিল্টার লজিক: সব সিলেক্টেড শর্ত মিললে তবেই শো করবে
+            const matchC = !country || u.country.toLowerCase().includes(country);
+            const matchD = !degree || (u.degree && u.degree.toUpperCase() === degree.toUpperCase());
+            const matchL = !lang || (u.acceptedEnglish && u.acceptedEnglish.toUpperCase().includes(lang.toUpperCase()));
 
-            if (countryMatch && degreeMatch && langMatch) {
-                const currentRate = rates[u.currency] || 120;
-                const commissionBDT = (parseFloat(u.semesterFee) * currentRate * parseFloat(u.partnerCommPercent)) / 100;
+            if (matchC && matchD && matchL) {
+                found++;
+                const rate = rates[u.currency] || 120;
+                const commission = (parseFloat(u.semesterFee) * rate * parseFloat(u.partnerCommPercent)) / 100;
 
                 rows += `<tr>
                     <td>${u.name}</td><td>${u.country}</td><td>${u.intake}</td>
                     <td>${u.currency || '$'} ${u.semesterFee}</td>
-                    <td style="color:#00ff00">৳ ${Math.round(commissionBDT).toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApp('${u.name}', ${commissionBDT})">Open File</button></td>
+                    <td style="color:#00ff00">৳ ${Math.round(commission).toLocaleString()}</td>
+                    <td><button class="btn-gold" onclick="openApp('${u.name}', ${commission})">Open File</button></td>
                 </tr>`;
             }
         });
-        tbody.innerHTML = rows || "<tr><td colspan='6' style='text-align:center; color:#ff5e5e;'>No Universities match your requirements.</td></tr>";
+        tbody.innerHTML = found > 0 ? rows : "<tr><td colspan='6' style='text-align:center; color:red;'>No matching university found.</td></tr>";
     });
 };
 
-// ৪. ফাইল ওপেন এবং সাবমিট
+// ৪. ফাইল ওপেন এবং কিউআর স্লিপ
 let selectedUniCommission = 0;
-window.openApp = (uniName, commAmount) => {
+window.openApp = (uniName, comm) => {
     document.getElementById('mTitle').innerText = uniName;
-    selectedUniCommission = commAmount;
+    selectedUniCommission = comm;
     document.getElementById('appModal').style.display = 'flex';
 };
 
 document.getElementById('submitBtn').onclick = async () => {
     const name = document.getElementById('sName').value;
-    const btn = document.getElementById('submitBtn');
-    if (!name) return alert("Student name is required!");
+    const pass = document.getElementById('sPass').value;
+    const uni = document.getElementById('mTitle').innerText;
+
+    if (!name || !pass) return alert("Student Name & Passport Required!");
 
     try {
-        btn.disabled = true;
-        btn.innerText = "Uploading Documents...";
-        
         await addDoc(collection(db, "applications"), {
-            studentName: name,
-            contactNo: document.getElementById('sPhone').value,
-            passportNo: document.getElementById('sPass').value,
-            university: document.getElementById('mTitle').innerText,
-            status: "Pending",
-            complianceMember: "Unassigned",
-            partnerUID: auth.currentUser.uid,
-            partnerName: document.getElementById('userName').innerText,
-            commissionBDT: selectedUniCommission,
-            pendingAmount: 0,
-            finalAmount: 0,
-            timestamp: new Date().toISOString(),
-            dateTime: new Date().toLocaleString()
+            studentName: name, contactNo: document.getElementById('sPhone').value,
+            passportNo: pass, university: uni, status: "Pending",
+            partnerUID: auth.currentUser.uid, partnerName: document.getElementById('userName').innerText,
+            commissionBDT: selectedUniCommission, pendingAmount: 0, finalAmount: 0,
+            timestamp: new Date().toISOString(), dateTime: new Date().toLocaleString()
         });
         
-        alert("Application Submitted Successfully!");
         document.getElementById('appModal').style.display = 'none';
+        
+        // QR Code Generation
+        document.getElementById('slipName').innerText = name;
+        document.getElementById('slipPass').innerText = pass;
+        document.getElementById('slipUni').innerText = uni;
+        document.getElementById('qrImg').src = `https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=${encodeURIComponent(name + "|" + pass + "|" + uni)}`;
+        
+        setTimeout(() => { window.print(); }, 1000);
     } catch (e) { alert(e.message); }
-    finally { btn.disabled = false; btn.innerText = "Submit Application"; }
 };
 
-// ৫. ওয়ালেট এবং ফাইল ট্র্যাকিং লিসেনার
+// ৫. ওয়ালেট এবং ট্র্যাকিং
 function initWalletListener(uid) {
-    const q = query(collection(db, "applications"), where("partnerUID", "==", uid));
-    onSnapshot(q, (snap) => {
-        let totalP = 0, totalF = 0;
-        snap.forEach(d => {
-            const data = d.data();
-            totalP += parseFloat(data.pendingAmount || 0);
-            totalF += parseFloat(data.finalAmount || 0);
-        });
-        document.getElementById('pendingWalletBox').innerText = `৳ ${Math.round(totalP).toLocaleString()}`;
-        document.getElementById('finalWalletBox').innerText = `৳ ${Math.round(totalF).toLocaleString()}`;
-        document.getElementById('finalWalletDisplay').innerText = `৳ ${Math.round(totalF).toLocaleString()}`;
-        
-        const wBtn = document.getElementById('withdrawBtn');
-        wBtn.disabled = totalF <= 0;
+    onSnapshot(query(collection(db, "applications"), where("partnerUID", "==", uid)), (snap) => {
+        let tp = 0, tf = 0;
+        snap.forEach(d => { tp += parseFloat(d.data().pendingAmount || 0); tf += parseFloat(d.data().finalAmount || 0); });
+        document.getElementById('pendingWalletBox').innerText = `৳ ${Math.round(tp).toLocaleString()}`;
+        document.getElementById('finalWalletBox').innerText = `৳ ${Math.round(tf).toLocaleString()}`;
+        document.getElementById('finalWalletDisplay').innerText = `৳ ${Math.round(tf).toLocaleString()}`;
+        document.getElementById('withdrawBtn').disabled = tf <= 0;
     });
 }
 
 function loadFileTracking(uid) {
-    const q = query(collection(db, "applications"), where("partnerUID", "==", uid), orderBy("timestamp", "desc"));
-    onSnapshot(q, (snap) => {
+    onSnapshot(query(collection(db, "applications"), where("partnerUID", "==", uid), orderBy("timestamp", "desc")), (snap) => {
         let html = "";
         snap.forEach(d => {
             const data = d.data();
-            html += `<tr>
-                <td>${data.studentName}</td><td>${data.passportNo}</td>
-                <td style="color:var(--gold)">${data.status}</td>
-                <td>${data.complianceMember}</td><td>${data.dateTime}</td>
-            </tr>`;
+            html += `<tr><td>${data.studentName}</td><td>${data.passportNo}</td><td style="color:var(--gold)">${data.status}</td><td>Unassigned</td><td>${data.dateTime}</td></tr>`;
         });
         document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = html);
     });
 }
 
-// ৬. উইথড্রয়াল সাবমিশন
+// উইথড্র
 window.openWithdrawModal = () => document.getElementById('withdrawModal').style.display = 'flex';
 document.getElementById('confirmWithdrawBtn').onclick = async () => {
-    const amount = parseFloat(document.getElementById('wAmount').value);
-    if (!amount || amount <= 0) return alert("Invalid amount!");
-
-    try {
-        await addDoc(collection(db, "withdrawals"), {
-            partnerUID: auth.currentUser.uid,
-            partnerName: document.getElementById('userName').innerText,
-            amount: amount,
-            method: document.getElementById('wMethod').value,
-            accountNo: document.getElementById('wAccNo').value,
-            status: "Pending",
-            timestamp: new Date().toISOString()
-        });
-        alert("Withdrawal requested!");
-        document.getElementById('withdrawModal').style.display = 'none';
-    } catch (e) { alert(e.message); }
+    await addDoc(collection(db, "withdrawals"), {
+        partnerUID: auth.currentUser.uid, amount: document.getElementById('wAmount').value,
+        method: document.getElementById('wMethod').value, accountNo: document.getElementById('wAccNo').value,
+        status: "Pending", timestamp: new Date().toISOString()
+    });
+    alert("Request Sent!");
+    document.getElementById('withdrawModal').style.display = 'none';
 };
 
 document.getElementById('logoutBtn').onclick = () => signOut(auth);

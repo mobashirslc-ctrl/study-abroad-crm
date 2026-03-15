@@ -32,12 +32,19 @@
         label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .table-wrap { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1250px; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1000px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         footer { position: fixed; bottom: 0; right: 0; width: calc(100% - 90px); background: var(--darker); padding: 15px; text-align: center; font-size: 12px; color: #555; border-top: 1px solid #111; z-index: 500; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 550px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: #160a3d; padding: 30px; border-radius: 20px; width: 500px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
+        
+        #printArea { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; display: block !important; color: black; background: white; }
+        }
     </style>
 </head>
 <body>
@@ -61,7 +68,7 @@
         <div class="top-stats">
             <div class="stat-box"><small>Estimated Pending</small><div class="amount" id="pendingWalletBox">৳ 0</div></div>
             <div class="stat-box"><small>Available Wallet</small><div class="amount" id="finalWalletBox">৳ 0</div></div>
-            <div class="stat-box"><small>Subscription Status</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM</div></div>
+            <div class="stat-box"><small>Subscription</small><div class="amount" style="color:#00ff00; font-size:16px;">PREMIUM</div></div>
         </div>
 
         <div id="dashboard" class="section active">
@@ -86,17 +93,14 @@
                             <option value="MOI">MOI</option>
                         </select>
                     </div>
-                    <div><label>Academic Score (Min CGPA)</label><input type="text" id="fAcadScore" placeholder="e.g. 3.00"></div>
                 </div>
                 <button class="btn-gold" style="width:100%; margin-top:15px;" onclick="smartSearch()">Run Assessment</button>
 
                 <div id="assessmentResults" class="table-wrap" style="display:none; margin-top:30px;">
-                    <h4 style="color:var(--gold)">Matching Results</h4>
+                    <h4 style="color:var(--gold)">Matching Universities</h4>
                     <table>
                         <thead>
-                            <tr>
-                                <th>University</th><th>Country</th><th>Intake</th><th>Fee</th><th>Commission</th><th>Action</th>
-                            </tr>
+                            <tr><th>University</th><th>Country</th><th>Intake</th><th>Fee</th><th>Commission</th><th>Action</th></tr>
                         </thead>
                         <tbody id="uniResultsBody"></tbody>
                     </table>
@@ -106,12 +110,10 @@
 
         <div id="tracking" class="section">
             <div class="card">
-                <h3 style="color:var(--gold)">File Tracking</h3>
+                <h3 style="color:var(--gold)">File Tracking (Compliance)</h3>
                 <div class="table-wrap">
                     <table>
-                        <thead>
-                            <tr><th>Student Name</th><th>Passport</th><th>Status</th><th>Compliance Member</th><th>Date</th></tr>
-                        </thead>
+                        <thead><tr><th>Student Name</th><th>Passport</th><th>Status</th><th>Compliance</th><th>Date</th></tr></thead>
                         <tbody class="sharedBody"></tbody>
                     </table>
                 </div>
@@ -121,9 +123,9 @@
         <div id="wallet" class="section">
             <div class="card">
                 <h3 style="color:var(--gold)">Commission Wallet</h3>
-                <div style="background: rgba(255,255,255,0.05); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--gold);">
-                    <small>Final Withdrawable Balance</small>
-                    <h1 style="color: var(--gold); font-size: 45px; margin: 10px 0;" id="finalWalletDisplay">৳ 0</h1>
+                <div style="background: rgba(255,255,255,0.05); padding: 40px; border-radius: 15px; text-align: center; border: 1px solid var(--gold);">
+                    <small>Balance</small>
+                    <h1 style="color: var(--gold); font-size: 45px;" id="finalWalletDisplay">৳ 0</h1>
                     <button class="btn-gold" id="withdrawBtn" onclick="openWithdrawModal()" disabled>Request Withdrawal</button>
                 </div>
             </div>
@@ -131,33 +133,29 @@
 
         <div id="profile" class="section">
             <div class="card">
-                <h3 style="color:var(--gold)"><i class="fa-solid fa-user-gear"></i> Profile Settings</h3>
+                <h3 style="color:var(--gold)">Profile Settings</h3>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                     <div><label>Full Name</label><input type="text" id="pFullName"></div>
                     <div><label>Agency Name</label><input type="text" id="pCompanyName"></div>
                     <div><label>Phone</label><input type="text" id="pPhone"></div>
                     <div><label>Address</label><input type="text" id="pAddress"></div>
                 </div>
-                <button class="btn-gold" style="margin-top:20px;" onclick="updateProfile()">Save Profile</button>
+                <button class="btn-gold" style="margin-top:20px;" onclick="updateProfile()">Save Changes</button>
             </div>
         </div>
 
-        <footer>© 2026 GORUN LTD. All Rights Reserved.</footer>
+        <footer>© 2026 GORUN LTD.</footer>
     </div>
 
     <div id="appModal" class="modal">
         <div class="modal-content">
             <h3 id="mTitle" style="color:var(--gold); margin-top:0"></h3>
-            <label>Student Full Name</label><input type="text" id="sName">
-            <label>Contact Number</label><input type="text" id="sPhone">
-            <label>Passport Number</label><input type="text" id="sPass">
-            
-            <p style="color:var(--gold); font-size:12px; margin-top:15px; border-bottom:1px solid #333;">PDF DOCUMENTS REQUIRED</p>
-            <label>1. Academic Certificates</label><input type="file" id="pdf1">
-            <label>2. Passport Copy</label><input type="file" id="pdf2">
-            <label>3. Recommendation Letter</label><input type="file" id="pdf3">
-            <label>4. Signed Acknowledgement Slip</label><input type="file" id="pdf4">
-
+            <label>Student Name</label><input type="text" id="sName">
+            <label>Contact No</label><input type="text" id="sPhone">
+            <label>Passport No</label><input type="text" id="sPass">
+            <p style="color:var(--gold); font-size:11px;">PDF UPLOADS (Academic, Passport, LOR, Slip)</p>
+            <input type="file" id="pdf1"><input type="file" id="pdf2">
+            <input type="file" id="pdf3"><input type="file" id="pdf4">
             <button class="btn-gold" style="width:100%; margin-top:20px;" id="submitBtn">Submit Application</button>
             <button class="btn-gold" style="width:100%; background:#333; margin-top:10px" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
         </div>
@@ -165,17 +163,26 @@
 
     <div id="withdrawModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold)">Withdraw Money</h3>
-            <label>Payment Method</label>
-            <select id="wMethod">
-                <option value="Bkash">Bkash</option>
-                <option value="Nagad">Nagad</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-            </select>
-            <label>Account Number</label><input type="text" id="wAccNo">
-            <label>Amount (BDT)</label><input type="number" id="wAmount">
-            <button class="btn-gold" style="width:100%" id="confirmWithdrawBtn">Confirm Request</button>
-            <button class="btn-gold" style="width:100%; background:#333; margin-top:10px" onclick="closeWithdrawModal()">Cancel</button>
+            <h3 style="color:var(--gold)">Withdrawal</h3>
+            <label>Method</label><select id="wMethod"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
+            <label>Account No</label><input type="text" id="wAccNo">
+            <label>Amount</label><input type="number" id="wAmount">
+            <button class="btn-gold" style="width:100%" id="confirmWithdrawBtn">Submit</button>
+            <button class="btn-gold" style="width:100%; background:#333; margin-top:10px" onclick="document.getElementById('withdrawModal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+
+    <div id="printArea">
+        <div style="border: 2px solid #000; padding: 40px; text-align: center;">
+            <img src="logo.jpeg" style="width: 100px;">
+            <h2>SCC - Acknowledgement Slip</h2>
+            <hr>
+            <div style="text-align: left; margin: 20px 0;">
+                <p><strong>Name:</strong> <span id="slipName"></span></p>
+                <p><strong>Passport:</strong> <span id="slipPass"></span></p>
+                <p><strong>University:</strong> <span id="slipUni"></span></p>
+            </div>
+            <img id="qrImg" src="" style="width: 150px;">
         </div>
     </div>
 
@@ -187,7 +194,6 @@
             document.getElementById(id).classList.add('active');
             event.currentTarget.classList.add('active');
         };
-        window.closeWithdrawModal = () => document.getElementById('withdrawModal').style.display='none';
     </script>
 </body>
 </html>
