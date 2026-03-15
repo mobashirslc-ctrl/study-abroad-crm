@@ -15,111 +15,116 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক ও ইউজারের নাম প্রদর্শন
+// 1. Security & User Info
 onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-        // লগইন না থাকলে ইনডেক্স পেজে পাঠাবে
-        if (!window.location.pathname.includes("index.html") && window.location.pathname !== "/") {
-            window.location.replace("index.html");
-        }
-    } else {
-        // লগইন থাকলেও চেক করবে সে এপ্রুভড কি না
+    if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        
         if (userDoc.exists() && userDoc.data().status === "approved") {
-            // ইউজারের নাম ড্যাশবোর্ডে দেখানোর জন্য
-            const nameField = document.getElementById('userName');
-            if (nameField) {
-                nameField.innerText = userDoc.data().fullName; 
-            }
-            console.log("Welcome,", userDoc.data().fullName);
+            document.getElementById('userName').innerText = userDoc.data().fullName;
+            document.getElementById('profileName').innerText = userDoc.data().fullName;
         } else {
-            // এপ্রুভড না হলে বের করে দিবে
             await signOut(auth);
             window.location.replace("index.html");
         }
+    } else {
+        if (!window.location.pathname.includes("index.html")) window.location.replace("index.html");
     }
 });
 
-// ২. ড্যাশবোর্ড ট্যাব ফাংশন
-window.tab = (id) => {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-    const target = document.getElementById(id);
-    if(target) target.classList.add('active');
+// 2. Smart Assessment (Filter Logic)
+window.smartSearch = () => {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const degree = document.getElementById('fDegree').value;
+    const lang = document.getElementById('fLangType').value;
+    
+    const resultsDiv = document.getElementById('assessmentResults');
+    const tbody = document.getElementById('uniResultsBody');
+    
+    resultsDiv.style.display = 'block';
+    tbody.innerHTML = "<tr><td colspan='11' style='text-align:center'>Analyzing criteria...</td></tr>";
+
+    onSnapshot(collection(db, "universities"), (snap) => {
+        let rows = "";
+        snap.forEach(doc => {
+            const u = doc.data();
+            // Simple filtering match
+            let match = true;
+            if (country && !u.country.toLowerCase().includes(country)) match = false;
+            
+            if (match) {
+                rows += `
+                <tr>
+                    <td style="color:var(--gold); font-weight:bold">${u.name}</td>
+                    <td>${u.country}</td>
+                    <td>${u.intake}</td>
+                    <td>${u.tuitionFee}</td>
+                    <td>${u.initialPayment || 'N/A'}</td>
+                    <td>${u.scholarship || 'N/A'}</td>
+                    <td>${u.requirement || 'Standard'}</td>
+                    <td>${u.englishScore || 'N/A'}</td>
+                    <td>${u.casTime || 'N/A'}</td>
+                    <td style="color:#00ff00">${u.successRate || 'High'}</td>
+                    <td><button class="btn-gold" style="padding:5px 10px; font-size:10px" onclick="openApp('${u.name}')">Open File</button></td>
+                </tr>`;
+            }
+        });
+        tbody.innerHTML = rows || "<tr><td colspan='11' style='text-align:center'>No match found. Contact Admin.</td></tr>";
+    });
 };
 
-// ৩. অ্যাপ্লিকেশন সাবমিশন লজিক
-let curUni = "";
-window.openApp = (u) => {
-    curUni = u;
-    document.getElementById('mTitle').innerText = u;
+// 3. Application Submission
+window.openApp = (uni) => {
+    document.getElementById('mTitle').innerText = uni;
     document.getElementById('appModal').style.display = 'flex';
 };
 
-const submitBtn = document.getElementById('submitBtn');
-if (submitBtn) {
-    submitBtn.onclick = async () => {
-        const name = document.getElementById('sName').value;
-        const pass = document.getElementById('sPass').value;
-        if (!name || !pass) return alert("All fields are required!");
+document.getElementById('submitBtn').onclick = async () => {
+    const sName = document.getElementById('sName').value;
+    const sPhone = document.getElementById('sPhone').value;
+    const sPass = document.getElementById('sPass').value;
+    const btn = document.getElementById('submitBtn');
 
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Sending...";
-            
-            await addDoc(collection(db, "applications"), {
-                studentName: name,
-                passport: pass,
-                university: curUni,
-                status: "Pending",
-                partner: document.getElementById('userName')?.innerText || "Unknown Partner",
-                timestamp: new Date().toISOString()
-            });
+    if(!sName || !sPhone || !sPass) return alert("Please fill basic info!");
 
-            alert("Application submitted successfully!");
-            document.getElementById('appModal').style.display = 'none';
-            document.getElementById('sName').value = "";
-            document.getElementById('sPass').value = "";
-        } catch (e) {
-            alert("Error: " + e.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Now";
-        }
-    };
-}
+    try {
+        btn.disabled = true;
+        btn.innerText = "Submitting File...";
 
-// ৪. রিয়েল-টাইম ডাটা লোড
+        const docRef = await addDoc(collection(db, "applications"), {
+            studentName: sName,
+            contactNo: sPhone,
+            passportNo: sPass,
+            university: document.getElementById('mTitle').innerText,
+            status: "Pending",
+            complianceMember: "Waiting for Assign",
+            partnerName: document.getElementById('userName').innerText,
+            timestamp: new Date().toISOString(),
+            dateTime: new Date().toLocaleString()
+        });
+
+        alert("File Submitted! Acknowledgement ID: " + docRef.id);
+        window.print(); // Simple print slip
+        document.getElementById('appModal').style.display = 'none';
+    } catch (e) { alert(e.message); }
+    finally { btn.disabled = false; btn.innerText = "Submit & Generate Slip"; }
+};
+
+// 4. Real-time Tracking
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
-    let r = "";
+    let html = "";
     snap.forEach(doc => {
         const d = doc.data();
-        r += `
-            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
-                <td class="p-4">${d.studentName}</td>
-                <td class="p-4">${d.passport}</td>
-                <td class="p-4">${d.university}</td>
-                <td class="p-4">
-                    <span class="px-2 py-1 rounded text-xs font-bold ${d.status === 'Pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}">
-                        ${d.status}
-                    </span>
-                </td>
-                <td class="p-4">${new Date(d.timestamp).toLocaleDateString()}</td>
-            </tr>`;
+        html += `<tr>
+            <td>${d.studentName}</td>
+            <td>${d.contactNo}</td>
+            <td>${d.passportNo}</td>
+            <td><span style="color:var(--gold)">${d.status}</span></td>
+            <td>${d.complianceMember}</td>
+            <td>${d.dateTime}</td>
+        </tr>`;
     });
-    
-    document.querySelectorAll('.sharedBody').forEach(t => {
-        t.innerHTML = r || '<tr><td colspan="5" class="p-4 text-center">No applications found.</td></tr>';
-    });
+    document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = html);
 });
 
-// ৫. লগআউট লজিক
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.onclick = () => {
-        signOut(auth).then(() => {
-            window.location.replace("index.html");
-        });
-    };
-}
+// 5. Logout
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
