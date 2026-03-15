@@ -15,21 +15,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক: লগইন না থাকলে রিডাইরেক্ট
+// ১. সিকিউরিটি চেক: লগইন না থাকলে রিডাইরেক্ট (একবার চেক করবে)
 onAuthStateChanged(auth, (user) => {
     if (!user) {
         window.location.replace("login.html");
     }
 });
 
-// ২. ট্যাব ফাংশন (গ্লোবাল স্কোপে রাখা হয়েছে)
+// ২. ট্যাব ফাংশন
 window.tab = (id) => {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(s => s.style.display = 'none'); // সব হাইড করো
+    
     const target = document.getElementById(id);
-    if(target) target.classList.add('active');
+    if(target) target.style.display = 'block'; // শুধু টার্গেট শো করো
 };
 
-// ৩. অ্যাপ্লিকেশন সাবমিট ফাংশন
+// ৩. অ্যাপ্লিকেশন সাবমিট
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
@@ -39,13 +41,17 @@ window.openApp = (u) => {
     if(modal) modal.style.display = 'flex';
 };
 
+// ৪. সাবমিট বাটন লজিক (ইভেন্ট লিসেনার ব্যবহার করা হয়েছে সেফটির জন্য)
 const submitBtn = document.getElementById('submitBtn');
 if(submitBtn) {
-    submitBtn.onclick = async () => {
+    submitBtn.addEventListener('click', async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
         
-        if(!name || !pass) return alert("সবগুলো ঘর পূরণ করুন!");
+        if(!name || !pass) {
+            alert("সবগুলো ঘর পূরণ করুন!");
+            return;
+        }
 
         try {
             submitBtn.disabled = true;
@@ -70,10 +76,10 @@ if(submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerText = "Submit Application";
         }
-    };
+    });
 }
 
-// ৪. ডাটা রিয়েল-টাইম আপডেট (লুপ ফিক্সড)
+// ৫. ডাটা রিয়েল-টাইম আপডেট (অপ্রয়োজনীয় রি-রেন্ডার বন্ধ করা হয়েছে)
 const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
 onSnapshot(q, (snap) => {
     let tableRows = "";
@@ -89,18 +95,20 @@ onSnapshot(q, (snap) => {
             </tr>`;
     });
     
-    // সব .sharedBody ক্লাস যুক্ত টেবিলে ডাটা পুশ করা
-    document.querySelectorAll('.sharedBody').forEach(t => {
-        t.innerHTML = tableRows;
+    const sharedBodies = document.querySelectorAll('.sharedBody');
+    sharedBodies.forEach(t => {
+        if (t.innerHTML !== tableRows) { // যদি ডাটা পরিবর্তন হয় তবেই আপডেট করো
+            t.innerHTML = tableRows;
+        }
     });
 });
 
-// ৫. লগআউট বাটন
+// ৬. লগআউট বাটন (সরাসরি ক্লিক হ্যান্ডলার)
 const logoutBtn = document.getElementById('logoutBtn');
 if(logoutBtn) {
-    logoutBtn.onclick = () => {
+    logoutBtn.addEventListener('click', () => {
         signOut(auth).then(() => {
             window.location.replace("login.html");
-        });
-    };
+        }).catch(err => alert("Logout failed"));
+    });
 }
