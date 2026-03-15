@@ -15,7 +15,7 @@ const db = getFirestore(app);
 
 let currentComm = 0;
 
-// ১. সার্চ লজিক
+// ১. ইউনিভার্সিটি সার্চ লজিক
 window.runSearch = async () => {
     const fCountry = document.getElementById('fCountry').value.trim().toLowerCase();
     const fDegree = document.getElementById('fDegree').value;
@@ -23,7 +23,7 @@ window.runSearch = async () => {
 
     const tbody = document.getElementById('uniResultsBody');
     document.getElementById('resArea').style.display = 'block';
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Searching...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Searching SCC Database...</td></tr>';
 
     try {
         const querySnapshot = await getDocs(collection(db, "universities"));
@@ -31,27 +31,23 @@ window.runSearch = async () => {
 
         querySnapshot.forEach(doc => {
             const u = doc.data();
-            
-            // অ্যাডমিন লজিক অনুযায়ী ফিল্ড ম্যাপিং
             const uniName = u.universityName || "N/A";
             const country = u.country || "N/A";
             const fee = parseFloat(u.semesterFee) || 0;
             const pComm = parseFloat(u.partnerComm) || 0;
             const minGPA = parseFloat(u.minGPA) || 0;
 
-            // ফিল্টার কন্ডিশন
             if ((!fCountry || country.toLowerCase().includes(fCountry)) && 
                 (!fDegree || u.degreeType === fDegree) && 
                 (fGPA >= minGPA)) {
                 
-                // ক্যালকুলেশন (Rate 120)
                 const commCalculated = Math.round((fee * 120 * pComm) / 100);
                 
                 rows += `<tr>
                     <td><b>${uniName}</b></td>
                     <td>${country}</td>
-                    <td>${u.degreeType}</td>
-                    <td>${u.courseName}</td>
+                    <td>${u.degreeType || 'N/A'}</td>
+                    <td>${u.courseName || 'N/A'}</td>
                     <td>$${fee}</td>
                     <td style="color:#00ff00; font-weight:bold;">৳ ${commCalculated.toLocaleString()}</td>
                     <td>${minGPA}</td>
@@ -68,7 +64,7 @@ window.runSearch = async () => {
     }
 };
 
-// ২. ওয়ালেট আপডেট (রিয়েল টাইম)
+// ২. ওয়ালেট আপডেট (রিয়েল টাইম)
 onSnapshot(collection(db, "applications"), (snap) => {
     let pending = 0;
     let available = 0;
@@ -83,28 +79,76 @@ onSnapshot(collection(db, "applications"), (snap) => {
     document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
 });
 
-// ৩. অ্যাপ্লিকেশন হ্যান্ডলিং
+// ৩. অ্যাপ্লিকেশন হ্যান্ডলিং ও মডাল ওপেন
 window.openApp = (uni, comm) => {
     document.getElementById('mTitle').innerText = uni;
     currentComm = comm;
     document.getElementById('appModal').style.display = 'flex';
 };
 
+// ৪. সাবমিট লজিক + স্লিপ জেনারেশন (FIXED)
 document.getElementById('submitBtn').onclick = async () => {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if (!sName || !sPass) return alert("Fill all data!");
+    const uniName = document.getElementById('mTitle').innerText;
+
+    if (!sName || !sPass) return alert("Student Name and Passport are required!");
 
     try {
+        // Firebase-এ ডাটা সেভ
         await addDoc(collection(db, "applications"), {
             studentName: sName,
             passport: sPass,
-            university: document.getElementById('mTitle').innerText,
+            university: uniName,
             commission: currentComm,
             status: "Pending",
             timestamp: serverTimestamp()
         });
-        alert("Application Submitted!");
-        location.reload();
-    } catch (e) { alert(e.message); }
+
+        // স্লিপের ডাটা আপডেট
+        document.getElementById('slipName').innerText = sName;
+        document.getElementById('slipPass').innerText = sPass;
+        document.getElementById('slipUni').innerText = uniName;
+        document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
+
+        // QR Code জেনারেট (যদি index.html-এ qrcode.js থাকে)
+        const qrBox = document.getElementById('qrcode');
+        if (qrBox) {
+            qrBox.innerHTML = "";
+            new QRCode(qrBox, { text: sPass, width: 100, height: 100 });
+        }
+
+        // মডাল বন্ধ করে স্লিপ দেখানো
+        document.getElementById('appModal').style.display = 'none';
+        document.getElementById('slipOverlay').style.display = 'flex';
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
 };
+
+// ৫. লাইভ ফাইল ট্র্যাকিং (FIXED)
+const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
+onSnapshot(q, (snap) => {
+    let html = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'New';
+        
+        let sColor = "#f1c40f"; // Gold for Pending
+        if (d.status === "Approved" || d.status === "Success") sColor = "#2ecc71"; // Green
+        if (d.status === "Rejected") sColor = "#ff4757"; // Red
+
+        html += `<tr>
+            <td>${d.studentName}</td>
+            <td>${d.passport}</td>
+            <td>${d.university}</td>
+            <td><b style="color:${sColor}">${d.status || 'Pending'}</b></td>
+            <td>${date}</td>
+        </tr>`;
+    });
+    
+    // টেবিলে ডাটা পুশ করা (ID match নিশ্চিত করুন)
+    const trackBody = document.getElementById('liveTrackingBody') || document.querySelector('.sharedBody');
+    if (trackBody) trackBody.innerHTML = html;
+});
