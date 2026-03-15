@@ -15,23 +15,24 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক
+// ১. সিকিউরিটি চেক (লুপ প্রোটেকশন)
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        window.location.replace("index.html");
+        // যদি লগইন না থাকে এবং ইউজার ইনডেক্স পেজে না থাকে, তবেই রিডাইরেক্ট হবে
+        if (!window.location.pathname.includes("index.html") && window.location.pathname !== "/") {
+            window.location.replace("index.html");
+        }
     }
 });
 
 // ২. ট্যাব ফাংশন
 window.tab = (id) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
     const target = document.getElementById(id);
     if(target) target.classList.add('active');
-    event.currentTarget.classList.add('active');
 };
 
-// ৩. মডেল ওপেন
+// ৩. সাবমিশন লজিক
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
@@ -39,38 +40,34 @@ window.openApp = (u) => {
     document.getElementById('appModal').style.display = 'flex';
 };
 
-// ৪. সাবমিট লজিক
 const submitBtn = document.getElementById('submitBtn');
 if (submitBtn) {
     submitBtn.onclick = async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
-        if (!name || !pass) return alert("Required!");
+        if (!name || !pass) return alert("All fields required!");
         try {
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Sending...";
             await addDoc(collection(db, "applications"), {
                 studentName: name, passport: pass, university: curUni,
                 status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
             });
-            alert("Sent!");
+            alert("Application Sent!");
             document.getElementById('appModal').style.display = 'none';
         } catch (e) { alert(e.message); }
-        finally { submitBtn.disabled = false; submitBtn.innerText = "Submit Now"; }
     };
 }
 
-// ৫. ডাটা আপডেট
+// ৪. রিয়েল-টাইম ডাটা লোড
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let r = "";
     snap.forEach(doc => {
         const d = doc.data();
-        r += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:orange">${d.status}</b></td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
+        r += `<tr><td class="p-4">${d.studentName}</td><td class="p-4">${d.passport}</td><td class="p-4">${d.university}</td><td class="p-4"><span class="bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs font-bold">${d.status}</span></td><td class="p-4">${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
     });
     document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
 });
 
-// ৬. লগআউট (index.html এ পাঠাবে)
+// ৫. লগআউট
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.onclick = () => {
