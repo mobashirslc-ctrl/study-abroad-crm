@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -15,7 +15,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. ইউনিভার্সিটি সেভ করা
+let editId = null; // Edit mode track korar jonno
+
+// --- ১. ইউনিভার্সিটি সেভ ba আপডেট করা ---
 document.getElementById('saveUniBtn').onclick = async () => {
     const btn = document.getElementById('saveUniBtn');
     const data = {
@@ -46,62 +48,54 @@ document.getElementById('saveUniBtn').onclick = async () => {
     if(!data.name || !data.semesterFee) return alert("University Name and Fee required!");
 
     try {
-        btn.innerText = "Saving...";
         btn.disabled = true;
-        await addDoc(collection(db, "universities"), data);
-        alert("University Data Saved Successfully!");
+        if (editId) {
+            // Edit Mode: Update existing doc
+            await updateDoc(doc(db, "universities", editId), data);
+            alert("University Updated Successfully!");
+            editId = null;
+            btn.innerText = "Save University";
+        } else {
+            // New Mode: Add new doc
+            await addDoc(collection(db, "universities"), data);
+            alert("University Saved Successfully!");
+        }
         location.reload();
     } catch (e) {
         alert("Error: " + e.message);
-    } finally {
         btn.disabled = false;
-        btn.innerText = "Save University";
     }
 };
 
-// ২. রিয়েল-টাইম ডাটা টেবিল আপডেট (Currency to BDT Conversion Logic সহ)
+// --- ২. রিয়েল-টাইম ডাটা টেবিল আপডেট (Fixed Calculation) ---
 onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
     const tbody = document.getElementById('uniTableBody');
     let html = "";
     
-    // কারেন্সি কনভারশন রেট (প্রয়োজনে এখান থেকে পরিবর্তন করতে পারবেন)
-    const rates = {
-        'GBP': 155, 
-        'USD': 120, 
-        'EUR': 132,
-        'BDT': 1
-    };
+    const rates = { 'GBP': 155, 'USD': 120, 'EUR': 132, 'BDT': 1 };
 
     snap.forEach(docSnap => {
         const u = docSnap.data();
         const id = docSnap.id;
 
-        // ক্যালকুলেশন পার্ট:
-        const currentRate = rates[u.currency] || 120; // কারেন্সি না মিললে ডিফল্ট ১২০ ধরবে
-        const semesterFeeNum = parseFloat(u.semesterFee) || 0;
-        const commPercentNum = parseFloat(u.partnerCommPercent) || 0;
-
-        // ১. আগে ফি-কে টাকায় কনভার্ট করা
-        const feeInBDT = semesterFeeNum * currentRate;
-
-        // ২. কনভার্টেড টাকার ওপর পার্সেন্টেজ হিসাব করা
-        const commAmountBDT = (feeInBDT * commPercentNum) / 100;
+        const currentRate = rates[u.currency] || 120;
+        const feeInBDT = (parseFloat(u.semesterFee) || 0) * currentRate; // Age Conversion
+        const commAmountBDT = (feeInBDT * (parseFloat(u.partnerCommPercent) || 0)) / 100; // Tarpor % calculation
         
         html += `
             <tr>
                 <td><b>${u.name}</b></td>
                 <td>${u.country}</td>
-                <td>${u.course} (${u.degree})</td>
+                <td>${u.course}</td>
+                <td>${u.currency} ${u.semesterFee} <br><small>(৳${feeInBDT.toLocaleString()})</small></td>
+                <td style="color:#2ecc71; font-weight:bold;">৳ ${Math.round(commAmountBDT).toLocaleString()}</td>
                 <td>
-                    ${u.currency} ${semesterFeeNum.toLocaleString()} 
-                    <br><small style="color:#aaa;">(৳ ${feeInBDT.toLocaleString()})</small>
-                </td>
-                <td style="color:#2ecc71; font-weight:bold;">
-                    ৳ ${Math.round(commAmountBDT).toLocaleString()}
-                </td>
-                <td>
-                    <button class="btn btn-edit" onclick="alert('Edit logic can be added here')"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-block" onclick="deleteUni('${id}')"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-edit" onclick="editUni('${id}', ${JSON.stringify(u).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-block" onclick="deleteUni('${id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `;
@@ -109,19 +103,43 @@ onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), 
     tbody.innerHTML = html;
 });
 
-// ৩. ডিলিট ফাংশন
+// --- ৩. Edit Function (Form fufill kora) ---
+window.editUni = (id, data) => {
+    editId = id;
+    document.getElementById('uName').value = data.name;
+    document.getElementById('uCountry').value = data.country;
+    document.getElementById('uCourse').value = data.course;
+    document.getElementById('uDegree').value = data.degree;
+    document.getElementById('uCurrency').value = data.currency;
+    document.getElementById('uSemesterFee').value = data.semesterFee;
+    document.getElementById('uScholarship').value = data.scholarship;
+    document.getElementById('uIntake').value = data.intake;
+    document.getElementById('uPartnerComm').value = data.partnerCommPercent;
+    document.getElementById('uPartnerBonus').value = data.partnerBonus;
+    document.getElementById('uAppFee').value = data.appFee;
+    document.getElementById('uDeposit').value = data.deposit;
+    document.getElementById('uIeltsO').value = data.ieltsO;
+    document.getElementById('uIeltsL').value = data.ieltsL;
+    document.getElementById('uInterview').value = data.interview;
+    document.getElementById('uGap').value = data.gap;
+    document.getElementById('uEntry').value = data.entry;
+    document.getElementById('uAdminFee').value = data.adminFee;
+    document.getElementById('uProcessTime').value = data.processTime;
+    document.getElementById('uLocation').value = data.location;
+    document.getElementById('uStatus').value = data.status;
+
+    document.getElementById('saveUniBtn').innerText = "Update University Info";
+    window.scrollTo(0, 0); // Form-er kache niye jaoa
+};
+
+// --- ৪. ডিলিট ফাংশন ---
 window.deleteUni = async (id) => {
-    if(confirm("Are you sure you want to delete this university?")) {
-        try {
-            await deleteDoc(doc(db, "universities", id));
-            alert("Deleted Successfully!");
-        } catch (err) {
-            alert("Delete failed: " + err.message);
-        }
+    if(confirm("Are you sure?")) {
+        await deleteDoc(doc(db, "universities", id));
     }
 };
 
-// ৪. লগআউট
+// --- ৫. লগআউট ---
 document.getElementById('logoutAdmin').onclick = () => {
     signOut(auth).then(() => window.location.href = "index.html");
 };
