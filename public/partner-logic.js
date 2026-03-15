@@ -1,5 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// ১. এখানে Auth ইম্পোর্ট করা হয়েছে
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -14,6 +16,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// ২. Auth ইনিশিয়ালাইজ করা হয়েছে
+const auth = getAuth(app);
+
+// ৩. সিকিউরিটি চেক: লগইন না থাকলে সরাসরি login.html এ পাঠিয়ে দিবে
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "login.html";
+    }
+});
+
+// --- আপনার আগের সব লজিক নিচে অপরিবর্তিত আছে ---
 
 // Tab Navigation
 window.tab = (id) => {
