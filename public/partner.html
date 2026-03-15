@@ -8,21 +8,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.03); --danger: #ff5e5e; }
-        body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
+        
+        /* স্ট্যাবিলিটি ফিক্স: লোড হওয়ার আগে বডি হাইড থাকবে */
+        body { 
+            margin: 0; display: flex; background-color: var(--bg); 
+            font-family: 'Poppins', sans-serif; color: white; 
+            height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease;
+        }
+        body.auth-ready { opacity: 1; }
+
+        /* লোডিং স্ক্রিন */
+        #loader {
+            position: fixed; inset: 0; background: var(--darker);
+            display: flex; flex-direction: column; justify-content: center; 
+            align-items: center; z-index: 9999;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,204,0,0.1);
+            border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
         /* Sidebar */
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; }
         .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
-        .nav-links li { padding: 18px; cursor: pointer; color: #bdc3c7; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+        .nav-links li { padding: 18px; cursor: pointer; color: #bdc3c7; display: flex; align-items: center; gap: 15px; transition: 0.2s; border-left: 3px solid transparent; }
         .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
         .sidebar:hover .nav-links li span { display: inline; }
-        .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); }
+        .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); border-left-color: var(--gold); }
 
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 25px; position: relative; }
         .section { display: none; padding-bottom: 100px; }
-        .section.active { display: block; }
+        .section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Stats */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
@@ -35,6 +55,7 @@
         input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
         label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; width: 100%; }
+        .btn-gold:hover { background: #e6b800; transform: translateY(-2px); }
         
         /* Table */
         .table-wrap { overflow-x: auto; margin-top: 20px; border-radius: 10px; }
@@ -53,15 +74,21 @@
     </style>
 </head>
 <body>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">SECURE ACCESS...</p>
+    </div>
+
     <div class="sidebar">
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
-            <li class="active" onclick="showSection('dashboard')"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="showSection('tracking')"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
-            <li onclick="showSection('wallet')"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
+            <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-house"></i> <span>Home</span></li>
+            <li onclick="showSection('tracking', this)"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
+            <li onclick="showSection('wallet', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
         </ul>
-        <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer;">
-            <i class="fa-solid fa-right-from-bracket"></i>
+        <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer; text-align: center; width: 100%;">
+            <i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i>
         </div>
     </div>
 
@@ -125,7 +152,7 @@
         <div id="wallet" class="section">
             <div class="card">
                 <h3>Wallet Summary</h3>
-                <p>Detailed transaction history will appear here.</p>
+                <p>Transaction history and withdrawal requests will appear here soon.</p>
             </div>
         </div>
     </div>
@@ -157,12 +184,15 @@
 
     <script type="module" src="partner-logic.js"></script>
     <script>
-        function showSection(id) {
+        function showSection(id, element) {
+            // Hide all sections
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            // Remove active class from all nav items
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-            const activeLi = Array.from(document.querySelectorAll('.nav-links li')).find(li => li.getAttribute('onclick')?.includes(id));
-            if(activeLi) activeLi.classList.add('active');
+            
+            // Show target
+            document.getElementById(id).classList.add('active');
+            element.classList.add('active');
         }
     </script>
 </body>

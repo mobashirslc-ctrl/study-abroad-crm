@@ -15,19 +15,23 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- স্টেবিলিটি চেক: লগইন না থাকলে রিডাইরেক্ট ---
+// --- স্টেবিলিটি এবং অথেনটিকেশন চেক ---
 onAuthStateChanged(auth, (user) => {
     if (!user) {
+        // লগইন না থাকলে সরাসরি বের করে দেবে
         window.location.replace("login.html");
     } else {
-        initApp(); // লগইন থাকলে অ্যাপ লোড করো
+        // লগইন থাকলে লোডার সরিয়ে মেইন পেজ দেখাবে
+        document.getElementById('loader').style.display = 'none';
+        document.body.classList.add('auth-ready');
+        startDashboard(); // ড্যাশবোর্ড ডাটা লোড শুরু করো
     }
 });
 
-function initApp() {
+function startDashboard() {
     let currentComm = 0;
 
-    // ১. ইউনিভার্সিটি সার্চ
+    // ১. ইউনিভার্সিটি সার্চ লজিক
     window.runSearch = async () => {
         const fCountry = document.getElementById('fCountry').value.trim().toLowerCase();
         const fDegree = document.getElementById('fDegree').value;
@@ -35,7 +39,7 @@ function initApp() {
         const tbody = document.getElementById('uniResultsBody');
         
         document.getElementById('resArea').style.display = 'block';
-        tbody.innerHTML = '<tr><td colspan="4">Searching...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Searching Universities...</td></tr>';
 
         try {
             const querySnapshot = await getDocs(collection(db, "universities"));
@@ -47,36 +51,54 @@ function initApp() {
                 const minGPA = parseFloat(u.minGPA) || 0;
 
                 if ((!fCountry || u.country.toLowerCase().includes(fCountry)) && (!fDegree || u.degreeType === fDegree) && (fGPA >= minGPA)) {
-                    const comm = Math.round((fee * 120 * pComm) / 100);
+                    const commCalculated = Math.round((fee * 120 * pComm) / 100);
                     rows += `<tr>
                         <td><b>${u.universityName}</b></td>
                         <td>${u.country}</td>
-                        <td style="color:#00ff00;">৳ ${comm.toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:5px;" onclick="openApp('${u.universityName}', ${comm})">OPEN</button></td>
+                        <td>${u.degreeType}</td>
+                        <td>${u.courseName}</td>
+                        <td>$${fee}</td>
+                        <td style="color:#00ff00; font-weight:bold;">৳ ${commCalculated.toLocaleString()}</td>
+                        <td>${minGPA}</td>
+                        <td>${u.ieltsO || 'N/A'}</td>
+                        <td>${u.scholarship || '0%'}</td>
+                        <td>${u.intake || 'N/A'}</td>
+                        <td><button class="btn-gold" style="padding: 5px 10px;" onclick="openApp('${u.universityName}', ${commCalculated})">OPEN FILE</button></td>
                     </tr>`;
                 }
             });
-            tbody.innerHTML = rows || '<tr><td colspan="4">No match found.</td></tr>';
-        } catch (e) { console.error(e); }
+            tbody.innerHTML = rows || '<tr><td colspan="11" style="text-align:center;">No match found.</td></tr>';
+        } catch (e) { console.error("Search Error:", e); }
     };
     document.getElementById('runSearchBtn').onclick = window.runSearch;
 
-    // ২. রিয়েলটাইম লিসেনার (ওয়ালেট এবং ট্র্যাকিং)
+    // ২. ওয়ালেট এবং ট্র্যাকিং (রিয়েল-টাইম)
     onSnapshot(collection(db, "applications"), (snap) => {
-        let pending = 0; let available = 0; let trackHtml = "";
+        let pending = 0;
+        let available = 0;
+        let trackingRows = "";
+        
         snap.forEach(doc => {
             const d = doc.data();
             pending += parseFloat(d.pendingAmount || 0);
             available += parseFloat(d.finalAmount || 0);
+            
             const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'New';
-            trackHtml += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td>${d.status}</td><td>${date}</td></tr>`;
+            trackingRows += `<tr>
+                <td>${d.studentName}</td>
+                <td>${d.passport}</td>
+                <td>${d.university}</td>
+                <td><b style="color:#ffcc00">${d.status}</b></td>
+                <td>${date}</td>
+            </tr>`;
         });
+        
         document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
         document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
-        document.getElementById('liveTrackingBody').innerHTML = trackHtml;
+        document.getElementById('liveTrackingBody').innerHTML = trackingRows;
     });
 
-    // ৩. সাবমিশন লজিক
+    // ৩. ফাইল সাবমিট লজিক
     window.openApp = (uni, comm) => {
         document.getElementById('mTitle').innerText = uni;
         currentComm = comm;
@@ -86,21 +108,36 @@ function initApp() {
     document.getElementById('submitBtn').onclick = async () => {
         const sName = document.getElementById('sName').value;
         const sPass = document.getElementById('sPass').value;
-        if (!sName || !sPass) return alert("Fill data");
+        if (!sName || !sPass) return alert("Please fill all student details!");
 
-        await addDoc(collection(db, "applications"), {
-            studentName: sName, passport: sPass, university: document.getElementById('mTitle').innerText,
-            commissionBDT: currentComm, status: "PENDING", timestamp: serverTimestamp(),
-            pendingAmount: 0, finalAmount: 0
-        });
-        document.getElementById('appModal').style.display = 'none';
-        alert("Submitted Successfully!");
+        try {
+            await addDoc(collection(db, "applications"), {
+                studentName: sName,
+                passport: sPass,
+                university: document.getElementById('mTitle').innerText,
+                commissionBDT: currentComm,
+                pendingAmount: 0,
+                finalAmount: 0,
+                status: "PENDING",
+                timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('slipName').innerText = sName;
+            document.getElementById('slipPass').innerText = sPass;
+            document.getElementById('slipUni').innerText = document.getElementById('mTitle').innerText;
+            document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
+            
+            document.getElementById('appModal').style.display = 'none';
+            document.getElementById('slipOverlay').style.display = 'flex';
+        } catch (e) { alert("Submission failed: " + e.message); }
     };
 
-    // ৪. লগআউট (পারফেক্টলি কাজ করবে)
+    // ৪. লগআউট (ব্লেজিং ফাস্ট এবং ক্লিন)
     document.getElementById('logoutBtn').onclick = () => {
-        if(confirm("Logout?")) {
-            signOut(auth).then(() => window.location.replace("login.html"));
+        if(confirm("Are you sure you want to logout?")) {
+            signOut(auth).then(() => {
+                window.location.replace("login.html");
+            });
         }
     };
 }
