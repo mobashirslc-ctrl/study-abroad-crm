@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -12,6 +13,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 let currentComm = 0;
 
@@ -46,15 +48,16 @@ window.runSearch = async () => {
                     <td>${u.ieltsO || 'N/A'}</td>
                     <td>${u.scholarship || '0%'}</td>
                     <td>${u.intake || 'N/A'}</td>
-                    <td><button class="btn-gold" onclick="openApp('${u.universityName}', ${commCalculated})">OPEN FILE</button></td>
+                    <td><button class="btn-gold" style="padding: 5px 10px;" onclick="openApp('${u.universityName}', ${commCalculated})">OPEN FILE</button></td>
                 </tr>`;
             }
         });
         tbody.innerHTML = rows || '<tr><td colspan="11" style="text-align:center;">No match found.</td></tr>';
     } catch (e) { console.error(e); }
 };
+document.getElementById('runSearchBtn').onclick = window.runSearch;
 
-// ২. ওয়ালেট আপডেট (Logic Fix: compliance controlled)
+// ২. ওয়ালেট আপডেট (Real-time)
 onSnapshot(collection(db, "applications"), (snap) => {
     let pending = 0;
     let available = 0;
@@ -67,7 +70,7 @@ onSnapshot(collection(db, "applications"), (snap) => {
     document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
 });
 
-// ৩. ফাইল সাবমিট (Initial Wallet will be 0)
+// ৩. ফাইল সাবমিট
 window.openApp = (uni, comm) => {
     document.getElementById('mTitle').innerText = uni;
     currentComm = comm;
@@ -85,8 +88,8 @@ document.getElementById('submitBtn').onclick = async () => {
             passport: sPass,
             university: document.getElementById('mTitle').innerText,
             commissionBDT: currentComm,
-            pendingAmount: 0, // Submission এ ব্যালেন্স ০ থাকবে
-            finalAmount: 0,   // Submission এ ব্যালেন্স ০ থাকবে
+            pendingAmount: 0,
+            finalAmount: 0,
             status: "PENDING",
             timestamp: serverTimestamp()
         });
@@ -107,8 +110,16 @@ onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), 
     snap.forEach(doc => {
         const d = doc.data();
         const date = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'New';
-        html += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b>${d.status}</b></td><td>${date}</td></tr>`;
+        html += `<tr><td>${d.studentName}</td><td>${d.passport}</td><td>${d.university}</td><td><b style="color:var(--gold)">${d.status}</b></td><td>${date}</td></tr>`;
     });
-    const trackBody = document.getElementById('liveTrackingBody') || document.querySelector('.sharedBody');
-    if (trackBody) trackBody.innerHTML = html;
+    document.getElementById('liveTrackingBody').innerHTML = html;
 });
+
+// ৫. লগআউট ফিক্স
+document.getElementById('logoutBtn').onclick = () => {
+    if(confirm("Logout from SCC Portal?")) {
+        signOut(auth).then(() => {
+            window.location.href = "login.html";
+        });
+    }
+};
