@@ -15,9 +15,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// সিকিউরিটি চেক
+// সিকিউরিটি: লগইন না থাকলে বের করে দাও
 onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.href = "login.html";
+    if (!user) window.location.replace("login.html");
 });
 
 // ট্যাব ফাংশন
@@ -27,7 +27,7 @@ window.tab = (id) => {
     document.getElementById(id).classList.add('active');
 };
 
-// ফাইল সাবমিশন
+// ফাইল সাবমিশন লজিক
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
@@ -35,20 +35,25 @@ window.openApp = (u) => {
     document.getElementById('appModal').style.display = 'flex';
 };
 
-document.getElementById('submitBtn').onclick = async () => {
-    const name = document.getElementById('sName').value;
-    const pass = document.getElementById('sPass').value;
-    if(!name || !pass) return alert("Fill all fields!");
+const submitBtn = document.getElementById('submitBtn');
+if(submitBtn) {
+    submitBtn.onclick = async () => {
+        const name = document.getElementById('sName').value;
+        const pass = document.getElementById('sPass').value;
+        if(!name || !pass) return alert("Required Fields!");
 
-    await addDoc(collection(db, "applications"), {
-        studentName: name, passport: pass, university: curUni,
-        status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
-    });
-    alert("Application Sent!");
-    document.getElementById('appModal').style.display = 'none';
-};
+        try {
+            await addDoc(collection(db, "applications"), {
+                studentName: name, passport: pass, university: curUni,
+                status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
+            });
+            alert("Application Submitted!");
+            document.getElementById('appModal').style.display = 'none';
+        } catch(e) { alert("Error: " + e.message); }
+    };
+}
 
-// ডাটা সিঙ্ক
+// ডাটা লোড করা
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let r = "";
     snap.forEach(doc => {
@@ -58,5 +63,8 @@ onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), 
     document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
 });
 
-// লগআউট
-document.getElementById('logoutBtn').onclick = () => signOut(auth);
+// লগআউট ফিক্স
+const logoutBtn = document.getElementById('logoutBtn');
+if(logoutBtn) {
+    logoutBtn.onclick = () => signOut(auth);
+}
