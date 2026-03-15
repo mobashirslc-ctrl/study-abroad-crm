@@ -15,20 +15,37 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক
+// ১. সিকিউরিটি চেক (লুপ বন্ধ করার জন্য একবার চেক হবে)
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        window.location.replace("login.html");
+        if (!window.location.href.includes("login.html")) {
+            window.location.replace("login.html");
+        }
     }
 });
 
-// ২. ট্যাব ফাংশন
+// ২. লগআউট ফিক্স (সরাসরি ক্লিক হ্যান্ডলার)
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            window.location.replace("login.html");
+        } catch (err) {
+            console.error(err);
+        }
+    });
+}
+
+// ৩. ট্যাব ফাংশন (উইন্ডো অবজেক্টে রাখা হয়েছে যাতে HTML থেকে কাজ করে)
 window.tab = (id) => {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active');
 };
 
-// ৩. মডেল কন্ট্রোল
+// ৪. ডাটা সাবমিট এবং রিয়েল-টাইম লোড (বাকি সব আগের মতোই থাকবে)
 let curUni = "";
 window.openApp = (u) => {
     curUni = u;
@@ -36,29 +53,23 @@ window.openApp = (u) => {
     document.getElementById('appModal').style.display = 'flex';
 };
 
-// ৪. সাবমিট ফাংশন
 const submitBtn = document.getElementById('submitBtn');
 if (submitBtn) {
-    submitBtn.addEventListener('click', async () => {
+    submitBtn.onclick = async () => {
         const name = document.getElementById('sName').value;
         const pass = document.getElementById('sPass').value;
-        if (!name || !pass) return alert("সব ঘর পূরণ করুন!");
-
+        if (!name || !pass) return alert("All fields required");
         try {
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Sending...";
             await addDoc(collection(db, "applications"), {
                 studentName: name, passport: pass, university: curUni,
                 status: "Pending", partner: "GORUN LTD.", timestamp: new Date().toISOString()
             });
-            alert("সফলভাবে পাঠানো হয়েছে!");
+            alert("Success!");
             document.getElementById('appModal').style.display = 'none';
-        } catch (e) { alert("Error: " + e.message); }
-        finally { submitBtn.disabled = false; submitBtn.innerText = "Submit Now"; }
-    });
+        } catch (e) { alert(e.message); }
+    };
 }
 
-// ৫. ডাটা আপডেট (লুপ ফিক্সড)
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let r = "";
     snap.forEach(doc => {
@@ -67,11 +78,3 @@ onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), 
     });
     document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = r);
 });
-
-// ৬. লগআউট (সরাসরি ক্লিক হ্যান্ডলার)
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => window.location.replace("login.html"));
-    });
-}
