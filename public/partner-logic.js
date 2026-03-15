@@ -13,15 +13,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentComm = 0;
+let activeComm = 0;
 
-// Search Logic with Country Field
+// Search Logic with Country Field Added
 window.runSearch = () => {
     const tbody = document.getElementById('uniResultsBody');
     const fCountry = document.getElementById('fCountry').value.toLowerCase().trim();
     const fDegree = document.getElementById('fDegree').value;
-    const fUserGPA = parseFloat(document.getElementById('fAcad').value) || 0;
-    const fUserIELTS = parseFloat(document.getElementById('fScore').value) || 0;
+    const fGPA = parseFloat(document.getElementById('fAcad').value) || 0;
+    const fIELTS = parseFloat(document.getElementById('fScore').value) || 0;
 
     document.getElementById('resArea').style.display = 'block';
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Searching...</td></tr>';
@@ -32,43 +32,48 @@ window.runSearch = () => {
             const u = doc.data();
             const dbCountry = (u.country || "").toLowerCase();
             const dbDegree = u.degree || u.degreeType || "";
-            const dbGPA = parseFloat(u.minGPA || 0);
-            const dbIELTS = parseFloat(u.ieltsO || u.ieltsOverall || 0);
+            const minGPA = parseFloat(u.minGPA || 0);
+            const minIELTS = parseFloat(u.ieltsO || u.ieltsOverall || 0);
 
             if ((!fCountry || dbCountry.includes(fCountry)) && 
                 (!fDegree || dbDegree === fDegree) && 
-                (fUserGPA >= dbGPA) && (fUserIELTS >= dbIELTS)) {
+                (fGPA >= minGPA) && (fIELTS >= minIELTS)) {
                 
                 const comm = Math.round((parseFloat(u.semesterFee || 0) * 120 * parseFloat(u.partnerComm || 0)) / 100);
                 
                 rows += `<tr>
-                    <td>${u.universityName}</td><td>${u.country}</td><td>${dbDegree}</td><td>${u.courseName}</td>
-                    <td>$${u.semesterFee}</td><td style="color:#2ecc71">৳ ${comm.toLocaleString()}</td>
-                    <td>${dbGPA}</td><td>${dbIELTS}</td><td>${u.intake}</td>
+                    <td><b>${u.universityName}</b></td>
+                    <td>${u.country}</td>
+                    <td>${dbDegree}</td>
+                    <td>${u.courseName}</td>
+                    <td>$${u.semesterFee}</td>
+                    <td style="color:#2ecc71; font-weight:bold;">৳ ${comm.toLocaleString()}</td>
+                    <td>${minGPA}</td>
+                    <td>${minIELTS}</td>
+                    <td>${u.intake}</td>
                     <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApp('${u.universityName}', ${comm})">Open File</button></td>
                 </tr>`;
             }
         });
-        tbody.innerHTML = rows || '<tr><td colspan="10" style="text-align:center;">No match found.</td></tr>';
+        tbody.innerHTML = rows || '<tr><td colspan="10" style="text-align:center;">No matching university found.</td></tr>';
     });
 };
 
-// Modal Trigger
 window.openApp = (uni, comm) => {
     document.getElementById('mTitle').innerText = uni;
-    currentComm = comm;
+    activeComm = comm;
     document.getElementById('appModal').style.display = 'flex';
 };
 
-// Submit Application Logic
+// Application Submission & QR Generation
 document.getElementById('submitBtn').onclick = async () => {
     const name = document.getElementById('sName').value;
     const pass = document.getElementById('sPass').value;
     const uni = document.getElementById('mTitle').innerText;
 
-    if (!name || !pass) return alert("Please fill all fields!");
+    if (!name || !pass) return alert("Please enter Student Name and Passport!");
 
-    document.getElementById('submitBtn').innerText = "Submitting...";
+    document.getElementById('submitBtn').innerText = "Processing...";
     document.getElementById('submitBtn').disabled = true;
 
     try {
@@ -76,27 +81,30 @@ document.getElementById('submitBtn').onclick = async () => {
             studentName: name,
             passport: pass,
             university: uni,
-            commission: currentComm,
+            commission: activeComm,
             status: "Pending",
-            date: serverTimestamp()
+            timestamp: serverTimestamp()
         });
 
-        // Generate QR and Slip
+        // Fill Slip Data
         document.getElementById('slipName').innerText = name;
         document.getElementById('slipPass').innerText = pass;
         document.getElementById('slipUni').innerText = uni;
-        
+        document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
+
+        // Generate QR Code
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), {
-            text: `https://scc-partner-portal.web.app/track?pass=${pass}`,
-            width: 128,
-            height: 128
+            text: `https://scc-track.web.app/?id=${pass}`,
+            width: 150,
+            height: 150
         });
 
         document.getElementById('appModal').style.display = 'none';
         document.getElementById('slipOverlay').style.display = 'flex';
 
-    } catch (e) {
-        alert("Error: " + e.message);
+    } catch (err) {
+        alert("Submission Failed!");
+        console.error(err);
     }
 };
