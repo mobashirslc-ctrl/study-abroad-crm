@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -15,12 +15,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// ১. অথেনটিকেশন ও প্রোফাইল ডাটা লোড
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists() && userDoc.data().status === "approved") {
             document.getElementById('userName').innerText = userDoc.data().fullName;
-            document.getElementById('profileName').innerText = userDoc.data().fullName;
+            if(document.getElementById('profileName')) document.getElementById('profileName').innerText = userDoc.data().fullName;
+            
+            // ওয়ালেট আপডেট শুরু করা
+            initWalletListener(user.uid);
         } else {
             await signOut(auth);
             window.location.replace("index.html");
@@ -30,7 +34,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// ২. স্মার্ট অ্যাসেসমেন্ট (আপডেটেড কারেন্সি কনভারশন লজিক)
+// ২. স্মার্ট অ্যাসেসমেন্ট (ইউনিভার্সিটি সার্চ ও কমিশন ক্যালকুলেশন)
 window.smartSearch = () => {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const resultsArea = document.getElementById('assessmentResults');
@@ -41,23 +45,16 @@ window.smartSearch = () => {
 
     onSnapshot(collection(db, "universities"), (snap) => {
         let rows = "";
-        
-        // কারেন্সি রেট কনফিগারেশন
         const rates = { 'GBP': 155, 'USD': 120, 'EUR': 132, 'BDT': 1 };
 
-        snap.forEach(doc => {
-            const u = doc.data();
-            
-            // --- কমিশন ক্যালকুলেশন লজিক শুরু ---
-            const currentRate = rates[u.currency] || 120; // কারেন্সি না থাকলে ১২০ ডিফল্ট
+        snap.forEach(docSnap => {
+            const u = docSnap.data();
+            const currentRate = rates[u.currency] || 120;
             const semesterFeeRaw = parseFloat(u.semesterFee) || 0;
             const commPercent = parseFloat(u.partnerCommPercent) || 0;
 
-            // ১. আগে টাকায় কনভার্ট করা
             const feeInBDT = semesterFeeRaw * currentRate;
-            // ২. তারপর বিডিটি অ্যামাউন্টের ওপর কমিশন বের করা
             const commissionAmountBDT = (feeInBDT * commPercent) / 100;
-            // --- কমিশন ক্যালকুলেশন লজিক শেষ ---
 
             let isMatch = true;
             if (country && !u.country.toLowerCase().includes(country)) isMatch = false;
@@ -79,7 +76,7 @@ window.smartSearch = () => {
                     <td>${u.casTime || 'N/A'}</td>
                     <td style="color:#00ff00">${u.successRate || 'High'}</td>
                     <td>
-                        <button class="btn-gold" style="padding:6px 12px; font-size:10px;" onclick="openApp('${u.name}')">Open File</button>
+                        <button class="btn-gold" style="padding:6px 12px; font-size:10px;" onclick="openApp('${u.name}', ${commissionAmountBDT})">Open File</button>
                     </td>
                 </tr>`;
             }
@@ -88,12 +85,15 @@ window.smartSearch = () => {
     });
 };
 
-window.openApp = (uniName) => {
+// ৩. ফাইল সাবমিশন লজিক (কমিশন সহ সেভ করা)
+let selectedUniCommission = 0; // গ্লোবাল ভেরিয়েবল কমিশন ট্র্যাক করার জন্য
+
+window.openApp = (uniName, commAmount) => {
     document.getElementById('mTitle').innerText = uniName;
+    selectedUniCommission = commAmount; // কমিশন ভ্যালু স্টোর করা
     document.getElementById('appModal').style.display = 'flex';
 };
 
-// ৩. সাবমিশন এবং স্লিপ জেনারেশন
 document.getElementById('submitBtn').onclick = async () => {
     const name = document.getElementById('sName').value;
     const phone = document.getElementById('sPhone').value;
@@ -108,14 +108,22 @@ document.getElementById('submitBtn').onclick = async () => {
         btn.innerText = "Processing...";
 
         const docRef = await addDoc(collection(db, "applications"), {
-            studentName: name, contactNo: phone, passportNo: pass,
-            university: uni, status: "Pending", complianceMember: "Unassigned",
+            studentName: name,
+            contactNo: phone,
+            passportNo: pass,
+            university: uni,
+            status: "Pending",
+            complianceMember: "Unassigned",
             partnerName: document.getElementById('userName').innerText,
             partnerUID: auth.currentUser.uid,
+            commissionBDT: selectedUniCommission, // কমিশন অ্যামাউন্ট এখানে সেভ হচ্ছে
+            pendingAmount: 0, // শুরুতে ০ থাকবে, কমপ্লায়েন্স আপডেট দিলে বাড়বে
+            finalAmount: 0,
             timestamp: new Date().toISOString(),
             dateTime: new Date().toLocaleString()
         });
 
+        // স্লিপ জেনারেশন ও প্রিন্ট
         document.getElementById('slipNameHead').innerText = name;
         document.getElementById('slipName').innerText = name;
         document.getElementById('slipPass').innerText = pass;
@@ -134,12 +142,46 @@ document.getElementById('submitBtn').onclick = async () => {
     finally { btn.disabled = false; btn.innerText = "Submit & Generate Slip"; }
 };
 
+// ৪. ওয়ালেট ব্যালেন্স লিসেনার (রিয়েল-টাইম সামারি)
+function initWalletListener(uid) {
+    const q = query(collection(db, "applications"), where("partnerUID", "==", uid));
+    
+    onSnapshot(q, (snap) => {
+        let totalPending = 0;
+        let totalFinal = 0;
+
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            totalPending += parseFloat(data.pendingAmount || 0);
+            totalFinal += parseFloat(data.finalAmount || 0);
+        });
+
+        // HTML-এ ভ্যালু আপডেট করা
+        if(document.getElementById('pendingWalletBox')) {
+            document.getElementById('pendingWalletBox').innerText = `৳ ${Math.round(totalPending).toLocaleString()}`;
+        }
+        if(document.getElementById('finalWalletBox')) {
+            document.getElementById('finalWalletBox').innerText = `৳ ${Math.round(totalFinal).toLocaleString()}`;
+            
+            // উইথড্র বাটন কন্ট্রোল
+            const withdrawBtn = document.getElementById('withdrawBtn');
+            if(withdrawBtn) {
+                withdrawBtn.disabled = totalFinal <= 0;
+                withdrawBtn.style.opacity = totalFinal <= 0 ? "0.5" : "1";
+            }
+        }
+    });
+}
+
+// ৫. অ্যাপ্লিকেশান লিস্ট লোড করা
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let html = "";
-    snap.forEach(doc => {
-        const d = doc.data();
-        html += `<tr><td>${d.studentName}</td><td>${d.contactNo}</td><td>${d.passportNo}</td>
-                <td><span style="color:var(--gold)">${d.status}</span></td><td>${d.complianceMember}</td><td>${d.dateTime}</td></tr>`;
+    snap.forEach(docSnap => {
+        const d = docSnap.data();
+        if(d.partnerUID === auth.currentUser?.uid) { // শুধু নিজের ফাইলগুলো দেখাবে
+            html += `<tr><td>${d.studentName}</td><td>${d.contactNo}</td><td>${d.passportNo}</td>
+                    <td><span style="color:var(--gold)">${d.status}</span></td><td>${d.complianceMember}</td><td>${d.dateTime}</td></tr>`;
+        }
     });
     document.querySelectorAll('.sharedBody').forEach(t => t.innerHTML = html);
 });
