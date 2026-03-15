@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ১. সিকিউরিটি চেক (এডমিন এপ্রুভাল ও লুপ প্রোটেকশন)
+// ১. সিকিউরিটি চেক ও ইউজারের নাম প্রদর্শন
 onAuthStateChanged(auth, async (user) => {
     if (!user) {
         // লগইন না থাকলে ইনডেক্স পেজে পাঠাবে
@@ -25,7 +25,16 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         // লগইন থাকলেও চেক করবে সে এপ্রুভড কি না
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (!userDoc.exists() || userDoc.data().status !== "approved") {
+        
+        if (userDoc.exists() && userDoc.data().status === "approved") {
+            // ইউজারের নাম ড্যাশবোর্ডে দেখানোর জন্য
+            const nameField = document.getElementById('userName');
+            if (nameField) {
+                nameField.innerText = userDoc.data().fullName; 
+            }
+            console.log("Welcome,", userDoc.data().fullName);
+        } else {
+            // এপ্রুভড না হলে বের করে দিবে
             await signOut(auth);
             window.location.replace("index.html");
         }
@@ -38,8 +47,6 @@ window.tab = (id) => {
     document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
     const target = document.getElementById(id);
     if(target) target.classList.add('active');
-    // ট্যাব ক্লিক করলে হাইলাইট করার জন্য (যদি এলিমেন্টটি ইভেন্ট থেকে আসে)
-    if(event && event.currentTarget) event.currentTarget.classList.add('active');
 };
 
 // ৩. অ্যাপ্লিকেশন সাবমিশন লজিক
@@ -66,13 +73,12 @@ if (submitBtn) {
                 passport: pass,
                 university: curUni,
                 status: "Pending",
-                partner: "GORUN LTD.", // আপনি চাইলে ইউজারের নাম Firestore থেকে নিয়ে এখানে দিতে পারেন
+                partner: document.getElementById('userName')?.innerText || "Unknown Partner",
                 timestamp: new Date().toISOString()
             });
 
             alert("Application submitted successfully!");
             document.getElementById('appModal').style.display = 'none';
-            // ইনপুট ফিল্ড ক্লিয়ার করা
             document.getElementById('sName').value = "";
             document.getElementById('sPass').value = "";
         } catch (e) {
@@ -84,13 +90,13 @@ if (submitBtn) {
     };
 }
 
-// ৪. রিয়েল-টাইম ডাটা লোড (ড্যাশবোর্ড ও ট্র্যাকিং টেবিলের জন্য)
+// ৪. রিয়েল-টাইম ডাটা লোড
 onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), (snap) => {
     let r = "";
     snap.forEach(doc => {
         const d = doc.data();
         r += `
-            <tr class="border-b border-gray-700 hover:bg-white/5 transition">
+            <tr class="border-b border-gray-200 hover:bg-gray-50 transition">
                 <td class="p-4">${d.studentName}</td>
                 <td class="p-4">${d.passport}</td>
                 <td class="p-4">${d.university}</td>
@@ -103,7 +109,6 @@ onSnapshot(query(collection(db, "applications"), orderBy("timestamp", "desc")), 
             </tr>`;
     });
     
-    // ড্যাশবোর্ড এবং ট্র্যাকিং দুই জায়গার টেবিল বডি আপডেট করবে
     document.querySelectorAll('.sharedBody').forEach(t => {
         t.innerHTML = r || '<tr><td colspan="5" class="p-4 text-center">No applications found.</td></tr>';
     });
@@ -115,8 +120,6 @@ if (logoutBtn) {
     logoutBtn.onclick = () => {
         signOut(auth).then(() => {
             window.location.replace("index.html");
-        }).catch((error) => {
-            alert("Logout failed: " + error.message);
         });
     };
 }
