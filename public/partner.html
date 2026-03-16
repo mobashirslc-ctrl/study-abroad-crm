@@ -46,7 +46,7 @@
             if (partnerData && partnerData.name) {
                 document.getElementById('partnerNameDisplay').innerText = partnerData.name;
             } else {
-                window.location.href = 'login.html';
+                window.location.href = 'index.html';
             }
         });
         function showSection(sectionId) {
@@ -55,7 +55,7 @@
         }
         function logout() {
             localStorage.removeItem('partnerData');
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     </script>
 </body>
