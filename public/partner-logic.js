@@ -1,155 +1,107 @@
 import { db, auth, storage } from "./firebase-config.js";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-let selectedUniName = "";
+let selectedUni = "";
+const BDT_RATE = 155; // উদাহরণ: ১ পাউন্ড = ১৫৫ টাকা (এটি আপনি ডাইনামিকও করতে পারেন)
 
-// ১. অথেনটিকেশন এবং লোডার ফিক্স
-onAuthStateChanged(auth, (user) => {
-    const loader = document.getElementById('loader');
-    if (user) {
-        if (loader) loader.style.display = 'none';
-        document.body.classList.add('auth-ready');
-        console.log("Logged in as:", user.email);
-    } else {
-        window.location.href = "index.html"; 
-    }
-});
+// ১. সার্চ ও কমিশন লজিক
+document.getElementById('runSearchBtn').onclick = async () => {
+    const country = document.getElementById('fCountry').value.trim();
+    const resultsBody = document.getElementById('uniResultsBody');
+    if(!country) return alert("Please enter country!");
 
-// ২. ইউনিভার্সিটি সার্চ (রেজাল্ট টেবিলে ১১টি ফিল্ড শো করবে)
-const runSearchBtn = document.getElementById('runSearchBtn');
-if (runSearchBtn) {
-    runSearchBtn.addEventListener('click', async () => {
-        const countryInput = document.getElementById('fCountry').value.trim();
-        const resultsBody = document.getElementById('uniResultsBody');
-        const resArea = document.getElementById('resArea');
+    resultsBody.innerHTML = "<tr><td colspan='11' style='text-align:center;'>Calculating Commission & Results...</td></tr>";
+    document.getElementById('resArea').style.display = 'block';
 
-        if (!countryInput) {
-            alert("Please type a country name!");
-            return;
-        }
+    const q = query(collection(db, "universities"), where("country", "==", country));
+    const snap = await getDocs(q);
+    resultsBody.innerHTML = "";
 
-        resultsBody.innerHTML = "<tr><td colspan='11' style='text-align:center;'>Running Smart Assessment...</td></tr>";
-        resArea.style.display = 'block';
+    snap.forEach(doc => {
+        const uni = doc.data();
+        
+        // কমিশন লজিক: (Tuition Fee * Exchange Rate) * (Partner % / 100)
+        const tuitionInTaka = (uni.tuitionFeeAmount || 0) * BDT_RATE;
+        const calculatedComm = (tuitionInTaka * (uni.partnerCommPercentage || 0)) / 100;
 
-        try {
-            const q = query(collection(db, "universities"), where("country", "==", countryInput));
-            const querySnapshot = await getDocs(q);
-
-            resultsBody.innerHTML = "";
-            if (querySnapshot.empty) {
-                resultsBody.innerHTML = `<tr><td colspan='11' style='text-align:center;'>No data found for "${countryInput}".</td></tr>`;
-                return;
-            }
-
-            querySnapshot.forEach((doc) => {
-                const uni = doc.data();
-                // ১১টি কলামের ডাটা যা অ্যাডমিন প্যানেল থেকে আসবে
-                resultsBody.innerHTML += `
-                    <tr>
-                        <td><b>${uni.universityName || 'N/A'}</b></td>
-                        <td>${uni.country || 'N/A'}</td>
-                        <td>${uni.degree || 'N/A'}</td>
-                        <td>${uni.intake || 'TBA'}</td>
-                        <td>${uni.duration || 'N/A'}</td>
-                        <td>${uni.tuition || 'N/A'}</td>
-                        <td>${uni.scholarship || 'N/A'}</td>
-                        <td>${uni.entryReq || 'N/A'}</td>
-                        <td>${uni.engReq || 'N/A'}</td>
-                        <td style="color:var(--gold); font-weight:bold;">৳ ${uni.partnerComm || '0'}</td>
-                        <td><button class="btn-gold" onclick="openApplyModal('${uni.universityName}')">Apply</button></td>
-                    </tr>`;
-            });
-        } catch (error) {
-            console.error("Search error:", error);
-            alert("Error loading assessment data.");
-        }
+        resultsBody.innerHTML += `
+            <tr>
+                <td><b>${uni.universityName}</b></td>
+                <td>${uni.country}</td>
+                <td>${uni.degree}</td>
+                <td>${uni.intake || 'N/A'}</td>
+                <td>${uni.duration || 'N/A'}</td>
+                <td>${uni.currency || '£'} ${uni.tuitionFeeAmount}</td>
+                <td>${uni.scholarship || 'N/A'}</td>
+                <td>${uni.entryReq || 'N/A'}</td>
+                <td>${uni.engReq || 'N/A'}</td>
+                <td style="color:var(--gold); font-weight:bold;">৳ ${calculatedComm.toLocaleString('en-IN')}</td>
+                <td><button class="btn-gold" onclick="openApply('${uni.universityName}')">Apply</button></td>
+            </tr>`;
     });
-}
-
-// ৩. অ্যাপ্লিকেশন মোডাল ওপেন লজিক
-window.openApplyModal = (uniName) => {
-    selectedUniName = uniName;
-    document.getElementById('mTitle').innerText = "Apply for " + uniName;
-    document.getElementById('appModal').style.display = 'flex';
 };
 
-// ৪. ফাইল আপলোড এবং ফাইনাল সাবমিট (QR জেনারেশন সহ)
-const finalSubmitBtn = document.getElementById('finalSubmitBtn');
-if (finalSubmitBtn) {
-    finalSubmitBtn.addEventListener('click', async () => {
-        const sName = document.getElementById('sName').value;
-        const sPass = document.getElementById('sPass').value;
-        
-        const filePass = document.getElementById('pdfPass').files[0];
-        const fileAcad = document.getElementById('pdfAcad').files[0];
-        const fileLang = document.getElementById('pdfLang').files[0];
+// ২. ফাইল আপলোড ফিক্স (Submit Loading Fix)
+window.openApply = (uni) => {
+    selectedUni = uni;
+    document.getElementById('appModal').style.display = 'flex';
+    document.getElementById('formStep').style.display = 'block';
+    document.getElementById('successStep').style.display = 'none';
+};
 
-        if (!sName || !sPass || !filePass || !fileAcad || !fileLang) {
-            alert("Please fill all info and upload all 3 PDF files!");
-            return;
-        }
+document.getElementById('finalSubmitBtn').onclick = async () => {
+    const btn = document.getElementById('finalSubmitBtn');
+    const sName = document.getElementById('sName').value;
+    const sPass = document.getElementById('sPass').value;
+    
+    const f1 = document.getElementById('pdfPass').files[0];
+    const f2 = document.getElementById('pdfAcad').files[0];
+    const f3 = document.getElementById('pdfLang').files[0];
 
-        finalSubmitBtn.innerText = "Uploading Documents...";
-        finalSubmitBtn.disabled = true;
+    if(!sName || !sPass || !f1 || !f2 || !f3) return alert("All fields and 3 PDFs are required!");
 
-        try {
-            // ফাইল আপলোড ফাংশন
-            const uploadFile = async (file, folder) => {
-                const storageRef = ref(storage, `applications/${sPass}/${folder}_${Date.now()}.pdf`);
-                await uploadBytes(storageRef, file);
-                return await getDownloadURL(storageRef);
-            };
+    btn.innerText = "Uploading... Please wait";
+    btn.disabled = true;
 
-            const urlPass = await uploadFile(filePass, "passport");
-            const urlAcad = await uploadFile(fileAcad, "academic");
-            const urlLang = await uploadFile(fileLang, "language");
+    try {
+        const uploadTask = async (file, label) => {
+            const fileRef = ref(storage, `apps/${sPass}/${label}_${Date.now()}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            return await getDownloadURL(snapshot.ref);
+        };
 
-            // ডাটাবেজে ডাটা সেভ
-            const docRef = await addDoc(collection(db, "applications"), {
-                studentName: sName,
-                passportNo: sPass,
-                university: selectedUniName,
-                passportUrl: urlPass,
-                academicUrl: urlAcad,
-                languageUrl: urlLang,
-                partnerEmail: auth.currentUser.email,
-                status: "Pending",
-                submittedAt: serverTimestamp()
-            });
+        // ফাইলগুলো আপলোড হচ্ছে
+        const url1 = await uploadTask(f1, "passport");
+        const url2 = await uploadTask(f2, "academic");
+        const url3 = await uploadTask(f3, "language");
 
-            // সাকসেস স্লিপ এবং QR কোড দেখানো
-            document.getElementById('formStep').style.display = 'none';
-            document.getElementById('successStep').style.display = 'block';
-            document.getElementById('appIdText').innerText = "App ID: " + docRef.id;
-
-            // QR কোড তৈরি
-            const qrContainer = document.getElementById("qrcode");
-            qrContainer.innerHTML = ""; // আগের QR মুছতে
-            new QRCode(qrContainer, {
-                text: docRef.id,
-                width: 128,
-                height: 128,
-                colorDark : "#0b012d",
-                colorLight : "#ffffff"
-            });
-
-        } catch (error) {
-            console.error("Submission error:", error);
-            alert("Submission failed! Check your internet or file size.");
-            finalSubmitBtn.disabled = false;
-            finalSubmitBtn.innerText = "Submit Application";
-        }
-    });
-}
-
-// ৫. লগআউট লজিক
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            window.location.href = "index.html"; 
+        // ডাটাবেজে এন্ট্রি
+        const docRef = await addDoc(collection(db, "applications"), {
+            studentName: sName,
+            passportNo: sPass,
+            university: selectedUni,
+            partnerEmail: auth.currentUser.email,
+            docs: { passport: url1, academic: url2, language: url3 },
+            status: "Pending",
+            timestamp: serverTimestamp()
         });
-    });
-}
+
+        // সফল হলে QR কোড দেখানো
+        document.getElementById('formStep').style.display = 'none';
+        document.getElementById('successStep').style.display = 'block';
+        document.getElementById('appIdText').innerText = "ID: " + docRef.id;
+
+        new QRCode(document.getElementById("qrcode"), {
+            text: docRef.id,
+            width: 128, height: 128,
+            colorDark: "#0b012d", colorLight: "#ffffff"
+        });
+
+    } catch (e) {
+        console.error(e);
+        alert("Upload Failed! Error: " + e.message);
+        btn.disabled = false;
+        btn.innerText = "Submit Application";
+    }
+};

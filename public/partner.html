@@ -40,6 +40,7 @@
         /* Cards & Tables */
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
         input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; margin-top: 8px; box-sizing: border-box; }
+        label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .btn-gold:hover { transform: scale(1.02); opacity: 0.9; }
         
@@ -94,18 +95,19 @@
             <div id="dashboard" class="section active">
                 <div class="card">
                     <h3 style="margin-top:0; color: var(--gold);">Smart Assessment Search</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                         <div><label>Target Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
-                        <div><label>Degree Level</label>
-                            <select id="fDegree">
-                                <option value="">Select Degree</option>
-                                <option>Foundation</option>
-                                <option>Bachelor</option>
-                                <option>Master's</option>
+                        <div><label>Academic GPA / %</label><input type="text" id="fGPA" placeholder="e.g. 3.50 or 75%"></div>
+                        <div><label>Language Test</label>
+                            <select id="fLang">
+                                <option value="">Select Test</option>
+                                <option>IELTS</option>
+                                <option>PTE</option>
+                                <option>Duolingo</option>
+                                <option>MOI</option>
                             </select>
                         </div>
-                        <div><label>Language Test</label><select id="fLang"><option value="">Select</option><option>IELTS</option><option>PTE</option><option>MOI</option></select></div>
-                        <div><label>Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
+                        <div><label>Language Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
                     </div>
                     <button class="btn-gold" id="runSearchBtn" style="margin-top:20px;">Run Assessment</button>
                 </div>
@@ -125,11 +127,11 @@
                                     <th>Scholarship</th>
                                     <th>Entry Req.</th>
                                     <th>Language Req.</th>
-                                    <th style="color:var(--gold);">Partner Commission</th> <th>Action</th>
+                                    <th style="color:var(--gold);">Partner Commission (BDT)</th> 
+                                    <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="uniResultsBody">
-                                </tbody>
+                            <tbody id="uniResultsBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -193,7 +195,6 @@
 
     <script type="module" src="partner-logic.js"></script>
     <script>
-        // Navigation Script
         function showSection(id, element) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
