@@ -6,9 +6,11 @@
     <title>Partner Portal | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.05); --danger: #ff5e5e; --success: #2ecc71; }
         body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
+        
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; background: white; border-radius: 12px; margin-bottom: 45px; }
@@ -17,19 +19,32 @@
         .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
         .sidebar:hover .nav-links li span { display: inline; }
         .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); border-left-color: var(--gold); }
+        
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .content-body { padding: 25px; flex-grow: 1; }
         .section { display: none; }
-        .section.active { display: block; }
+        .section.active { display: block; animation: fadeIn 0.4s ease; }
+        
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,204,0,0.3); }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); }
+        
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px;}
+        input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; margin-top: 8px; box-sizing: border-box; }
+        label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        
+        .table-wrap { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1250px; }
+        th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid rgba(255,204,0,0.2); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
@@ -43,7 +58,7 @@
 
     <div class="main-container">
         <div class="top-header">
-            <button onclick="location.reload()" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 15px; border-radius:5px; cursor:pointer;">Refresh</button>
+            <button onclick="location.reload()" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 15px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-rotate"></i> Refresh</button>
             <div style="color: var(--gold); font-weight: bold; font-size: 14px;">
                 <i class="fa-solid fa-user-check"></i> <span id="pNameText">Partner Portal</span>
             </div>
@@ -51,24 +66,61 @@
 
         <div class="content-body">
             <div class="top-stats">
-                <div class="stat-box"><small>Estimated Pending</small><div class="amount">৳ 0</div></div>
-                <div class="stat-box"><small>Available Wallet</small><div class="amount">৳ 0</div></div>
-                <div class="stat-box"><small>System Status</small><div class="amount" style="color:var(--success); font-size:14px;">LIVE</div></div>
+                <div class="stat-box"><small>Estimated Pending</small><div class="amount" id="pendingAm">৳ 0</div></div>
+                <div class="stat-box"><small>Available Wallet</small><div class="amount" id="availAm">৳ 0</div></div>
+                <div class="stat-box"><small>System Status</small><div class="amount" style="color:var(--success); font-size:14px;">LIVE-SYNC</div></div>
             </div>
 
             <div id="dashboard" class="section active">
                 <div class="card">
-                    <h3 style="margin-top:0; color: var(--gold);">Welcome Back</h3>
-                    <p>আপনার ড্যাশবোর্ড এখন সচল। গিটহাব থেকে আপডেট লোড হতে ১-২ মিনিট সময় লাগতে পারে।</p>
-                    <button class="btn-gold">Start New Assessment</button>
+                    <h3 style="margin-top:0; color: var(--gold);">Smart Assessment Search</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                        <div><label>Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
+                        <div><label>Degree</label><select id="fDegree"><option>Bachelor's</option><option>Master's</option></select></div>
+                        <div><label>Language</label><select id="fLang"><option>IELTS</option><option>PTE</option><option>MOI</option></select></div>
+                        <div><label>Min Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
+                    </div>
+                    <button type="button" class="btn-gold" id="runSearchBtn" style="margin-top:20px; width:100%;">Run Real-time Assessment</button>
+                </div>
+
+                <div class="card">
+                    <h3 style="color:var(--gold);"><i class="fa-solid fa-satellite-dish"></i> Live Tracking (Recent)</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th><th>Contact No</th><th>Passport No</th><th>University</th><th>Status</th><th>Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTrackingBody">
+                                <tr><td colspan="6" style="text-align:center; padding:30px; color:#666;">No recent applications found.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-            <div id="tracking-sec" class="section"><div class="card"><h3>Tracking</h3></div></div>
-            <div id="wallet-sec" class="section"><div class="card"><h3>Wallet</h3></div></div>
-            <div id="profile" class="section"><div class="card"><h3>Profile</h3></div></div>
+
+            <div id="tracking-sec" class="section">
+                <div class="card"><h3>Full File Tracking</h3><p>Detailed tracking list will appear here.</p></div>
+            </div>
+            <div id="wallet-sec" class="section">
+                <div class="card" style="text-align:center;">
+                    <small>Balance</small><h1 style="color:var(--success);">৳ 0</h1>
+                    <button class="btn-gold" style="max-width:200px;">Withdraw</button>
+                </div>
+            </div>
+            <div id="profile" class="section">
+                <div class="card"><h3>Profile Setup</h3><p>Manage your agency details here.</p></div>
+            </div>
         </div>
+
+        <footer style="text-align: center; padding: 25px; color: #555; font-size: 13px;">
+            Rights and Reserved <b>GORUN LTD.</b>
+        </footer>
     </div>
 
+    <script type="module" src="./firebase-config.js"></script>
+    <script type="module" src="./partner-logic.js"></script>
     <script>
         function showSection(id, element) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -76,17 +128,12 @@
             document.getElementById(id).classList.add('active');
             element.classList.add('active');
         }
-
         function logout() {
             localStorage.removeItem('partnerData');
             window.location.href = 'index.html';
         }
-
-        // নাম দেখানোর চেষ্টা (যদি লগইন করা থাকে)
         const partnerData = JSON.parse(localStorage.getItem('partnerData'));
-        if (partnerData) {
-            document.getElementById('pNameText').innerText = partnerData.name;
-        }
+        if (partnerData) { document.getElementById('pNameText').innerText = partnerData.name; }
     </script>
 </body>
 </html>
