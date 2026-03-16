@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Partner Login | SCC</title>
+    <title>Login | SCC Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-t-4 border-blue-600">
-        <h2 class="text-3xl font-extrabold text-slate-800 mb-2">Partner Login</h2>
-        <p class="text-gray-500 mb-6">Enter your credentials to access portal.</p>
+<body class="bg-[#0b012d] flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl w-full max-w-md backdrop-blur-lg">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-extrabold text-white">SCC Portal</h2>
+            <p class="text-gray-400 mt-2">Sign in to your dashboard</p>
+        </div>
         
         <div class="space-y-4">
-            <input type="email" id="email" placeholder="Email Address" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
-            <input type="password" id="pass" placeholder="Password" class="w-full p-4 bg-gray-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition">
-            <button id="loginBtn" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 transition transform active:scale-95 shadow-lg">Login Now</button>
+            <div>
+                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Email Address</label>
+                <input type="email" id="logEmail" placeholder="partner@scc.com" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
+            </div>
+            <div>
+                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Password</label>
+                <input type="password" id="logPass" placeholder="••••••••" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
+            </div>
+            <button id="loginBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Login</button>
         </div>
 
-        <div class="mt-6 text-center border-t pt-4">
-            <p class="text-gray-600 text-sm">
-                Don't have a partner account? 
-                <a href="register.html" class="text-blue-600 font-bold hover:underline font-semibold">Register here</a>
-            </p>
-        </div>
+        <p class="text-center text-gray-400 mt-6 text-sm">
+            Don't have an account? <a href="register.html" class="text-[#ffcc00] font-bold hover:underline">Register Now</a>
+        </p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -44,51 +48,47 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ১. অটো-লগইন চেক (যদি অনুমোদিত ইউজার হয় তবেই পাঠাবে)
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().status === "approved") {
-                    window.location.replace("partner.html");
-                }
-            }
-        });
-
-        // ২. লগইন বাটন ক্লিক হ্যান্ডলার
         document.getElementById('loginBtn').onclick = async () => {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('pass').value;
+            const email = document.getElementById('logEmail').value;
+            const pass = document.getElementById('logPass').value;
             const btn = document.getElementById('loginBtn');
 
-            if (!email || !password) return alert("Please fill both email and password!");
+            if(!email || !pass) return alert("Fill all fields!");
 
             try {
                 btn.disabled = true;
                 btn.innerText = "Checking...";
+                
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
 
-                // Firebase Auth এ লগইন
-                const userCred = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCred.user;
-
-                // ৩. Firestore থেকে এডমিন এপ্রুভাল চেক
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 
-                if (userDoc.exists() && userDoc.data().status === "approved") {
-                    // যদি এপ্রুভড হয়, ড্যাশবোর্ডে পাঠাও
-                    window.location.replace("partner.html");
-                } else {
-                    // যদি পেন্ডিং থাকে, লগআউট করে আটকে দাও
-                    await signOut(auth);
-                    alert("Your account is still pending admin approval. Please wait for SCC Admin to verify your account.");
-                    btn.disabled = false;
-                    btn.innerText = "Login Now";
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    if (userData.status !== "active") {
+                        alert("Account Pending! Please wait for admin approval.");
+                        await signOut(auth);
+                        btn.disabled = false;
+                        btn.innerText = "Login";
+                        return;
+                    }
+
+                    // Role Based Redirection
+                    if (userData.role === "partner") {
+                        window.location.replace("partner.html");
+                    } else if (userData.role === "compliance") {
+                        window.location.replace("compliance.html");
+                    } else {
+                        alert("Role not defined. Contact Admin.");
+                    }
                 }
 
             } catch (err) {
-                // ভুল পাসওয়ার্ড বা ইমেইল দিলে এরর দেখাবে
                 alert("Login Failed: " + err.message);
                 btn.disabled = false;
-                btn.innerText = "Login Now";
+                btn.innerText = "Login";
             }
         };
     </script>
