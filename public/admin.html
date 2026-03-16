@@ -105,13 +105,12 @@
                     <p class="text-gray-500">Real-time withdrawal requests will appear here.</p>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -127,7 +126,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- ১. ইউনিভার্সিটি সেভ লজিক ---
+        // --- ইউনিভার্সিটি সেভ ---
         document.getElementById('saveUniBtn').onclick = async () => {
             const data = {
                 universityName: document.getElementById('uName').value,
@@ -139,18 +138,17 @@
                 minGPA: document.getElementById('uMinGPA').value,
                 ieltsReq: document.getElementById('uIeltsO').value,
                 gap: document.getElementById('uGap').value,
-                timestamp: new Date().getTime()
+                createdAt: serverTimestamp()
             };
-
             try {
                 await addDoc(collection(db, "universities"), data);
-                alert("University Added Successfully!");
-                location.reload(); 
+                alert("University Added!");
+                location.reload();
             } catch (e) { alert(e.message); }
         };
 
-        // --- ২. ইউনিভার্সিটি লিস্ট (Real-time) ---
-        onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
+        // --- ইউনিভার্সিটি লিস্ট লোড ---
+        onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const u = docSnap.data();
@@ -169,19 +167,18 @@
             if(confirm("Are you sure?")) await deleteDoc(doc(db, "universities", id));
         };
 
-        // --- ৩. ইউজার অ্যাপ্রুভাল লজিক (Real-time Fix) ---
+        // --- ইউজার ম্যানেজমেন্ট ---
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const user = docSnap.data();
                 const id = docSnap.id;
                 const statusBadge = user.status === 'active' ? 'badge-active' : 'badge-pending';
-                
                 html += `<tr>
-                    <td>${user.fullName}</td>
+                    <td>${user.fullName || 'N/A'}</td>
                     <td>${user.email}</td>
                     <td><span class="badge" style="background:var(--blue)">${user.role}</span></td>
-                    <td><span class="badge ${statusBadge}">${user.status}</span></td>
+                    <td><span class="badge ${statusBadge}">${(user.status || 'pending').toUpperCase()}</span></td>
                     <td>
                         ${user.status === 'pending' ? 
                             `<button onclick="updateStatus('${id}', 'active')" class="btn" style="background:var(--success)">Approve</button>` : 
@@ -197,23 +194,15 @@
             await updateDoc(doc(db, "users", id), { status: newStatus });
         };
 
-        // --- ৪. লগআউট ---
         document.getElementById('logoutAdmin').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
 
-    </script>
-
-    <script>
-        function showTab(id) {
+        // Tab Switcher Function
+        window.showTab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('m-' + id).classList.add('active');
-            
-            const titles = {
-                'uni-manage': 'University Management',
-                'partners': 'Partner Management',
-                'payouts': 'Payouts & Wallet Control'
-            };
+            const titles = { 'uni-manage': 'University Management', 'partners': 'Partner Management', 'payouts': 'Payouts & Wallet Control' };
             document.getElementById('page-title').innerText = titles[id];
         }
     </script>
