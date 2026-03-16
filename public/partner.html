@@ -15,6 +15,7 @@
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,204,0,0.1); border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
+        /* Sidebar Navigation */
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; background: white; border-radius: 12px; margin-bottom: 45px; }
@@ -24,12 +25,14 @@
         .sidebar:hover .nav-links li span { display: inline; }
         .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); border-left-color: var(--gold); }
         
+        /* Main Layout */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .content-body { padding: 25px; flex-grow: 1; }
         .section { display: none; }
         .section.active { display: block; animation: fadeIn 0.4s ease; }
         
+        /* Stats & Cards */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,204,0,0.3); }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); }
@@ -38,31 +41,35 @@
         input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; margin-top: 8px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
-        .btn-gold:hover { transform: scale(1.02); opacity: 0.9; }
         
-        .table-wrap { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1200px; }
+        /* Table Wrapping */
+        .table-wrap { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid rgba(255,204,0,0.2); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
         
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: #160a3d; padding: 35px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; position: relative; }
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #160a3d; padding: 35px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
         #qrcode { background: white; padding: 10px; display: inline-block; border-radius: 10px; margin: 15px 0; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="auth-ready"> <div id="loader">
+<body>
+
+    <div id="loader">
         <div class="spinner"></div>
-        <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">SECURE ACCESS...</p>
+        <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">AUTHENTICATING...</p>
     </div>
 
     <div class="sidebar">
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
             <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="showSection('tracking', this)"><i class="fa-solid fa-folder-tree"></i> <span>Tracking</span></li>
+            <li onclick="showSection('tracking-sec', this)"><i class="fa-solid fa-satellite-dish"></i> <span>Live Tracking</span></li>
             <li onclick="showSection('wallet-sec', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
-            <li onclick="showSection('profile', this)"><i class="fa-solid fa-user-gear"></i> <span>Profile Setup</span></li>
+            <li onclick="showSection('profile', this)"><i class="fa-solid fa-user-gear"></i> <span>Settings</span></li>
         </ul>
         <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i></div>
     </div>
@@ -71,7 +78,7 @@
         <div class="top-header">
             <button class="refresh-btn" onclick="location.reload()" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 15px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-rotate"></i> Refresh</button>
             <div id="partnerNameDisplay" style="color: var(--gold); font-weight: bold; font-size: 14px;">
-                Welcome, <span id="pNameText">Partner</span>
+                <i class="fa-solid fa-user-check"></i> Welcome, <span id="pNameText">...</span>
             </div>
         </div>
 
@@ -79,7 +86,7 @@
             <div class="top-stats">
                 <div class="stat-box"><small>Estimated Pending</small><div class="amount" id="pendingAm">৳ 0</div></div>
                 <div class="stat-box"><small>Available Wallet</small><div class="amount" id="availAm">৳ 0</div></div>
-                <div class="stat-box"><small>System Status</small><div class="amount" style="color:var(--success); font-size:14px;">ACTIVE</div></div>
+                <div class="stat-box"><small>System Status</small><div class="amount" style="color:var(--success); font-size:14px;">LIVE-SYNC</div></div>
             </div>
 
             <div id="dashboard" class="section active">
@@ -93,43 +100,29 @@
                                 <option value="">Select Degree</option>
                                 <option>A-Level / HSC</option>
                                 <option>Foundation</option>
-                                <option>International Year One</option>
                                 <option>Bachelor's (Honours)</option>
-                                <option>Pre-Master's</option>
                                 <option>Master's (MA/MSc/MBA)</option>
                                 <option>PhD / Doctoral</option>
                             </select>
                         </div>
-                        <div><label>Language Test</label>
-                            <select id="fLang">
-                                <option value="">Select Test</option>
-                                <option>IELTS</option>
-                                <option>PTE</option>
-                                <option>Duolingo</option>
-                                <option>MOI / Other</option>
-                            </select>
-                        </div>
-                        <div><label>Language Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
+                        <div><label>Academic Score (GPA/%)</label><input type="text" id="fGPA" placeholder="e.g. 4.50 / 80%"></div>
+                        <div><label>Language Score</label><input type="text" id="fScore" placeholder="e.g. IELTS 6.5"></div>
                     </div>
-                    <button class="btn-gold" id="runSearchBtn" style="margin-top:20px;">Run Assessment</button>
+                    <button class="btn-gold" id="runSearchBtn" style="margin-top:20px;">Run Real-time Assessment</button>
                 </div>
 
                 <div class="card" id="resArea" style="display:none;">
-                    <h4 style="color:var(--gold);"><i class="fa-solid fa-wand-magic-sparkles"></i> Assessment Results</h4>
+                    <h4 style="color:var(--gold);"><i class="fa-solid fa-wand-magic-sparkles"></i> Matching Universities</h4>
                     <div class="table-wrap">
-                        <table id="uniTable">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>University Name</th>
                                     <th>Country</th>
                                     <th>Degree</th>
                                     <th>Intake</th>
-                                    <th>Duration</th>
                                     <th>Tuition Fee</th>
-                                    <th>Scholarship</th>
-                                    <th>Entry Req.</th>
-                                    <th>Language Req.</th>
-                                    <th style="color:var(--gold);">Partner Commission (BDT)</th> 
+                                    <th style="color:var(--gold);">Commission (BDT)</th> 
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -137,15 +130,48 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="card" style="margin-top:30px;">
+                    <h3 style="color:var(--gold);"><i class="fa-solid fa-list-check"></i> Recent Applications Tracking</h3>
+                    <div class="table-wrap">
+                        <table style="min-width: 1300px;">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Contact No</th>
+                                    <th>Passport No</th>
+                                    <th>University</th>
+                                    <th>File Status</th>
+                                    <th>Compliance Member</th>
+                                    <th>Docs</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTrackingBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <div id="tracking" class="section">
+            <div id="tracking-sec" class="section">
                 <div class="card">
-                    <h3>Application Status</h3>
+                    <h3 style="color:var(--gold);">All Applications History</h3>
                     <div class="table-wrap">
-                        <table id="trackingTable">
-                            <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                            <tbody id="fullTrackingBody"></tbody>
+                        <table style="min-width: 1300px;">
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Contact No</th>
+                                    <th>Passport No</th>
+                                    <th>University</th>
+                                    <th>File Status</th>
+                                    <th>Compliance Member</th>
+                                    <th>Docs</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTrackingBodyDeep"></tbody>
                         </table>
                     </div>
                 </div>
@@ -157,39 +183,43 @@
                     <h1 id="walletBalance" style="color:var(--success); font-size: 40px;">৳ 0</h1>
                     <div style="max-width: 380px; margin: auto; text-align: left;">
                         <label>Method</label><select id="pMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
-                        <label>Account No</label><input type="text" id="pDetails">
+                        <label>Account Number</label><input type="text" id="pDetails">
                         <button class="btn-gold" id="withdrawBtn" style="width:100%; margin-top:15px;">Submit Request</button>
                     </div>
                 </div>
             </div>
         </div>
-        <footer>All rights reserved GORUN LTD.</footer>
+
+        <footer style="text-align: center; padding: 25px; color: #555; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.05);">
+            Rights and Reserved <b>GORUN LTD.</b>
+        </footer>
     </div>
 
     <div id="appModal" class="modal">
         <div class="modal-content">
             <div id="formStep">
-                <h3 id="mTitle" style="color:var(--gold); margin-top:0">Apply to University</h3>
+                <h3 id="mTitle" style="color:var(--gold); margin-top:0">Final Submission</h3>
                 <label>Student Full Name</label><input type="text" id="sName">
+                <label>Contact Number</label><input type="text" id="sContact" placeholder="e.g. 017xx-xxxxxx">
                 <label>Passport Number</label><input type="text" id="sPass">
                 
                 <div style="margin-top:20px; border: 1px dashed #444; padding: 15px; border-radius: 10px;">
-                    <p style="font-size: 11px; color: var(--gold);">REQUIRED DOCUMENTS (PDF ONLY)</p>
+                    <p style="font-size: 11px; color: var(--gold);">REQUIRED PDFs ONLY</p>
                     <label>Passport Copy</label><input type="file" id="pdfPass" accept=".pdf">
                     <label>Academic Transcripts</label><input type="file" id="pdfAcad" accept=".pdf">
                     <label>Language Certificate</label><input type="file" id="pdfLang" accept=".pdf">
                 </div>
 
-                <button class="btn-gold" id="finalSubmitBtn" style="width:100%; margin-top:20px;">Submit Application</button>
-                <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
+                <button class="btn-gold" id="finalSubmitBtn" style="width:100%; margin-top:20px;">Submit Now</button>
+                <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Close</button>
             </div>
 
             <div id="successStep" style="display:none; text-align:center;">
                 <i class="fa-solid fa-circle-check" style="font-size:50px; color:var(--success);"></i>
-                <h2 style="color:var(--gold);">Submission Successful!</h2>
+                <h2 style="color:var(--gold);">Submitted Successfully!</h2>
                 <div id="qrcode"></div>
                 <p id="appIdText" style="font-family: monospace; color: #aaa;"></p>
-                <button class="btn-gold" onclick="location.reload()">Done & Close</button>
+                <button class="btn-gold" onclick="location.reload()">Back to Dashboard</button>
             </div>
         </div>
     </div>
