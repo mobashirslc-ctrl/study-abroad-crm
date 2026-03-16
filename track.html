@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Status | STUDENT CAREER CONSULTANCY</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #ffcc00; --bg: #0b012d; --card: rgba(255, 255, 255, 0.05); }
+        body { margin: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 450px; text-align: center; padding: 20px; }
+        .header-area { margin-bottom: 30px; }
+        .logo { width: 80px; height: 80px; object-fit: cover; background: white; padding: 5px; border-radius: 50%; border: 3px solid var(--gold); margin-bottom: 10px; }
+        .brand-name { font-size: 18px; font-weight: 600; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin: 0; }
+        .card { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,204,0,0.2); backdrop-filter: blur(10px); }
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group i { position: absolute; left: 15px; top: 15px; color: var(--gold); }
+        input { background: rgba(0,0,0,0.4); border: 1px solid #444; padding: 15px 15px 15px 45px; color: white; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 16px; outline: none; }
+        .btn-track { background: var(--gold); color: black; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        #statusResult { margin-top: 25px; display: none; text-align: left; animation: fadeIn 0.5s ease; }
+        .result-card { background: rgba(255,255,255,0.08); border-radius: 15px; padding: 20px; border-left: 5px solid var(--gold); }
+        .res-item { margin-bottom: 10px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; }
+        .status-badge { background: var(--gold); color: black; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-area">
+            <img src="logo.jpeg" class="logo">
+            <h1 class="brand-name">STUDENT CAREER CONSULTANCY</h1>
+        </div>
+        <div class="card">
+            <h2>Track Application</h2>
+            <div class="input-group">
+                <i class="fa-solid fa-passport"></i>
+                <input type="text" id="passportInput" placeholder="Enter Passport Number">
+            </div>
+            <button class="btn-track" onclick="checkStatus()">Search Status</button>
+            <div id="statusResult">
+                <div class="result-card">
+                    <div class="res-item"><span>Student Name</span><span id="sName">-</span></div>
+                    <div class="res-item"><span>University</span><span id="sUni">-</span></div>
+                    <div class="res-item"><span>Status</span><span class="status-badge" id="sStatus">PENDING</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+            authDomain: "scc-partner-portal.firebaseapp.com",
+            projectId: "scc-partner-portal",
+            storageBucket: "scc-partner-portal.firebasestorage.app",
+            messagingSenderId: "13013457431",
+            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.checkStatus = async () => {
+            const passport = document.getElementById('passportInput').value.trim();
+            if(!passport) return alert("Please enter Passport Number");
+            try {
+                const q = query(collection(db, "applications"), where("passportNo", "==", passport));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        document.getElementById('sName').innerText = d.studentName || 'N/A';
+                        document.getElementById('sUni').innerText = d.universityName || 'N/A';
+                        document.getElementById('sStatus').innerText = (d.status || 'Pending').toUpperCase();
+                    });
+                    document.getElementById('statusResult').style.display = 'block';
+                } else { alert("No application found!"); }
+            } catch (e) { alert("Error: " + e.message); }
+        }
+    </script>
+</body>
+</html>
