@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, getDocs, where, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -15,199 +15,154 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
 
-// Global State
-let currentAvailableBalance = 0;
+let currentPartnerEmail = "";
+let selectedUniData = null;
 
+// 1. Auth Status & Security
 onAuthStateChanged(auth, (user) => {
-    const loader = document.getElementById('loader');
     if (!user) {
         window.location.replace("index.html");
     } else {
-        if(loader) loader.style.display = 'none';
+        currentPartnerEmail = user.email;
         document.body.classList.add('auth-ready');
-        startDashboard(user); 
+        document.getElementById('loader').style.display = 'none';
+        loadDashboardData();
     }
 });
 
-function startDashboard(currentUser) {
-    // ১. রিয়েল-টাইম ডাটা ট্র্যাকিং এবং ওয়ালেট আপডেট
-    const qApp = query(collection(db, "applications"), where("partnerEmail", "==", currentUser.email));
-    onSnapshot(qApp, (snap) => {
-        let pending = 0, available = 0, hRows = "", fRows = "";
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
-            pending += parseFloat(d.pendingAmount || 0);
-            available += parseFloat(d.finalAmount || 0);
-            
-            const dateStr = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString() : 'Pending';
-            const statusColor = d.status === 'APPROVED' ? '#2ecc71' : (d.status === 'REJECTED' ? '#ff5e5e' : '#ffcc00');
+// 2. Load Dashboard & Tracking
+function loadDashboardData() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", currentPartnerEmail));
+    
+    onSnapshot(q, (snap) => {
+        let rows = "";
+        let pendingComm = 0;
+        let availWallet = 0;
 
-            hRows += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:${statusColor}">${d.status}</span></td><td>${dateStr}</td></tr>`;
-            fRows += `<tr><td>${d.studentName}</td><td>${d.contact || 'N/A'}</td><td>${d.passport || 'N/A'}</td><td><b style="color:${statusColor}">${d.status}</b></td><td>${d.compliancePerson || 'Pending'}</td><td><a href="${d.passportUrl || '#'}" target="_blank" style="color:var(--gold)">View Docs</a></td><td>${dateStr}</td></tr>`;
+        snap.forEach(doc => {
+            const data = doc.data();
+            pendingComm += parseFloat(data.pendingAmount || 0);
+            availWallet += parseFloat(data.finalAmount || 0);
+
+            rows += `
+                <tr>
+                    <td>${data.studentName}</td>
+                    <td>${data.passportNumber}</td>
+                    <td>${data.university}</td>
+                    <td><b style="color:${getStatusColor(data.status)}">${data.status}</b></td>
+                    <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleDateString() : 'Pending'}</td>
+                </tr>
+            `;
         });
 
-        currentAvailableBalance = available;
-        safeSetText('pendingAm', `৳ ${pending.toLocaleString()}`);
-        safeSetText('availAm', `৳ ${available.toLocaleString()}`);
-        safeSetText('walletDisplay', `৳ ${available.toLocaleString()}`);
+        document.getElementById('liveTrackingBody').innerHTML = rows || "<tr><td colspan='5'>No applications found.</td></tr>";
+        document.getElementById('pendingAm').innerText = `৳ ${pendingComm.toLocaleString()}`;
+        document.getElementById('availAm').innerText = `৳ ${availWallet.toLocaleString()}`;
+    });
+}
 
-        const hBody = document.getElementById('homeLiveBody');
-        if(hBody) hBody.innerHTML = hRows || '<tr><td colspan="4">No activity.</td></tr>';
-        const fBody = document.getElementById('fullTrackingBody');
-        if(fBody) fBody.innerHTML = fRows || '<tr><td colspan="7">No files tracked.</td></tr>';
+function getStatusColor(status) {
+    if (status === 'APPROVED') return '#2ecc71';
+    if (status === 'REJECTED') return '#ff5e5e';
+    return '#ffcc00';
+}
 
-        // Withdraw Button Control Logic
-        const wBtn = document.getElementById('requestWithdrawBtn');
-        if(wBtn) {
-            if(currentAvailableBalance > 0) {
-                wBtn.disabled = false;
-                wBtn.style.opacity = "1";
-                safeSetText('withdrawNotice', "");
-            } else {
-                wBtn.disabled = true;
-                wBtn.style.opacity = "0.5";
-                safeSetText('withdrawNotice', "* Amount is 0. Cannot withdraw.");
-            }
+// 3. Smart Assessment Search Logic
+document.getElementById('runSearchBtn').onclick = async () => {
+    const country = document.getElementById('fCountry').value.toUpperCase();
+    const degree = document.getElementById('fDegree').value;
+    const gpa = parseFloat(document.getElementById('fAcad').value) || 0;
+    const ielts = parseFloat(document.getElementById('fScore').value) || 0;
+
+    const resArea = document.getElementById('resArea');
+    const resultsBody = document.getElementById('uniResultsBody');
+    
+    resultsBody.innerHTML = "<tr><td colspan='10'>Searching...</td></tr>";
+    resArea.style.display = "block";
+
+    const q = query(collection(db, "universities"));
+    const querySnapshot = await getDocs(q);
+    
+    let html = "";
+    querySnapshot.forEach((doc) => {
+        const uni = doc.data();
+        
+        // Filtering Logic
+        const matchCountry = !country || uni.country.toUpperCase().includes(country);
+        const matchDegree = !degree || uni.degreeType === degree;
+        const matchGPA = gpa >= parseFloat(uni.minGPA);
+        
+        if (matchCountry && matchDegree && matchGPA) {
+            html += `
+                <tr>
+                    <td>${uni.universityName}</td>
+                    <td>${uni.country}</td>
+                    <td>${uni.degreeType}</td>
+                    <td>${uni.courseName}</td>
+                    <td>$${uni.semesterFee}</td>
+                    <td style="color:#00ff00; font-weight:bold;">৳ ${uni.partnerComm}</td>
+                    <td>${uni.minGPA}</td>
+                    <td>${uni.ieltsReq}</td>
+                    <td>${uni.intake || 'All Year'}</td>
+                    <td><button class="btn-gold" style="padding:5px 10px; font-size:10px;" onclick="openApplyModal('${doc.id}', '${uni.universityName}', '${uni.partnerComm}')">Apply File</button></td>
+                </tr>
+            `;
         }
     });
 
-    // ২. স্মার্ট সার্চ ফাংশনালিটি
-    const searchBtn = document.getElementById('runSearchBtn');
-    if(searchBtn) {
-        searchBtn.onclick = async () => {
-            const countryIn = document.getElementById('fCountry').value.trim().toLowerCase();
-            const resBody = document.getElementById('searchResultBody');
-            document.getElementById('searchResultCard').style.display = 'block';
-            resBody.innerHTML = '<tr><td colspan="11" style="text-align:center;">Searching...</td></tr>';
+    resultsBody.innerHTML = html || "<tr><td colspan='10'>No universities found matching your criteria.</td></tr>";
+};
 
-            try {
-                const snap = await getDocs(collection(db, "universities"));
-                let html = "";
-                let found = false;
-                snap.forEach(uDoc => {
-                    const u = uDoc.data();
-                    if ((u.country || "").toLowerCase().includes(countryIn)) {
-                        found = true;
-                        const commBDT = (parseFloat(u.semesterFee || 0) * (parseFloat(u.partnerComm || 0) / 100)) * 120;
-                        html += `<tr>
-                            <td style="color:var(--gold); font-weight:bold;">${u.universityName || u.name}</td>
-                            <td>${u.country}</td><td>${u.courseName || 'N/A'}</td><td>${u.intake || 'N/A'}</td>
-                            <td>${u.minGPA}</td><td>${u.ielts}</td><td>${u.duolingo}</td><td>${u.pte}</td><td>${u.moi}</td>
-                            <td style="color:var(--success); font-weight:bold;">৳ ${commBDT.toLocaleString()}</td>
-                            <td><button class="btn-gold" style="padding:5px 10px; font-size:10px; width:auto;" onclick="openApplyForm('${u.universityName || u.name}')">Apply File</button></td>
-                        </tr>`;
-                    }
-                });
-                resBody.innerHTML = found ? html : '<tr><td colspan="11" style="text-align:center;">No match found for this country.</td></tr>';
-            } catch (err) { resBody.innerHTML = '<tr><td colspan="11">Error loading data.</td></tr>'; }
+// 4. Application Submission
+window.openApplyModal = (id, name, comm) => {
+    selectedUniData = { id, name, comm };
+    document.getElementById('mTitle').innerText = name;
+    document.getElementById('appModal').style.display = 'flex';
+};
+
+document.getElementById('submitBtn').onclick = async () => {
+    const name = document.getElementById('sName').value;
+    const pass = document.getElementById('sPass').value;
+
+    if (!name || !pass) return alert("Please fill all fields");
+
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = "Processing...";
+    btn.disabled = true;
+
+    try {
+        const appData = {
+            studentName: name,
+            passportNumber: pass,
+            university: selectedUniData.name,
+            partnerEmail: currentPartnerEmail,
+            pendingAmount: selectedUniData.comm,
+            finalAmount: 0,
+            status: "INCOMING",
+            timestamp: serverTimestamp()
         };
-    }
 
-    // ৩. উইথড্র রিকোয়েস্ট লজিক
-    window.handleWithdraw = async () => {
-        if(currentAvailableBalance <= 0) {
-            alert("Your balance is 0. Withdrawal not possible.");
-            return;
-        }
+        await addDoc(collection(db, "applications"), appData);
 
-        const amount = parseFloat(prompt("Enter Withdrawal Amount:"));
-        if(!amount || amount <= 0) return;
-        
-        if(amount > currentAvailableBalance) {
-            alert("Insufficient Balance! You only have ৳" + currentAvailableBalance);
-            return;
-        }
-
-        const method = prompt("Payment Method (e.g. Bkash, Nagad, Bank):");
-        const account = prompt("Enter Account/Phone Number:");
-
-        if(!method || !account) {
-            alert("Payment details are required.");
-            return;
-        }
-
-        try {
-            await addDoc(collection(db, "withdrawals"), {
-                partnerEmail: currentUser.email,
-                amount: amount,
-                method: method,
-                account: account,
-                status: "PENDING",
-                timestamp: serverTimestamp()
-            });
-            alert("Withdrawal Request Sent! ৳" + amount + " will be processed soon.");
-        } catch (e) { alert("Error: " + e.message); }
-    };
-
-    const wBtn = document.getElementById('requestWithdrawBtn');
-    if(wBtn) wBtn.onclick = handleWithdraw;
-
-    // ৪. ফাইল এপ্লাই এবং স্লিপ লজিক (Glassmorphism Modal)
-    window.openApplyForm = (uniName) => {
-        document.getElementById('sUniInput').value = uniName;
-        document.getElementById('applyModal').style.display = 'flex';
-    };
-
-    window.closeModal = () => {
-        document.getElementById('applyModal').style.display = 'none';
-    };
-
-    document.getElementById('submitApplication').onclick = async () => {
-        const sName = document.getElementById('sNameInput').value;
-        const sPassportNum = document.getElementById('sPassportInput').value;
-        const fPassFile = document.getElementById('fPassport').files[0];
-
-        if(!sName || !sPassportNum || !fPassFile) {
-            alert("Required: Student Name, Passport Number, and Passport PDF Copy.");
-            return;
-        }
-
-        document.getElementById('submitApplication').innerText = "Uploading Documents...";
-        document.getElementById('submitApplication').disabled = true;
-
-        try {
-            const sRef = ref(storage, `applications/${Date.now()}_${fPassFile.name}`);
-            await uploadBytes(sRef, fPassFile);
-            const pUrl = await getDownloadURL(sRef);
-
-            const docRef = await addDoc(collection(db, "applications"), {
-                studentName: sName,
-                passport: sPassportNum,
-                university: document.getElementById('sUniInput').value,
-                partnerEmail: currentUser.email,
-                status: "INCOMING",
-                timestamp: serverTimestamp(),
-                passportUrl: pUrl,
-                pendingAmount: 0,
-                finalAmount: 0
-            });
-
-            showSlip(docRef.id, sName, document.getElementById('sUniInput').value);
-        } catch (e) { 
-            alert("Upload Failed: " + e.message); 
-            document.getElementById('submitApplication').disabled = false;
-            document.getElementById('submitApplication').innerText = "SUBMIT APPLICATION";
-        }
-    };
-
-    function showSlip(id, name, uni) {
-        document.getElementById('applyModal').style.display = 'none';
-        document.getElementById('slipModal').style.display = 'flex';
-        const appID = "SCC-" + id.substring(0, 6).toUpperCase();
-        document.getElementById('slipID').innerText = appID;
+        // Show Slip
         document.getElementById('slipName').innerText = name;
-        document.getElementById('slipUni').innerText = uni;
-        document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
-        // QR Code Generator
-        document.querySelector('#qrcode img').src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=AppID:${appID}-Student:${name}`;
+        document.getElementById('slipPass').innerText = pass;
+        document.getElementById('slipUni').innerText = selectedUniData.name;
+        document.getElementById('slipDate').innerText = new Date().toLocaleString();
+        
+        document.getElementById('appModal').style.display = 'none';
+        document.getElementById('slipOverlay').style.display = 'flex';
+
+    } catch (e) {
+        alert("Error submitting application: " + e.message);
+    } finally {
+        btn.innerText = "Submit Application";
+        btn.disabled = false;
     }
+};
 
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
-}
-
-function safeSetText(id, val) { 
-    const el = document.getElementById(id);
-    if(el) el.innerText = val; 
-}
+// 5. Logout
+document.getElementById('logoutBtn').onclick = () => {
+    signOut(auth).then(() => window.location.replace("index.html"));
+};
