@@ -31,7 +31,8 @@
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,204,0,0.3); }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); }
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
-        input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; margin-top: 8px; box-sizing: border-box; }
+        input, select { background: #050118; border: 1px solid #333; padding: 10px; color: white; border-radius: 8px; width: 100%; margin-top: 5px; box-sizing: border-box; }
+        label { font-size: 12px; color: #bdc3c7; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
         .table-wrap { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
@@ -39,6 +40,7 @@
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 35px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); max-height: 85vh; overflow-y: auto; }
+        #qrcode img { margin: auto; border: 5px solid white; border-radius: 8px; }
         footer { text-align: right; padding: 20px 25px; font-size: 11px; color: #666; background: var(--darker); border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -64,115 +66,68 @@
     <div class="main-container">
         <div class="top-header">
             <button class="refresh-btn" onclick="location.reload()" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 15px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-rotate"></i> Refresh</button>
-            <div id="partnerNameDisplay" style="color: var(--gold); font-weight: bold; font-size: 14px;">
-                Welcome, <span id="pNameText">Partner</span>
-            </div>
+            <div style="color: var(--gold); font-weight: bold; font-size: 14px;">Welcome, <span id="pNameText">Partner</span></div>
         </div>
 
         <div class="content-body">
-            <div class="top-stats">
-                <div class="stat-box"><small>Estimated Pending</small><div class="amount" id="pendingAm">৳ 0</div></div>
-                <div class="stat-box"><small>Available Wallet</small><div class="amount" id="availAm">৳ 0</div></div>
-                <div class="stat-box"><small>System Status</small><div class="amount" style="color:var(--success); font-size:14px;">ACTIVE</div></div>
-            </div>
-
             <div id="dashboard" class="section active">
                 <div class="card">
                     <h3 style="margin-top:0; color: var(--gold);">Smart Assessment Search</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px;">
-                        <div><label>Target Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
-                        <div><label>Degree Level</label>
-                            <select id="fDegree">
-                                <option value="">Select Degree</option>
-                                <option>Foundation</option>
-                                <option>Bachelor (UG)</option>
-                                <option>Master's (PG)</option>
-                                <option>PHD</option>
-                                <option>Diploma</option>
-                            </select>
-                        </div>
-                        <div><label>Academic GPA</label><input type="text" id="fAcad" placeholder="e.g. 3.50"></div>
-                        <div><label>Language Test</label><select id="fLang"><option value="">Select</option><option>IELTS</option><option>PTE</option><option>DUOLINGO</option><option>MOI</option></select></div>
-                        <div><label>Score</label><input type="text" id="fScore" placeholder="6.5"></div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                        <div><label>Target Country</label><input type="text" id="fCountry" placeholder="e.g. United kingdom"></div>
+                        <div><label>Degree Level</label><select id="fDegree"><option value="">Select</option><option>Foundation</option><option>Bachelor</option><option>Master's</option></select></div>
+                        <div><label>Last Qualification</label><input type="text" id="fLastQual"></div>
+                        <div><label>GPA / Percentage</label><input type="text" id="fGPA"></div>
+                        <div><label>Passing Year</label><input type="number" id="fYear"></div>
+                        <div><label>Language Test</label><select id="fLang"><option value="">Select</option><option>IELTS</option><option>PTE</option><option>Duolingo</option><option>MOI</option></select></div>
+                        <div><label>Overall Score</label><input type="text" id="fScore"></div>
+                        <div><label>Reading</label><input type="text" id="fRead"></div>
+                        <div><label>Writing</label><input type="text" id="fWrite"></div>
+                        <div><label>Listening</label><input type="text" id="fListen"></div>
+                        <div><label>Speaking</label><input type="text" id="fSpeak"></div>
                     </div>
                     <button class="btn-gold" id="runSearchBtn" style="margin-top:20px;">Search University</button>
                 </div>
 
                 <div class="card" id="resArea" style="display:none;">
-                    <h4 style="color:var(--gold);">Available Universities</h4>
+                    <h4 style="color:var(--gold);">Search Results</h4>
                     <div class="table-wrap">
                         <table>
-                            <thead><tr><th>University Name</th><th>Country</th><th>Degree</th><th>Commission</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University Name</th><th>Country</th><th>Degree</th><th>Your Commission</th><th>Action</th></tr></thead>
                             <tbody id="uniResultsBody"></tbody>
                         </table>
                     </div>
                 </div>
-
-                <div class="card">
-                    <h4 style="color:var(--gold);"><i class="fa-solid fa-bolt"></i> Live Tracking (Recent)</h4>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Student Name</th><th>University</th><th>Status</th><th>Last Update</th></tr></thead>
-                            <tbody id="dashLiveBody"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
-
-            <div id="tracking" class="section">
-                <div class="card">
-                    <h3>Full Application History</h3>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Student</th><th>Passport</th><th>Uni</th><th>Status</th><th>Compliance</th><th>Date</th></tr></thead>
-                            <tbody id="fullTrackingBody"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
-
-            <div id="wallet-sec" class="section">
-                <div class="card" style="text-align: center;">
-                    <small>Withdrawable Balance</small>
-                    <h1 id="walletBalance" style="color:var(--success); font-size: 40px;">৳ 0</h1>
-                    <div style="max-width: 380px; margin: auto; text-align: left;">
-                        <label>Payment Method</label><select id="pMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
-                        <label>Account Info</label><input type="text" id="pDetails">
-                        <button class="btn-gold" id="withdrawBtn" style="width:100%; margin-top:15px;" disabled>Withdraw</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="profile" class="section">
-                <div class="card">
-                    <h3>Profile Setup</h3>
-                    <label>Agency Name</label><input type="text" id="profAgency">
-                    <label>Contact Number</label><input type="text" id="profPhone">
-                    <label>Address</label><input type="text" id="profAddress">
-                    <button class="btn-gold" style="margin-top:15px;" id="saveProfileBtn">Update Profile</button>
-                </div>
-            </div>
-        </div>
-
-        <footer>All rights and reserved GORUN LTD.</footer>
+        <footer>All rights reserved GORUN LTD.</footer>
     </div>
 
     <div id="appModal" class="modal">
         <div class="modal-content">
-            <h3 id="mTitle" style="color:var(--gold); margin-top:0">Submit File</h3>
-            <label>Student Name</label><input type="text" id="sName">
-            <label>Passport Number</label><input type="text" id="sPass">
-            <label>Contact No</label><input type="text" id="sContact">
-            
-            <div style="margin-top:20px; border: 1px dashed #444; padding: 15px; border-radius: 10px;">
-                <p style="font-size: 11px; color: var(--gold);">REQUIRED PDF FILES</p>
-                <label>Passport</label><input type="file" id="pdfPass" accept=".pdf">
-                <label>Academics</label><input type="file" id="pdfAcad" accept=".pdf">
-                <label>Language Cert.</label><input type="file" id="pdfLang" accept=".pdf">
+            <div id="formStep">
+                <h3 id="mTitle" style="color:var(--gold); margin-top:0">Submit Application</h3>
+                <label>Student Full Name</label><input type="text" id="sName">
+                <label>Passport Number</label><input type="text" id="sPass">
+                <label>Contact Number</label><input type="text" id="sContact">
+                
+                <div style="margin-top:20px; border: 1px dashed #444; padding: 15px; border-radius: 10px;">
+                    <p style="font-size: 11px; color: var(--gold);">REQUIRED DOCUMENTS (PDF ONLY)</p>
+                    <label>Passport Copy</label><input type="file" id="pdfPass" accept=".pdf">
+                    <label>Academic Transcripts</label><input type="file" id="pdfAcad" accept=".pdf">
+                    <label>Language Certificate</label><input type="file" id="pdfLang" accept=".pdf">
+                </div>
+                <button class="btn-gold" id="submitBtn" style="width:100%; margin-top:20px;">Submit Application</button>
+                <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
             </div>
 
-            <button class="btn-gold" id="submitBtn" style="width:100%; margin-top:20px;">Submit Application</button>
-            <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
+            <div id="successStep" style="display:none; text-align:center;">
+                <i class="fa-solid fa-circle-check" style="font-size:50px; color:var(--success);"></i>
+                <h2 style="color:var(--gold);">Application Submitted!</h2>
+                <div id="qrcode" style="margin: 20px auto;"></div>
+                <p id="appIdText" style="font-family: monospace; font-size: 14px;"></p>
+                <button class="btn-gold" onclick="location.reload()">Done & Refresh</button>
+            </div>
         </div>
     </div>
 
