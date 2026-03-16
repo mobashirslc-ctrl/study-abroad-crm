@@ -4,194 +4,250 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal | SCC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --gold: #ffcc00; --bg: #0b012d; --darker: #080120; --card-bg: rgba(255, 255, 255, 0.03); --danger: #ff5e5e; --success: #2ecc71; }
-        body { margin: 0; display: flex; background-color: var(--bg); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
-        body.auth-ready { opacity: 1; }
-        #loader { position: fixed; inset: 0; background: var(--darker); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,204,0,0.1); border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .welcome-text { color: var(--gold); font-weight: 600; font-size: 14px; background: rgba(255,204,0,0.1); padding: 8px 15px; border-radius: 20px; border: 1px solid rgba(255,204,0,0.3); }
+        :root {
+            --gold: #d4af37;
+            --dark-bg: #0a0a0a;
+            --card-bg: #111111;
+            --text-gray: #888;
+            --success: #2ecc71;
+            --danger: #ff5e5e;
+        }
 
-        .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
-        .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
-        .sidebar img.logo { width: 70px; height: auto; background: white; border-radius: 12px; margin-bottom: 45px; transition: 0.3s; }
-        .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
-        .nav-links li { padding: 18px; cursor: pointer; color: #bdc3c7; display: flex; align-items: center; gap: 15px; transition: 0.2s; border-left: 3px solid transparent; }
-        .nav-links li span { display: none; white-space: nowrap; font-size: 14px; }
-        .sidebar:hover .nav-links li span { display: inline; }
-        .nav-links li:hover, .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); border-left-color: var(--gold); }
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
 
-        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 25px; position: relative; }
-        .section { display: none; padding-bottom: 60px; }
-        .section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
 
-        .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
-        .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid var(--gold); }
-        .stat-box small { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); margin: 5px 0; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
 
-        .card { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
-        input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; margin-bottom: 10px; }
-        label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s; width: 100%; }
-        
-        .table-wrap { overflow-x: auto; margin-top: 20px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 1100px; }
-        th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid var(--gold); background: rgba(0,0,0,0.3); white-space: nowrap; }
-        td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); vertical-align: middle; }
+        .btn-gold {
+            background: var(--gold);
+            color: black;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+        }
 
-        footer { text-align: center; padding: 20px; font-size: 12px; color: #555; border-top: 1px solid rgba(255,255,255,0.05); margin-top: auto; }
+        .btn-gold:disabled {
+            background: #444;
+            color: #777;
+            cursor: not-allowed;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th, .data-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #222;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Glassmorphism Modal */
+        .glass-modal {
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 30px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .file-box {
+            background: #111;
+            padding: 15px;
+            border: 1px dashed #444;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 11px;
+            position: relative;
+        }
+
+        .file-box input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
-<body class="auth-ready">
-    <div id="loader">
-        <div class="spinner"></div>
-        <p style="color:var(--gold); margin-top:15px;">INITIALIZING...</p>
-    </div>
+<body>
 
-    <div class="sidebar">
-        <img src="logo.jpeg" class="logo">
-        <ul class="nav-links">
-            <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="showSection('tracking', this)"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
-            <li onclick="showSection('wallet', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet & Withdraw</span></li>
-            <li onclick="showSection('profile', this)"><i class="fa-solid fa-user-gear"></i> <span>Profile Setup</span></li>
-        </ul>
-        <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer; text-align: center; width: 100%;">
-            <i class="fa-solid fa-right-from-bracket" style="font-size: 20px;"></i>
+    <div class="stats-grid">
+        <div class="card">
+            <p style="color: var(--text-gray); font-size: 12px;">Pending Commission</p>
+            <h2 id="pendingAm">৳ 0</h2>
+        </div>
+        <div class="card">
+            <p style="color: var(--text-gray); font-size: 12px;">Available Balance</p>
+            <h2 id="availAm" style="color: var(--success);">৳ 0</h2>
         </div>
     </div>
 
-    <div class="main-container">
-        <div class="top-bar">
-            <div style="font-size: 18px; font-weight: 600;">Partner Dashboard</div>
-            <div class="welcome-text" id="welcomePartner">Welcome, Partner</div>
+    <div id="wallet" class="card" style="text-align: center; margin-top: 20px;">
+        <i class="fa-solid fa-building-columns" style="font-size: 40px; color: var(--gold);"></i>
+        <h3>Wallet & Payouts</h3>
+        <p style="font-size: 13px; color: var(--text-gray);">Withdraw your earnings to your account</p>
+        
+        <div style="margin: 20px 0;">
+            <span style="font-size: 12px;">Total Available:</span>
+            <h1 id="walletDisplay" style="color: var(--gold); margin: 5px 0;">৳ 0</h1>
         </div>
 
-        <div class="top-stats">
-            <div class="stat-box"><small>Estimated (Pending)</small><div class="amount" id="pendingAm">৳ 0</div></div>
-            <div class="stat-box"><small>Final Wallet (Available)</small><div class="amount" id="availAm">৳ 0</div></div>
-            <div class="stat-box"><small>Account Status</small><div class="amount" style="color:var(--success); font-size:16px;">VERIFIED</div></div>
-        </div>
-
-        <div id="dashboard" class="section active">
-            <div class="card">
-                <h3><i class="fa-solid fa-magnifying-glass"></i> Smart Assessment Search</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
-                    <div><label>Country</label><input type="text" id="fCountry" placeholder="UK/USA"></div>
-                    <div>
-                        <label>Language Test</label>
-                        <select id="fLang">
-                            <option value="">Any</option>
-                            <option value="IELTS">IELTS</option><option value="DUOLINGO">Duolingo</option>
-                            <option value="PTE">PTE</option><option value="MOI">MOI</option>
-                        </select>
-                    </div>
-                    <div><label>Language Score</label><input type="text" id="fLangScore" placeholder="e.g. 6.5"></div>
-                    <div>
-                        <label>Degree</label>
-                        <select id="fDegree">
-                            <option value="">All Degree</option>
-                            <option value="SSC">SSC</option>
-                            <option value="HSC">HSC</option>
-                            <option value="DIPLOMA">Diploma</option>
-                            <option value="UG">Undergraduate (Honours/BSc)</option>
-                            <option value="PG">Postgraduate (Masters/MSc)</option>
-                            <option value="PHD">PhD</option>
-                        </select>
-                    </div>
-                    <div><label>Min. GPA</label><input type="number" step="0.01" id="fAcad" placeholder="3.50"></div>
-                </div>
-                <button class="btn-gold" style="margin-top:15px; width: 200px;" id="runSearchBtn">Search Now</button>
-            </div>
-
-            <div class="card" id="searchResultCard" style="display:none;">
-                <h3><i class="fa-solid fa-list-check"></i> Matching Universities</h3>
-                <div class="table-wrap">
-                    <table id="searchResultTable">
-                        <thead>
-                            <tr>
-                                <th>University Name</th>
-                                <th>Country</th>
-                                <th>Course</th>
-                                <th>Intake</th>
-                                <th>Min. GPA</th>
-                                <th>IELTS</th>
-                                <th>Duolingo</th>
-                                <th>PTE</th>
-                                <th>MOI</th>
-                                <th>Tuition Fee</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="searchResultBody"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Recent Activity</h3>
-                <div class="table-wrap">
-                    <table>
-                        <thead><tr><th>Student Name</th><th>University</th><th>Status</th><th>Last Update</th></tr></thead>
-                        <tbody id="homeLiveBody"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="tracking" class="section">
-             <div class="card">
-                 <h3>File Tracking</h3>
-                 <div class="table-wrap">
-                     <table>
-                         <thead>
-                             <tr>
-                                 <th>Student Name</th><th>Contact</th><th>Passport</th><th>Status</th><th>Compliance</th><th>Docs</th><th>Last Update</th>
-                             </tr>
-                         </thead>
-                         <tbody id="fullTrackingBody"></tbody>
-                     </table>
-                 </div>
-             </div>
-        </div>
-
-        <div id="wallet" class="section">
-             <div class="card">
-                 <h3>Wallet & Payments</h3>
-                 <h2 id="walletDisplay" style="color:var(--gold);">৳ 0</h2>
-                 <button id="requestWithdrawBtn" class="btn-gold" style="width: auto;">Withdraw Balance</button>
-                 <p id="withdrawNotice" style="font-size: 11px; color: var(--danger); margin-top: 10px;"></p>
-             </div>
-        </div>
-
-        <div id="profile" class="section">
-             <div class="card">
-                 <h3>Profile Setup</h3>
-                 <label>Full Name</label><input id="pName" type="text">
-                 <label>Organization</label><input id="pOrg" type="text">
-                 <label>Phone Number</label><input id="pPhone" type="text">
-                 <button id="updateProfileBtn" class="btn-gold" style="width: auto;">Update Profile</button>
-             </div>
-        </div>
-
-        <footer>All Rights Reserved &copy; 2026 | <b>Gorun Ltd.</b></footer>
+        <button id="requestWithdrawBtn" class="btn-gold" style="max-width: 300px;" disabled>
+            <i class="fa-solid fa-money-bill-transfer"></i> WITHDRAW NOW
+        </button>
+        <p id="withdrawNotice" style="color: var(--danger); font-size: 11px; margin-top: 10px;"></p>
     </div>
+
+    <div class="card">
+        <h3>Recent Applications</h3>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>University</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="homeLiveBody"></tbody>
+        </table>
+    </div>
+
+    <div id="applyModal" class="modal-overlay">
+        <div class="glass-modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3 style="color:var(--gold); margin:0;">File Submission</h3>
+                <span onclick="closeModal()" style="cursor:pointer; color:var(--danger); font-size:24px;">&times;</span>
+            </div>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Student Name</label>
+                    <input type="text" id="sNameInput" placeholder="Full Name">
+                </div>
+                <div class="input-group">
+                    <label>Passport Number</label>
+                    <input type="text" id="sPassportInput" placeholder="Ex: A0123456">
+                </div>
+                <div class="input-group">
+                    <label>University</label>
+                    <input type="text" id="sUniInput" readonly style="background:#222;">
+                </div>
+                <div class="input-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="sPhoneInput" placeholder="+8801...">
+                </div>
+            </div>
+            
+            <div style="margin-top:20px;">
+                <p style="font-size: 12px; color: var(--gold); margin-bottom: 10px;">Upload Passport Copy (PDF)</p>
+                <div class="file-box">
+                    <i class="fa-solid fa-file-pdf" style="font-size: 20px; color: var(--gold);"></i>
+                    <p>Click to select PDF</p>
+                    <input type="file" id="fPassport" accept="application/pdf">
+                </div>
+            </div>
+
+            <button class="btn-gold" id="submitApplication" style="margin-top:25px;">SUBMIT FILE</button>
+        </div>
+    </div>
+
+    <div id="slipModal" class="modal-overlay">
+        <div class="glass-modal" style="max-width:350px; text-align:center;">
+            <h2 style="color:var(--gold); margin-bottom:5px;">SCC RECEIPT</h2>
+            <p style="font-size:10px; color:#888;">OFFICIAL ACKNOWLEDGEMENT</p>
+            <hr style="border:0.5px dashed #444; margin: 15px 0;">
+            
+            <div style="text-align:left; font-size:13px; line-height:2; padding:0 10px;">
+                <p><strong>App ID:</strong> <span id="slipID" style="color:var(--gold)"></span></p>
+                <p><strong>Student:</strong> <span id="slipName"></span></p>
+                <p><strong>University:</strong> <span id="slipUni"></span></p>
+                <p><strong>Date:</strong> <span id="slipDate"></span></p>
+            </div>
+
+            <div id="qrcode" style="margin:20px auto; background:white; padding:10px; width:120px; height:120px; border-radius:10px; display: inline-block;">
+                 <img src="" alt="QR" style="width:100%;">
+            </div>
+            
+            <button class="btn-gold" onclick="location.reload()">CLOSE & REFRESH</button>
+        </div>
+    </div>
+
+    <script type="module" src="partner-logic.js"></script>
 
     <script>
-        function showSection(id, element) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(element) element.classList.add('active');
+        // UI Helpers
+        function closeModal() {
+            document.getElementById('applyModal').style.display = 'none';
         }
     </script>
-    <script type="module" src="partner-logic.js"></script>
+
 </body>
 </html>
