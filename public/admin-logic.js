@@ -16,33 +16,34 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // --- ১. ইউনিভার্সিটি ডাটা সেভ করা ---
-document.getElementById('saveUniBtn').onclick = async () => {
-    const data = {
-        universityName: document.getElementById('uName').value,
-        country: document.getElementById('uCountry').value,
-        courseName: document.getElementById('uCourse').value,
-        degreeType: document.getElementById('uDegree').value,
-        semesterFee: document.getElementById('uSemesterFee').value,
-        partnerComm: document.getElementById('uPartnerComm').value,
-        minGPA: document.getElementById('uMinGPA').value,
-        ieltsO: document.getElementById('uIeltsO').value,
-        gap: document.getElementById('uGap').value,
-        intake: document.getElementById('uIntake').value,
-        scholarship: document.getElementById('uScholarship').value,
-        status: document.getElementById('uStatus').value,
-        createdAt: serverTimestamp()
-    };
+const saveBtn = document.getElementById('saveUniBtn');
+if(saveBtn) {
+    saveBtn.onclick = async () => {
+        const data = {
+            universityName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            courseName: document.getElementById('uCourse').value,
+            degreeType: document.getElementById('uDegree').value,
+            semesterFee: document.getElementById('uSemesterFee').value,
+            partnerComm: document.getElementById('uPartnerComm').value,
+            minGPA: document.getElementById('uMinGPA').value,
+            ieltsO: document.getElementById('uIeltsO').value,
+            gap: document.getElementById('uGap').value,
+            createdAt: serverTimestamp()
+        };
 
-    try {
-        await addDoc(collection(db, "universities"), data);
-        alert("University Added!");
-        location.reload();
-    } catch (e) { alert(e.message); }
-};
+        try {
+            await addDoc(collection(db, "universities"), data);
+            alert("University Added!");
+            location.reload();
+        } catch (e) { alert(e.message); }
+    };
+}
 
 // --- ২. ইউনিভার্সিটি লিস্ট লোড করা ---
 onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
     const tbody = document.getElementById('uniTableBody');
+    if(!tbody) return;
     let html = "";
     snap.forEach(docSnap => {
         const u = docSnap.data();
@@ -61,57 +62,63 @@ window.deleteUni = async (id) => {
     if(confirm("Delete this university?")) await deleteDoc(doc(db, "universities", id));
 };
 
-// --- ৩. পার্টনার ম্যানেজমেন্ট (Real-time) ---
-onSnapshot(collection(db, "partners"), async (snap) => {
+// --- ৩. পার্টনার ও স্টাফ ম্যানেজমেন্ট (users কালেকশন থেকে) ---
+// এখানে 'partners' এর বদলে 'users' ব্যবহার করা হয়েছে যাতে রেজিস্ট্রেশন করা ইউজারদের দেখা যায়
+onSnapshot(collection(db, "users"), async (snap) => {
     const tbody = document.getElementById('partnerTableBody');
+    if(!tbody) return;
     let html = "";
 
     for (const docSnap of snap.docs) {
         const p = docSnap.data();
-        const partnerId = docSnap.id;
+        const userId = docSnap.id;
 
-        // ফাইল কাউন্ট করা (Applications থেকে ওই পার্টনারের ইমেইল দিয়ে ফিল্টার)
-        const q = query(collection(db, "applications"), where("partnerEmail", "==", p.email || ""));
-        const appSnap = await getDocs(q);
-        const fileCount = appSnap.size;
+        // ফাইল কাউন্ট করা (যদি সে পার্টনার হয়)
+        let fileCount = 0;
+        if(p.role === 'partner') {
+            const q = query(collection(db, "applications"), where("partnerEmail", "==", p.email));
+            const appSnap = await getDocs(q);
+            fileCount = appSnap.size;
+        }
 
         html += `<tr>
             <td>${p.fullName || 'N/A'}</td>
-            <td>${p.orgName || 'N/A'}</td>
-            <td>${p.phone || 'N/A'}</td>
+            <td>${p.role ? p.role.toUpperCase() : 'N/A'}</td>
+            <td>${p.email || 'N/A'}</td>
             <td>
-                <button onclick="togglePartnerStatus('${partnerId}', '${p.status}')" class="status-toggle" 
-                    style="background:${p.status === 'active' ? '#2ecc71' : '#ff4757'}">
-                    ${(p.status || 'inactive').toUpperCase()}
-                </button>
+                <span class="badge" style="background:${p.status === 'active' ? '#2ecc71' : '#f39c12'}">
+                    ${(p.status || 'pending').toUpperCase()}
+                </span>
             </td>
-            <td>${p.expiryDate || 'N/A'}</td>
-            <td><span class="badge">${fileCount}</span></td>
+            <td><span class="badge" style="background:#3498db">${fileCount} Files</span></td>
             <td>
-                ${p.accountStatus === 'pending' ? 
-                    `<button class="btn" style="background:#2ecc71" onclick="approvePartner('${partnerId}')">Approve</button>` : 
-                    `<span style="color:#2ecc71"><i class="fas fa-check"></i> Verified</span>`
+                ${p.status === 'pending' ? 
+                    `<button class="btn" style="background:#2ecc71" onclick="approveUser('${userId}')">Approve</button>` : 
+                    `<button class="btn" style="background:#ff4757" onclick="suspendUser('${userId}')">Suspend</button>`
                 }
             </td>
         </tr>`;
     }
-    tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;">No partners found.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>';
 });
 
-// --- ৪. পার্টনার অ্যাকশন ফাংশনস ---
-window.togglePartnerStatus = async (id, current) => {
-    const next = current === 'active' ? 'inactive' : 'active';
-    await updateDoc(doc(db, "partners", id), { status: next });
+// --- ৪. ইউজার অ্যাকশন ফাংশনস ---
+window.approveUser = async (id) => {
+    if(confirm("Approve this user?")) {
+        await updateDoc(doc(db, "users", id), { status: 'active' });
+    }
 };
 
-window.approvePartner = async (id) => {
-    if(confirm("Approve this partner?")) {
-        await updateDoc(doc(db, "partners", id), { 
-            accountStatus: 'approved', 
-            status: 'active' 
-        });
+window.suspendUser = async (id) => {
+    if(confirm("Suspend this user?")) {
+        await updateDoc(doc(db, "users", id), { status: 'pending' });
     }
 };
 
 // --- ৫. লগআউট ---
-document.getElementById('logoutAdmin').onclick = () => signOut(auth).then(() => location.href = "login.html");
+const logoutBtn = document.getElementById('logoutAdmin');
+if(logoutBtn) {
+    logoutBtn.onclick = () => {
+        signOut(auth).then(() => location.href = "index.html");
+    };
+}
