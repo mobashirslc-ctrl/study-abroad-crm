@@ -27,7 +27,20 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function startDashboard(currentUser) {
-    // ১. রিয়েল-টাইম ওয়ালেট এবং ট্র্যাকিং (Requirement 2 & 3)
+    // ১. পার্টনারের নাম টপ-রাইট কর্নারে সেট করা
+    const updatePartnerHeader = async () => {
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+        if(userDoc.exists()) {
+            const userData = userDoc.data();
+            const welcomeBox = document.getElementById('welcomePartner');
+            if(welcomeBox) {
+                welcomeBox.innerText = `Welcome, ${userData.fullName || 'Partner'}`;
+            }
+        }
+    };
+    updatePartnerHeader();
+
+    // ২. রিয়েল-টাইম ওয়ালেট এবং ট্র্যাকিং ডাটা লোড করা
     const qApp = query(collection(db, "applications"), where("partnerEmail", "==", currentUser.email));
     
     onSnapshot(qApp, (snap) => {
@@ -44,7 +57,7 @@ function startDashboard(currentUser) {
             const dateStr = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString() : 'Just now';
             const statusColor = d.status === 'APPROVED' ? '#2ecc71' : '#ffcc00';
 
-            // Home Page Table (Live Tracking)
+            // ড্যাশবোর্ড টেবিল
             homeRows += `<tr>
                 <td>${d.studentName}</td>
                 <td>${d.university}</td>
@@ -52,7 +65,7 @@ function startDashboard(currentUser) {
                 <td>${dateStr}</td>
             </tr>`;
 
-            // Full Tracking Table (Requirement 3)
+            // ফুল ট্র্যাকিং টেবিল
             fullRows += `<tr>
                 <td>${d.studentName}</td>
                 <td>${d.contact || 'N/A'}</td>
@@ -64,16 +77,14 @@ function startDashboard(currentUser) {
             </tr>`;
         });
         
-        // Update Stats
         document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
         document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
         document.getElementById('walletDisplay').innerText = `৳ ${available.toLocaleString()}`;
         
-        // UI Updates
         document.getElementById('homeLiveBody').innerHTML = homeRows || '<tr><td colspan="4">No recent activity.</td></tr>';
         document.getElementById('fullTrackingBody').innerHTML = fullRows || '<tr><td colspan="7">No files tracked.</td></tr>';
 
-        // Withdraw Button Logic (Requirement 4)
+        // উইথড্র বাটন লজিক (৫০০০ টাকার বেশি হলে একটিভ হবে)
         const withdrawBtn = document.getElementById('requestWithdrawBtn');
         if(available >= 5000) {
             withdrawBtn.disabled = false;
@@ -84,7 +95,7 @@ function startDashboard(currentUser) {
         }
     });
 
-    // ২. প্রোফাইল সেটাপ (Requirement 5)
+    // ৩. প্রোফাইল সেটাপ ডাটা লোড এবং আপডেট
     const loadProfile = async () => {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if(userDoc.exists()) {
@@ -104,10 +115,11 @@ function startDashboard(currentUser) {
                 phone: document.getElementById('pPhone').value
             });
             alert("Profile Updated!");
+            updatePartnerHeader(); // হেডার নামও সাথে সাথে আপডেট হবে
         } catch (e) { alert(e.message); }
     };
 
-    // ৩. উইথড্রয়াল রিকোয়েস্ট
+    // ৪. উইথড্রয়াল রিকোয়েস্ট পাঠানো
     document.getElementById('requestWithdrawBtn').onclick = async () => {
         const amount = parseFloat(document.getElementById('wAmount').value);
         const details = document.getElementById('wDetails').value;
@@ -128,17 +140,22 @@ function startDashboard(currentUser) {
         } catch (e) { alert(e.message); }
     };
 
-    // ৪. স্মার্ট অ্যাসেসমেন্ট (Language Filter যুক্ত)
+    // ৫. স্মার্ট অ্যাসেসমেন্ট (নতুন স্কোর ফিল্ডসহ)
     document.getElementById('runSearchBtn').onclick = async () => {
         const country = document.getElementById('fCountry').value.toLowerCase();
-        const lang = document.getElementById('fLang').value;
+        const langType = document.getElementById('fLang').value;
+        const langScore = document.getElementById('fLangScore').value; // নতুন স্কোর বক্সের ডাটা
         const gpa = parseFloat(document.getElementById('fAcad').value) || 0;
 
-        // আপনার ইউনিভার্সিটি সার্চ লজিক এখানে কল হবে (আগের কোডের মতো)
-        // জাস্ট ফিল্টারে lang ভেরিয়েবলটি চেক করবেন।
-        alert("Searching for: " + country + " with " + lang);
+        if(!country) {
+            alert("Please enter a country name.");
+            return;
+        }
+
+        // সার্চ কনফার্মেশন (এখানে আপনার ইউনিভার্সিটি ডাটাবেজ ফিল্টারিং লজিক বসবে)
+        alert(`Searching for ${country.toUpperCase()} with ${langType} (Score: ${langScore})`);
     };
 
-    // লগআউট
+    // লগআউট লজিক
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
 }
