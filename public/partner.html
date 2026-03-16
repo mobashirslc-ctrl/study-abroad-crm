@@ -41,7 +41,7 @@
         .btn-gold:disabled { opacity: 0.4; cursor: not-allowed; }
         
         .table-wrap { overflow-x: auto; background: rgba(0,0,0,0.2); border-radius: 12px; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1200px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1250px; }
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid rgba(255,204,0,0.2); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
@@ -55,25 +55,25 @@
 
     <div id="loader">
         <div class="spinner"></div>
-        <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">AUTHENTICATING...</p>
+        <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">SECURE ACCESS...</p>
     </div>
 
     <div class="sidebar">
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
             <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-house"></i> <span>Home</span></li>
-            <li onclick="showSection('tracking-sec', this)"><i class="fa-solid fa-satellite-dish"></i> <span>Live Tracking</span></li>
+            <li onclick="showSection('tracking-sec', this)"><i class="fa-solid fa-folder-tree"></i> <span>File Tracking</span></li>
             <li onclick="showSection('wallet-sec', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
-            <li onclick="showSection('profile', this)"><i class="fa-solid fa-user-gear"></i> <span>Settings</span></li>
+            <li onclick="showSection('profile', this)"><i class="fa-solid fa-user-gear"></i> <span>Profile Setup</span></li>
         </ul>
-        <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer; width: 100%; text-align: center;"><i class="fa-solid fa-right-from-bracket"></i></div>
+        <div id="logoutBtn" style="margin-top:auto; padding-bottom:20px; color:var(--danger); cursor:pointer; width:100%; text-align:center;"><i class="fa-solid fa-right-from-bracket"></i></div>
     </div>
 
     <div class="main-container">
         <div class="top-header">
             <button class="refresh-btn" onclick="location.reload()" style="background:none; border:1px solid var(--gold); color:var(--gold); padding:5px 15px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-rotate"></i> Refresh</button>
-            <div id="partnerNameDisplay" style="color: var(--gold); font-weight: bold; font-size: 14px;">
-                <i class="fa-solid fa-user-check"></i> Welcome, <span id="pNameText">...</span>
+            <div style="color: var(--gold); font-weight: bold; font-size: 14px;">
+                <i class="fa-solid fa-user-check"></i> <span id="pNameText">Identifying...</span>
             </div>
         </div>
 
@@ -109,7 +109,7 @@
                             </select>
                         </div>
                         <div><label>Academic Score</label><input type="text" id="fGPA" placeholder="GPA/%"></div>
-                        <div><label>Lang Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
+                        <div><label>Min Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
                     </div>
                     <button type="button" class="btn-gold" id="runSearchBtn" style="margin-top:20px;">Run Real-time Assessment</button>
                 </div>
@@ -128,10 +128,10 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 style="color:var(--gold);"><i class="fa-solid fa-list-check"></i> Live Applications Tracking</h3>
+                <div class="card" style="margin-top:30px;">
+                    <h3 style="color:var(--gold);"><i class="fa-solid fa-satellite-dish"></i> Live Tracking (Recent)</h3>
                     <div class="table-wrap">
-                        <table style="min-width: 1300px;">
+                        <table>
                             <thead>
                                 <tr>
                                     <th>Student Name</th><th>Contact No</th><th>Passport No</th><th>University</th><th>Status</th><th>Compliance</th><th>Docs</th><th>Update</th>
@@ -143,28 +143,44 @@
                 </div>
             </div>
 
+            <div id="tracking-sec" class="section">
+                <div class="card">
+                    <h3 style="color:var(--gold);">Full File Tracking</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th><th>Contact No</th><th>Passport No</th><th>University</th><th>Status</th><th>Compliance</th><th>Docs</th><th>Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTrackingBodyDeep"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wallet-sec" class="section">
+                <div class="card" style="text-align: center;">
+                    <small>Available Balance</small>
+                    <h1 id="walletBalance" style="color:var(--success); font-size: 40px;">৳ 0</h1>
+                    <div style="max-width: 380px; margin: auto; text-align: left;">
+                        <label>Method</label><select id="pMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
+                        <label>Details</label><input type="text" id="pDetails">
+                        <button class="btn-gold" id="withdrawBtn" style="width:100%; margin-top:15px;" disabled>Withdraw Now</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="profile" class="section">
                 <div class="card">
                     <h3>Partner Profile Setup</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div><label>Full Name</label><input type="text" id="profName"></div>
                         <div><label>Agency Name</label><input type="text" id="profAgency"></div>
-                        <div><label>WhatsApp Number</label><input type="text" id="profPhone"></div>
-                        <div><label>Office Address</label><input type="text" id="profAddress"></div>
+                        <div><label>WhatsApp</label><input type="text" id="profPhone"></div>
+                        <div><label>Address</label><input type="text" id="profAddress"></div>
                     </div>
-                    <button class="btn-gold" id="saveProfileBtn" style="margin-top:20px;">Update Profile</button>
-                </div>
-            </div>
-
-            <div id="wallet-sec" class="section">
-                <div class="card" style="text-align: center;">
-                    <small>Balance</small>
-                    <h1 id="walletBalance" style="color:var(--success); font-size: 40px;">৳ 0</h1>
-                    <div style="max-width: 380px; margin: auto; text-align: left;">
-                        <label>Method</label><select id="pMethod"><option>bKash</option><option>Nagad</option><option>Bank</option></select>
-                        <label>Account Info</label><input type="text" id="pDetails">
-                        <button class="btn-gold" id="withdrawBtn" style="width:100%; margin-top:15px;" disabled>Submit Withdrawal</button>
-                    </div>
+                    <button class="btn-gold" id="saveProfileBtn" style="margin-top:20px;">Save Profile</button>
                 </div>
             </div>
         </div>
@@ -179,22 +195,22 @@
             <div id="formStep">
                 <h3 style="color:var(--gold); margin-top:0">Final Submission</h3>
                 <label>Student Name</label><input type="text" id="sName">
-                <label>Contact No</label><input type="text" id="sContact">
-                <label>Passport No</label><input type="text" id="sPass">
-                <div style="margin-top:15px; border:1px dashed #444; padding:15px; border-radius:10px;">
-                    <label>Passport PDF</label><input type="file" id="pdfPass" accept=".pdf">
-                    <label>Academic PDF</label><input type="file" id="pdfAcad" accept=".pdf">
-                    <label>Language PDF</label><input type="file" id="pdfLang" accept=".pdf">
+                <label>Contact Number</label><input type="text" id="sContact">
+                <label>Passport Number</label><input type="text" id="sPass">
+                <div style="margin-top:20px; border:1px dashed #444; padding:15px; border-radius:10px;">
+                    <label>Passport Copy (PDF)</label><input type="file" id="pdfPass" accept=".pdf">
+                    <label>Academic (PDF)</label><input type="file" id="pdfAcad" accept=".pdf">
+                    <label>Language (PDF)</label><input type="file" id="pdfLang" accept=".pdf">
                 </div>
-                <button class="btn-gold" id="finalSubmitBtn" style="width:100%; margin-top:20px;">Submit Now</button>
-                <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Close</button>
+                <button class="btn-gold" id="finalSubmitBtn" style="width:100%; margin-top:20px;">Submit Application</button>
+                <button class="btn-gold" style="background:#333; color:#fff; width:100%; margin-top:10px;" onclick="document.getElementById('appModal').style.display='none'">Cancel</button>
             </div>
             <div id="successStep" style="display:none; text-align:center;">
                 <i class="fa-solid fa-circle-check" style="font-size:50px; color:var(--success);"></i>
-                <h2 style="color:var(--gold);">Submitted!</h2>
+                <h2 style="color:var(--gold);">Submitted Successfully!</h2>
                 <div id="qrcode" style="background:white; padding:10px; display:inline-block; border-radius:10px; margin:15px 0;"></div>
-                <p id="appIdText" style="color:#aaa;"></p>
-                <button class="btn-gold" onclick="location.reload()">Done</button>
+                <p id="appIdText" style="color:#aaa; font-family:monospace;"></p>
+                <button class="btn-gold" onclick="location.reload()">Back to Home</button>
             </div>
         </div>
     </div>
