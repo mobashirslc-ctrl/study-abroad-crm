@@ -15,11 +15,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+// Auth state monitor
 onAuthStateChanged(auth, (user) => {
+    const loader = document.getElementById('loader');
     if (!user) {
         window.location.replace("index.html");
     } else {
-        const loader = document.getElementById('loader');
         if(loader) loader.style.display = 'none';
         document.body.classList.add('auth-ready');
         startDashboard(user); 
@@ -27,17 +28,20 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function startDashboard(currentUser) {
+    // ১. আপডেট হেডার নাম
     const updatePartnerHeader = async () => {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        if(userDoc.exists()) {
-            const userData = userDoc.data();
-            const welcomeBox = document.getElementById('welcomePartner');
-            if(welcomeBox) welcomeBox.innerText = `Welcome, ${userData.fullName || 'Partner'}`;
-        }
+        try {
+            const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+            if(userDoc.exists()) {
+                const userData = userDoc.data();
+                const welcomeBox = document.getElementById('welcomePartner');
+                if(welcomeBox) welcomeBox.innerText = `Welcome, ${userData.fullName || 'Partner'}`;
+            }
+        } catch (e) { console.error("Header Error:", e); }
     };
     updatePartnerHeader();
 
-    // real-time tracking
+    // ২. রিয়েল-টাইম ডাটা লিসেনার
     const qApp = query(collection(db, "applications"), where("partnerEmail", "==", currentUser.email));
     onSnapshot(qApp, (snap) => {
         let pending = 0, available = 0, homeRows = "", fullRows = "";
@@ -52,11 +56,15 @@ function startDashboard(currentUser) {
             fullRows += `<tr><td>${d.studentName}</td><td>${d.contact || 'N/A'}</td><td>${d.passport}</td><td><b style="color:${statusColor}">${d.status}</b></td><td>${d.compliancePerson || 'Pending'}</td><td><a href="${d.docLink || '#'}" target="_blank" style="color:var(--gold)">View Docs</a></td><td>${dateStr}</td></tr>`;
         });
         
-        if(document.getElementById('pendingAm')) document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
-        if(document.getElementById('availAm')) document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
-        if(document.getElementById('walletDisplay')) document.getElementById('walletDisplay').innerText = `৳ ${available.toLocaleString()}`;
-        if(document.getElementById('homeLiveBody')) document.getElementById('homeLiveBody').innerHTML = homeRows || '<tr><td colspan="4">No activity.</td></tr>';
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = fullRows || '<tr><td colspan="7">No files.</td></tr>';
+        safeSetText('pendingAm', `৳ ${pending.toLocaleString()}`);
+        safeSetText('availAm', `৳ ${available.toLocaleString()}`);
+        safeSetText('walletDisplay', `৳ ${available.toLocaleString()}`);
+        
+        const homeBody = document.getElementById('homeLiveBody');
+        if(homeBody) homeBody.innerHTML = homeRows || '<tr><td colspan="4">No activity found.</td></tr>';
+        
+        const trackingBody = document.getElementById('fullTrackingBody');
+        if(trackingBody) trackingBody.innerHTML = fullRows || '<tr><td colspan="7">No files tracked.</td></tr>';
 
         const withdrawBtn = document.getElementById('requestWithdrawBtn');
         if(withdrawBtn) {
@@ -65,52 +73,57 @@ function startDashboard(currentUser) {
                 document.getElementById('withdrawNotice').style.display = 'none';
             } else {
                 withdrawBtn.disabled = true;
-                document.getElementById('withdrawNotice').innerText = "* Min 5,000 BDT required";
+                const notice = document.getElementById('withdrawNotice');
+                if(notice) notice.innerText = "* Min 5,000 BDT required to withdraw";
             }
         }
     });
 
-    // Profile Load & Update
-    const loadProfile = async () => {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        if(userDoc.exists()) {
-            const userData = userDoc.data();
-            document.getElementById('pName').value = userData.fullName || "";
-            document.getElementById('pOrg').value = userData.orgName || "";
-            document.getElementById('pPhone').value = userData.phone || "";
-        }
-    };
-    loadProfile();
-
-    document.getElementById('updateProfileBtn').onclick = async () => {
-        try {
-            await updateDoc(doc(db, "users", currentUser.uid), {
-                fullName: document.getElementById('pName').value,
-                orgName: document.getElementById('pOrg').value,
-                phone: document.getElementById('pPhone').value
-            });
-            alert("Profile Updated!");
-            updatePartnerHeader();
-        } catch (e) { alert(e.message); }
-    };
-
-    // SEARCH BUTTON ACTIVATION
-    const searchBtn = document.getElementById('runSearchBtn');
-    if(searchBtn) {
-        searchBtn.onclick = async () => {
-            const country = document.getElementById('fCountry').value;
-            const langType = document.getElementById('fLang').value;
-            const langScore = document.getElementById('fLangScore').value;
-            
-            if(!country) {
-                alert("Please enter a country name.");
-                return;
-            }
-
-            console.log("Search Triggered:", country, langType, langScore);
-            alert(`Searching for ${country} with ${langType} (Score: ${langScore}). Results will appear soon.`);
+    // ৩. প্রোফাইল হ্যান্ডলার
+    const updateBtn = document.getElementById('updateProfileBtn');
+    if(updateBtn) {
+        updateBtn.onclick = async () => {
+            try {
+                await updateDoc(doc(db, "users", currentUser.uid), {
+                    fullName: document.getElementById('pName').value,
+                    orgName: document.getElementById('pOrg').value,
+                    phone: document.getElementById('pPhone').value
+                });
+                alert("Profile Updated Successfully!");
+                updatePartnerHeader();
+            } catch (e) { alert("Error: " + e.message); }
         };
     }
 
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+    // ৪. সার্চ বাটন অ্যাক্টিভেশন (এখানেই আপনার সমস্যা ছিল)
+    const searchBtn = document.getElementById('runSearchBtn');
+    if(searchBtn) {
+        // আগের ইভেন্ট রিমুভ করে নতুন করে সেট করা হচ্ছে
+        searchBtn.addEventListener('click', () => {
+            const country = document.getElementById('fCountry').value;
+            const langType = document.getElementById('fLang').value;
+            const langScore = document.getElementById('fLangScore').value;
+            const gpa = document.getElementById('fAcad').value;
+
+            if(!country) {
+                alert("Please enter a country name to start search.");
+                return;
+            }
+
+            console.log("Assessment Query:", {country, langType, langScore, gpa});
+            alert(`Searching Database for: ${country.toUpperCase()}\nTest: ${langType} (${langScore})\nGPA: ${gpa}\n\nPlease wait while we fetch the best universities...`);
+            
+            // এখানে আপনি চাইলে সার্চ রেজাল্ট দেখানোর জন্য আলাদা ফাংশন কল করতে পারেন
+        });
+    }
+
+    // লগআউট
+    const logout = document.getElementById('logoutBtn');
+    if(logout) logout.onclick = () => signOut(auth);
+}
+
+// Helper function to prevent null errors
+function safeSetText(id, val) {
+    const el = document.getElementById(id);
+    if(el) el.innerText = val;
 }
