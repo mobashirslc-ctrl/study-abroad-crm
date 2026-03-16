@@ -15,7 +15,6 @@
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,204,0,0.1); border-left-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         
-        /* Sidebar */
         .sidebar { width: 90px; background: var(--darker); display: flex; flex-direction: column; align-items: center; padding: 25px 0; border-right: 1px solid rgba(255,255,255,0.05); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 70px; background: white; border-radius: 12px; margin-bottom: 45px; }
@@ -25,19 +24,16 @@
         .sidebar:hover .nav-links li span { display: inline; }
         .nav-links li.active { color: var(--gold); background: rgba(255, 204, 0, 0.08); border-left-color: var(--gold); }
         
-        /* Main Area */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05); }
         .content-body { padding: 25px; flex-grow: 1; }
         .section { display: none; }
         .section.active { display: block; animation: fadeIn 0.4s ease; }
         
-        /* Stats */
         .top-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: linear-gradient(135deg, #1c1145, #080120); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,204,0,0.3); }
         .stat-box .amount { font-size: 20px; font-weight: bold; color: var(--gold); }
         
-        /* Cards & Tables */
         .card { background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(10px); }
         input, select { background: #050118; border: 1px solid #333; padding: 12px; color: white; border-radius: 8px; width: 100%; margin-top: 8px; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
@@ -49,19 +45,13 @@
         th { text-align: left; color: var(--gold); padding: 15px; border-bottom: 2px solid rgba(255,204,0,0.2); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: #160a3d; padding: 35px; border-radius: 20px; width: 480px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; position: relative; }
-        
-        /* QR Code Styling */
         #qrcode { background: white; padding: 10px; display: inline-block; border-radius: 10px; margin: 15px 0; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body>
-
-    <div id="loader">
+<body class="auth-ready"> <div id="loader">
         <div class="spinner"></div>
         <p style="color:var(--gold); margin-top:15px; letter-spacing: 2px;">SECURE ACCESS...</p>
     </div>
@@ -97,14 +87,26 @@
                     <h3 style="margin-top:0; color: var(--gold);">Smart Assessment Search</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
                         <div><label>Target Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
-                        <div><label>Academic GPA / %</label><input type="text" id="fGPA" placeholder="e.g. 3.50 or 75%"></div>
+                        <div>
+                            <label>Academic Degree</label>
+                            <select id="fDegree">
+                                <option value="">Select Degree</option>
+                                <option>A-Level / HSC</option>
+                                <option>Foundation</option>
+                                <option>International Year One</option>
+                                <option>Bachelor's (Honours)</option>
+                                <option>Pre-Master's</option>
+                                <option>Master's (MA/MSc/MBA)</option>
+                                <option>PhD / Doctoral</option>
+                            </select>
+                        </div>
                         <div><label>Language Test</label>
                             <select id="fLang">
                                 <option value="">Select Test</option>
                                 <option>IELTS</option>
                                 <option>PTE</option>
                                 <option>Duolingo</option>
-                                <option>MOI</option>
+                                <option>MOI / Other</option>
                             </select>
                         </div>
                         <div><label>Language Score</label><input type="text" id="fScore" placeholder="e.g. 6.5"></div>
@@ -141,7 +143,7 @@
                 <div class="card">
                     <h3>Application Status</h3>
                     <div class="table-wrap">
-                        <table>
+                        <table id="trackingTable">
                             <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
                             <tbody id="fullTrackingBody"></tbody>
                         </table>
@@ -161,8 +163,7 @@
                 </div>
             </div>
         </div>
-
-        <footer style="padding: 20px; text-align: center; font-size: 12px; color: #555;">All rights reserved GORUN LTD.</footer>
+        <footer>All rights reserved GORUN LTD.</footer>
     </div>
 
     <div id="appModal" class="modal">

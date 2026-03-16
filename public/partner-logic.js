@@ -1,39 +1,52 @@
 import { db, auth, storage } from "./firebase-config.js";
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { collection, query, where, getDocs, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 let selectedUni = "";
-const BDT_RATE = 155; // ১ পাউন্ড = ১৫৫ টাকা (অ্যাডজাস্টযোগ্য)
+const BDT_RATE = 155; // Exchange rate
 
-// ১. পেজ লোড ও লগইন চেক
+// ১. ড্যাশবোর্ড লক এবং রিডাইরেক্ট ফিক্স
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById('loader').style.display = 'none';
         document.body.classList.add('auth-ready');
+        loadTrackingData(user.email); // রিয়েল-টাইম ট্র্যাকিং শুরু
     } else {
-        window.location.href = "index.html"; // লগইন পেজে পাঠাবে
+        window.location.replace("index.html"); // পারমানেন্ট লক
     }
 });
 
-// ২. ক্যালকুলেশন ও সার্চ
+// ২. রিয়েল-টাইম সার্চ লজিক
 document.getElementById('runSearchBtn').onclick = async () => {
     const country = document.getElementById('fCountry').value.trim();
+    const degree = document.getElementById('fDegree').value;
     const resultsBody = document.getElementById('uniResultsBody');
-    if(!country) return alert("Please enter country!");
+    
+    if(!country) return alert("Please enter a country!");
 
-    resultsBody.innerHTML = "<tr><td colspan='11' style='text-align:center;'>Processing Assessment...</td></tr>";
+    resultsBody.innerHTML = "<tr><td colspan='11' style='text-align:center;'>Searching Universities...</td></tr>";
     document.getElementById('resArea').style.display = 'block';
 
     try {
-        const q = query(collection(db, "universities"), where("country", "==", country));
+        let q = query(collection(db, "universities"), where("country", "==", country));
         const snap = await getDocs(q);
         resultsBody.innerHTML = "";
 
+        if(snap.empty) {
+            resultsBody.innerHTML = "<tr><td colspan='11' style='text-align:center;'>No universities found.</td></tr>";
+            return;
+        }
+
         snap.forEach(doc => {
             const uni = doc.data();
-            const tuitionInTaka = (uni.tuitionFeeAmount || 0) * BDT_RATE;
-            const calculatedComm = (tuitionInTaka * (uni.partnerCommPercentage || 0)) / 100;
+            // ফিল্টারিং লজিক (যদি ডিগ্রি সিলেক্ট থাকে)
+            if(degree && uni.degree !== degree) return;
+
+            // কমিশন ক্যালকুলেশন
+            const tuition = parseFloat(uni.tuitionFeeAmount) || 0;
+            const percentage = parseFloat(uni.partnerCommPercentage) || 0;
+            const commInBDT = (tuition * BDT_RATE * percentage) / 100;
 
             resultsBody.innerHTML += `
                 <tr>
@@ -46,14 +59,14 @@ document.getElementById('runSearchBtn').onclick = async () => {
                     <td>${uni.scholarship || 'N/A'}</td>
                     <td>${uni.entryReq || 'N/A'}</td>
                     <td>${uni.engReq || 'N/A'}</td>
-                    <td style="color:var(--gold); font-weight:bold;">৳ ${calculatedComm.toLocaleString('en-IN')}</td>
-                    <td><button class="btn-gold" onclick="openApply('${uni.universityName}')">Apply</button></td>
+                    <td style="color:var(--gold); font-weight:bold;">৳ ${commInBDT.toLocaleString()}</td>
+                    <td><button class="btn-gold" onclick="window.openApply('${uni.universityName}')">Apply</button></td>
                 </tr>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { alert("Search failed!"); }
 };
 
-// ৩. ফাইল সাবমিশন লজিক (সাদা হয়ে যাওয়া বন্ধ করবে)
+// ৩. ফাইল আপলোড এবং ফর্ম সাবমিট (Fix)
 window.openApply = (uni) => {
     selectedUni = uni;
     document.getElementById('appModal').style.display = 'flex';
@@ -67,42 +80,62 @@ document.getElementById('finalSubmitBtn').onclick = async () => {
     const f2 = document.getElementById('pdfAcad').files[0];
     const f3 = document.getElementById('pdfLang').files[0];
 
-    if(!sName || !sPass || !f1 || !f2 || !f3) return alert("Fill all fields and upload 3 PDFs!");
+    if(!sName || !sPass || !f1 || !f2 || !f3) return alert("All files and info required!");
 
-    btn.innerText = "Uploading Documents...";
+    btn.innerText = "Submitting...";
     btn.disabled = true;
 
     try {
-        const upload = async (file, name) => {
-            const r = ref(storage, `apps/${sPass}/${name}_${Date.now()}`);
-            await uploadBytes(r, file);
-            return await getDownloadURL(r);
+        const upload = async (file, prefix) => {
+            const storageRef = ref(storage, `applications/${sPass}/${prefix}_${Date.now()}.pdf`);
+            const snap = await uploadBytes(storageRef, file);
+            return await getDownloadURL(snap.ref);
         };
 
-        const u1 = await upload(f1, "pass");
-        const u2 = await upload(f2, "acad");
-        const u3 = await upload(f3, "lang");
+        const u1 = await upload(f1, "passport");
+        const u2 = await upload(f2, "academic");
+        const u3 = await upload(f3, "language");
 
         const docRef = await addDoc(collection(db, "applications"), {
             studentName: sName,
             passport: sPass,
             university: selectedUni,
-            partner: auth.currentUser.email,
-            docs: { p: u1, a: u2, l: u3 },
+            partnerEmail: auth.currentUser.email,
+            docs: { passport: u1, academic: u2, language: u3 },
             status: "Pending",
-            at: serverTimestamp()
+            submittedAt: serverTimestamp()
         });
 
         document.getElementById('formStep').style.display = 'none';
         document.getElementById('successStep').style.display = 'block';
-        document.getElementById('appIdText').innerText = "App ID: " + docRef.id;
-        new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 120, height: 120 });
+        document.getElementById('appIdText').innerText = "ID: " + docRef.id;
+        new QRCode(document.getElementById("qrcode"), docRef.id);
 
     } catch (e) {
-        alert("Upload Error: " + e.message);
+        alert("Submission Error!");
         btn.disabled = false;
         btn.innerText = "Submit Application";
     }
 };
 
-document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => location.href="index.html");
+// ৪. রিয়েল-টাইম ট্র্যাকিং ডাটা লোড
+function loadTrackingData(email) {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", email));
+    onSnapshot(q, (snap) => {
+        const tbody = document.getElementById('fullTrackingBody');
+        tbody.innerHTML = "";
+        snap.forEach(doc => {
+            const app = doc.data();
+            tbody.innerHTML += `
+                <tr>
+                    <td>${app.studentName}</td>
+                    <td>${app.passport}</td>
+                    <td>${app.university}</td>
+                    <td style="color:var(--gold)">${app.status}</td>
+                    <td>${app.submittedAt ? app.submittedAt.toDate().toLocaleDateString() : 'Just now'}</td>
+                </tr>`;
+        });
+    });
+}
+
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
