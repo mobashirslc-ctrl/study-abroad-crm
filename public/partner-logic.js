@@ -27,75 +27,50 @@ onAuthStateChanged(auth, (user) => {
 });
 
 function startDashboard(currentUser) {
-    // ১. পার্টনারের নাম টপ-রাইট কর্নারে সেট করা
     const updatePartnerHeader = async () => {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if(userDoc.exists()) {
             const userData = userDoc.data();
             const welcomeBox = document.getElementById('welcomePartner');
-            if(welcomeBox) {
-                welcomeBox.innerText = `Welcome, ${userData.fullName || 'Partner'}`;
-            }
+            if(welcomeBox) welcomeBox.innerText = `Welcome, ${userData.fullName || 'Partner'}`;
         }
     };
     updatePartnerHeader();
 
-    // ২. রিয়েল-টাইম ওয়ালেট এবং ট্র্যাকিং ডাটা লোড করা
+    // real-time tracking
     const qApp = query(collection(db, "applications"), where("partnerEmail", "==", currentUser.email));
-    
     onSnapshot(qApp, (snap) => {
-        let pending = 0;
-        let available = 0;
-        let homeRows = "";
-        let fullRows = "";
-        
+        let pending = 0, available = 0, homeRows = "", fullRows = "";
         snap.forEach(docSnap => {
             const d = docSnap.data();
             pending += parseFloat(d.pendingAmount || 0);
             available += parseFloat(d.finalAmount || 0);
-            
             const dateStr = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString() : 'Just now';
             const statusColor = d.status === 'APPROVED' ? '#2ecc71' : '#ffcc00';
 
-            // ড্যাশবোর্ড টেবিল
-            homeRows += `<tr>
-                <td>${d.studentName}</td>
-                <td>${d.university}</td>
-                <td><span style="color:${statusColor}">${d.status}</span></td>
-                <td>${dateStr}</td>
-            </tr>`;
-
-            // ফুল ট্র্যাকিং টেবিল
-            fullRows += `<tr>
-                <td>${d.studentName}</td>
-                <td>${d.contact || 'N/A'}</td>
-                <td>${d.passport}</td>
-                <td><b style="color:${statusColor}">${d.status}</b></td>
-                <td>${d.compliancePerson || 'Pending'}</td>
-                <td><a href="${d.docLink || '#'}" target="_blank" style="color:var(--gold)">View Docs</a></td>
-                <td>${dateStr}</td>
-            </tr>`;
+            homeRows += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:${statusColor}">${d.status}</span></td><td>${dateStr}</td></tr>`;
+            fullRows += `<tr><td>${d.studentName}</td><td>${d.contact || 'N/A'}</td><td>${d.passport}</td><td><b style="color:${statusColor}">${d.status}</b></td><td>${d.compliancePerson || 'Pending'}</td><td><a href="${d.docLink || '#'}" target="_blank" style="color:var(--gold)">View Docs</a></td><td>${dateStr}</td></tr>`;
         });
         
-        document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
-        document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
-        document.getElementById('walletDisplay').innerText = `৳ ${available.toLocaleString()}`;
-        
-        document.getElementById('homeLiveBody').innerHTML = homeRows || '<tr><td colspan="4">No recent activity.</td></tr>';
-        document.getElementById('fullTrackingBody').innerHTML = fullRows || '<tr><td colspan="7">No files tracked.</td></tr>';
+        if(document.getElementById('pendingAm')) document.getElementById('pendingAm').innerText = `৳ ${pending.toLocaleString()}`;
+        if(document.getElementById('availAm')) document.getElementById('availAm').innerText = `৳ ${available.toLocaleString()}`;
+        if(document.getElementById('walletDisplay')) document.getElementById('walletDisplay').innerText = `৳ ${available.toLocaleString()}`;
+        if(document.getElementById('homeLiveBody')) document.getElementById('homeLiveBody').innerHTML = homeRows || '<tr><td colspan="4">No activity.</td></tr>';
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = fullRows || '<tr><td colspan="7">No files.</td></tr>';
 
-        // উইথড্র বাটন লজিক (৫০০০ টাকার বেশি হলে একটিভ হবে)
         const withdrawBtn = document.getElementById('requestWithdrawBtn');
-        if(available >= 5000) {
-            withdrawBtn.disabled = false;
-            document.getElementById('withdrawNotice').style.display = 'none';
-        } else {
-            withdrawBtn.disabled = true;
-            document.getElementById('withdrawNotice').style.display = 'block';
+        if(withdrawBtn) {
+            if(available >= 5000) {
+                withdrawBtn.disabled = false;
+                document.getElementById('withdrawNotice').style.display = 'none';
+            } else {
+                withdrawBtn.disabled = true;
+                document.getElementById('withdrawNotice').innerText = "* Min 5,000 BDT required";
+            }
         }
     });
 
-    // ৩. প্রোফাইল সেটাপ ডাটা লোড এবং আপডেট
+    // Profile Load & Update
     const loadProfile = async () => {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if(userDoc.exists()) {
@@ -115,47 +90,27 @@ function startDashboard(currentUser) {
                 phone: document.getElementById('pPhone').value
             });
             alert("Profile Updated!");
-            updatePartnerHeader(); // হেডার নামও সাথে সাথে আপডেট হবে
+            updatePartnerHeader();
         } catch (e) { alert(e.message); }
     };
 
-    // ৪. উইথড্রয়াল রিকোয়েস্ট পাঠানো
-    document.getElementById('requestWithdrawBtn').onclick = async () => {
-        const amount = parseFloat(document.getElementById('wAmount').value);
-        const details = document.getElementById('wDetails').value;
-        const method = document.getElementById('wMethod').value;
+    // SEARCH BUTTON ACTIVATION
+    const searchBtn = document.getElementById('runSearchBtn');
+    if(searchBtn) {
+        searchBtn.onclick = async () => {
+            const country = document.getElementById('fCountry').value;
+            const langType = document.getElementById('fLang').value;
+            const langScore = document.getElementById('fLangScore').value;
+            
+            if(!country) {
+                alert("Please enter a country name.");
+                return;
+            }
 
-        if(amount < 5000) return alert("Minimum 5,000 BDT required!");
-        
-        try {
-            await addDoc(collection(db, "withdrawals"), {
-                partnerEmail: currentUser.email,
-                amount: amount,
-                method: method,
-                details: details,
-                status: "PENDING",
-                timestamp: serverTimestamp()
-            });
-            alert("Withdrawal request sent!");
-        } catch (e) { alert(e.message); }
-    };
+            console.log("Search Triggered:", country, langType, langScore);
+            alert(`Searching for ${country} with ${langType} (Score: ${langScore}). Results will appear soon.`);
+        };
+    }
 
-    // ৫. স্মার্ট অ্যাসেসমেন্ট (নতুন স্কোর ফিল্ডসহ)
-    document.getElementById('runSearchBtn').onclick = async () => {
-        const country = document.getElementById('fCountry').value.toLowerCase();
-        const langType = document.getElementById('fLang').value;
-        const langScore = document.getElementById('fLangScore').value; // নতুন স্কোর বক্সের ডাটা
-        const gpa = parseFloat(document.getElementById('fAcad').value) || 0;
-
-        if(!country) {
-            alert("Please enter a country name.");
-            return;
-        }
-
-        // সার্চ কনফার্মেশন (এখানে আপনার ইউনিভার্সিটি ডাটাবেজ ফিল্টারিং লজিক বসবে)
-        alert(`Searching for ${country.toUpperCase()} with ${langType} (Score: ${langScore})`);
-    };
-
-    // লগআউট লজিক
     document.getElementById('logoutBtn').onclick = () => signOut(auth);
 }
