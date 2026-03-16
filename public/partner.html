@@ -107,7 +107,7 @@
             const partnerData = JSON.parse(localStorage.getItem('partnerData'));
             if (!partnerData) {
                 // যদি লগইন ডাটা না থাকে, তবে index.html এ পাঠাও
-                window.location.href = 'index.html';
+                
             } else {
                 document.getElementById('pNameText').innerText = partnerData.name || 'Partner';
                 document.body.classList.add('auth-ready');
@@ -118,7 +118,7 @@
         // লগআউট বাটন ফিক্স
         document.getElementById('logoutBtn').addEventListener('click', () => {
             localStorage.removeItem('partnerData');
-            window.location.href = 'index.html';
+            
         });
     </script>
 </body>
