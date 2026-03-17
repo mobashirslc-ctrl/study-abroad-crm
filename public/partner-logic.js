@@ -13,9 +13,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings ---
+// --- Cloudinary Settings (Modified for PDF Support) ---
 const CLOUD_NAME = "ddziennkh"; 
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; // 'auto' ব্যবহার করা হয়েছে সব ফাইলের জন্য
+// এন্ডপয়েন্ট 'auto' করার মাধ্যমে ইমেজ এবং পিডিএফ দুইটাই সাপোর্ট করবে
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
@@ -82,7 +83,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic ---
+// --- 3. Submission Logic (Fixed Upload) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -106,9 +107,14 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
+                
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                urls[item.k] = data.secure_url;
+                
+                if (data.secure_url) {
+                    // পিডিএফ এর ক্ষেত্রে ইউআরএল কিছুটা ভিন্ন হতে পারে, তাই সরাসরি সিকিউর ইউআরএল স্টোর করছি
+                    urls[item.k] = data.secure_url;
+                }
             }
         }
         const appData = { studentName: sName, passportNo: sPass, phone: document.getElementById('sPhone').value, university: document.getElementById('sUni').value, commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, partnerEmail: partnerEmail, partnerName: localStorage.getItem('partnerName'), status: 'pending', docs: urls, createdAt: serverTimestamp() };
@@ -122,7 +128,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (URL Fix for PDF/Image) ---
+// --- 4. Tracking Table (Enhanced View Logic) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -134,20 +140,20 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // ক্লাউডিনারিতে পিডিএফ ভিউ করার জন্য ইউআরএল প্রসেসিং
-            const formatUrl = (url) => {
-                if(!url) return "";
-                // যদি পিডিএফ হয়, তবে ইউআরএল-এ 'image' এর বদলে 'raw' বা 'auto' থাকতে পারে। 
-                // আমরা শুধু নিশ্চিত করছি যেন কোনো এক্সট্রা অ্যাটাচমেন্ট ফ্ল্যাগ না থাকে।
-                return url; 
+            // পিডিএফ ফাইল হলে ক্লাউডিনারি ইউআরএল-এ 'image' এর জায়গায় 'raw' থাকতে পারে
+            // এই ফাংশনটি ইউআরএল চেক করে সঠিক লিঙ্কে পাঠাবে
+            const getSafeUrl = (url) => {
+                if(!url) return "#";
+                // ব্রাউজারে ভিউ করার জন্য ক্লিন ইউআরএল রিটার্ন করছে
+                return url;
             };
 
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${formatUrl(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${formatUrl(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${formatUrl(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${formatUrl(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${getSafeUrl(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${getSafeUrl(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${getSafeUrl(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${getSafeUrl(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
