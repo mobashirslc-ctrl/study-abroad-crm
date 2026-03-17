@@ -3,29 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Track Your Application - IHP CRM</title>
+    <title>Tracking - IHP CRM</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f4; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; }
-        img { max-width: 150px; margin-bottom: 20px; }
-        input { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        #result { margin-top: 20px; font-weight: bold; color: #333; }
+        /* ব্যাকগ্রাউন্ড কালার এবং ফন্ট */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        /* Glassmorphism Container */
+        .glass-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            text-align: center;
+        }
+
+        img { width: 120px; margin-bottom: 20px; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.2)); }
+        
+        h2 { margin-bottom: 10px; font-weight: 600; }
+        p { font-size: 14px; opacity: 0.9; margin-bottom: 25px; }
+
+        /* Input Styles */
+        .search-group { display: flex; flex-direction: column; gap: 15px; }
+        
+        input {
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            outline: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+        }
+        input::placeholder { color: rgba(255, 255, 255, 0.7); }
+        input:focus { background: rgba(255, 255, 255, 0.3); border-color: #fff; }
+
+        button {
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            background: #00d2ff;
+            background: -webkit-linear-gradient(to right, #3a7bd5, #00d2ff);
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5); }
+
+        /* Result Section */
+        #result {
+            margin-top: 30px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 0px; /* Hidden by default */
+            font-size: 14px;
+        }
+        .info-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .info-row:last-child { border-bottom: none; }
+        .label { font-weight: bold; color: #00d2ff; }
+
+        /* Footer */
+        footer {
+            margin-top: 30px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="glass-box">
         <img src="logo.jpeg" alt="IHP Logo">
+        <h2>Track Application</h2>
+        <p>Stay updated with your study abroad journey</p>
         
-        <h2>Track Your Application</h2>
-        <p>Enter your Passport Number to check status</p>
-        
-        <input type="text" id="passportInput" placeholder="Enter Passport Number">
-        <button id="trackBtn">Search</button>
+        <div class="search-group">
+            <input type="text" id="passportInput" placeholder="Ex: A12345678">
+            <button id="trackBtn">Track Status</button>
+        </div>
 
-        <div id="result"></div>
+        <div id="result">
+            </div>
     </div>
+
+    <footer>
+        &copy; 2026 All Rights Reserved GORUN LTD.
+    </footer>
 
     <script type="module" src="tracking-logic.js"></script>
 </body>
