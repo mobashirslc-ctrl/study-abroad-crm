@@ -3,226 +3,124 @@ import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestam
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-  authDomain: "scc-partner-portal.firebaseapp.com",
-  databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
-  projectId: "scc-partner-portal",
-  storageBucket: "scc-partner-portal.firebasestorage.app",
-  messagingSenderId: "13013457431",
-  appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+  apiKey: "AIzaSyA_lOiKJFhvY1iL1jDA1KLVD6sHDNXlo0I",
+  authDomain: "ihp-global-portal.firebaseapp.com",
+  projectId: "ihp-global-portal",
+  storageBucket: "ihp-global-portal.firebasestorage.app",
+  messagingSenderId: "623093397069",
+  appId: "1:623093397069:web:de3b3b7b1df15ad444ce04",
+  measurementId: "G-2ZZQYJ1TY6"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- ১. পেজ লোড ও পার্টনার ভেরিফিকেশন ---
+// ১. পেজ লোড লজিক
 document.addEventListener('DOMContentLoaded', () => {
     const partnerData = JSON.parse(localStorage.getItem('partnerData'));
     if (partnerData) {
         document.getElementById('partnerNameDisplay').innerText = partnerData.name;
         loadTrackingData(partnerData.name);
-    } else {
-        window.location.href = 'index.html'; // লগইন না থাকলে ফেরত পাঠাবে
     }
 });
 
-// --- ২. স্মার্ট অ্যাসেসমেন্ট সার্চ লজিক ---
-const assessmentBtn = document.querySelector('.btn-gold');
-if(assessmentBtn) {
-    assessmentBtn.addEventListener('click', async () => {
+// ২. ইউনিভার্সিটি সার্চ ফিক্স (স্মার্ট অ্যাসেসমেন্ট)
+const searchBtn = document.querySelector('.btn-gold');
+if(searchBtn) {
+    searchBtn.onclick = async () => {
         const table = document.getElementById('assessmentResults');
-        table.innerHTML = `<tr><td colspan="11" style="text-align:center;">Analyzing Universities...</td></tr>`;
+        table.innerHTML = `<tr><td colspan="11" style="text-align:center;">Searching in Database...</td></tr>`;
 
         try {
-            const q = query(collection(db, "universities"));
-            const snap = await getDocs(q);
-            table.innerHTML = "";
-
+            const snap = await getDocs(collection(db, "universities"));
             if (snap.empty) {
-                table.innerHTML = `<tr><td colspan="11" style="text-align:center;">No Universities found in Database.</td></tr>`;
+                table.innerHTML = `<tr><td colspan="11" style="text-align:center;">No data in 'universities' collection! Please add some in Firestore.</td></tr>`;
                 return;
             }
-
+            table.innerHTML = "";
             snap.forEach(doc => {
                 const u = doc.data();
-                // কারেন্সি ক্যালকুলেশন (অ্যাডমিন থেকে রেট না থাকলে ডিফল্ট ১৫০ ধরা হয়েছে)
-                const rate = u.currencyRate || 150; 
-                const bdtTotal = u.tuitionFee * rate;
-                const commission = (bdtTotal * (u.partnerPercent / 100)).toFixed(0);
+                const rate = u.currencyRate || 150;
+                const bdt = u.tuitionFee * rate;
+                const comm = (bdt * (u.partnerPercent / 100)).toFixed(0);
 
                 table.innerHTML += `
                     <tr>
                         <td>${u.name}</td><td>${u.country}</td><td>${u.course}</td><td>${u.intake}</td><td>${u.duration}</td>
-                        <td>${u.tuitionFee} ${u.currency}</td><td>${u.currency}</td>
-                        <td>৳ ${parseInt(bdtTotal).toLocaleString()}</td>
-                        <td>${u.partnerPercent}%</td>
-                        <td style="color:#ffcc00; font-weight:bold;">৳ ${parseInt(commission).toLocaleString()}</td>
+                        <td>${u.tuitionFee}</td><td>${u.currency}</td><td>৳ ${parseInt(bdt).toLocaleString()}</td>
+                        <td>${u.partnerPercent}%</td><td>৳ ${parseInt(comm).toLocaleString()}</td>
                         <td><button class="btn-gold" style="padding:5px 10px; font-size:10px;" onclick="openApplyForm('${u.name}')">File Opening</button></td>
-                    </tr>
-                `;
+                    </tr>`;
             });
-        } catch (e) {
-            console.error("Search Error:", e);
-            table.innerHTML = `<tr><td colspan="11" style="text-align:center; color:red;">Database Connection Failed.</td></tr>`;
+        } catch (err) {
+            console.error("Search Error:", err);
+            table.innerHTML = `<tr><td colspan="11" style="text-align:center; color:red;">Database Error! Check Firestore.</td></tr>`;
         }
-    });
+    };
 }
 
-// --- ৩. ফাইল ওপেনিং পপআপ কন্ট্রোল ---
+// ৩. ফর্ম ওপেন
 window.openApplyForm = (uni) => {
     document.getElementById('sUni').value = uni;
     document.getElementById('studentFormModal').style.display = 'flex';
 };
 
-// --- ৪. অ্যাপ্লিকেশন সাবমিট ও পিডিএফ আপলোড লজিক ---
+// ৪. সাবমিট লজিক (PDF Upload & Save)
 const submitBtn = document.getElementById('submitAppBtn');
 if(submitBtn) {
-    submitBtn.addEventListener('click', async () => {
+    submitBtn.onclick = async () => {
         const partnerData = JSON.parse(localStorage.getItem('partnerData'));
-        
-        // ইনপুট ডেটা সংগ্রহ
-        const sName = document.getElementById('sName').value.trim();
-        const sPass = document.getElementById('sPass').value.trim();
-        const sPhone = document.getElementById('sPhone').value.trim();
+        const sName = document.getElementById('sName').value;
+        const sPass = document.getElementById('sPass').value;
         const sUni = document.getElementById('sUni').value;
-
-        const file1 = document.getElementById('fileAcad').files[0];
-        const file2 = document.getElementById('fileLang').files[0];
         const file3 = document.getElementById('filePassport').files[0];
 
-        // ভ্যালিডেশন
         if(!sName || !sPass || !file3) {
-            alert("Mandatory: Student Name, Passport No & Passport PDF required!");
+            alert("Student Name, Passport No & Passport PDF are mandatory!");
             return;
         }
 
-        submitBtn.innerText = "Uploading & Saving...";
+        submitBtn.innerText = "Processing Documents...";
         submitBtn.disabled = true;
 
         try {
-            // ফাইল আপলোড ফাংশন
-            const uploadToStorage = async (file, prefix) => {
-                if(!file) return null;
-                const fileRef = ref(storage, `applications/${sPass}/${prefix}_${Date.now()}_${file.name}`);
-                await uploadBytes(fileRef, file);
-                return getDownloadURL(fileRef);
-            };
+            // PDF আপলোড লজিক
+            const passRef = ref(storage, `applications/${sPass}/passport_${Date.now()}_${file3.name}`);
+            const uploadTask = await uploadBytes(passRef, file3);
+            const passUrl = await getDownloadURL(uploadTask.ref);
 
-            const academicUrl = await uploadToStorage(file1, 'ACAD');
-            const languageUrl = await uploadToStorage(file2, 'LANG');
-            const passportUrl = await uploadToStorage(file3, 'PASS');
-
-            // Firestore-এ অ্যাপ্লিকেশন জমা দেওয়া
+            // ডাটা সেভ
             await addDoc(collection(db, "applications"), {
                 studentName: sName,
                 passportNo: sPass,
-                contactNo: sPhone,
                 university: sUni,
                 partnerName: partnerData.name,
                 status: "Pending Compliance",
-                academicDoc: academicUrl,
-                languageDoc: languageUrl,
-                passportDoc: passportUrl,
-                createdAt: serverTimestamp(),
-                lastUpdate: new Date().toLocaleString()
+                passportDoc: passUrl,
+                createdAt: serverTimestamp()
             });
 
-            alert("Application Successful! Generating Receipt...");
-            generatePrintSlip(sName, sPass, sUni, partnerData.name);
-            location.reload(); // পেজ রিফ্রেশ করে লিস্ট আপডেট করা
-
+            alert("Submission Successful! Generating QR Slip...");
+            // স্লিপ ফাংশন কল করা যেতে পারে এখানে
+            location.reload();
         } catch (error) {
-            console.error("Submission Error:", error);
-            alert("Failed to submit application. Check internet or storage permissions.");
+            console.error("Submit Error:", error);
+            alert("Upload Failed! Make sure Storage is enabled in 'us-central'. Error: " + error.message);
             submitBtn.innerText = "Submit Application";
             submitBtn.disabled = false;
         }
-    });
+    };
 }
 
-// --- ৫. একনলেজমেন্ট স্লিপ প্রিন্ট (QR Code সহ) ---
-function generatePrintSlip(name, pass, uni, partner) {
-    const trackUrl = `https://study-abroad-crm.onrender.com/track.html?id=${pass}`;
-    const qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(trackUrl)}`;
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>Acknowledgement Slip - SCC</title>
-            <style>
-                body { font-family: 'Segoe UI', sans-serif; padding: 30px; color: #333; text-align: center; }
-                .border-box { border: 3px solid #ffcc00; padding: 20px; border-radius: 15px; }
-                .header { margin-bottom: 20px; }
-                .details { text-align: left; margin: 20px auto; max-width: 400px; line-height: 1.8; }
-                .footer-text { font-size: 12px; color: #777; margin-top: 30px; }
-                .qr-section { margin-top: 20px; }
-            </style>
-        </head>
-        <body>
-            <div class="border-box">
-                <div class="header">
-                    <img src="logo.jpeg" width="120" onerror="this.src='https://via.placeholder.com/120x50?text=SCC+LOGO'">
-                    <h1 style="color:#0b012d; margin:10px 0;">Congratulations!</h1>
-                    <p>Your Study Abroad application has been initiated.</p>
-                </div>
-                <hr>
-                <div class="details">
-                    <div><b>Student Name:</b> ${name}</div>
-                    <div><b>Passport Number:</b> ${pass}</div>
-                    <div><b>University:</b> ${uni}</div>
-                    <div><b>Applied Through:</b> ${partner}</div>
-                    <div><b>Status:</b> Pending Compliance</div>
-                </div>
-                <hr>
-                <div class="qr-section">
-                    <p><b>Scan to Track Your File Status</b></p>
-                    <img src="${qrCode}" alt="QR Code">
-                </div>
-                <div class="footer-text">
-                    This is a system generated acknowledgement slip.<br>
-                    Rights Reserved by <b>GORUN LTD.</b>
-                </div>
-            </div>
-            <script>
-                setTimeout(() => { window.print(); window.close(); }, 1000);
-            </script>
-        </body>
-        </html>
-    `);
-}
-
-// --- ৬. ট্র্যাকিং টেবিল রিড লজিক ---
+// ৫. ট্র্যাকিং ডেটা লোড
 async function loadTrackingData(pName) {
     const tbody = document.getElementById('trackingBody');
     if(!tbody) return;
-
-    try {
-        const q = query(collection(db, "applications"), where("partnerName", "==", pName));
-        const snap = await getDocs(q);
-        
-        tbody.innerHTML = "";
-        if(snap.empty) {
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#555;">No records found.</td></tr>`;
-            return;
-        }
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            tbody.innerHTML += `
-                <tr>
-                    <td>${d.studentName}</td>
-                    <td>${d.contactNo}</td>
-                    <td>${d.passportNo}</td>
-                    <td><span style="background:rgba(46,204,113,0.2); color:#2ecc71; padding:4px 8px; border-radius:5px; font-weight:bold;">${d.status}</span></td>
-                    <td>Compliance Team</td>
-                    <td><a href="${d.passportDoc}" target="_blank" style="color:#ffcc00; text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Docs</a></td>
-                    <td>${d.lastUpdate || 'Just Now'}</td>
-                </tr>
-            `;
-        });
-    } catch (e) {
-        console.error("Tracking Data Error:", e);
-    }
+    const snap = await getDocs(query(collection(db, "applications"), where("partnerName", "==", pName)));
+    tbody.innerHTML = "";
+    snap.forEach(doc => {
+        const d = doc.data();
+        tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.contactNo || '-'}</td><td>${d.passportNo}</td><td>${d.status}</td><td>Officer</td><td><a href="${d.passportDoc}" target="_blank">View</a></td><td>Recent</td></tr>`;
+    });
 }
