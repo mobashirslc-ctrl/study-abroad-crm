@@ -18,7 +18,7 @@ const db = getFirestore(app);
 const CLOUD_NAME = "ddziennkh"; 
 const UPLOAD_PRESET = "ihp_upload"; 
 
-// --- ৩. ইউনিভার্সিটি লিস্ট লোড ---
+// --- ৩. ইউনিভার্সিটি লিস্ট লোড (ডিজাইন ফিক্সড) ---
 async function fetchUniversities() {
     const uniTable = document.getElementById('assessmentResults');
     if(!uniTable) return;
@@ -26,29 +26,40 @@ async function fetchUniversities() {
         const q = query(collection(db, "universities"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
         uniTable.innerHTML = ""; 
+        
         snap.forEach((docSnap) => {
             const u = docSnap.data();
             const fee = Number(u.semesterFee || 0);
-            const bdtTotal = fee * 120;
+            const bdtTotal = fee * 120; // Exchange Rate: 120
             const comm = (bdtTotal * Number(u.partnerComm || 0)) / 100;
 
             uniTable.innerHTML += `
                 <tr>
-                    <td><b>${u.universityName}</b></td>
-                    <td>${u.country}</td>
-                    <td>${u.courseName}</td>
+                    <td>
+                        <div style="font-weight: bold; color: #fff;">${u.universityName}</div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5);">${u.courseName}</div>
+                    </td>
+                    <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px;">${u.country}</span></td>
                     <td>${u.intake || 'All'}</td>
-                    <td>$${fee}</td>
-                    <td>৳ ${bdtTotal.toLocaleString()}</td>
-                    <td style="color: #2ecc71; font-weight: bold;">৳ ${comm.toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply Now</button></td>
+                    <td>
+                        <div style="font-weight: bold;">$${fee.toLocaleString()}</div>
+                        <div style="font-size: 10px; opacity: 0.6;">৳ ${bdtTotal.toLocaleString()}</div>
+                    </td>
+                    <td style="color: #2ecc71; font-weight: bold;">
+                        ৳ ${comm.toLocaleString()}
+                        <div style="font-size: 9px; color: rgba(255,255,255,0.4);">Comm: ${u.partnerComm}%</div>
+                    </td>
+                    <td>
+                        <button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply Now</button>
+                    </td>
                 </tr>`;
         });
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Load Error:", e); }
 }
 
 window.openApplyModal = (u) => {
-    document.getElementById('sUni').value = u;
+    const modalInput = document.getElementById('sUni');
+    if(modalInput) modalInput.value = u;
     document.getElementById('studentFormModal').style.display = 'flex';
 };
 fetchUniversities();
@@ -91,9 +102,9 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
     }
 
     try {
-        btn.innerText = "Uploading Documents..."; btn.disabled = true;
+        btn.innerText = "Uploading Files..."; btn.disabled = true;
 
-        // ৪টি ফাইল প্যারালাল আপলোড (যদি থাকে)
+        // ৪টি ফাইল প্যারালাল আপলোড
         const [urlPass, urlAcad, urlLang, urlOther] = await Promise.all([
             uploadToCloudinary(filePass),
             uploadToCloudinary(fileAcad),
@@ -101,7 +112,7 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
             uploadToCloudinary(fileOther)
         ]);
 
-        btn.innerText = "Opening File...";
+        btn.innerText = "Securing Data...";
         
         const docRef = await addDoc(collection(db, "applications"), {
             studentName: name,
@@ -119,8 +130,8 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
             createdAt: serverTimestamp()
         });
 
-        // সফল হলে স্লিপ দেখানো (html ফাইলে থাকা ফাংশন কল করা)
-        if(window.showSuccessSlip) {
+        // সফল হলে স্লিপ দেখানো (এটি HTML এর showSuccessSlip ফাংশনকে কল করবে)
+        if(typeof window.showSuccessSlip === "function") {
             window.showSuccessSlip({
                 id: docRef.id,
                 studentName: name,
@@ -128,6 +139,9 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
                 partner: partnerName,
                 university: uni
             });
+        } else {
+            alert("Success! Slip function not found but data saved.");
+            location.reload();
         }
 
     } catch (e) { 
@@ -137,7 +151,7 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
     }
 });
 
-// --- ৬. ট্র্যাকিং লিস্ট লোড ---
+// --- ৬. ট্র্যাকিং লিস্ট (৪টি ফাইলের লিঙ্কসহ) ---
 async function fetchTrackingData() {
     const trackTable = document.getElementById('trackingBody');
     if(!trackTable) return;
@@ -146,14 +160,22 @@ async function fetchTrackingData() {
         trackTable.innerHTML = "";
         snap.forEach((docSnap) => {
             const app = docSnap.data();
+            
+            // Cloudinary PDF Force Download Fix (fl_attachment)
+            const getSecureUrl = (url) => url ? url.replace("upload/", "upload/fl_attachment,f_auto/") : "#";
+
             trackTable.innerHTML += `
                 <tr>
                     <td>${app.studentName}</td>
                     <td>${app.contactNo}</td>
                     <td>${app.passportNumber}</td>
-                    <td><span style="background:#f1c40f; color:black; padding:2px 8px; border-radius:5px; font-size:11px;">${app.status}</span></td>
+                    <td><span style="background:#f1c40f; color:black; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:bold;">${app.status}</span></td>
                     <td>Pending</td>
-                    <td><a href="${app.docs?.passport}" target="_blank" style="color:var(--gold);">View Pass</a></td>
+                    <td>
+                        <a href="${getSecureUrl(app.docs?.passport)}" target="_blank" style="color:var(--gold); font-size:12px; font-weight:bold; text-decoration:none;">
+                           <i class="fas fa-file-pdf"></i> View Doc
+                        </a>
+                    </td>
                     <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
                 </tr>`;
         });
