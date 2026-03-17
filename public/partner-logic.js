@@ -30,7 +30,7 @@ async function fetchUniversities() {
         snap.forEach((docSnap) => {
             const u = docSnap.data();
             const fee = Number(u.semesterFee || 0);
-            const bdtTotal = fee * 120; // Exchange Rate: 120
+            const bdtTotal = fee * 120;
             const comm = (bdtTotal * Number(u.partnerComm || 0)) / 100;
 
             uniTable.innerHTML += `
@@ -47,10 +47,9 @@ async function fetchUniversities() {
                     </td>
                     <td style="color: #2ecc71; font-weight: bold;">
                         ৳ ${comm.toLocaleString()}
-                        <div style="font-size: 9px; color: rgba(255,255,255,0.4);">Comm: ${u.partnerComm}%</div>
                     </td>
                     <td>
-                        <button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply Now</button>
+                        <button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply</button>
                     </td>
                 </tr>`;
         });
@@ -79,32 +78,29 @@ async function uploadToCloudinary(file) {
     return data.secure_url; 
 }
 
-// --- ৫. সাবমিট অ্যাপ্লিকেশন (৪টি ফাইল সহ) ---
+// --- ৫. সাবমিট অ্যাপ্লিকেশন ---
 document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitAppBtn');
     
-    // Inputs
     const name = document.getElementById('sName').value;
     const passNum = document.getElementById('sPass').value;
     const phone = document.getElementById('sPhone').value;
     const uni = document.getElementById('sUni').value;
-    const partnerName = localStorage.getItem('partnerName') || "Our Partner";
+    const partnerName = localStorage.getItem('partnerName') || "Partner";
 
-    // Files
     const filePass = document.getElementById('filePassport').files[0];
     const fileAcad = document.getElementById('fileAcademic').files[0];
     const fileLang = document.getElementById('fileLanguage').files[0];
     const fileOther = document.getElementById('fileOthers').files[0];
 
     if (!name || !passNum || !filePass || !fileAcad) {
-        return alert("Please fill Name, Passport Number and upload mandatory documents (Passport & Academic)!");
+        return alert("Mandatory: Name, Passport, and Academic Docs!");
     }
 
     try {
         btn.innerText = "Uploading Files..."; btn.disabled = true;
 
-        // ৪টি ফাইল প্যারালাল আপলোড
         const [urlPass, urlAcad, urlLang, urlOther] = await Promise.all([
             uploadToCloudinary(filePass),
             uploadToCloudinary(fileAcad),
@@ -112,8 +108,6 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
             uploadToCloudinary(fileOther)
         ]);
 
-        btn.innerText = "Securing Data...";
-        
         const docRef = await addDoc(collection(db, "applications"), {
             studentName: name,
             passportNumber: passNum,
@@ -126,12 +120,11 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
                 language: urlLang,
                 others: urlOther
             },
-            status: "Pending Compliance",
+            status: "Pending",
             createdAt: serverTimestamp()
         });
 
-        // সফল হলে স্লিপ দেখানো (এটি HTML এর showSuccessSlip ফাংশনকে কল করবে)
-        if(typeof window.showSuccessSlip === "function") {
+        if(window.showSuccessSlip) {
             window.showSuccessSlip({
                 id: docRef.id,
                 studentName: name,
@@ -139,19 +132,15 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => 
                 partner: partnerName,
                 university: uni
             });
-        } else {
-            alert("Success! Slip function not found but data saved.");
-            location.reload();
         }
-
     } catch (e) { 
         alert("Error: " + e.message); 
-        btn.innerText = "Submit Application"; 
+        btn.innerText = "Confirm & Submit"; 
         btn.disabled = false; 
     }
 });
 
-// --- ৬. ট্র্যাকিং লিস্ট (৪টি ফাইলের লিঙ্কসহ) ---
+// --- ৬. ট্র্যাকিং লিস্ট (৪টি ফাইল আইকন সিস্টেম - FIXED) ---
 async function fetchTrackingData() {
     const trackTable = document.getElementById('trackingBody');
     if(!trackTable) return;
@@ -160,23 +149,24 @@ async function fetchTrackingData() {
         trackTable.innerHTML = "";
         snap.forEach((docSnap) => {
             const app = docSnap.data();
+            const docs = app.docs || {};
             
-            // Cloudinary PDF Force Download Fix (fl_attachment)
-            const getSecureUrl = (url) => url ? url.replace("upload/", "upload/fl_attachment,f_auto/") : "#";
+            // Cloudinary PDF Attachment Fix
+            const getUrl = (url) => url ? url.replace("upload/", "upload/fl_attachment,f_auto/") : null;
 
             trackTable.innerHTML += `
                 <tr>
                     <td>${app.studentName}</td>
                     <td>${app.contactNo}</td>
                     <td>${app.passportNumber}</td>
-                    <td><span style="background:#f1c40f; color:black; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:bold;">${app.status}</span></td>
-                    <td>Pending</td>
-                    <td>
-                        <a href="${getSecureUrl(app.docs?.passport)}" target="_blank" style="color:var(--gold); font-size:12px; font-weight:bold; text-decoration:none;">
-                           <i class="fas fa-file-pdf"></i> View Doc
-                        </a>
+                    <td><span style="background:var(--gold); color:black; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:bold;">${app.status}</span></td>
+                    <td style="display: flex; gap: 10px; font-size: 16px;">
+                        ${docs.passport ? `<a href="${getUrl(docs.passport)}" target="_blank" title="Passport" style="color:var(--gold);"><i class="fas fa-id-card"></i></a>` : ''}
+                        ${docs.academic ? `<a href="${getUrl(docs.academic)}" target="_blank" title="Academic" style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i></a>` : ''}
+                        ${docs.language ? `<a href="${getUrl(docs.language)}" target="_blank" title="Language" style="color:#3498db;"><i class="fas fa-language"></i></a>` : ''}
+                        ${docs.others ? `<a href="${getUrl(docs.others)}" target="_blank" title="Others" style="color:#9b59b6;"><i class="fas fa-file-alt"></i></a>` : ''}
                     </td>
-                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
+                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Now'}</td>
                 </tr>`;
         });
     } catch (e) { console.error(e); }
