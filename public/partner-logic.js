@@ -14,17 +14,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings (Updated from your Screenshot) ---
-const CLOUD_NAME = "ddziennkh"; // আপনার স্ক্রিনশট অনুযায়ী ক্লাউড নেম
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
-const CLOUDINARY_PRESET = "upload"; // আপনার ড্যাশবোর্ডে থাকা আনসাইনড প্রিসেট নাম
+// --- Cloudinary Settings (Exact Match from your Screenshot) ---
+const CLOUD_NAME = "ddziennkh"; 
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+const CLOUDINARY_PRESET = "upload"; // আপনার স্ক্রিনশটে থাকা Unsigned প্রিসেট নাম
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
 
 if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 1. Dashboard & Wallet ---
+// --- 1. Dashboard Stats ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -88,7 +88,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Application Submission ---
+// --- 3. Application Submission (Cloudinary Fixed) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -104,7 +104,8 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
+        btn.innerText = "Uploading Files..."; 
+        btn.disabled = true;
 
         const fileInputs = [
             { id: 'filePassport', key: 'passport' },
@@ -122,8 +123,17 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
 
-                const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
-                if (!response.ok) throw new Error(`${item.key} upload failed`);
+                const response = await fetch(CLOUDINARY_URL, { 
+                    method: "POST", 
+                    body: formData 
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("Cloudinary Error Details:", errorData);
+                    throw new Error(`${item.key} upload failed: ${errorData.error.message}`);
+                }
+                
                 const data = await response.json();
                 urls[item.key] = data.secure_url;
             }
@@ -151,13 +161,15 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) {
+        console.error(e);
         alert("Upload Error: " + e.message);
     } finally {
-        btn.innerText = "Confirm & Submit"; btn.disabled = false;
+        btn.innerText = "Confirm & Submit"; 
+        btn.disabled = false;
     }
 };
 
-// --- 4. Tracking Table (Download Icons) ---
+// --- 4. Tracking Table ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
