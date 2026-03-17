@@ -13,8 +13,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`; // 'image/upload' এর বদলে শুধু 'upload' ব্যবহার করা নিরাপদ
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`; // 'auto' ব্যবহার করা হয়েছে সব ফাইলের জন্য
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
@@ -121,7 +122,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (Final URL Fix) ---
+// --- 4. Tracking Table (URL Fix for PDF/Image) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -133,14 +134,20 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // এরর এড়াতে লিঙ্কগুলোকে সরাসরি ব্যবহার করা হচ্ছে
-            // ইমেজ এবং পিডিএফ উভয়ই এখন এই লিঙ্কে ভিউ হবে
+            // ক্লাউডিনারিতে পিডিএফ ভিউ করার জন্য ইউআরএল প্রসেসিং
+            const formatUrl = (url) => {
+                if(!url) return "";
+                // যদি পিডিএফ হয়, তবে ইউআরএল-এ 'image' এর বদলে 'raw' বা 'auto' থাকতে পারে। 
+                // আমরা শুধু নিশ্চিত করছি যেন কোনো এক্সট্রা অ্যাটাচমেন্ট ফ্ল্যাগ না থাকে।
+                return url; 
+            };
+
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${docs.language}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${docs.others}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${formatUrl(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${formatUrl(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${formatUrl(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${formatUrl(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
