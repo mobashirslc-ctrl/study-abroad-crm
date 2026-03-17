@@ -38,11 +38,8 @@ async function fetchUniversities() {
                     <td>${u.country}</td>
                     <td>${u.courseName}</td>
                     <td>${u.intake || 'All'}</td>
-                    <td>${u.duration || 'N/A'}</td>
                     <td>$${fee}</td>
-                    <td>USD</td>
                     <td>৳ ${bdtTotal.toLocaleString()}</td>
-                    <td>${u.partnerComm}%</td>
                     <td style="color: #2ecc71; font-weight: bold;">৳ ${comm.toLocaleString()}</td>
                     <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply Now</button></td>
                 </tr>`;
@@ -58,10 +55,10 @@ fetchUniversities();
 
 // --- ৪. Cloudinary আপলোড ফাংশন ---
 async function uploadToCloudinary(file) {
+    if(!file) return null;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-    // 'resource_type' অটোমেটিক ইমেজ/পিডিএফ হ্যান্ডেল করবে
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { 
         method: 'POST', 
         body: formData 
@@ -71,30 +68,76 @@ async function uploadToCloudinary(file) {
     return data.secure_url; 
 }
 
-// --- ৫. সাবমিট অ্যাপ্লিকেশন ---
+// --- ৫. সাবমিট অ্যাপ্লিকেশন (৪টি ফাইল সহ) ---
 document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submitAppBtn');
-    const fileInput = document.getElementById('filePassport');
-    if (!fileInput.files[0]) return alert("Please select passport!");
+    
+    // Inputs
+    const name = document.getElementById('sName').value;
+    const passNum = document.getElementById('sPass').value;
+    const phone = document.getElementById('sPhone').value;
+    const uni = document.getElementById('sUni').value;
+    const partnerName = localStorage.getItem('partnerName') || "Our Partner";
+
+    // Files
+    const filePass = document.getElementById('filePassport').files[0];
+    const fileAcad = document.getElementById('fileAcademic').files[0];
+    const fileLang = document.getElementById('fileLanguage').files[0];
+    const fileOther = document.getElementById('fileOthers').files[0];
+
+    if (!name || !passNum || !filePass || !fileAcad) {
+        return alert("Please fill Name, Passport Number and upload mandatory documents (Passport & Academic)!");
+    }
 
     try {
-        btn.innerText = "Processing..."; btn.disabled = true;
-        const url = await uploadToCloudinary(fileInput.files[0]);
-        await addDoc(collection(db, "applications"), {
-            studentName: document.getElementById('sName').value,
-            passportNumber: document.getElementById('sPass').value,
-            contactNo: document.getElementById('sPhone').value,
-            university: document.getElementById('sUni').value,
-            passportDoc: url,
+        btn.innerText = "Uploading Documents..."; btn.disabled = true;
+
+        // ৪টি ফাইল প্যারালাল আপলোড (যদি থাকে)
+        const [urlPass, urlAcad, urlLang, urlOther] = await Promise.all([
+            uploadToCloudinary(filePass),
+            uploadToCloudinary(fileAcad),
+            uploadToCloudinary(fileLang),
+            uploadToCloudinary(fileOther)
+        ]);
+
+        btn.innerText = "Opening File...";
+        
+        const docRef = await addDoc(collection(db, "applications"), {
+            studentName: name,
+            passportNumber: passNum,
+            contactNo: phone,
+            university: uni,
+            partnerName: partnerName,
+            docs: {
+                passport: urlPass,
+                academic: urlAcad,
+                language: urlLang,
+                others: urlOther
+            },
             status: "Pending Compliance",
             createdAt: serverTimestamp()
         });
-        alert("Success!"); location.reload();
-    } catch (e) { alert(e.message); btn.innerText = "Submit"; btn.disabled = false; }
+
+        // সফল হলে স্লিপ দেখানো (html ফাইলে থাকা ফাংশন কল করা)
+        if(window.showSuccessSlip) {
+            window.showSuccessSlip({
+                id: docRef.id,
+                studentName: name,
+                passport: passNum,
+                partner: partnerName,
+                university: uni
+            });
+        }
+
+    } catch (e) { 
+        alert("Error: " + e.message); 
+        btn.innerText = "Submit Application"; 
+        btn.disabled = false; 
+    }
 });
 
-// --- ৬. ট্র্যাকিং লিস্ট (401 Error Force Bypass) ---
+// --- ৬. ট্র্যাকিং লিস্ট লোড ---
 async function fetchTrackingData() {
     const trackTable = document.getElementById('trackingBody');
     if(!trackTable) return;
@@ -103,25 +146,15 @@ async function fetchTrackingData() {
         trackTable.innerHTML = "";
         snap.forEach((docSnap) => {
             const app = docSnap.data();
-            
-            // ৪৫১ এরর এড়াতে লিঙ্কটিকে একটি ডাউনলোডযোগ্য/পাবলিক লিঙ্কে কনভার্ট করা
-            let rawUrl = app.passportDoc ? app.passportDoc.replace("http://", "https://") : "#";
-            
-            // Cloudinary transformation যোগ করা যা ফাইলটিকে 'Public' হিসেবে ফোর্স করবে
-            let finalURL = rawUrl;
-            if (rawUrl.includes("upload/")) {
-                finalURL = rawUrl.replace("upload/", "upload/fl_attachment,f_auto/");
-            }
-
             trackTable.innerHTML += `
                 <tr>
                     <td>${app.studentName}</td>
                     <td>${app.contactNo}</td>
                     <td>${app.passportNumber}</td>
-                    <td><span style="background:orange; color:black; padding:2px 8px; border-radius:5px;">${app.status}</span></td>
-                    <td>Assigned Soon</td>
-                    <td><a href="${finalURL}" target="_blank" rel="noopener noreferrer" style="color:var(--gold); font-weight:bold;">View Doc</a></td>
-                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Now'}</td>
+                    <td><span style="background:#f1c40f; color:black; padding:2px 8px; border-radius:5px; font-size:11px;">${app.status}</span></td>
+                    <td>Pending</td>
+                    <td><a href="${app.docs?.passport}" target="_blank" style="color:var(--gold);">View Pass</a></td>
+                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
                 </tr>`;
         });
     } catch (e) { console.error(e); }
