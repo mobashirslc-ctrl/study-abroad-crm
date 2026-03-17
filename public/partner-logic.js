@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// ১. Firebase Config (Admin.html theke neya)
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,179 +13,125 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ২. Cloudinary Settings (Update kora hoyeche)
 const CLOUD_NAME = "ddziennkh"; 
 const UPLOAD_PRESET = "ihp_upload"; 
 
-// --- ৩. University List Load (Smart Assessment) ---
+// --- ৩. University List ---
 async function fetchUniversities() {
     const uniTable = document.getElementById('assessmentResults');
     if(!uniTable) return;
-
     try {
         const q = query(collection(db, "universities"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
+        const snap = await getDocs(q);
         uniTable.innerHTML = ""; 
-
-        if (querySnapshot.empty) {
-            uniTable.innerHTML = "<tr><td colspan='11' style='text-align:center;'>No University found.</td></tr>";
-            return;
-        }
-
-        querySnapshot.forEach((docSnap) => {
+        snap.forEach((docSnap) => {
             const u = docSnap.data();
-            const name = u.universityName || "N/A";
-            const country = u.country || "N/A";
-            const course = u.courseName || "N/A";
-            const fee = Number(u.semesterFee || 0);
-            const comm = Number(u.partnerComm || 0);
-
-            const bdtRate = 120; 
-            const bdtTotal = fee * bdtRate;
-            const myCommission = (bdtTotal * comm) / 100;
-
-            const row = `
+            const bdtTotal = Number(u.semesterFee || 0) * 120;
+            const comm = (bdtTotal * Number(u.partnerComm || 0)) / 100;
+            uniTable.innerHTML += `
                 <tr>
-                    <td><b>${name}</b></td>
-                    <td>${country}</td>
-                    <td>${course}</td>
-                    <td>${u.intake || 'All Intake'}</td>
+                    <td><b>${u.universityName}</b></td>
+                    <td>${u.country}</td>
+                    <td>${u.courseName}</td>
+                    <td>${u.intake || 'All'}</td>
                     <td>${u.duration || 'N/A'}</td>
-                    <td>$${fee}</td>
+                    <td>$${u.semesterFee}</td>
                     <td>USD</td>
                     <td>৳ ${bdtTotal.toLocaleString()}</td>
-                    <td>${comm}%</td>
-                    <td style="color: #2ecc71; font-weight: bold;">৳ ${myCommission.toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApplyModal('${name}')">Apply Now</button></td>
-                </tr>
-            `;
-            uniTable.innerHTML += row;
+                    <td>${u.partnerComm}%</td>
+                    <td style="color: #2ecc71; font-weight: bold;">৳ ${comm.toLocaleString()}</td>
+                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply Now</button></td>
+                </tr>`;
         });
-    } catch (error) {
-        console.error("Fetch Error:", error);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// ৪. Modal Open Function
-window.openApplyModal = (uniName) => {
-    const modal = document.getElementById('studentFormModal');
-    if(modal) {
-        document.getElementById('sUni').value = uniName;
-        modal.style.display = 'flex';
-    }
+window.openApplyModal = (u) => {
+    document.getElementById('sUni').value = u;
+    document.getElementById('studentFormModal').style.display = 'flex';
 };
-
 fetchUniversities();
 
-// --- ৫. Cloudinary File Upload Function ---
+// --- ৫. Cloudinary Upload ---
 async function uploadToCloudinary(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: 'POST',
-        body: formData
+    
+    // সরাসরি HTTPS API ব্যবহার করা হচ্ছে
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { 
+        method: 'POST', 
+        body: formData 
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.error?.message || 'Cloudinary Upload Failed');
-    }
+    
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'Upload Failed');
+    
+    // Secure URL রিটার্ন করবে
     return data.secure_url; 
 }
 
-// --- ৬. Student Application Submit Logic ---
-const submitAppBtn = document.getElementById('submitAppBtn');
-if (submitAppBtn) {
-    submitAppBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
+// --- ৬. Submit Application ---
+document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitAppBtn');
+    const fileInput = document.getElementById('filePassport');
+    const partnerData = JSON.parse(localStorage.getItem('partnerData'));
 
-        const sName = document.getElementById('sName').value;
-        const sPass = document.getElementById('sPass').value;
-        const sPhone = document.getElementById('sPhone').value;
-        const sUni = document.getElementById('sUni').value;
-        const fileInput = document.getElementById('filePassport');
-        const partnerData = JSON.parse(localStorage.getItem('partnerData'));
+    if (!fileInput.files[0]) return alert("Please upload passport copy!");
 
-        if (!sName || !sPass || !fileInput.files[0]) {
-            return alert("Sob ghor puron korun ebong passport copy upload korun!");
-        }
+    try {
+        btn.innerText = "Uploading..."; btn.disabled = true;
+        const url = await uploadToCloudinary(fileInput.files[0]);
 
-        try {
-            submitAppBtn.innerText = "Uploading File...";
-            submitAppBtn.disabled = true;
+        await addDoc(collection(db, "applications"), {
+            studentName: document.getElementById('sName').value,
+            passportNumber: document.getElementById('sPass').value,
+            contactNo: document.getElementById('sPhone').value,
+            university: document.getElementById('sUni').value,
+            partnerEmail: partnerData?.email || "N/A",
+            passportDoc: url,
+            status: "Pending Compliance",
+            createdAt: serverTimestamp()
+        });
 
-            const passportURL = await uploadToCloudinary(fileInput.files[0]);
+        alert("Application Submitted!");
+        location.reload();
+    } catch (e) { 
+        alert("Error: " + e.message); 
+        btn.innerText = "Submit Application"; 
+        btn.disabled = false; 
+    }
+});
 
-            submitAppBtn.innerText = "Saving Data...";
-            await addDoc(collection(db, "applications"), {
-                studentName: sName,
-                passportNumber: sPass,
-                contactNo: sPhone,
-                university: sUni,
-                partnerName: partnerData ? (partnerData.fullName || partnerData.name) : "Unknown",
-                partnerEmail: partnerData ? partnerData.email : "N/A",
-                passportDoc: passportURL,
-                status: "Pending Compliance",
-                createdAt: serverTimestamp()
-            });
-
-            alert("Application submitted successfully!");
-            location.reload();
-
-        } catch (error) {
-            console.error("Submit Error:", error);
-            alert("Error: " + error.message);
-        } finally {
-            submitAppBtn.innerText = "Submit Application";
-            submitAppBtn.disabled = false;
-        }
-    });
-}
-
-// --- ৭. File Tracking List Load (View Doc Fix kora hoyeche) ---
+// --- ৭. Tracking List (401 Error Fix) ---
 async function fetchTrackingData() {
     const trackTable = document.getElementById('trackingBody');
     if(!trackTable) return;
-
     try {
-        const querySnapshot = await getDocs(query(collection(db, "applications"), orderBy("createdAt", "desc")));
+        const snap = await getDocs(query(collection(db, "applications"), orderBy("createdAt", "desc")));
         trackTable.innerHTML = "";
-
-        if (querySnapshot.empty) {
-            trackTable.innerHTML = "<tr><td colspan='7' style='text-align:center;'>No applications found.</td></tr>";
-            return;
-        }
-
-        querySnapshot.forEach((docSnap) => {
+        snap.forEach((docSnap) => {
             const app = docSnap.data();
             
-            // Cloudinary URL processing for direct view
-            let docLink = app.passportDoc;
-            if(docLink) {
-                docLink = docLink.replace("http://", "https://");
-            }
+            // ৪৫১ এরর এড়াতে আমরা URL টি সরাসরি ব্রাউজারে ওপেন করার জন্য প্রস্তুত করছি
+            const viewURL = app.passportDoc;
 
-            const row = `
+            trackTable.innerHTML += `
                 <tr>
                     <td>${app.studentName}</td>
-                    <td>${app.contactNo || 'N/A'}</td>
+                    <td>${app.contactNo}</td>
                     <td>${app.passportNumber}</td>
                     <td><span style="background:orange; color:black; padding:2px 8px; border-radius:5px;">${app.status}</span></td>
                     <td>Assigned Soon</td>
                     <td>
-                        <a href="${docLink}" target="_blank" rel="noopener noreferrer" style="color:var(--gold); text-decoration: underline;">
-                           <i class="fa-solid fa-file-image"></i> View Doc
+                        <a href="${viewURL}" target="_blank" rel="noopener noreferrer" style="color:var(--gold); font-weight:bold; text-decoration:underline;">
+                           View Document
                         </a>
                     </td>
-                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</td>
-                </tr>
-            `;
-            trackTable.innerHTML += row;
+                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Now'}</td>
+                </tr>`;
         });
-    } catch (err) {
-        console.error("Tracking Error:", err);
-    }
+    } catch (e) { console.error(e); }
 }
 fetchTrackingData();
