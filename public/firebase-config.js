@@ -3,18 +3,21 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+// আপনার নতুন প্রজেক্টের কনফিগারেশন
 const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52",
-    measurementId: "G-TX0NQE79MC"
+  apiKey: "AIzaSyA_lOiKJFhvY1iL1jDA1KLVD6sHDNXlo0I",
+  authDomain: "ihp-global-portal.firebaseapp.com",
+  projectId: "ihp-global-portal",
+  storageBucket: "ihp-global-portal.firebasestorage.app",
+  messagingSenderId: "623093397069",
+  appId: "1:623093397069:web:de3b3b7b1df15ad444ce04",
+  measurementId: "G-2ZZQYJ1TY6"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Export Services
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
