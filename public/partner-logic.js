@@ -178,4 +178,51 @@ function generatePrintSlip(name, pass, uni, partner) {
                 <hr>
                 <div class="qr-section">
                     <p><b>Scan to Track Your File Status</b></p>
-                    <img src="${qrCode
+                    <img src="${qrCode}" alt="QR Code">
+                </div>
+                <div class="footer-text">
+                    This is a system generated acknowledgement slip.<br>
+                    Rights Reserved by <b>GORUN LTD.</b>
+                </div>
+            </div>
+            <script>
+                setTimeout(() => { window.print(); window.close(); }, 1000);
+            </script>
+        </body>
+        </html>
+    `);
+}
+
+// --- ৬. ট্র্যাকিং টেবিল রিড লজিক ---
+async function loadTrackingData(pName) {
+    const tbody = document.getElementById('trackingBody');
+    if(!tbody) return;
+
+    try {
+        const q = query(collection(db, "applications"), where("partnerName", "==", pName));
+        const snap = await getDocs(q);
+        
+        tbody.innerHTML = "";
+        if(snap.empty) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:#555;">No records found.</td></tr>`;
+            return;
+        }
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.studentName}</td>
+                    <td>${d.contactNo}</td>
+                    <td>${d.passportNo}</td>
+                    <td><span style="background:rgba(46,204,113,0.2); color:#2ecc71; padding:4px 8px; border-radius:5px; font-weight:bold;">${d.status}</span></td>
+                    <td>Compliance Team</td>
+                    <td><a href="${d.passportDoc}" target="_blank" style="color:#ffcc00; text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> View Docs</a></td>
+                    <td>${d.lastUpdate || 'Just Now'}</td>
+                </tr>
+            `;
+        });
+    } catch (e) {
+        console.error("Tracking Data Error:", e);
+    }
+}
