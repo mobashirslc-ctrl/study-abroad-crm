@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,10 +14,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings (Exact Match from Screenshot 769.jpg) ---
+// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-const CLOUDINARY_PRESET = "ihp_upload"; // আপনার নতুন তৈরি করা Unsigned প্রিসেট
+const CLOUDINARY_PRESET = "ihp_upload"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
@@ -45,7 +46,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 2. Smart Search ---
+// --- 2. Smart Assessment Search ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -87,7 +88,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Application Submission ---
+// --- 3. Application Submission (Cloudinary) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -100,7 +101,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
 
-    if(!sName || !sPass) return alert("Required fields missing!");
+    if(!sName || !sPass) return alert("Student name and Passport are required!");
 
     try {
         btn.innerText = "Uploading Files..."; 
@@ -122,15 +123,8 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
 
-                const response = await fetch(CLOUDINARY_URL, { 
-                    method: "POST", 
-                    body: formData 
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error.message || "Upload failed");
-                }
+                const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
+                if (!response.ok) throw new Error("Upload failed");
                 
                 const data = await response.json();
                 urls[item.key] = data.secure_url;
@@ -160,42 +154,56 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) {
-        alert("Upload Error: " + e.message);
+        alert("Error: " + e.message);
     } finally {
         btn.innerText = "Confirm & Submit"; 
         btn.disabled = false;
     }
 };
 
-// --- 4. Tracking Table ---
+// --- 4. Tracking Table (Real-time Sync & JS Sort) ---
 function loadTracking() {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+    
     onSnapshot(q, (snap) => {
-        let html = "";
+        let apps = [];
         snap.forEach(doc => {
-            const d = doc.data();
-            const docs = d.docs || {};
-            const docLinks = `
-                <div style="display: flex; gap: 8px;">
-                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate"></i></a>` : ''}
-                    ${docs.language ? `<a href="${docs.language}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language"></i></a>` : ''}
-                    ${docs.others ? `<a href="${docs.others}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice"></i></a>` : ''}
-                </div>`;
-
-            html += `<tr>
-                <td>${d.studentName}</td>
-                <td>${d.passportNo}</td>
-                <td>${d.university}</td>
-                <td><span class="badge" style="background:orange; color:black;">${d.status}</span></td>
-                <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
-            </tr>`;
+            apps.push({ id: doc.id, ...doc.data() });
         });
+
+        // লেটেস্ট ফাইল উপরে দেখানোর জন্য সর্টিং
+        apps.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+        let html = "";
+        if (apps.length === 0) {
+            html = `<tr><td colspan="6" style="text-align:center; padding:20px; opacity:0.5;">No data found</td></tr>`;
+        } else {
+            apps.forEach(d => {
+                const date = d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today";
+                const docs = d.docs || {};
+                const docLinks = `
+                    <div style="display: flex; gap: 8px;">
+                        ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport"></i></a>` : ''}
+                        ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate"></i></a>` : ''}
+                        ${docs.language ? `<a href="${docs.language}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language"></i></a>` : ''}
+                        ${docs.others ? `<a href="${docs.others}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice"></i></a>` : ''}
+                    </div>`;
+
+                html += `<tr>
+                    <td><b>${d.studentName}</b></td>
+                    <td>${d.passportNo}</td>
+                    <td>${d.university}</td>
+                    <td><span class="badge" style="background:rgba(255,204,0,0.1); color:#ffcc00; border:1px solid #ffcc00;">${d.status.toUpperCase()}</span></td>
+                    <td>${docLinks}</td>
+                    <td>${date}</td>
+                </tr>`;
+            });
+        }
         document.getElementById('trackingBody').innerHTML = html;
     });
 }
 
+// Initialize Everything
 loadDashboardStats(); 
 initSearch(); 
 loadTracking();
