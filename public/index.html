@@ -75,6 +75,12 @@
                         return;
                     }
 
+                    // --- CRITICAL FIX: Save session data before redirecting ---
+                    localStorage.setItem('userEmail', user.email);
+                    localStorage.setItem('userId', user.uid);
+                    localStorage.setItem('userRole', userData.role);
+                    localStorage.setItem('partnerName', userData.fullName || 'Partner');
+
                     // Role Based Redirection
                     if (userData.role === "partner") {
                         window.location.replace("partner.html");
@@ -83,6 +89,8 @@
                     } else {
                         alert("Role not defined. Contact Admin.");
                     }
+                } else {
+                    alert("User data not found in database.");
                 }
 
             } catch (err) {
