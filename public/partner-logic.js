@@ -13,9 +13,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings (Modified for PDF Support) ---
+// --- Cloudinary Settings (Critical Fix for PDF) ---
 const CLOUD_NAME = "ddziennkh"; 
-// এন্ডপয়েন্ট 'auto' করার মাধ্যমে ইমেজ এবং পিডিএফ দুইটাই সাপোর্ট করবে
+// এখানে 'image' এর বদলে 'auto' ব্যবহার করা হয়েছে যাতে PDF এবং Image দুইটাই কাজ করে
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
@@ -83,7 +83,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (Fixed Upload) ---
+// --- 3. Submission Logic (Uploading PDF Fix) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -95,11 +95,17 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields missing!");
+    if(!sName || !sPass) return alert("Required fields!");
 
     try {
         btn.innerText = "Uploading..."; btn.disabled = true;
-        const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
+        const fileInputs = [
+            {id:'filePassport',k:'passport'}, 
+            {id:'fileAcademic',k:'academic'}, 
+            {id:'fileLanguage',k:'language'}, 
+            {id:'fileOthers',k:'others'}
+        ];
+        
         let urls = {};
         for (const item of fileInputs) {
             const file = document.getElementById(item.id).files[0];
@@ -111,24 +117,38 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
                 
+                // এখানে সরাসরি জেনারেট হওয়া secure_url সেভ করছি যাতে টাইপ এরর না হয়
                 if (data.secure_url) {
-                    // পিডিএফ এর ক্ষেত্রে ইউআরএল কিছুটা ভিন্ন হতে পারে, তাই সরাসরি সিকিউর ইউআরএল স্টোর করছি
                     urls[item.k] = data.secure_url;
                 }
             }
         }
-        const appData = { studentName: sName, passportNo: sPass, phone: document.getElementById('sPhone').value, university: document.getElementById('sUni').value, commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, partnerEmail: partnerEmail, partnerName: localStorage.getItem('partnerName'), status: 'pending', docs: urls, createdAt: serverTimestamp() };
+
+        const appData = { 
+            studentName: sName, 
+            passportNo: sPass, 
+            phone: document.getElementById('sPhone').value, 
+            university: document.getElementById('sUni').value, 
+            commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, 
+            partnerEmail: partnerEmail, 
+            partnerName: localStorage.getItem('partnerName'), 
+            status: 'pending', 
+            docs: urls, 
+            createdAt: serverTimestamp() 
+        };
+        
         const docRef = await addDoc(collection(db, "applications"), appData);
         document.getElementById('studentFormModal').style.display = 'none';
         document.getElementById('slipModal').style.display = 'flex';
         document.getElementById('slipInfo').innerText = sName + " | " + appData.university;
         document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
+
     } catch (e) { alert("Error: " + e.message); } 
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (Enhanced View Logic) ---
+// --- 4. Tracking Table (Final Fix for View Documents) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -140,20 +160,22 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // পিডিএফ ফাইল হলে ক্লাউডিনারি ইউআরএল-এ 'image' এর জায়গায় 'raw' থাকতে পারে
-            // এই ফাংশনটি ইউআরএল চেক করে সঠিক লিঙ্কে পাঠাবে
-            const getSafeUrl = (url) => {
+            // এই ফাংশনটি নিশ্চিত করবে যেন PDF ফাইলগুলো /image/ লিঙ্কে না যায়
+            const getLink = (url) => {
                 if(!url) return "#";
-                // ব্রাউজারে ভিউ করার জন্য ক্লিন ইউআরএল রিটার্ন করছে
+                // যদি লিঙ্কে /image/ থাকে এবং ফাইলটি .pdf হয়, তবে সেটি পরিবর্তন করে দিবে
+                if(url.includes(".pdf") && url.includes("/image/upload/")) {
+                    return url.replace("/image/upload/", "/files/upload/");
+                }
                 return url;
             };
 
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${getSafeUrl(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getSafeUrl(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${getSafeUrl(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${getSafeUrl(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${getLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${getLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${getLink(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${getLink(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
