@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ১. আপনার admin.html থেকে নেওয়া সঠিক Firebase Config
 const firebaseConfig = {
@@ -14,38 +14,34 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ২. Cloudinary সেটিংস
-const CLOUD_NAME = "dgq0v7zxp"; 
+// ২. Cloudinary সেটিংস (আপনার নতুন ড্যাশবোর্ড অনুযায়ী আপডেট করা)
+const CLOUD_NAME = "ddziennkh"; 
 const UPLOAD_PRESET = "ihp_upload"; 
 
-// --- ৩. ইউনিভার্সিটি লোড ফাংশন (Admin Data-র সাথে ম্যাচ করা) ---
+// --- ৩. ইউনিভার্সিটি লিস্ট লোড (Smart Assessment) ---
 async function fetchUniversities() {
     const uniTable = document.getElementById('assessmentResults');
     if(!uniTable) return;
 
     try {
-        console.log("Loading Universities...");
-        // admin.html অনুযায়ী কালেকশন 'universities'
         const q = query(collection(db, "universities"), orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         uniTable.innerHTML = ""; 
 
         if (querySnapshot.empty) {
-            uniTable.innerHTML = "<tr><td colspan='11' style='text-align:center;'>কোনো ইউনিভার্সিটি পাওয়া যায়নি। অ্যাডমিন প্যানেলে ডেটা চেক করুন।</td></tr>";
+            uniTable.innerHTML = "<tr><td colspan='11' style='text-align:center;'>No University found in database.</td></tr>";
             return;
         }
 
         querySnapshot.forEach((docSnap) => {
             const u = docSnap.data();
-            
-            // admin.html এর ফিল্ড নামের সাথে ম্যাপিং
             const name = u.universityName || "N/A";
             const country = u.country || "N/A";
             const course = u.courseName || "N/A";
             const fee = Number(u.semesterFee || 0);
             const comm = Number(u.partnerComm || 0);
 
-            const bdtRate = 120; // Admin Header অনুযায়ী
+            const bdtRate = 120; // ১ ডলার = ১২০ টাকা
             const bdtTotal = fee * bdtRate;
             const myCommission = (bdtTotal * comm) / 100;
 
@@ -68,11 +64,11 @@ async function fetchUniversities() {
         });
     } catch (error) {
         console.error("Fetch Error:", error);
-        uniTable.innerHTML = `<tr><td colspan='11' style='color:red;'>Error: ${error.message}</td></tr>`;
+        uniTable.innerHTML = `<tr><td colspan='11' style='color:red;'>Error loading data.</td></tr>`;
     }
 }
 
-// ৪. মডাল ওপেনিং ফাংশন
+// ৪. মডাল ওপেনিং লজিক
 window.openApplyModal = (uniName) => {
     const modal = document.getElementById('studentFormModal');
     if(modal) {
@@ -81,11 +77,10 @@ window.openApplyModal = (uniName) => {
     }
 };
 
-// পেজ লোড হলে ফাংশন কল
+// পেজ লোড হলে ইউনিভার্সিটি লিস্ট নিয়ে আসবে
 fetchUniversities();
 
-
-// --- ৫. ফাইল আপলোড (Cloudinary) ---
+// --- ৫. Cloudinary ফাইল আপলোড ফাংশন ---
 async function uploadToCloudinary(file) {
     const formData = new FormData();
     formData.append('file', file);
@@ -96,11 +91,12 @@ async function uploadToCloudinary(file) {
         body: formData
     });
 
-    if (!response.ok) throw new Error('Cloudinary Upload Failed');
     const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error?.message || 'Cloudinary Upload Failed');
+    }
     return data.secure_url; 
 }
-
 
 // --- ৬. অ্যাপ্লিকেশন সাবমিট লজিক ---
 const submitAppBtn = document.getElementById('submitAppBtn');
@@ -110,33 +106,37 @@ if (submitAppBtn) {
 
         const sName = document.getElementById('sName').value;
         const sPass = document.getElementById('sPass').value;
+        const sPhone = document.getElementById('sPhone').value;
         const sUni = document.getElementById('sUni').value;
         const fileInput = document.getElementById('filePassport');
         const partnerData = JSON.parse(localStorage.getItem('partnerData'));
 
         if (!sName || !sPass || !fileInput.files[0]) {
-            return alert("সবগুলো ঘর পূরণ করুন এবং পাসপোর্ট কপি সিলেক্ট করুন!");
+            return alert("অনুগ্রহ করে সব তথ্য দিন এবং পাসপোর্ট কপি আপলোড করুন!");
         }
 
         try {
-            submitAppBtn.innerText = "Uploading Documents...";
+            submitAppBtn.innerText = "Uploading File...";
             submitAppBtn.disabled = true;
 
+            // ধাপ ১: ক্লাউডিনারিতে পাসপোর্ট আপলোড
             const passportURL = await uploadToCloudinary(fileInput.files[0]);
 
-            submitAppBtn.innerText = "Saving Data...";
+            // ধাপ ২: ফায়ারবেসে তথ্য সেভ
+            submitAppBtn.innerText = "Saving Application...";
             await addDoc(collection(db, "applications"), {
                 studentName: sName,
                 passportNumber: sPass,
+                contactNo: sPhone,
                 university: sUni,
-                partnerName: partnerData ? partnerData.fullName : "Unknown Partner",
+                partnerName: partnerData ? (partnerData.fullName || partnerData.name) : "Unknown",
                 partnerEmail: partnerData ? partnerData.email : "N/A",
                 passportDoc: passportURL,
                 status: "Pending Compliance",
                 createdAt: serverTimestamp()
             });
 
-            alert("আবেদন সফলভাবে গৃহীত হয়েছে!");
+            alert("সফলভাবে আবেদন জমা হয়েছে!");
             location.reload();
 
         } catch (error) {
@@ -148,3 +148,33 @@ if (submitAppBtn) {
         }
     });
 }
+
+// --- ৭. ফাইল ট্র্যাকিং লিস্ট লোড ---
+async function fetchTrackingData() {
+    const trackTable = document.getElementById('trackingBody');
+    if(!trackTable) return;
+
+    try {
+        const querySnapshot = await getDocs(query(collection(db, "applications"), orderBy("createdAt", "desc")));
+        trackTable.innerHTML = "";
+
+        querySnapshot.forEach((docSnap) => {
+            const app = docSnap.data();
+            const row = `
+                <tr>
+                    <td>${app.studentName}</td>
+                    <td>${app.contactNo || 'N/A'}</td>
+                    <td>${app.passportNumber}</td>
+                    <td><span style="background:orange; color:black; padding:2px 8px; border-radius:5px;">${app.status}</span></td>
+                    <td>Assigned Soon</td>
+                    <td><a href="${app.passportDoc}" target="_blank" style="color:var(--gold);">View Doc</a></td>
+                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</td>
+                </tr>
+            `;
+            trackTable.innerHTML += row;
+        });
+    } catch (err) {
+        console.error("Tracking Error:", err);
+    }
+}
+fetchTrackingData();
