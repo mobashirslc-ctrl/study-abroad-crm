@@ -1,7 +1,8 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// ১. Firebase Config
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,162 +14,176 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-// ২. Cloudinary Settings
-const CLOUD_NAME = "ddziennkh"; 
-const UPLOAD_PRESET = "ihp_upload"; 
+// --- User Session ---
+const partnerEmail = localStorage.getItem('userEmail');
+const partnerId = localStorage.getItem('userId');
 
-// --- ৩. ইউনিভার্সিটি লিস্ট লোড (ডিজাইন ফিক্সড) ---
-async function fetchUniversities() {
-    const uniTable = document.getElementById('assessmentResults');
-    if(!uniTable) return;
-    try {
-        const q = query(collection(db, "universities"), orderBy("createdAt", "desc"));
-        const snap = await getDocs(q);
-        uniTable.innerHTML = ""; 
-        
-        snap.forEach((docSnap) => {
-            const u = docSnap.data();
-            const fee = Number(u.semesterFee || 0);
-            const bdtTotal = fee * 120;
-            const comm = (bdtTotal * Number(u.partnerComm || 0)) / 100;
-
-            uniTable.innerHTML += `
-                <tr>
-                    <td>
-                        <div style="font-weight: bold; color: #fff;">${u.universityName}</div>
-                        <div style="font-size: 11px; color: rgba(255,255,255,0.5);">${u.courseName}</div>
-                    </td>
-                    <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px;">${u.country}</span></td>
-                    <td>${u.intake || 'All'}</td>
-                    <td>
-                        <div style="font-weight: bold;">$${fee.toLocaleString()}</div>
-                        <div style="font-size: 10px; opacity: 0.6;">৳ ${bdtTotal.toLocaleString()}</div>
-                    </td>
-                    <td style="color: #2ecc71; font-weight: bold;">
-                        ৳ ${comm.toLocaleString()}
-                    </td>
-                    <td>
-                        <button class="btn-gold" onclick="openApplyModal('${u.universityName}')">Apply</button>
-                    </td>
-                </tr>`;
-        });
-    } catch (e) { console.error("Load Error:", e); }
+if (!partnerEmail) {
+    window.location.href = 'index.html';
 }
 
-window.openApplyModal = (u) => {
-    const modalInput = document.getElementById('sUni');
-    if(modalInput) modalInput.value = u;
-    document.getElementById('studentFormModal').style.display = 'flex';
-};
-fetchUniversities();
+// --- 1. Load Stats (Dashboard) ---
+function loadDashboardStats() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+    onSnapshot(q, (snap) => {
+        let total = snap.size;
+        let pending = 0;
+        let totalComm = 0;
 
-// --- ৪. Cloudinary আপলোড ফাংশন ---
-async function uploadToCloudinary(file) {
-    if(!file) return null;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, { 
-        method: 'POST', 
-        body: formData 
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.status === 'pending') pending++;
+            if (data.commStatus === 'paid') totalComm += (data.commission || 0);
+        });
+
+        document.getElementById('statTotalStudents').innerText = total;
+        document.getElementById('statActiveFiles').innerText = pending;
+        document.getElementById('statEarnings').innerText = "৳ " + (totalComm * 120).toLocaleString(); // USD to BDT
+        document.getElementById('walletBalance').innerText = "৳ " + (totalComm * 120).toLocaleString();
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Upload Failed');
-    return data.secure_url; 
 }
 
-// --- ৫. সাবমিট অ্যাপ্লিকেশন ---
-document.getElementById('submitAppBtn')?.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submitAppBtn');
-    
-    const name = document.getElementById('sName').value;
-    const passNum = document.getElementById('sPass').value;
-    const phone = document.getElementById('sPhone').value;
-    const uni = document.getElementById('sUni').value;
-    const partnerName = localStorage.getItem('partnerName') || "Partner";
+// --- 2. Smart Assessment (Search & Filter) ---
+function initSearch() {
+    const uniTable = document.getElementById('assessmentResults');
+    const fCountry = document.getElementById('fCountry');
+    const fDegree = document.getElementById('fDegree');
+    const fLang = document.getElementById('fLangType');
 
-    const filePass = document.getElementById('filePassport').files[0];
-    const fileAcad = document.getElementById('fileAcademic').files[0];
-    const fileLang = document.getElementById('fileLanguage').files[0];
-    const fileOther = document.getElementById('fileOthers').files[0];
+    onSnapshot(collection(db, "universities"), (snap) => {
+        const allUnis = [];
+        snap.forEach(doc => allUnis.push({ id: doc.id, ...doc.data() }));
 
-    if (!name || !passNum || !filePass || !fileAcad) {
-        return alert("Mandatory: Name, Passport, and Academic Docs!");
-    }
+        const filterData = () => {
+            const countryVal = fCountry.value.toLowerCase();
+            const degreeVal = fDegree.value;
+            const langVal = fLang.value.toLowerCase();
 
-    try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
-
-        const [urlPass, urlAcad, urlLang, urlOther] = await Promise.all([
-            uploadToCloudinary(filePass),
-            uploadToCloudinary(fileAcad),
-            uploadToCloudinary(fileLang),
-            uploadToCloudinary(fileOther)
-        ]);
-
-        const docRef = await addDoc(collection(db, "applications"), {
-            studentName: name,
-            passportNumber: passNum,
-            contactNo: phone,
-            university: uni,
-            partnerName: partnerName,
-            docs: {
-                passport: urlPass,
-                academic: urlAcad,
-                language: urlLang,
-                others: urlOther
-            },
-            status: "Pending",
-            createdAt: serverTimestamp()
-        });
-
-        if(window.showSuccessSlip) {
-            window.showSuccessSlip({
-                id: docRef.id,
-                studentName: name,
-                passport: passNum,
-                partner: partnerName,
-                university: uni
+            const filtered = allUnis.filter(u => {
+                return (u.country.toLowerCase().includes(countryVal)) &&
+                       (degreeVal === "" || u.degree === degreeVal) &&
+                       (langVal === "" || u.ieltsReq.toLowerCase().includes(langVal));
             });
-        }
-    } catch (e) { 
-        alert("Error: " + e.message); 
-        btn.innerText = "Confirm & Submit"; 
-        btn.disabled = false; 
-    }
-});
 
-// --- ৬. ট্র্যাকিং লিস্ট (৪টি ফাইল আইকন সিস্টেম - FIXED) ---
-async function fetchTrackingData() {
-    const trackTable = document.getElementById('trackingBody');
-    if(!trackTable) return;
-    try {
-        const snap = await getDocs(query(collection(db, "applications"), orderBy("createdAt", "desc")));
-        trackTable.innerHTML = "";
-        snap.forEach((docSnap) => {
-            const app = docSnap.data();
-            const docs = app.docs || {};
-            
-            // Cloudinary PDF Attachment Fix
-            const getUrl = (url) => url ? url.replace("upload/", "upload/fl_attachment,f_auto/") : null;
+            renderUnis(filtered);
+        };
 
-            trackTable.innerHTML += `
-                <tr>
-                    <td>${app.studentName}</td>
-                    <td>${app.contactNo}</td>
-                    <td>${app.passportNumber}</td>
-                    <td><span style="background:var(--gold); color:black; padding:2px 8px; border-radius:5px; font-size:11px; font-weight:bold;">${app.status}</span></td>
-                    <td style="display: flex; gap: 10px; font-size: 16px;">
-                        ${docs.passport ? `<a href="${getUrl(docs.passport)}" target="_blank" title="Passport" style="color:var(--gold);"><i class="fas fa-id-card"></i></a>` : ''}
-                        ${docs.academic ? `<a href="${getUrl(docs.academic)}" target="_blank" title="Academic" style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i></a>` : ''}
-                        ${docs.language ? `<a href="${getUrl(docs.language)}" target="_blank" title="Language" style="color:#3498db;"><i class="fas fa-language"></i></a>` : ''}
-                        ${docs.others ? `<a href="${getUrl(docs.others)}" target="_blank" title="Others" style="color:#9b59b6;"><i class="fas fa-file-alt"></i></a>` : ''}
-                    </td>
-                    <td>${app.createdAt ? new Date(app.createdAt.seconds * 1000).toLocaleDateString() : 'Now'}</td>
-                </tr>`;
-        });
-    } catch (e) { console.error(e); }
+        fCountry.oninput = filterData;
+        fDegree.onchange = filterData;
+        fLang.onchange = filterData;
+
+        filterData(); // Initial load
+    });
 }
-fetchTrackingData();
+
+function renderUnis(unis) {
+    const container = document.getElementById('assessmentResults');
+    document.getElementById('matchCount').innerText = `${unis.length} Universities Found`;
+    
+    container.innerHTML = unis.map(u => `
+        <tr>
+            <td><b>${u.universityName}</b><br><small>Rank: #${u.rank}</small></td>
+            <td>${u.country}</td>
+            <td><span class="badge">${u.degree}</span><br><small>${u.ieltsReq}</small></td>
+            <td>$${u.semesterFee}</td>
+            <td style="color:#2ecc71; font-weight:bold;">${u.partnerComm}%</td>
+            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply</button></td>
+        </tr>
+    `).join('');
+}
+
+// --- 3. Application Submission ---
+window.openApplyModal = (name, id, comm, fee) => {
+    document.getElementById('targetUni').innerText = name;
+    document.getElementById('sUni').value = name;
+    document.getElementById('studentFormModal').style.display = 'flex';
+    
+    // Store temp data for submission
+    window.currentAppData = { uniId: id, commPct: comm, fee: fee };
+};
+
+document.getElementById('submitAppBtn').onclick = async () => {
+    const btn = document.getElementById('submitAppBtn');
+    const sName = document.getElementById('sName').value;
+    const sPass = document.getElementById('sPass').value;
+    
+    if(!sName || !sPass) return alert("Please fill mandatory fields!");
+
+    try {
+        btn.innerText = "Uploading Documents...";
+        btn.disabled = true;
+
+        // File Upload Logic
+        const files = {
+            passport: document.getElementById('filePassport').files[0],
+            academic: document.getElementById('fileAcademic').files[0]
+        };
+
+        let urls = {};
+        for (let key in files) {
+            if (files[key]) {
+                const storageRef = ref(storage, `docs/${Date.now()}_${files[key].name}`);
+                const uploadSnap = await uploadBytes(storageRef, files[key]);
+                urls[key] = await getDownloadURL(uploadSnap.ref);
+            }
+        }
+
+        const appData = {
+            studentName: sName,
+            passportNo: sPass,
+            phone: document.getElementById('sPhone').value,
+            university: document.getElementById('sUni').value,
+            commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100,
+            partnerEmail: partnerEmail,
+            partnerName: localStorage.getItem('partnerName'),
+            status: 'pending',
+            docs: urls,
+            createdAt: serverTimestamp()
+        };
+
+        const docRef = await addDoc(collection(db, "applications"), appData);
+        
+        // Show Success Slip (Function in partner.html)
+        window.showSuccessSlip({
+            id: docRef.id,
+            studentName: sName,
+            university: appData.university
+        });
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    } finally {
+        btn.innerText = "Confirm & Submit";
+        btn.disabled = false;
+    }
+};
+
+// --- 4. Tracking Table ---
+function loadTracking() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
+        let html = "";
+        snap.forEach(doc => {
+            const data = doc.data();
+            const date = data.createdAt?.toDate().toLocaleDateString() || "Just now";
+            html += `
+                <tr>
+                    <td>${data.studentName}</td>
+                    <td>${data.passportNo}</td>
+                    <td>${data.university}</td>
+                    <td><span class="badge" style="background:orange; color:black;">${data.status}</span></td>
+                    <td><a href="${data.docs?.passport || '#'}" target="_blank" style="color:white;"><i class="fa-solid fa-file-pdf"></i> View</a></td>
+                    <td>${date}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('trackingBody').innerHTML = html;
+    });
+}
+
+// Initialize Everything
+loadDashboardStats();
+initSearch();
+loadTracking();
