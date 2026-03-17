@@ -14,18 +14,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings ---
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dwuced96u/image/upload";
-const CLOUDINARY_PRESET = "scc_portal"; 
+// --- Cloudinary Settings (Updated from your Screenshot) ---
+const CLOUD_NAME = "ddziennkh"; // আপনার স্ক্রিনশট অনুযায়ী ক্লাউড নেম
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+const CLOUDINARY_PRESET = "upload"; // আপনার ড্যাশবোর্ডে থাকা আনসাইনড প্রিসেট নাম
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
 
-if (!partnerEmail) { 
-    window.location.href = 'index.html'; 
-}
+if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 1. Dashboard Stats ---
+// --- 1. Dashboard & Wallet ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -37,9 +36,7 @@ function loadDashboardStats() {
                 processing++;
                 pWallet += (d.commission || 0);
             }
-            if (d.commStatus === 'paid') {
-                fWallet += (d.commission || 0);
-            }
+            if (d.commStatus === 'paid') { fWallet += (d.commission || 0); }
         });
         document.getElementById('statTotalStudents').innerText = total;
         document.getElementById('statActiveFiles').innerText = processing;
@@ -81,12 +78,12 @@ function renderUnis(unis) {
     container.innerHTML = unis.map(u => {
         const commBDT = ((u.semesterFee * u.partnerComm) / 100) * BDT_RATE;
         return `<tr>
-            <td><b>${u.universityName}</b><br><small>Rank: #${u.rank}</small></td>
+            <td><b>${u.universityName}</b></td>
             <td>${u.country}</td>
             <td><span class="badge">${u.degree}</span><br><small>${u.ieltsReq}</small></td>
             <td>$${u.semesterFee}</td>
             <td style="color:#2ecc71; font-weight:bold;">৳ ${commBDT.toLocaleString()}</td>
-            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply Now</button></td>
+            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply</button></td>
         </tr>`;
     }).join('');
 }
@@ -107,8 +104,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading Files..."; 
-        btn.disabled = true;
+        btn.innerText = "Uploading Files..."; btn.disabled = true;
 
         const fileInputs = [
             { id: 'filePassport', key: 'passport' },
@@ -126,13 +122,8 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
 
-                const response = await fetch(CLOUDINARY_URL, {
-                    method: "POST",
-                    body: formData
-                });
-                
+                const response = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 if (!response.ok) throw new Error(`${item.key} upload failed`);
-                
                 const data = await response.json();
                 urls[item.key] = data.secure_url;
             }
@@ -152,7 +143,6 @@ document.getElementById('submitAppBtn').onclick = async () => {
         };
 
         const docRef = await addDoc(collection(db, "applications"), appData);
-        
         document.getElementById('studentFormModal').style.display = 'none';
         document.getElementById('slipModal').style.display = 'flex';
         document.getElementById('slipInfo').innerText = sName + " | " + appData.university;
@@ -161,48 +151,39 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) {
-        console.error(e);
         alert("Upload Error: " + e.message);
     } finally {
-        btn.innerText = "Confirm & Submit"; 
-        btn.disabled = false;
+        btn.innerText = "Confirm & Submit"; btn.disabled = false;
     }
 };
 
-// --- 4. Tracking Table (With Download Icons) ---
+// --- 4. Tracking Table (Download Icons) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
         let html = "";
         snap.forEach(doc => {
             const d = doc.data();
-            const date = d.createdAt?.toDate().toLocaleDateString() || "Today";
-            
-            // ক্লাউডিনারি লিংক থেকে ডাউনলোড ফোর্স করার জন্য আমরা সরাসরি লিংকে ক্লিক করাবো
-            // ৪টি ডকুমেন্টের জন্য আলাদা ৪টি আইকন
             const docs = d.docs || {};
             const docLinks = `
-                <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" title="Passport" style="color: #ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" title="Academic" style="color: #3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${docs.language}" target="_blank" title="Language" style="color: #2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${docs.others}" target="_blank" title="Others" style="color: #e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
-                </div>
-            `;
+                <div style="display: flex; gap: 8px;">
+                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate"></i></a>` : ''}
+                    ${docs.language ? `<a href="${docs.language}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language"></i></a>` : ''}
+                    ${docs.others ? `<a href="${docs.others}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice"></i></a>` : ''}
+                </div>`;
 
             html += `<tr>
                 <td>${d.studentName}</td>
                 <td>${d.passportNo}</td>
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:orange; color:black;">${d.status}</span></td>
-                <td>${docLinks || '<small style="opacity:0.5;">No Docs</small>'}</td>
-                <td>${date}</td>
+                <td>${docLinks}</td>
+                <td>${d.createdAt?.toDate().toLocaleDateString() || "Today"}</td>
             </tr>`;
         });
         document.getElementById('trackingBody').innerHTML = html;
     });
 }
 
-loadDashboardStats(); 
-initSearch(); 
-loadTracking();
+loadDashboardStats(); initSearch(); loadTracking();
