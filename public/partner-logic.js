@@ -14,7 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const CLOUD_NAME = "ddziennkh"; 
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`; // 'image/upload' এর বদলে শুধু 'upload' ব্যবহার করা নিরাপদ
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
@@ -121,7 +121,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (Enhanced PDF Link Fix) ---
+// --- 4. Tracking Table (Final URL Fix) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -133,19 +133,14 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // PDF এবং Image ভিউ নিশ্চিত করার লজিক
-            const getLink = (url) => {
-                if(!url) return "";
-                // Cloudinary-তে PDF সরাসরি ভিউ করতে হলে /upload/ এর পর fl_attachment রিমুভ করতে হয়
-                return url.replace("/upload/", "/upload/fl_attachment:false/");
-            };
-
+            // এরর এড়াতে লিঙ্কগুলোকে সরাসরি ব্যবহার করা হচ্ছে
+            // ইমেজ এবং পিডিএফ উভয়ই এখন এই লিঙ্কে ভিউ হবে
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${getLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${getLink(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${getLink(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${docs.language}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${docs.others}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
