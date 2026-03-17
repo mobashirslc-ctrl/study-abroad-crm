@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,10 +13,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings (Exact Match from your Screenshot) ---
+// --- Cloudinary Settings (Exact Match from Screenshot 769.jpg) ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-const CLOUDINARY_PRESET = "upload"; // আপনার স্ক্রিনশটে থাকা Unsigned প্রিসেট নাম
+const CLOUDINARY_PRESET = "ihp_upload"; // আপনার নতুন তৈরি করা Unsigned প্রিসেট
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
@@ -53,7 +52,7 @@ function initSearch() {
         snap.forEach(doc => allUnis.push({ id: doc.id, ...doc.data() }));
 
         const filterData = () => {
-            const country = document.getElementById('fCountry').value.toLowerCase();
+            const country = (document.getElementById('fCountry').value || "").toLowerCase();
             const degree = document.getElementById('fDegree').value;
             const score = parseFloat(document.getElementById('fLangScore').value) || 0;
 
@@ -88,7 +87,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Application Submission (Cloudinary Fixed) ---
+// --- 3. Application Submission ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -130,8 +129,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Cloudinary Error Details:", errorData);
-                    throw new Error(`${item.key} upload failed: ${errorData.error.message}`);
+                    throw new Error(errorData.error.message || "Upload failed");
                 }
                 
                 const data = await response.json();
@@ -146,13 +144,14 @@ document.getElementById('submitAppBtn').onclick = async () => {
             university: document.getElementById('sUni').value,
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100,
             partnerEmail: partnerEmail,
-            partnerName: localStorage.getItem('partnerName'),
+            partnerName: localStorage.getItem('partnerName') || "Partner",
             status: 'pending',
             docs: urls,
             createdAt: serverTimestamp()
         };
 
         const docRef = await addDoc(collection(db, "applications"), appData);
+        
         document.getElementById('studentFormModal').style.display = 'none';
         document.getElementById('slipModal').style.display = 'flex';
         document.getElementById('slipInfo').innerText = sName + " | " + appData.university;
@@ -161,7 +160,6 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) {
-        console.error(e);
         alert("Upload Error: " + e.message);
     } finally {
         btn.innerText = "Confirm & Submit"; 
@@ -191,11 +189,13 @@ function loadTracking() {
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:orange; color:black;">${d.status}</span></td>
                 <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate().toLocaleDateString() || "Today"}</td>
+                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
             </tr>`;
         });
         document.getElementById('trackingBody').innerHTML = html;
     });
 }
 
-loadDashboardStats(); initSearch(); loadTracking();
+loadDashboardStats(); 
+initSearch(); 
+loadTracking();
