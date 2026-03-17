@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,14 +13,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
+
+// --- Cloudinary Settings ---
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dwuced96u/image/upload";
+const CLOUDINARY_PRESET = "scc_portal"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
 
-if (!partnerEmail) { window.location.href = 'index.html'; }
+if (!partnerEmail) { 
+    window.location.href = 'index.html'; 
+}
 
-// --- 1. Dashboard & Double Wallet ---
+// --- 1. Dashboard Stats ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -44,7 +49,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 2. Assessment Search ---
+// --- 2. Smart Search ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -86,7 +91,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Application Submission (4 Files) ---
+// --- 3. Application Submission ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -98,40 +103,73 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
+
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
-        const fileIds = ['filePassport', 'fileAcademic', 'fileLanguage', 'fileOthers'];
+        btn.innerText = "Uploading Files..."; 
+        btn.disabled = true;
+
+        const fileInputs = [
+            { id: 'filePassport', key: 'passport' },
+            { id: 'fileAcademic', key: 'academic' },
+            { id: 'fileLanguage', key: 'language' },
+            { id: 'fileOthers', key: 'others' }
+        ];
+
         let urls = {};
 
-        for (const id of fileIds) {
-            const file = document.getElementById(id).files[0];
+        for (const item of fileInputs) {
+            const file = document.getElementById(item.id).files[0];
             if (file) {
-                const storageRef = ref(storage, `apps/${Date.now()}_${file.name}`);
-                const snap = await uploadBytes(storageRef, file);
-                urls[id.replace('file', '').toLowerCase()] = await getDownloadURL(snap.ref);
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", CLOUDINARY_PRESET);
+
+                const response = await fetch(CLOUDINARY_URL, {
+                    method: "POST",
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error(`${item.key} upload failed`);
+                
+                const data = await response.json();
+                urls[item.key] = data.secure_url;
             }
         }
 
         const appData = {
-            studentName: sName, passportNo: sPass, phone: document.getElementById('sPhone').value,
+            studentName: sName,
+            passportNo: sPass,
+            phone: document.getElementById('sPhone').value,
             university: document.getElementById('sUni').value,
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100,
-            partnerEmail, partnerName: localStorage.getItem('partnerName'),
-            status: 'pending', docs: urls, createdAt: serverTimestamp()
+            partnerEmail: partnerEmail,
+            partnerName: localStorage.getItem('partnerName'),
+            status: 'pending',
+            docs: urls,
+            createdAt: serverTimestamp()
         };
 
         const docRef = await addDoc(collection(db, "applications"), appData);
+        
         document.getElementById('studentFormModal').style.display = 'none';
         document.getElementById('slipModal').style.display = 'flex';
         document.getElementById('slipInfo').innerText = sName + " | " + appData.university;
+        
+        document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
-    } catch (e) { alert(e.message); }
-    finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
+
+    } catch (e) {
+        console.error(e);
+        alert("Upload Error: " + e.message);
+    } finally {
+        btn.innerText = "Confirm & Submit"; 
+        btn.disabled = false;
+    }
 };
 
-// --- 4. Tracking with View Links ---
+// --- 4. Tracking Table (With Download Icons) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
@@ -139,15 +177,25 @@ function loadTracking() {
         snap.forEach(doc => {
             const d = doc.data();
             const date = d.createdAt?.toDate().toLocaleDateString() || "Today";
-            // ভিউ বাটন তৈরি (যদি ফাইল থাকে)
-            const viewLinks = d.docs ? Object.keys(d.docs).map(k => `<a href="${d.docs[k]}" target="_blank" style="color:var(--gold); margin-right:5px; font-size:10px;"><i class="fa-solid fa-file"></i> ${k.toUpperCase()}</a>`).join('') : 'No Files';
             
+            // ক্লাউডিনারি লিংক থেকে ডাউনলোড ফোর্স করার জন্য আমরা সরাসরি লিংকে ক্লিক করাবো
+            // ৪টি ডকুমেন্টের জন্য আলাদা ৪টি আইকন
+            const docs = d.docs || {};
+            const docLinks = `
+                <div style="display: flex; gap: 10px;">
+                    ${docs.passport ? `<a href="${docs.passport}" target="_blank" title="Passport" style="color: #ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${docs.academic}" target="_blank" title="Academic" style="color: #3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${docs.language}" target="_blank" title="Language" style="color: #2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${docs.others}" target="_blank" title="Others" style="color: #e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                </div>
+            `;
+
             html += `<tr>
                 <td>${d.studentName}</td>
                 <td>${d.passportNo}</td>
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:orange; color:black;">${d.status}</span></td>
-                <td>${viewLinks}</td>
+                <td>${docLinks || '<small style="opacity:0.5;">No Docs</small>'}</td>
                 <td>${date}</td>
             </tr>`;
         });
@@ -155,4 +203,6 @@ function loadTracking() {
     });
 }
 
-loadDashboardStats(); initSearch(); loadTracking();
+loadDashboardStats(); 
+initSearch(); 
+loadTracking();
