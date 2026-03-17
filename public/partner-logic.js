@@ -16,16 +16,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// --- User Session ---
+// --- 🛡️ User Session Protection ---
 const partnerEmail = localStorage.getItem('userEmail');
-const partnerId = localStorage.getItem('userId');
+const userRole = localStorage.getItem('userRole');
 
-if (!partnerEmail) {
-    window.location.href = 'index.html';
+// Role 'partner' ছোট হাতের কি না তা চেক করুন (Database value matching)
+if (!partnerEmail || userRole !== 'partner') {
+    console.log("No valid session found. Redirecting to login...");
+    window.location.replace('index.html');
 }
 
 // --- 1. Load Stats (Dashboard) ---
 function loadDashboardStats() {
+    if(!partnerEmail) return;
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
         let total = snap.size;
@@ -35,22 +38,29 @@ function loadDashboardStats() {
         snap.forEach(doc => {
             const data = doc.data();
             if (data.status === 'pending') pending++;
+            // Assuming commStatus might be updated by admin later
             if (data.commStatus === 'paid') totalComm += (data.commission || 0);
         });
 
-        document.getElementById('statTotalStudents').innerText = total;
-        document.getElementById('statActiveFiles').innerText = pending;
-        document.getElementById('statEarnings').innerText = "৳ " + (totalComm * 120).toLocaleString(); // USD to BDT
-        document.getElementById('walletBalance').innerText = "৳ " + (totalComm * 120).toLocaleString();
+        const statTotal = document.getElementById('statTotalStudents');
+        const statActive = document.getElementById('statActiveFiles');
+        const statEarn = document.getElementById('statEarnings');
+        const wallBal = document.getElementById('walletBalance');
+
+        if(statTotal) statTotal.innerText = total;
+        if(statActive) statActive.innerText = pending;
+        if(statEarn) statEarn.innerText = "৳ " + (totalComm * 120).toLocaleString();
+        if(wallBal) wallBal.innerText = "৳ " + (totalComm * 120).toLocaleString();
     });
 }
 
 // --- 2. Smart Assessment (Search & Filter) ---
 function initSearch() {
-    const uniTable = document.getElementById('assessmentResults');
     const fCountry = document.getElementById('fCountry');
     const fDegree = document.getElementById('fDegree');
     const fLang = document.getElementById('fLangType');
+
+    if(!fCountry) return; // Guard for other pages
 
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -62,9 +72,12 @@ function initSearch() {
             const langVal = fLang.value.toLowerCase();
 
             const filtered = allUnis.filter(u => {
-                return (u.country.toLowerCase().includes(countryVal)) &&
+                const uCountry = u.country ? u.country.toLowerCase() : "";
+                const uLang = u.ieltsReq ? u.ieltsReq.toLowerCase() : "";
+                
+                return (uCountry.includes(countryVal)) &&
                        (degreeVal === "" || u.degree === degreeVal) &&
-                       (langVal === "" || u.ieltsReq.toLowerCase().includes(langVal));
+                       (langVal === "" || uLang.includes(langVal));
             });
 
             renderUnis(filtered);
@@ -74,22 +87,25 @@ function initSearch() {
         fDegree.onchange = filterData;
         fLang.onchange = filterData;
 
-        filterData(); // Initial load
+        filterData(); 
     });
 }
 
 function renderUnis(unis) {
     const container = document.getElementById('assessmentResults');
-    document.getElementById('matchCount').innerText = `${unis.length} Universities Found`;
+    const mCount = document.getElementById('matchCount');
+    if(!container) return;
+
+    if(mCount) mCount.innerText = `${unis.length} Universities Found`;
     
     container.innerHTML = unis.map(u => `
         <tr>
-            <td><b>${u.universityName}</b><br><small>Rank: #${u.rank}</small></td>
+            <td><b>${u.universityName}</b><br><small>Rank: #${u.rank || 'N/A'}</small></td>
             <td>${u.country}</td>
-            <td><span class="badge">${u.degree}</span><br><small>${u.ieltsReq}</small></td>
-            <td>$${u.semesterFee}</td>
-            <td style="color:#2ecc71; font-weight:bold;">${u.partnerComm}%</td>
-            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply</button></td>
+            <td><span class="badge">${u.degree}</span><br><small>${u.ieltsReq || 'No Req'}</small></td>
+            <td>$${u.semesterFee || 0}</td>
+            <td style="color:#2ecc71; font-weight:bold;">${u.partnerComm || 0}%</td>
+            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm || 0}, ${u.semesterFee || 0})">Apply</button></td>
         </tr>
     `).join('');
 }
@@ -99,69 +115,71 @@ window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
     document.getElementById('studentFormModal').style.display = 'flex';
-    
-    // Store temp data for submission
     window.currentAppData = { uniId: id, commPct: comm, fee: fee };
 };
 
-document.getElementById('submitAppBtn').onclick = async () => {
-    const btn = document.getElementById('submitAppBtn');
-    const sName = document.getElementById('sName').value;
-    const sPass = document.getElementById('sPass').value;
-    
-    if(!sName || !sPass) return alert("Please fill mandatory fields!");
-
-    try {
-        btn.innerText = "Uploading Documents...";
-        btn.disabled = true;
-
-        // File Upload Logic
-        const files = {
-            passport: document.getElementById('filePassport').files[0],
-            academic: document.getElementById('fileAcademic').files[0]
-        };
-
-        let urls = {};
-        for (let key in files) {
-            if (files[key]) {
-                const storageRef = ref(storage, `docs/${Date.now()}_${files[key].name}`);
-                const uploadSnap = await uploadBytes(storageRef, files[key]);
-                urls[key] = await getDownloadURL(uploadSnap.ref);
-            }
-        }
-
-        const appData = {
-            studentName: sName,
-            passportNo: sPass,
-            phone: document.getElementById('sPhone').value,
-            university: document.getElementById('sUni').value,
-            commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100,
-            partnerEmail: partnerEmail,
-            partnerName: localStorage.getItem('partnerName'),
-            status: 'pending',
-            docs: urls,
-            createdAt: serverTimestamp()
-        };
-
-        const docRef = await addDoc(collection(db, "applications"), appData);
+const submitBtn = document.getElementById('submitAppBtn');
+if(submitBtn) {
+    submitBtn.onclick = async () => {
+        const sName = document.getElementById('sName').value;
+        const sPass = document.getElementById('sPass').value;
         
-        // Show Success Slip (Function in partner.html)
-        window.showSuccessSlip({
-            id: docRef.id,
-            studentName: sName,
-            university: appData.university
-        });
+        if(!sName || !sPass) return alert("Please fill mandatory fields!");
 
-    } catch (e) {
-        alert("Error: " + e.message);
-    } finally {
-        btn.innerText = "Confirm & Submit";
-        btn.disabled = false;
-    }
-};
+        try {
+            submitBtn.innerText = "Uploading Documents...";
+            submitBtn.disabled = true;
+
+            const files = {
+                passport: document.getElementById('filePassport').files[0],
+                academic: document.getElementById('fileAcademic').files[0]
+            };
+
+            let urls = {};
+            for (let key in files) {
+                if (files[key]) {
+                    const storageRef = ref(storage, `docs/${Date.now()}_${files[key].name}`);
+                    const uploadSnap = await uploadBytes(storageRef, files[key]);
+                    urls[key] = await getDownloadURL(uploadSnap.ref);
+                }
+            }
+
+            const appData = {
+                studentName: sName,
+                passportNo: sPass,
+                phone: document.getElementById('sPhone').value || "",
+                university: document.getElementById('sUni').value,
+                commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100,
+                partnerEmail: partnerEmail,
+                partnerName: localStorage.getItem('partnerName') || "Partner",
+                status: 'pending',
+                docs: urls,
+                createdAt: serverTimestamp()
+            };
+
+            const docRef = await addDoc(collection(db, "applications"), appData);
+            
+            window.showSuccessSlip({
+                id: docRef.id,
+                studentName: sName,
+                university: appData.university
+            });
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        } finally {
+            submitBtn.innerText = "Confirm & Submit";
+            submitBtn.disabled = false;
+        }
+    };
+}
 
 // --- 4. Tracking Table ---
 function loadTracking() {
+    if(!partnerEmail) return;
+    const trackingCont = document.getElementById('trackingBody');
+    if(!trackingCont) return;
+
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
         let html = "";
@@ -179,7 +197,7 @@ function loadTracking() {
                 </tr>
             `;
         });
-        document.getElementById('trackingBody').innerHTML = html;
+        trackingCont.innerHTML = html;
     });
 }
 
