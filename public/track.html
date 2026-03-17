@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracking - IHP CRM</title>
     <style>
-        /* ব্যাকগ্রাউন্ড কালার এবং ফন্ট */
+        /* লোগোর পার্পল কালার অনুযায়ী ব্যাকগ্রাউন্ড */
         body {
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4b0082 0%, #6a0dad 100%); /* Deep Purple Gradient */
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -21,7 +21,7 @@
 
         /* Glassmorphism Container */
         .glass-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -29,14 +29,14 @@
             padding: 40px;
             width: 90%;
             max-width: 450px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
             text-align: center;
         }
 
-        img { width: 120px; margin-bottom: 20px; filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.2)); }
+        img { width: 130px; margin-bottom: 20px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); }
         
-        h2 { margin-bottom: 10px; font-weight: 600; }
-        p { font-size: 14px; opacity: 0.9; margin-bottom: 25px; }
+        h2 { margin-bottom: 10px; font-weight: 600; letter-spacing: 1px; }
+        p { font-size: 14px; opacity: 0.8; margin-bottom: 25px; }
 
         /* Input Styles */
         .search-group { display: flex; flex-direction: column; gap: 15px; }
@@ -44,51 +44,53 @@
         input {
             padding: 15px;
             border-radius: 10px;
-            border: none;
-            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
             font-size: 16px;
             outline: none;
-            border: 1px solid rgba(255, 255, 255, 0.3);
             transition: 0.3s;
         }
-        input::placeholder { color: rgba(255, 255, 255, 0.7); }
-        input:focus { background: rgba(255, 255, 255, 0.3); border-color: #fff; }
+        input::placeholder { color: rgba(255, 255, 255, 0.6); }
+        input:focus { background: rgba(255, 255, 255, 0.2); border-color: #fff; }
 
+        /* Green Button as requested */
         button {
             padding: 15px;
             border-radius: 10px;
             border: none;
-            background: #00d2ff;
-            background: -webkit-linear-gradient(to right, #3a7bd5, #00d2ff);
-            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            background: #28a745; /* Success Green */
+            background: linear-gradient(to right, #2ecc71, #27ae60);
             color: white;
             font-weight: bold;
             font-size: 16px;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5); }
 
         /* Result Section */
         #result {
-            margin-top: 30px;
+            margin-top: 25px;
             text-align: left;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 0px; /* Hidden by default */
-            font-size: 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: 0.5s;
         }
-        .info-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
         .info-row:last-child { border-bottom: none; }
-        .label { font-weight: bold; color: #00d2ff; }
+        .label { font-weight: bold; color: #2ecc71; font-size: 13px; text-transform: uppercase; }
+        .val { font-size: 14px; text-align: right; }
 
         /* Footer */
         footer {
-            margin-top: 30px;
+            position: absolute;
+            bottom: 20px;
             font-size: 12px;
-            opacity: 0.7;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -101,7 +103,7 @@
         
         <div class="search-group">
             <input type="text" id="passportInput" placeholder="Ex: A12345678">
-            <button id="trackBtn">Track Status</button>
+            <button id="trackBtn">Track Status Now</button>
         </div>
 
         <div id="result">
