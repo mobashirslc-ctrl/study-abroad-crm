@@ -1,126 +1,90 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ১. আপনার নতুন প্রজেক্টের কনফিগ
 const firebaseConfig = {
-  apiKey: "AIzaSyA_lOiKJFhvY1iL1jDA1KLVD6sHDNXlo0I",
-  authDomain: "ihp-global-portal.firebaseapp.com",
-  projectId: "ihp-global-portal",
-  storageBucket: "ihp-global-portal.firebasestorage.app",
-  messagingSenderId: "623093397069",
-  appId: "1:623093397069:web:de3b3b7b1df15ad444ce04",
-  measurementId: "G-2ZZQYJ1TY6"
+  apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
+  authDomain: "ihp-portal-v3.firebaseapp.com",
+  projectId: "ihp-portal-v3",
+  storageBucket: "ihp-portal-v3.firebasestorage.app",
+  messagingSenderId: "481157902534",
+  appId: "1:481157902534:web:2d9784032fbf0f2f7fe7c7",
+  measurementId: "G-P9S5BHTY6F"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// ১. পেজ লোড লজিক
-document.addEventListener('DOMContentLoaded', () => {
-    const partnerData = JSON.parse(localStorage.getItem('partnerData'));
-    if (partnerData) {
-        document.getElementById('partnerNameDisplay').innerText = partnerData.name;
-        loadTrackingData(partnerData.name);
+// ২. Cloudinary সেটিংস
+const CLOUD_NAME = "dgq0v7zxp"; 
+const UPLOAD_PRESET = "ihp_upload"; 
+
+// ৩. ফাইল আপলোড ফাংশন (Cloudinary)
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error.message || 'Cloudinary Upload Failed');
     }
-});
 
-// ২. ইউনিভার্সিটি সার্চ ফিক্স (স্মার্ট অ্যাসেসমেন্ট)
-const searchBtn = document.querySelector('.btn-gold');
-if(searchBtn) {
-    searchBtn.onclick = async () => {
-        const table = document.getElementById('assessmentResults');
-        table.innerHTML = `<tr><td colspan="11" style="text-align:center;">Searching in Database...</td></tr>`;
-
-        try {
-            const snap = await getDocs(collection(db, "universities"));
-            if (snap.empty) {
-                table.innerHTML = `<tr><td colspan="11" style="text-align:center;">No data in 'universities' collection! Please add some in Firestore.</td></tr>`;
-                return;
-            }
-            table.innerHTML = "";
-            snap.forEach(doc => {
-                const u = doc.data();
-                const rate = u.currencyRate || 150;
-                const bdt = u.tuitionFee * rate;
-                const comm = (bdt * (u.partnerPercent / 100)).toFixed(0);
-
-                table.innerHTML += `
-                    <tr>
-                        <td>${u.name}</td><td>${u.country}</td><td>${u.course}</td><td>${u.intake}</td><td>${u.duration}</td>
-                        <td>${u.tuitionFee}</td><td>${u.currency}</td><td>৳ ${parseInt(bdt).toLocaleString()}</td>
-                        <td>${u.partnerPercent}%</td><td>৳ ${parseInt(comm).toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:5px 10px; font-size:10px;" onclick="openApplyForm('${u.name}')">File Opening</button></td>
-                    </tr>`;
-            });
-        } catch (err) {
-            console.error("Search Error:", err);
-            table.innerHTML = `<tr><td colspan="11" style="text-align:center; color:red;">Database Error! Check Firestore.</td></tr>`;
-        }
-    };
+    const data = await response.json();
+    return data.secure_url; 
 }
 
-// ৩. ফর্ম ওপেন
-window.openApplyForm = (uni) => {
-    document.getElementById('sUni').value = uni;
-    document.getElementById('studentFormModal').style.display = 'flex';
-};
-
-// ৪. সাবমিট লজিক (PDF Upload & Save)
-const submitBtn = document.getElementById('submitAppBtn');
-if(submitBtn) {
-    submitBtn.onclick = async () => {
-        const partnerData = JSON.parse(localStorage.getItem('partnerData'));
+// ৪. স্টুডেন্ট অ্যাপ্লিকেশন সাবমিট লজিক
+const submitAppBtn = document.getElementById('submitAppBtn');
+if (submitAppBtn) {
+    submitAppBtn.onclick = async () => {
         const sName = document.getElementById('sName').value;
         const sPass = document.getElementById('sPass').value;
         const sUni = document.getElementById('sUni').value;
-        const file3 = document.getElementById('filePassport').files[0];
+        const fileInput = document.getElementById('filePassport');
+        const partnerData = JSON.parse(localStorage.getItem('partnerData'));
 
-        if(!sName || !sPass || !file3) {
-            alert("Student Name, Passport No & Passport PDF are mandatory!");
-            return;
+        if (!sName || !sPass || !fileInput.files[0]) {
+            return alert("সবগুলো ঘর পূরণ করুন এবং ফাইল সিলেক্ট করুন!");
         }
 
-        submitBtn.innerText = "Processing Documents...";
-        submitBtn.disabled = true;
+        const file = fileInput.files[0];
 
         try {
-            // PDF আপলোড লজিক
-            const passRef = ref(storage, `applications/${sPass}/passport_${Date.now()}_${file3.name}`);
-            const uploadTask = await uploadBytes(passRef, file3);
-            const passUrl = await getDownloadURL(uploadTask.ref);
+            submitAppBtn.innerText = "ফাইল আপলোড হচ্ছে...";
+            submitAppBtn.disabled = true;
 
-            // ডাটা সেভ
+            // ধাপ ১: Cloudinary-তে পাসপোর্ট আপলোড
+            const passportURL = await uploadToCloudinary(file);
+
+            // ধাপ ২: Firestore-এ ডাটা সেভ
+            submitAppBtn.innerText = "তথ্য সেভ হচ্ছে...";
             await addDoc(collection(db, "applications"), {
                 studentName: sName,
-                passportNo: sPass,
+                passportNumber: sPass,
                 university: sUni,
-                partnerName: partnerData.name,
+                partnerName: partnerData ? partnerData.name : "Unknown Partner",
+                partnerEmail: partnerData ? partnerData.email : "N/A",
+                passportDoc: passportURL, // Cloudinary লিঙ্ক
                 status: "Pending Compliance",
-                passportDoc: passUrl,
                 createdAt: serverTimestamp()
             });
 
-            alert("Submission Successful! Generating QR Slip...");
-            // স্লিপ ফাংশন কল করা যেতে পারে এখানে
+            alert("সফলভাবে সাবমিট হয়েছে!");
             location.reload();
+
         } catch (error) {
-            console.error("Submit Error:", error);
-            alert("Upload Failed! Make sure Storage is enabled in 'us-central'. Error: " + error.message);
-            submitBtn.innerText = "Submit Application";
-            submitBtn.disabled = false;
+            console.error("Error details:", error);
+            alert("সমস্যা হয়েছে: " + error.message);
+        } finally {
+            submitAppBtn.innerText = "Submit Application";
+            submitAppBtn.disabled = false;
         }
     };
-}
-
-// ৫. ট্র্যাকিং ডেটা লোড
-async function loadTrackingData(pName) {
-    const tbody = document.getElementById('trackingBody');
-    if(!tbody) return;
-    const snap = await getDocs(query(collection(db, "applications"), where("partnerName", "==", pName)));
-    tbody.innerHTML = "";
-    snap.forEach(doc => {
-        const d = doc.data();
-        tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.contactNo || '-'}</td><td>${d.passportNo}</td><td>${d.status}</td><td>Officer</td><td><a href="${d.passportDoc}" target="_blank">View</a></td><td>Recent</td></tr>`;
-    });
 }
