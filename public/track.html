@@ -1,1 +1,32 @@
-<script type="module" src="tracking-logic.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Your Application - IHP CRM</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f4f4f4; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; }
+        img { max-width: 150px; margin-bottom: 20px; }
+        input { padding: 10px; width: 250px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #result { margin-top: 20px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="logo.jpeg" alt="IHP Logo">
+        
+        <h2>Track Your Application</h2>
+        <p>Enter your Passport Number to check status</p>
+        
+        <input type="text" id="passportInput" placeholder="Enter Passport Number">
+        <button id="trackBtn">Search</button>
+
+        <div id="result"></div>
+    </div>
+
+    <script type="module" src="tracking-logic.js"></script>
+</body>
+</html>
