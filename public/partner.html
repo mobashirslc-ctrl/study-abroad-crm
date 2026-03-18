@@ -8,85 +8,67 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #f1c40f; --bg: #0b012d; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --success: #2ecc71; --danger: #ff4757; }
-        body { margin: 0; display: flex; background: radial-gradient(circle at top right, #1a0b4d, #0b012d); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
-        
-        .sidebar { width: 80px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 1px solid var(--border); transition: 0.3s; z-index: 1000; }
+        body { margin: 0; background: radial-gradient(circle at top right, #1a0b4d, #0b012d); font-family: 'Poppins', sans-serif; color: white; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 80px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); border-right: 1px solid var(--border); transition: 0.3s; z-index: 1000; display: flex; flex-direction: column; align-items: center; padding: 20px 0; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
-        .sidebar img.logo { width: 50px; border-radius: 5px; margin-bottom: 40px; background: white; padding: 2px; }
         .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
         .nav-links li { padding: 15px 20px; cursor: pointer; color: #888; display: flex; align-items: center; gap: 15px; transition: 0.2s; border-left: 4px solid transparent; }
         .nav-links li.active { color: var(--gold); background: var(--glass); border-left-color: var(--gold); }
         .nav-links li span { display: none; white-space: nowrap; }
         .sidebar:hover .nav-links li span { display: inline; }
-
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); }
         .content-body { padding: 30px; }
-        
         .card { background: var(--glass); padding: 20px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 25px; }
-        .grid-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .grid-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
         input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 8px; width: 100%; outline: none; font-size: 12px; }
         label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; font-weight: bold; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
         th { text-align: left; color: var(--gold); font-size: 11px; text-transform: uppercase; padding: 12px; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-
         .btn-gold { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .badge { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 5px; font-size: 11px; color: var(--gold); }
-        
-        .section { display: none; }
-        .section.active { display: block; }
-        footer { text-align: center; padding: 20px; color: #555; font-size: 12px; border-top: 1px solid var(--border); margin-top: auto; }
+        .section { display: none; } .section.active { display: block; }
+        /* Modal Style */
+        #applyModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
     </style>
 </head>
 <body>
-
     <div class="sidebar">
-        <img src="logo.jpeg" class="logo">
+        <img src="logo.jpeg" style="width:50px; border-radius:5px; margin-bottom:40px;">
         <ul class="nav-links">
-            <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-gauge"></i> <span>Dashboard</span></li>
+            <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-gauge"></i> <span>Assessment</span></li>
             <li onclick="showSection('tracking', this)"><i class="fa-solid fa-list-check"></i> <span>File Tracking</span></li>
-            <li onclick="showSection('wallet', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
         </ul>
-        <div onclick="logout()" style="margin-top:auto; color:var(--danger); cursor:pointer; padding-bottom:20px; padding-left:25px;"><i class="fa-solid fa-power-off"></i></div>
+        <div onclick="localStorage.clear(); location.reload();" style="margin-top:auto; color:var(--danger); cursor:pointer; padding-bottom:20px;"><i class="fa-solid fa-power-off"></i></div>
     </div>
 
     <div class="main-container">
         <div class="top-header">
             <h3 style="margin:0; font-size:16px; color:var(--gold);">SCC PARTNER PORTAL</h3>
-            <div>Welcome, <span id="partnerDisplayName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
+            <div>Welcome, <span id="partnerDisplayName" style="color:var(--gold);">Partner</span></div>
         </div>
 
         <div class="content-body">
-            
             <div id="dashboard" class="section active">
                 <div class="card">
-                    <h4 style="margin:0 0 15px 0;"><i class="fas fa-search-plus"></i> Smart Assessment Search</h4>
+                    <h4><i class="fas fa-search-plus"></i> Smart Assessment Search</h4>
                     <div class="grid-filter">
-                        <div><label>University Name</label><input type="text" id="fName" placeholder="Search Uni..."></div>
                         <div><label>Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
-                        <div>
-                            <label>Degree Type</label>
-                            <select id="fDegree">
-                                <option value="">All</option>
-                                <option value="UG">Bachelor (UG)</option>
-                                <option value="PG">Master (PG)</option>
-                            </select>
-                        </div>
-                        <div><label>Max Fee (USD)</label><input type="number" id="fMaxFee" placeholder="Budget"></div>
+                        <div><label>Degree</label><select id="fDegree"><option value="">All</option><option value="UG">Bachelor</option><option value="PG">Master</option></select></div>
+                        <div><label>Language Score</label><input type="number" step="0.1" id="fLangScore" placeholder="e.g. 6.5"></div>
+                        <div><label>Academic GPA</label><input type="number" step="0.1" id="fGPA" placeholder="e.g. 3.0"></div>
                     </div>
                 </div>
-
                 <div class="card">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h4 style="margin:0;">Available Universities</h4>
-                        <span id="matchCount" style="font-size:11px; color:var(--gold);">0 Results</span>
+                        <h4 style="margin:0;">Eligible Results</h4>
+                        <span id="matchCount" style="font-size:11px; color:var(--gold);">0 Found</span>
                     </div>
                     <div style="overflow-x:auto;">
                         <table>
                             <thead>
-                                <tr><th>University</th><th>Country</th><th>Requirement</th><th>Fee</th><th>Comm (৳)</th><th>Action</th></tr>
+                                <tr><th>University</th><th>Country</th><th>Requirement</th><th>Fee (USD)</th><th>Comm (৳)</th><th>Action</th></tr>
                             </thead>
                             <tbody id="assessmentResults"></tbody>
                         </table>
@@ -96,24 +78,37 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h4><i class="fa-solid fa-file-lines"></i> All Processing Files</h4>
+                    <h4>File Tracking Status</h4>
                     <div style="overflow-x:auto;">
                         <table>
                             <thead>
-                                <tr><th>Student Name</th><th>University</th><th>Partner</th><th>Status</th><th>Date</th></tr>
+                                <tr><th>Student</th><th>University</th><th>Documents</th><th>Status</th><th>Date</th></tr>
                             </thead>
                             <tbody id="trackingBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div id="wallet" class="section">
-                <div class="card"><h4>Wallet Balance</h4><h2 style="color:var(--success);">৳ 0.00</h2></div>
-            </div>
-
         </div>
-        <footer>&copy; 2026 <b>GORUN LTD.</b> All Rights Reserved</footer>
+    </div>
+
+    <div id="applyModal">
+        <div class="card" style="width:90%; max-width:550px; background:#1a0b4d; border:1px solid var(--gold);">
+            <h3 style="color:var(--gold); margin-top:0;">Apply for <span id="targetUni">...</span></h3>
+            <div class="grid-filter" style="grid-template-columns: 1fr 1fr; margin-bottom:15px;">
+                <div><label>Student Name</label><input type="text" id="sName"></div>
+                <div><label>Passport No</label><input type="text" id="sPass"></div>
+            </div>
+            <label>Upload PDFs (Max 2MB each)</label>
+            <div class="grid-filter" style="grid-template-columns: 1fr 1fr;">
+                <input type="file" id="pdf1"> <input type="file" id="pdf2">
+                <input type="file" id="pdf3"> <input type="file" id="pdf4">
+            </div>
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button class="btn-gold" id="finalSubmitBtn" style="flex:2;">Confirm Submission</button>
+                <button onclick="document.getElementById('applyModal').style.display='none'" style="flex:1; background:var(--danger); border:none; color:white; border-radius:8px; cursor:pointer;">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -123,7 +118,6 @@
             document.getElementById(id).classList.add('active');
             if(el) el.classList.add('active');
         }
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
     </script>
     <script type="module" src="partner-logic.js"></script>
 </body>
