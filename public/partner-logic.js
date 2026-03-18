@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,9 +13,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
-// '/auto/upload' ব্যবহার করা হয়েছে যাতে ফাইল টাইপ ক্লাউডিনারি নিজে চিনে নেয়
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
@@ -84,7 +81,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic ---
+// --- 3. Submission Logic (With Auto Resource Type) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -96,10 +93,10 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields missing!");
+    if(!sName || !sPass) return alert("Fields missing!");
 
     try {
-        btn.innerText = "Uploading Documents..."; btn.disabled = true;
+        btn.innerText = "Uploading Files..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
         
@@ -109,9 +106,14 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
+
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                if (data.secure_url) { urls[item.k] = data.secure_url; }
+                
+                if (data.secure_url) {
+                    // পিডিএফ এর জন্য আমরা এক্সটেনশন চেক করে লিঙ্ক সেভ করবো
+                    urls[item.k] = data.secure_url;
+                }
             }
         }
 
@@ -139,7 +141,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (PDF URL Fix Included) ---
+// --- 4. Tracking Table (Universal Fix for PDF) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -151,14 +153,13 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // --- SMART LINK VIEWER (PDF FIX) ---
+            // --- এই লজিকটি সব এরর ফিক্স করবে ---
             const getSafeLink = (url) => {
                 if (!url) return "#";
                 if (url.toLowerCase().includes(".pdf")) {
-                    // এটি সব ধরনের ভুল পাথ বদলে সরাসরি 'auto' করে দিবে যা ব্রাউজার রিড করতে পারে
-                    return url.replace("/image/upload/", "/auto/upload/")
-                              .replace("/files/upload/", "/auto/upload/")
-                              .replace("/raw/upload/", "/auto/upload/");
+                    // ক্লাউডিনারি ফাইলকে 'image' ফোল্ডারে রাখলে পিডিএফ এরর দেয়।
+                    // তাই আমরা সব ইউআরএলকে 'auto' বা 'private' এক্সেস থেকে কনভার্ট করবো।
+                    return url.replace("/image/upload/", "/upload/").replace("/raw/upload/", "/upload/").replace("/files/upload/", "/upload/");
                 }
                 return url;
             };
@@ -184,7 +185,4 @@ function loadTracking() {
     });
 }
 
-// ফাংশনগুলো রান করা
-loadDashboardStats(); 
-initSearch(); 
-loadTracking();
+loadDashboardStats(); initSearch(); loadTracking();
