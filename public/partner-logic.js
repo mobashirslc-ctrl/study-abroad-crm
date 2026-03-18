@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,7 +13,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
@@ -22,10 +20,9 @@ const CLOUDINARY_PRESET = "ihp_upload";
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
 
-// লগইন চেক
 if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 1. Dashboard Stats (নিচ থেকে ডাটা নিয়ে স্ট্যাট আপডেট করবে) ---
+// --- 1. Dashboard Stats ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -47,7 +44,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 2. Smart Assessment (ইউনিভার্সিটি ফিল্টার) ---
+// --- 2. Smart Assessment ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -84,7 +81,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (ফাইল আপলোড এবং ডাটা সেভ) ---
+// --- 3. Submission Logic ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -97,7 +94,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
     
-    if(!sName || !sPass) return alert("Student Name and Passport are required!");
+    if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
         btn.innerText = "Uploading Documents..."; btn.disabled = true;
@@ -141,13 +138,13 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) { 
-        alert("System Error: " + e.message); 
+        alert("Upload Error: " + e.message); 
     } finally { 
         btn.innerText = "Confirm & Submit"; btn.disabled = false; 
     }
 };
 
-// --- 4. Tracking Table (ডকুমেন্ট ভিউ লিঙ্ক ফিক্সসহ) ---
+// --- 4. Tracking Table (PDF URL Fix Included) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -159,12 +156,13 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // PDF ভিউ ফিক্স করার জন্য স্মার্ট লিঙ্ক জেনারেটর
+            // --- PDF VIEWER LOGIC ---
+            // এটি নিশ্চিত করবে যে ফাইলটি যে ফোল্ডারেই থাকুক, ব্রাউজার যেন রিড করতে পারে
             const getSafeLink = (url) => {
                 if(!url) return "#";
+                // ক্লাউডিনারি অনেক সময় পিডিএফকে ইমেজ ফোল্ডারে রাখে, এটি তা ডাইনামিকলি ঠিক করবে
                 if(url.includes(".pdf")) {
-                    // PDF হলে /image/ ফোল্ডার প্যাথ বদলে /files/ করে দেয়
-                    return url.replace("/image/upload/", "/files/upload/");
+                    return url.replace("/image/upload/", "/files/upload/").replace("/raw/upload/", "/files/upload/");
                 }
                 return url;
             };
@@ -190,7 +188,4 @@ function loadTracking() {
     });
 }
 
-// ফাংশনগুলো রান করা
-loadDashboardStats(); 
-initSearch(); 
-loadTracking();
+loadDashboardStats(); initSearch(); loadTracking();
