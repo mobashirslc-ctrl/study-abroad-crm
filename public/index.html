@@ -2,80 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login & Register | Georun Ltd.</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Georun Ltd. | Portal</title>
     <style>
-        :root { --purple-deep: #0b012d; --purple-light: #1a0b4d; --gold: #ffcc00; --glass: rgba(255, 255, 255, 0.08); }
-        body { margin: 0; font-family: 'Poppins', sans-serif; background: radial-gradient(circle at top right, var(--purple-light), var(--purple-deep)); height: 100vh; display: flex; align-items: center; justify-content: center; color: white; overflow: hidden; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 30px; width: 100%; max-width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: var(--gold); margin-bottom: 30px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box; }
-        .btn-main { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--gold); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .toggle-link { text-align: center; margin-top: 20px; font-size: 14px; cursor: pointer; color: var(--gold); }
-        .dynamic-fields { display: none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+        /* Apnar Glassmorphism CSS eikhane thakbe */
+        body { background: #0b012d; color: white; font-family: sans-serif; }
+        .glass-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; width: 400px; margin: 100px auto; }
+        .reg-input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
     <div class="glass-card">
-        <div id="loginSection">
-            <h2><i class="fas fa-lock"></i> Login</h2>
-            <div class="form-group"><input type="email" id="loginEmail" placeholder="Email Address"></div>
-            <div class="form-group"><input type="password" id="loginPass" placeholder="Password"></div>
-            <button class="btn-main" id="loginBtn">Access Dashboard</button>
-            <p class="toggle-link" onclick="toggleForms('register')">Don't have an account? Register Now</p>
-        </div>
+        <h2 id="formTitle">Registration</h2>
+        
+        <label>I am a:</label>
+        <select id="userRole" onchange="switchFields()" class="reg-input">
+            <option value="">Select Role</option>
+            <option value="partner">Partner</option>
+            <option value="compliance">Compliance</option>
+        </select>
 
-        <div id="registerSection" style="display: none;">
-            <h2><i class="fas fa-user-plus"></i> Registration</h2>
-            <div class="form-group">
-                <label>Register As</label>
-                <select id="userRole" onchange="handleRoleChange()">
-                    <option value="">Select Role</option>
-                    <option value="Partner">Partner</option>
-                    <option value="Compliance">Compliance Staff</option>
-                </select>
+        <form id="mainForm">
+            <input type="email" placeholder="Email" class="reg-input" required>
+            <input type="password" placeholder="Password" class="reg-input" required>
+
+            <div id="partnerFields" class="hidden">
+                <input type="text" placeholder="Agency Name" class="reg-input">
+                <input type="text" placeholder="Authorized Person" class="reg-input">
+                <label>Trade License (PDF)</label>
+                <input type="file" class="reg-input">
             </div>
 
-            <div class="form-group"><input type="email" id="regEmail" placeholder="Login Email"></div>
-            <div class="form-group"><input type="password" id="regPass" placeholder="Set Password"></div>
-
-            <div id="partnerFields" class="dynamic-fields">
-                <input type="text" id="pAgency" placeholder="Agency Name" class="form-group">
-                <input type="text" id="pPerson" placeholder="Authorized Person Name" class="form-group">
-                <input type="text" id="pContact" placeholder="Contact Number" class="form-group">
-                <input type="text" id="pAddress" placeholder="Address" class="form-group">
-                <label>Trade License (PDF)</label><input type="file" id="pTrade" class="form-group">
-                <label>NID Copy (PDF)</label><input type="file" id="pNid" class="form-group">
-                <input type="text" id="pService" placeholder="Service Countries (e.g. UK, USA)">
+            <div id="complianceFields" class="hidden">
+                <input type="text" placeholder="Employee Name" class="reg-input">
+                <input type="text" placeholder="Experience Duration" class="reg-input">
             </div>
 
-            <div id="complianceFields" class="dynamic-fields">
-                <input type="text" id="cName" placeholder="Employee Name" class="form-group">
-                <input type="text" id="cContact" placeholder="Contact Number" class="form-group">
-                <input type="text" id="cOrg" placeholder="Organisation Name" class="form-group">
-                <input type="text" id="cExp" placeholder="Experience Duration" class="form-group">
-                <input type="text" id="cService" placeholder="Assigned Countries">
-            </div>
-
-            <button class="btn-main" id="regBtn">Submit Request</button>
-            <p class="toggle-link" onclick="toggleForms('login')">Already have an account? Login</p>
-        </div>
+            <button type="submit" style="width:100%; padding:10px; background:#ffcc00; border:none; border-radius:5px; font-weight:bold;">SUBMIT</button>
+        </form>
     </div>
 
-    <script type="module" src="auth.js"></script>
     <script>
-        function toggleForms(type) {
-            document.getElementById('loginSection').style.display = type === 'login' ? 'block' : 'none';
-            document.getElementById('registerSection').style.display = type === 'register' ? 'block' : 'none';
-        }
-        function handleRoleChange() {
+        // Dynamic Fields Switcher Logic
+        function switchFields() {
             const role = document.getElementById('userRole').value;
-            document.getElementById('partnerFields').style.display = role === 'Partner' ? 'block' : 'none';
-            document.getElementById('complianceFields').style.display = role === 'Compliance' ? 'block' : 'none';
+            const pFields = document.getElementById('partnerFields');
+            const cFields = document.getElementById('complianceFields');
+
+            if (role === 'partner') {
+                pFields.classList.remove('hidden');
+                cFields.classList.add('hidden');
+            } else if (role === 'compliance') {
+                cFields.classList.remove('hidden');
+                pFields.classList.add('hidden');
+            } else {
+                pFields.classList.add('hidden');
+                cFields.classList.add('hidden');
+            }
         }
     </script>
 </body>
