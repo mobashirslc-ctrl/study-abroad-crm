@@ -50,7 +50,6 @@ function initAssessment() {
         allUnis = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         runFilter();
     });
-
     ['fCountry', 'fDegree', 'fLangType', 'fGPA', 'fLang'].forEach(id => {
         document.getElementById(id).addEventListener('input', runFilter);
     });
@@ -95,15 +94,16 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Fill student details!");
+    const sContact = document.getElementById('sContact').value;
+    if(!sName || !sPass || !sContact) return alert("Fill all student details!");
 
     btn.innerText = "Uploading Files...";
     btn.disabled = true;
 
     try {
-        const files = ['pdfAcademic', 'pdfPassport', 'pdfLanguage', 'pdfOthers'];
+        const fileIds = ['pdfAcademic', 'pdfPassport', 'pdfLanguage', 'pdfOthers'];
         let urls = {};
-        for(let id of files) {
+        for(let id of fileIds) {
             const file = document.getElementById(id).files[0];
             if(file) {
                 const fd = new FormData();
@@ -117,6 +117,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
 
         await addDoc(collection(db, "applications"), {
             studentName: sName,
+            contactNo: sContact,
             passportNo: sPass,
             university: window.currentApp.name,
             commission: window.currentApp.commission,
@@ -126,35 +127,47 @@ document.getElementById('submitAppBtn').onclick = async () => {
             docs: urls,
             createdAt: serverTimestamp()
         });
-
         alert("Application Submitted!");
         location.reload();
-    } catch (e) { alert("Error!"); btn.disabled = false; }
+    } catch (e) { alert("Upload Failed!"); btn.disabled = false; }
 };
 
-// --- ৪. আর্নিং ও ট্র্যাকিং ---
+// --- ৪. ট্র্যাকিং ও আর্নিং সামারি লজিক ---
 function initTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
         const tbody = document.getElementById('trackingList');
-        let pTotal = 0; let fTotal = 0;
+        let current = 0, success = 0, reject = 0, totalEarned = 0, finalBalance = 0;
+        
         tbody.innerHTML = "";
         snap.forEach(doc => {
             const d = doc.data();
-            if(d.status === 'pending') pTotal += d.commission;
-            if(d.status === 'approved') fTotal += d.commission;
+            if(d.status === 'pending' || d.status === 'processing') current++;
+            else if(d.status === 'approved') {
+                success++;
+                totalEarned += d.commission;
+                finalBalance += d.commission;
+            } else if(d.status === 'rejected') reject++;
+
+            const viewLink = d.docs?.pdfAcademic ? `<a href="${d.docs.pdfAcademic}" target="_blank" style="color:var(--gold)">View PDF</a>` : 'No Doc';
+            const dateStr = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString() : '...';
 
             tbody.innerHTML += `<tr>
-                <td>${d.studentName}</td>
+                <td><b>${d.studentName}</b></td>
+                <td>${d.contactNo || 'N/A'}</td>
                 <td>${d.passportNo}</td>
-                <td>${d.university}</td>
-                <td><span style="color:var(--gold)">${d.status.toUpperCase()}</span></td>
-                <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : ''}</td>
+                <td style="color:var(--gold)">${d.status.toUpperCase()}</td>
+                <td>${d.complianceStaff || 'Waiting'}</td>
+                <td>${viewLink}</td>
+                <td>${dateStr}</td>
             </tr>`;
         });
-        document.getElementById('pendingEarn').innerText = `৳ ${pTotal.toLocaleString()}`;
-        document.getElementById('finalEarn').innerText = `৳ ${fTotal.toLocaleString()}`;
-        if(fTotal > 0) document.getElementById('withdrawBtn').disabled = false;
+
+        document.getElementById('statCurrent').innerText = current;
+        document.getElementById('statSuccess').innerText = success;
+        document.getElementById('statEarn').innerText = `৳ ${totalEarned.toLocaleString()}`;
+        document.getElementById('statReject').innerText = reject;
+        if(finalBalance > 0) document.getElementById('withdrawBtn').disabled = false;
     });
 }
 
