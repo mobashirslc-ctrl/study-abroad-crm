@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- 1. Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,20 +13,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- 2. State & Auth Check ---
 const BDT_RATE = 120;
 const partnerEmail = localStorage.getItem('userEmail');
 const partnerRealName = localStorage.getItem('partnerName') || "Partner";
 
+// 1. User Authentication & Name Display
 if (!partnerEmail) { 
     window.location.href = 'index.html'; 
 } else {
-    // ইউজারের আসল নাম ডিসপ্লে করা
     const nameDisplay = document.getElementById('partnerDisplayName');
     if(nameDisplay) nameDisplay.innerText = partnerRealName;
 }
 
-// --- 3. Wallet Logic (Compliance Verified Only) ---
+// 2. Wallet & Stats Logic (Compliance Verified Only)
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -35,15 +33,13 @@ function loadDashboardStats() {
         snap.forEach(doc => {
             const d = doc.data();
             total++;
-            // শুধুমাত্র Compliance ডিপার্টমেন্ট 'verified' করলেই পেন্ডিং ওয়ালেটে টাকা আসবে
+            // Compliance verified করলেই পেন্ডিং ওয়ালেটে আসবে
             if (d.status === 'verified' || d.status === 'processing') {
                 processing++;
                 pWallet += (d.commission || 0);
             }
-            // অ্যাডমিন পেমেন্ট করলে ফাইনাল ওয়ালেটে আসবে
-            if (d.commStatus === 'paid') { 
-                fWallet += (d.commission || 0); 
-            }
+            // Admin ফাইনাল পেমেন্ট এনশিওর করলে
+            if (d.commStatus === 'paid') { fWallet += (d.commission || 0); }
         });
         document.getElementById('statTotalStudents').innerText = total;
         document.getElementById('statActiveFiles').innerText = processing;
@@ -53,7 +49,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 4. Advanced Assessment Search ---
+// 3. Smart Assessment Search Logic
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -67,28 +63,25 @@ function initSearch() {
             const academicScore = parseFloat(document.getElementById('fAcademicScore').value) || 0;
 
             const filtered = allUnis.filter(u => {
-                const dbLangScore = parseFloat(u.ieltsReq) || 0;
+                const dbLangReq = parseFloat(u.ieltsReq) || 0;
                 const dbGpaReq = parseFloat(u.gpaReq) || 0;
 
-                const matchCountry = u.country.toLowerCase().includes(country);
-                const matchDegree = (degree === "" || u.degree === degree);
-                const matchLangType = (langType === "" || u.langType === langType);
-                const matchLangScore = (langScore === 0 || langScore >= dbLangScore);
-                const matchAcademic = (academicScore === 0 || academicScore >= dbGpaReq);
-
-                return matchCountry && matchDegree && matchLangType && matchLangScore && matchAcademic;
+                return (u.country.toLowerCase().includes(country)) && 
+                       (degree === "" || u.degree === degree) && 
+                       (langType === "" || u.langType === langType) &&
+                       (langScore === 0 || langScore >= dbLangReq) &&
+                       (academicScore === 0 || academicScore >= dbGpaReq);
             });
             renderUnis(filtered);
             document.getElementById('matchCount').innerText = `${filtered.length} Universities Found`;
         };
 
-        // সব ইনপুট ফিল্ডে লিসেনার অ্যাড করা
         ['fCountry', 'fDegree', 'fLangType', 'fLangScore', 'fAcademicScore'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.addEventListener('input', performSearch);
         });
 
-        performSearch(); // Initial load
+        performSearch();
     });
 }
 
@@ -102,7 +95,7 @@ function renderUnis(unis) {
         <tr>
             <td>
                 <b style="color:var(--gold);">${u.universityName}</b><br>
-                <small style="opacity:0.6;">Intake: ${u.intake || 'Sep / Jan'}</small>
+                <small style="opacity:0.6;">Intake: ${u.intake || 'N/A'}</small>
             </td>
             <td>${u.country}</td>
             <td>
@@ -111,20 +104,17 @@ function renderUnis(unis) {
             </td>
             <td>
                 ${u.currency || '$'}${u.semesterFee.toLocaleString()}<br>
-                <small style="color:var(--success);">Scholarship: ${u.scholarship || 'Available'}</small>
+                <small style="color:var(--success);">Scholarship: ${u.scholarship || 'Up to 30%'}</small>
             </td>
-            <td style="color:var(--success); font-weight:bold;">
-                ৳ ${commBDT.toLocaleString()}<br>
-                <small style="color:#aaa; font-weight:normal;">(${u.partnerComm}%)</small>
-            </td>
+            <td style="color:var(--success); font-weight:bold;">৳ ${commBDT.toLocaleString()}</td>
             <td>
-                <button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply Now</button>
+                <button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply</button>
             </td>
         </tr>`;
     }).join('');
 }
 
-// --- 5. Application Submission ---
+// 4. Submission Logic
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -143,10 +133,9 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Processing Documents..."; btn.disabled = true;
+        btn.innerText = "Processing..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
-        
         for (const item of fileInputs) {
             const file = document.getElementById(item.id).files[0];
             if (file) {
@@ -155,64 +144,43 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 formData.append("upload_preset", CLOUDINARY_PRESET);
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                if (data.secure_url) { urls[item.k] = data.secure_url; }
+                if (data.secure_url) urls[item.k] = data.secure_url;
             }
         }
 
         const appData = { 
-            studentName: sName, 
-            passportNo: sPass, 
-            phone: document.getElementById('sPhone').value, 
+            studentName: sName, passportNo: sPass, phone: document.getElementById('sPhone').value, 
             university: document.getElementById('sUni').value, 
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, 
-            partnerEmail: partnerEmail, 
-            partnerName: partnerRealName, 
-            status: 'pending', // সাবমিট করলে পেন্ডিং থাকবে
-            docs: urls, 
-            createdAt: serverTimestamp() 
+            partnerEmail: partnerEmail, partnerName: partnerRealName, status: 'pending', 
+            docs: urls, createdAt: serverTimestamp() 
         };
         
-        const docRef = await addDoc(collection(db, "applications"), appData);
-        document.getElementById('studentFormModal').style.display = 'none';
-        document.getElementById('slipModal').style.display = 'flex';
-        document.getElementById('slipInfo').innerText = sName + " | " + appData.university;
-        document.getElementById("qrcode").innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
-
-    } catch (e) { alert("Error: " + e.message); } 
+        await addDoc(collection(db, "applications"), appData);
+        alert("Success!"); location.reload();
+    } catch (e) { alert(e.message); } 
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 6. File Tracking ---
+// 5. Tracking Logic
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
-        let apps = [];
-        snap.forEach(doc => { apps.push({ id: doc.id, ...doc.data() }); });
-        apps.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
         let html = "";
-        apps.forEach(d => {
+        snap.forEach(doc => {
+            const d = doc.data();
             const docs = d.docs || {};
             const getSafeLink = (url) => url ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true` : "#";
-
-            const docLinks = `
-                <div style="display: flex; gap: 8px;">
-                    ${docs.passport ? `<a href="${getSafeLink(docs.passport)}" target="_blank" style="color:var(--gold);"><i class="fa-solid fa-file-pdf"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getSafeLink(docs.academic)}" target="_blank" style="color:var(--blue);"><i class="fa-solid fa-graduation-cap"></i></a>` : ''}
-                </div>`;
-
             html += `<tr>
                 <td><b>${d.studentName}</b></td>
                 <td>${d.university}</td>
-                <td><span class="badge" style="color:${d.status === 'verified' ? 'var(--success)' : 'var(--gold)'};">${d.status.toUpperCase()}</span></td>
-                <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
+                <td><span class="badge" style="color:var(--gold);">${d.status.toUpperCase()}</span></td>
+                <td><a href="${getSafeLink(docs.passport)}" target="_blank" style="color:var(--gold);"><i class="fa-solid fa-file-pdf"></i></a></td>
+                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "..."}</td>
             </tr>`;
         });
-        document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="5" style="text-align:center;">No data found.</td></tr>`;
+        document.getElementById('trackingBody').innerHTML = html;
     });
 }
 
-// Start everything
 loadDashboardStats(); initSearch(); loadTracking();
