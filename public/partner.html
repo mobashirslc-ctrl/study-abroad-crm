@@ -75,8 +75,17 @@
                 <div class="card">
                     <div class="filter-grid">
                         <input type="text" id="fCountry" placeholder="Country">
-                        <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
-                        <select id="fLangType"><option value="">Lang Test</option><option value="IELTS">IELTS</option><option value="Duolingo">Duolingo</option><option value="MOI">MOI</option></select>
+                        <select id="fDegree">
+                            <option value="">Degree</option>
+                            <option value="Bachelor">Bachelor</option>
+                            <option value="Master">Master</option>
+                        </select>
+                        <select id="fLangType">
+                            <option value="">Language Test</option>
+                            <option value="IELTS">IELTS</option>
+                            <option value="Duolingo">Duolingo</option>
+                            <option value="MOI">MOI</option>
+                        </select>
                         <input type="number" id="fGPA" placeholder="Min GPA">
                         <input type="number" id="fLang" placeholder="Min Score">
                     </div>
@@ -90,7 +99,7 @@
             <div id="tracking" class="section">
                 <div class="card">
                     <h3>Application Tracking</h3>
-                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Doc View</th><th>Date</th></tr></thead><tbody id="trackingList"></tbody></table></div>
+                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Document</th><th>Date</th></tr></thead><tbody id="trackingList"></tbody></table></div>
                 </div>
             </div>
 
@@ -111,7 +120,7 @@
                     <label>Contact Number</label><input type="text" id="setPhone">
                     <h4 style="border-top:1px solid var(--glass-border); margin-top:15px; padding-top:15px; color:var(--gold);">Payment Method</h4>
                     <select id="setPayMethod"><option value="Bank Transfer">Bank Transfer</option><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option></select>
-                    <label>Account Details</label><textarea id="setPayDetails" rows="3"></textarea>
+                    <label>Account Details (Bank details or Mobile No)</label><textarea id="setPayDetails" rows="3"></textarea>
                     <button class="btn-gold" id="saveProfileBtn" style="margin-top:20px;">Save Changes</button>
                 </div>
             </div>
@@ -128,8 +137,8 @@
                 <input type="file" id="pdfAcademic">
                 <input type="file" id="pdfOthers">
             </div>
-            <button class="btn-gold" id="submitAppBtn">Confirm Submission</button>
-            <button onclick="document.getElementById('applyModal').style.display='none'" class="btn-outline" style="margin-top:10px;">Close</button>
+            <button class="btn-gold" id="submitAppBtn" style="margin-top:15px;">Confirm Submission</button>
+            <button onclick="document.getElementById('applyModal').style.display='none'" class="btn-outline" style="margin-top:10px; border-color:var(--danger); color:var(--danger);">Close</button>
         </div>
     </div>
 
