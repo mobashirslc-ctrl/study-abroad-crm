@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// আপনার Firebase Config এখানে দিন
+// Firebase Configuration (Same as your previous)
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,142 +14,172 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- ১. স্মার্ট অ্যাসেসমেন্ট ফিল্টার (অ্যাডমিন ডাটা অনুযায়ী) ---
-function initSmartSearch() {
+// Global Variables
+let allUniversities = [];
+const partnerEmail = localStorage.getItem('userEmail');
+const partnerName = localStorage.getItem('partnerName') || 'Partner';
+document.getElementById('partnerNameDisplay').innerText = partnerName;
+
+// --- ১. স্মার্ট অ্যাসেসমেন্ট লজিক ---
+function initAssessment() {
     const uniRef = collection(db, "universities");
-
+    
     onSnapshot(uniRef, (snap) => {
-        const allUnis = [];
-        snap.forEach(doc => allUnis.push({ id: doc.id, ...doc.data() }));
+        allUniversities = [];
+        snap.forEach(doc => allUniversities.push({ id: doc.id, ...doc.data() }));
+        filterUnis(); // Initial load
+    });
 
-        const runFilter = () => {
-            const countrySearch = document.getElementById('fCountry').value.toLowerCase();
-            const degreeSearch = document.getElementById('fDegree').value;
-            const studentLangScore = parseFloat(document.getElementById('fScore').value) || 0;
-            const studentGPA = parseFloat(document.getElementById('fGPA').value) || 0;
-
-            const filtered = allUnis.filter(u => {
-                const matchCountry = u.country.toLowerCase().includes(countrySearch);
-                const matchDegree = degreeSearch === "" || u.degree === degreeSearch;
-                
-                // লজিক: স্টুডেন্টের স্কোর অ্যাডমিনের দেওয়া রিকোয়ারমেন্টের সমান বা বেশি হতে হবে
-                const matchLang = studentLangScore >= (parseFloat(u.ieltsReq) || 0);
-                const matchGPA = studentGPA >= (parseFloat(u.minGPA) || 0);
-
-                return matchCountry && matchDegree && matchLang && matchGPA;
-            });
-
-            renderResults(filtered);
-        };
-
-        // ইনপুট বক্সে টাইপ করার সাথে সাথে ফিল্টার হবে
-        ['fCountry', 'fDegree', 'fScore', 'fGPA'].forEach(id => {
-            document.getElementById(id).addEventListener('input', runFilter);
-        });
-
-        runFilter(); // প্রথমবার লোড হওয়ার জন্য
+    // ফিল্টার ইভেন্ট লিসেনার
+    ['fCountry', 'fDegree', 'fGPA', 'fLang'].forEach(id => {
+        document.getElementById(id).addEventListener('input', filterUnis);
     });
 }
 
-function renderResults(data) {
-    const tbody = document.getElementById('uniResults');
-    tbody.innerHTML = data.map(u => {
-        // কমিশন ক্যালকুলেশন (৳ ১২০ রেট)
-        const comm = ((u.semesterFee * u.partnerComm) / 100) * 120;
-        
-        return `<tr>
-            <td><b>${u.universityName}</b><br><small>${u.courseName || ''}</small></td>
-            <td>${u.country}</td>
-            <td>
-                <span class="badge">GPA: ${u.minGPA || 'N/A'}</span><br>
-                <small>Lang: ${u.ieltsReq || 'N/A'}</small>
-            </td>
-            <td>$${Number(u.semesterFee).toLocaleString()}</td>
-            <td style="color:#2ecc71; font-weight:bold;">৳ ${comm.toLocaleString()}</td>
-            <td><button class="btn-apply" onclick="openApply('${u.universityName}', ${u.partnerComm}, ${u.semesterFee})">Apply</button></td>
-        </tr>`;
-    }).join('');
-    
-    document.getElementById('matchCount').innerText = `${data.length} Universities Found`;
+function filterUnis() {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const degree = document.getElementById('fDegree').value;
+    const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
+    const lang = parseFloat(document.getElementById('fLang').value) || 0;
+
+    const filtered = allUniversities.filter(u => {
+        const mCountry = country === "" || u.country.toLowerCase().includes(country);
+        const mDegree = degree === "" || u.degree === degree;
+        const mGPA = gpa >= (parseFloat(u.minGPA) || 0);
+        const mLang = lang >= (parseFloat(u.ieltsReq) || 0);
+        return mCountry && mDegree && mGPA && mLang;
+    });
+
+    renderUniTable(filtered);
 }
 
-// --- ২. ফাইল আপলোড (Cloudinary) এবং সাবমিশন ---
-window.openApply = (uniName, commPct, fee) => {
-    document.getElementById('targetUni').innerText = uniName;
+function renderUniTable(data) {
+    const tbody = document.getElementById('uniList');
+    document.getElementById('matchCount').innerText = `${data.length} found`;
+    
+    tbody.innerHTML = data.map(u => {
+        // কমিশন ক্যালকুলেশন (৳ ১২০ রেট)
+        const semesterFee = parseFloat(u.semesterFee) || 0;
+        const commPct = parseFloat(u.partnerComm) || 0;
+        const commBDT = (semesterFee * commPct / 100) * 120;
+
+        return `
+            <tr>
+                <td><b>${u.universityName}</b><br><small style="opacity:0.6">${u.courseName || 'General'}</small></td>
+                <td>
+                    <span style="font-size:11px; color:#ffcc00">GPA: ${u.minGPA}</span><br>
+                    <span style="font-size:11px; color:#fff">IELTS: ${u.ieltsReq}</span>
+                </td>
+                <td>$${semesterFee.toLocaleString()}</td>
+                <td style="color:#2ecc71; font-weight:bold;">৳ ${commBDT.toLocaleString()}</td>
+                <td><button class="btn-apply" onclick="openApplyModal('${u.id}', '${u.universityName}', ${commBDT})">Apply Visa</button></td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// --- ২. ফাইল আপলোড এবং অ্যাপ্লিকেশন সাবমিশন ---
+window.openApplyModal = (id, name, commission) => {
+    document.getElementById('modalUniName').innerText = name;
     document.getElementById('applyModal').style.display = 'flex';
-    window.currentAppData = { uniName, commPct, fee };
+    window.currentApp = { id, name, commission };
 };
 
-document.getElementById('submitApp').onclick = async () => {
-    const btn = document.getElementById('submitApp');
+document.getElementById('submitAppBtn').onclick = async () => {
+    const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
-    if(!sName) return alert("Student Name is required!");
+    const sPass = document.getElementById('sPass').value;
 
-    btn.innerText = "Uploading to Cloudinary...";
+    if (!sName || !sPass) return alert("Student Name and Passport are required!");
+
+    btn.innerText = "Uploading PDFs...";
     btn.disabled = true;
 
     try {
-        const fileIds = ['pdf1', 'pdf2', 'pdf3', 'pdf4'];
-        let uploadedUrls = {};
+        const fileInputs = ['pdfAcademic', 'pdfPassport', 'pdfLanguage', 'pdfOthers'];
+        let urls = {};
 
-        for (let id of fileIds) {
+        for (let id of fileInputs) {
             const file = document.getElementById(id).files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append("file", file);
-                formData.append("upload_preset", "ihp_upload"); // আপনার Cloudinary Preset
+                formData.append("upload_preset", "ihp_upload"); // Your Cloudinary Preset
 
                 const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", {
                     method: "POST",
                     body: formData
                 });
-                const d = await res.json();
-                uploadedUrls[id] = d.secure_url; // সরাসরি ভিউ লিঙ্ক
+                const data = await res.json();
+                urls[id] = data.secure_url;
             }
         }
 
         // Firebase-এ ডাটা সেভ
         await addDoc(collection(db, "applications"), {
             studentName: sName,
-            university: window.currentAppData.uniName,
-            commission: ((window.currentAppData.fee * window.currentAppData.commPct) / 100) * 120,
-            partnerEmail: localStorage.getItem('userEmail'),
-            partnerName: localStorage.getItem('partnerName') || 'Partner',
-            status: 'processing',
-            docs: uploadedUrls,
+            passportNo: sPass,
+            university: window.currentApp.name,
+            commission: window.currentApp.commission,
+            partnerEmail: partnerEmail,
+            partnerName: partnerName,
+            status: 'pending',
+            docs: urls,
             createdAt: serverTimestamp()
         });
 
         alert("Application Submitted Successfully!");
         location.reload();
 
-    } catch (error) {
-        console.error(error);
-        alert("Submission Failed!");
+    } catch (err) {
+        console.error(err);
+        alert("Upload Failed!");
         btn.innerText = "Submit Application";
         btn.disabled = false;
     }
 };
 
-// --- ৩. ফাইল ট্র্যাকিং ---
-function initTracking() {
-    const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
+// --- ৩. লাইভ ট্র্যাকিং এবং আর্নিং বক্স ---
+function initTrackingAndEarning() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail), orderBy("createdAt", "desc"));
+    
     onSnapshot(q, (snap) => {
-        const tbody = document.getElementById('trackResults');
+        const tbody = document.getElementById('trackingList');
+        let pendingTotal = 0;
+        let finalTotal = 0;
+        
         tbody.innerHTML = "";
         snap.forEach(doc => {
             const d = doc.data();
-            const viewLink = d.docs?.pdf1 ? `<a href="${d.docs.pdf1}" target="_blank" style="color:#f1c40f;">View Docs</a>` : 'No Docs';
             
-            tbody.innerHTML += `<tr>
-                <td><b>${d.studentName}</b></td>
-                <td>${d.university}</td>
-                <td>${viewLink}</td>
-                <td><span style="color:#f1c40f;">${d.status.toUpperCase()}</span></td>
-            </tr>`;
+            // ইর্নিং ক্যালকুলেশন
+            if (d.status === 'pending' || d.status === 'processing') {
+                pendingTotal += parseFloat(d.commission) || 0;
+            } else if (d.status === 'approved' || d.status === 'visa-received') {
+                finalTotal += parseFloat(d.commission) || 0;
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.studentName}</td>
+                    <td>${d.passportNo}</td>
+                    <td>${d.university}</td>
+                    <td><span style="color:#ffcc00">${d.status.toUpperCase()}</span></td>
+                    <td>${d.complianceStaff || 'Not Assigned'}</td>
+                    <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : 'Just now'}</td>
+                </tr>
+            `;
         });
+
+        document.getElementById('pendingEarn').innerText = `৳ ${pendingTotal.toLocaleString()}`;
+        document.getElementById('finalEarn').innerText = `৳ ${finalTotal.toLocaleString()}`;
+        
+        if (finalTotal > 0) {
+            document.getElementById('withdrawBtn').disabled = false;
+        }
     });
 }
 
-initSmartSearch();
-initTracking();
+// Initialize All
+initAssessment();
+initTrackingAndEarning();
