@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- Firebase Config ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,9 +14,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Settings (Critical Fix for PDF) ---
+// --- Cloudinary Config (Crucial for PDF Support) ---
 const CLOUD_NAME = "ddziennkh"; 
-// এখানে 'image' এর বদলে 'auto' ব্যবহার করা হয়েছে যাতে PDF এবং Image দুইটাই কাজ করে
+// '/auto/upload' ব্যবহার করা হয়েছে যাতে PDF এবং Image উভয়ই সাপোর্ট করে
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
@@ -83,7 +84,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (Uploading PDF Fix) ---
+// --- 3. Submission Logic (The PDF Fix) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -95,31 +96,31 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields!");
+    if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading..."; btn.disabled = true;
-        const fileInputs = [
-            {id:'filePassport',k:'passport'}, 
-            {id:'fileAcademic',k:'academic'}, 
-            {id:'fileLanguage',k:'language'}, 
-            {id:'fileOthers',k:'others'}
-        ];
-        
+        btn.innerText = "Uploading Files..."; btn.disabled = true;
+        const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
+        
         for (const item of fileInputs) {
             const file = document.getElementById(item.id).files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
+
+                // ক্লাউডিনারিকে ফোর্স করছি সব টাইপ ফাইল গ্রহণ করতে
+                const res = await fetch(CLOUDINARY_URL, { 
+                    method: "POST", 
+                    body: formData 
+                });
                 
-                const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                
-                // এখানে সরাসরি জেনারেট হওয়া secure_url সেভ করছি যাতে টাইপ এরর না হয়
                 if (data.secure_url) {
                     urls[item.k] = data.secure_url;
+                } else {
+                    throw new Error(data.error?.message || "Upload failed");
                 }
             }
         }
@@ -144,11 +145,14 @@ document.getElementById('submitAppBtn').onclick = async () => {
         document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
-    } catch (e) { alert("Error: " + e.message); } 
-    finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
+    } catch (e) { 
+        alert("Upload Error: " + e.message); 
+    } finally { 
+        btn.innerText = "Confirm & Submit"; btn.disabled = false; 
+    }
 };
 
-// --- 4. Tracking Table (Final Fix for View Documents) ---
+// --- 4. Tracking Table (Real-time View) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -160,22 +164,15 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // এই ফাংশনটি নিশ্চিত করবে যেন PDF ফাইলগুলো /image/ লিঙ্কে না যায়
-            const getLink = (url) => {
-                if(!url) return "#";
-                // যদি লিঙ্কে /image/ থাকে এবং ফাইলটি .pdf হয়, তবে সেটি পরিবর্তন করে দিবে
-                if(url.includes(".pdf") && url.includes("/image/upload/")) {
-                    return url.replace("/image/upload/", "/files/upload/");
-                }
-                return url;
-            };
+            // সব ফাইলের জন্য একদম ক্লিন ইউআরএল ভিউয়ার
+            const getLink = (url) => url ? url : "#";
 
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${getLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${getLink(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${getLink(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${getLink(docs.passport)}" target="_blank" title="Passport" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${getLink(docs.academic)}" target="_blank" title="Academic" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${getLink(docs.language)}" target="_blank" title="Language" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${getLink(docs.others)}" target="_blank" title="Others" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
@@ -187,8 +184,11 @@ function loadTracking() {
                 <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
             </tr>`;
         });
-        document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="6" style="text-align:center;">No data</td></tr>`;
+        document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px;">No applications found.</td></tr>`;
     });
 }
 
-loadDashboardStats(); initSearch(); loadTracking();
+// --- Initialize Everything ---
+loadDashboardStats(); 
+initSearch(); 
+loadTracking();
