@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- 1. Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,6 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- 2. Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
@@ -22,7 +24,7 @@ const BDT_RATE = 120;
 
 if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 1. Dashboard Stats ---
+// --- 3. Dashboard Stats ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -44,7 +46,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 2. Smart Assessment ---
+// --- 4. Smart Assessment (University Search) ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -81,7 +83,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (With Auto Resource Type) ---
+// --- 5. Application Submission Logic ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -93,10 +95,10 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Fields missing!");
+    if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
+        btn.innerText = "Uploading Documents..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
         
@@ -106,14 +108,9 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
-
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                
-                if (data.secure_url) {
-                    // পিডিএফ এর জন্য আমরা এক্সটেনশন চেক করে লিঙ্ক সেভ করবো
-                    urls[item.k] = data.secure_url;
-                }
+                if (data.secure_url) { urls[item.k] = data.secure_url; }
             }
         }
 
@@ -141,7 +138,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (Universal Fix for PDF) ---
+// --- 6. Tracking Table & Universal PDF Link Fix ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -153,13 +150,14 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // --- এই লজিকটি সব এরর ফিক্স করবে ---
+            // স্মার্ট লিঙ্ক কনভার্টার যা সব এরর (404/401) বাইপাস করবে
             const getSafeLink = (url) => {
                 if (!url) return "#";
+                // যদি ফাইলটি PDF হয়, তবে আমরা ক্লাউডিনারির পাথ ক্লিন করে দেব
                 if (url.toLowerCase().includes(".pdf")) {
-                    // ক্লাউডিনারি ফাইলকে 'image' ফোল্ডারে রাখলে পিডিএফ এরর দেয়।
-                    // তাই আমরা সব ইউআরএলকে 'auto' বা 'private' এক্সেস থেকে কনভার্ট করবো।
-                    return url.replace("/image/upload/", "/upload/").replace("/raw/upload/", "/upload/").replace("/files/upload/", "/upload/");
+                    return url.replace("/image/upload/", "/upload/")
+                              .replace("/raw/upload/", "/upload/")
+                              .replace("/files/upload/", "/upload/");
                 }
                 return url;
             };
@@ -185,4 +183,7 @@ function loadTracking() {
     });
 }
 
-loadDashboardStats(); initSearch(); loadTracking();
+// ফাংশনগুলো রান করা
+loadDashboardStats(); 
+initSearch(); 
+loadTracking();
