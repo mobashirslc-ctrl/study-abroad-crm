@@ -1,137 +1,153 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, doc, updateDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal | Georun Ltd.</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #ffcc00; --purple-dark: #0b012d; --purple-light: #1a0b4d; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1); --success: #2ecc71; --danger: #ff4757; }
+        body { margin: 0; background: radial-gradient(circle at top right, var(--purple-light), var(--purple-dark)); font-family: 'Poppins', sans-serif; color: white; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 260px; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 30px 20px; text-align: center; }
+        .sidebar-header img { width: 80px; border-radius: 10px; border: 2px solid var(--gold); }
+        .nav-links { list-style: none; padding: 0; flex-grow: 1; }
+        .nav-links li { padding: 15px 25px; cursor: pointer; color: #b1a7d1; display: flex; align-items: center; gap: 15px; transition: 0.3s; font-size: 14px; }
+        .nav-links li.active { background: var(--glass); color: var(--gold); border-right: 4px solid var(--gold); }
+        .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--glass-border); }
+        .wallet-header { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px 40px; background: rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass-border); }
+        .wallet-box { background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); text-align: center; }
+        .wallet-box h3 { margin: 0; color: var(--gold); font-size: 20px; }
+        .condition-text { font-size: 9px; color: #aaa; margin-top: 5px; font-style: italic; }
+        .content-area { padding: 20px 40px; }
+        .card { background: var(--glass); border-radius: 20px; border: 1px solid var(--glass-border); padding: 20px; margin-bottom: 25px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; font-size: 12px; box-sizing: border-box; }
+        label { display: block; font-size: 11px; color: var(--gold); margin: 10px 0 5px; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-outline { background: transparent; color: white; border: 1px solid var(--gold); padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; }
+        table { width: 100%; border-collapse: collapse; min-width: 850px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--glass-border); font-size: 11px; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        #applyModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index: 2000; align-items:center; justify-content:center; padding: 20px; }
+        #printArea { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:black; padding:40px; z-index:9999; }
+        @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { position: absolute; left: 0; top: 0; display: block !important; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header"><img src="logo.jpeg" alt="Logo"></div>
+        <ul class="nav-links">
+            <li class="active" onclick="switchTab('assessment', this)"><i class="fas fa-search"></i> <span>Assessment</span></li>
+            <li onclick="switchTab('tracking', this)"><i class="fas fa-tasks"></i> <span>Tracking</span></li>
+            <li onclick="switchTab('earning', this)"><i class="fas fa-wallet"></i> <span>Withdraw</span></li>
+            <li onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> <span>Profile & Payment</span></li>
+        </ul>
+        <div class="logout-btn" onclick="logout()" style="margin-top:auto; padding:25px; color:var(--danger); cursor:pointer;"><i class="fas fa-power-off"></i> Logout</div>
+    </div>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-};
+    <div class="main-container">
+        <div class="header">
+            <h3>Partner Dashboard</h3>
+            <div id="welcomeMsg">Welcome, <span id="partnerNameDisplay" style="color:var(--gold);">...</span></div>
+        </div>
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+        <div class="wallet-header">
+            <div class="wallet-box">
+                <p style="margin:0; font-size:10px; opacity:0.7;">Pending (Estimated)</p>
+                <h3 id="topPending">৳ 0</h3>
+                <div class="condition-text">*Based on student semester fee payment</div>
+            </div>
+            <div class="wallet-box">
+                <p style="margin:0; font-size:10px; opacity:0.7;">Final Balance</p>
+                <h3 id="topFinal">৳ 0</h3>
+                <div class="condition-text">*Available for withdrawal</div>
+            </div>
+        </div>
 
-const userEmail = localStorage.getItem('userEmail');
-const partnerName = localStorage.getItem('partnerName') || 'Partner';
-document.getElementById('partnerNameDisplay').innerText = partnerName;
+        <div class="content-area">
+            <div id="assessment" class="section active">
+                <div class="card">
+                    <div class="filter-grid">
+                        <input type="text" id="fCountry" placeholder="Country">
+                        <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
+                        <select id="fLangType"><option value="">Lang Test</option><option value="IELTS">IELTS</option><option value="Duolingo">Duolingo</option><option value="MOI">MOI</option></select>
+                        <input type="number" id="fGPA" placeholder="Min GPA">
+                        <input type="number" id="fLang" placeholder="Min Score">
+                    </div>
+                    <button class="btn-gold" id="searchBtn">Search Now</button>
+                </div>
+                <div class="card">
+                    <div style="overflow-x:auto;"><table><thead><tr><th>University</th><th>Gap/Intake</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead><tbody id="uniList"></tbody></table></div>
+                </div>
+            </div>
 
-let allUnis = [];
+            <div id="tracking" class="section">
+                <div class="card">
+                    <h3>Application Tracking</h3>
+                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Doc View</th><th>Date</th></tr></thead><tbody id="trackingList"></tbody></table></div>
+                </div>
+            </div>
 
-// --- ১. অ্যাসেসমেন্ট এবং সার্চ বক্স লজিক ---
-onSnapshot(collection(db, "universities"), (snap) => {
-    allUnis = snap.docs.map(d => d.data());
-    renderUniTable(allUnis);
-});
+            <div id="earning" class="section">
+                <div class="card" style="text-align:center; border:1px solid var(--gold);">
+                    <p>Total Final Balance</p>
+                    <h2 id="withdrawDisplay" style="color:var(--gold);">৳ 0</h2>
+                    <button id="withdrawBtn" class="btn-gold" style="width:250px;" disabled>Request Withdrawal</button>
+                    <p class="condition-text" id="withdrawMsg">*Final balance must be > 0</p>
+                </div>
+                <div class="card"><h4>Withdrawal History</h4><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead><tbody id="withdrawHistory"></tbody></table></div>
+            </div>
 
-function renderUniTable(data) {
-    const tbody = document.getElementById('uniList');
-    tbody.innerHTML = data.map(u => {
-        const comm = (parseFloat(u.semesterFee) * parseFloat(u.partnerComm) / 100) * 120;
-        return `<tr>
-            <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-            <td>Gap: ${u.studyGap}y | Intake: ${u.intake}</td>
-            <td>Fee: $${u.semesterFee}</td>
-            <td style="color:var(--success); font-weight:bold;">৳ ${comm.toLocaleString()}</td>
-            <td><button class="btn-gold" onclick="openApply('${u.universityName}', ${comm})">Apply</button></td>
-        </tr>`;
-    }).join('');
-}
+            <div id="profile" class="section">
+                <div class="card" style="max-width:600px; margin:auto;">
+                    <h3 style="text-align:center; color:var(--gold);">Profile & Payment Settings</h3>
+                    <label>Agency Name</label><input type="text" id="setAgencyName">
+                    <label>Contact Number</label><input type="text" id="setPhone">
+                    <h4 style="border-top:1px solid var(--glass-border); margin-top:15px; padding-top:15px; color:var(--gold);">Payment Method</h4>
+                    <select id="setPayMethod"><option value="Bank Transfer">Bank Transfer</option><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option></select>
+                    <label>Account Details</label><textarea id="setPayDetails" rows="3"></textarea>
+                    <button class="btn-gold" id="saveProfileBtn" style="margin-top:20px;">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-document.getElementById('searchBtn').onclick = () => {
-    const country = document.getElementById('fCountry').value.toLowerCase();
-    const degree = document.getElementById('fDegree').value;
-    const lang = document.getElementById('fLangType').value;
-    const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
-    const score = parseFloat(document.getElementById('fLang').value) || 0;
+    <div id="applyModal">
+        <div class="card" style="width:100%; max-width:550px; background:var(--purple-dark);">
+            <h3 id="modalUniName" style="color:var(--gold)"></h3>
+            <div class="filter-grid" style="grid-template-columns:1fr 1fr;">
+                <input type="text" id="sName" placeholder="Student Name">
+                <input type="text" id="sPass" placeholder="Passport No">
+                <input type="number" id="sGap" placeholder="Study Gap">
+                <input type="file" id="pdfAcademic">
+                <input type="file" id="pdfOthers">
+            </div>
+            <button class="btn-gold" id="submitAppBtn">Confirm Submission</button>
+            <button onclick="document.getElementById('applyModal').style.display='none'" class="btn-outline" style="margin-top:10px;">Close</button>
+        </div>
+    </div>
 
-    const filtered = allUnis.filter(u => {
-        return (country === "" || u.country.toLowerCase().includes(country)) &&
-               (degree === "" || u.degree === degree) &&
-               (lang === "" || u.langTest === lang) &&
-               (parseFloat(u.minGPA) >= gpa);
-    });
-    renderUniTable(filtered);
-};
+    <div id="printArea">
+        <div style="text-align:center; border-bottom:2px solid black; padding-bottom:10px;"><img src="logo.jpeg" style="width:120px;"><h2>Acknowledgement Receipt</h2></div>
+        <div style="text-align:center; margin-top:40px;"><h1 style="color:green;">Success!</h1><h3 id="slipName"></h3><p>University: <span id="slipUni"></span></p><div id="qrcode" style="display:inline-block; margin-top:20px;"></div></div>
+    </div>
 
-// --- ২. Apply Button Fix ---
-window.openApply = (name, commission) => {
-    document.getElementById('modalUniName').innerText = name;
-    document.getElementById('applyModal').style.display = 'flex';
-    window.currentAppData = { name, commission };
-};
-
-// --- ৩. ট্র্যাকিং এবং ওয়ালেট লজিক ---
-function initTracking() {
-    if(!userEmail) return;
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail));
-    onSnapshot(q, (snap) => {
-        const tbody = document.getElementById('trackingList');
-        tbody.innerHTML = "";
-        let pending = 0, final = 0;
-        snap.forEach(doc => {
-            const d = doc.data();
-            const comm = Number(d.commission) || 0;
-            if(d.status === 'pending') pending += comm;
-            if(d.status === 'approved') final += comm;
-
-            tbody.innerHTML += `<tr>
-                <td><b>${d.studentName}</b></td>
-                <td>${d.passportNo}</td>
-                <td style="color:var(--gold)">${d.status.toUpperCase()}</td>
-                <td>${d.complianceStaff || 'Waiting'}</td>
-                <td><a href="#" target="_blank" style="color:var(--gold)">View Doc</a></td>
-                <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...'}</td>
-            </tr>`;
-        });
-        document.getElementById('topPending').innerText = `৳ ${pending.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳ ${final.toLocaleString()}`;
-        document.getElementById('withdrawDisplay').innerText = `৳ ${final.toLocaleString()}`;
-        
-        const btn = document.getElementById('withdrawBtn');
-        if(final > 0) { btn.disabled = false; btn.style.opacity = "1"; btn.style.cursor = "pointer"; }
-    });
-}
-
-// --- ৪. সাবমিট ফাইল লজিক ---
-document.getElementById('submitAppBtn').onclick = async () => {
-    const sName = document.getElementById('sName').value;
-    const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Fill Name/Passport!");
-
-    try {
-        await addDoc(collection(db, "applications"), {
-            studentName: sName, passportNo: sPass,
-            university: window.currentAppData.name, commission: window.currentAppData.commission,
-            partnerEmail: userEmail, status: 'pending', createdAt: serverTimestamp()
-        });
-        
-        document.getElementById('slipName').innerText = sName;
-        document.getElementById('slipUni').innerText = window.currentAppData.name;
-        new QRCode(document.getElementById("qrcode"), { text: sPass, width: 100, height: 100 });
-        document.getElementById('printArea').style.display = 'block';
-        setTimeout(() => { window.print(); location.reload(); }, 1200);
-    } catch (e) { alert("Failed!"); }
-};
-
-// --- ৫. প্রোফাইল এবং পেমেন্ট সেভ লজিক ---
-document.getElementById('saveProfileBtn').onclick = async () => {
-    const agency = document.getElementById('setAgencyName').value;
-    const phone = document.getElementById('setPhone').value;
-    const method = document.getElementById('setPayMethod').value;
-    const details = document.getElementById('setPayDetails').value;
-
-    try {
-        const q = query(collection(db, "partners"), where("email", "==", userEmail));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-            await updateDoc(doc(db, "partners", snap.docs[0].id), {
-                agencyName: agency, phone: phone, paymentMethod: method, paymentDetails: details
-            });
-            alert("Settings Saved!");
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="module" src="partner-logic.js"></script>
+    <script>
+        function switchTab(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-links li').forEach(l => l.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
-    } catch (e) { alert("Save Error!"); }
-};
-
-initTracking();
+        function logout() { localStorage.clear(); window.location.href = "index.html"; }
+    </script>
+</body>
+</html>
