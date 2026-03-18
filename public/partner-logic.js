@@ -14,16 +14,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- 2. Global Settings ---
-const CLOUD_NAME = "ddziennkh"; 
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
-const CLOUDINARY_PRESET = "ihp_upload"; 
-const BDT_RATE = 120; // ১ ডলার = ১২০ টাকা (কমিশন ক্যালকুলেশনের জন্য)
-
+// --- 2. Configuration & State ---
+const BDT_RATE = 120;
 const partnerEmail = localStorage.getItem('userEmail');
-if (!partnerEmail) { window.location.href = 'index.html'; }
+const partnerRealName = localStorage.getItem('partnerName') || "Partner";
 
-// --- 3. Dashboard Wallet Logic (Compliance Split) ---
+// লগইন চেক এবং রিয়েল নেম ডিসপ্লে
+if (!partnerEmail) { 
+    window.location.href = 'index.html'; 
+} else {
+    const nameDisplay = document.querySelector('.welcome-text') || document.getElementById('partnerDisplayName');
+    if(nameDisplay) nameDisplay.innerHTML = `Welcome, <span style="color:#ffcc00;">${partnerRealName}</span>`;
+}
+
+// ফুটার আপডেট
+const footer = document.querySelector('footer');
+if(footer) footer.innerHTML = `&copy; ${new Date().getFullYear()} All Rights Reserved | <b>GORUN LTD.</b>`;
+
+// --- 3. Wallet & Stats Logic (Compliance Based) ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -31,12 +39,10 @@ function loadDashboardStats() {
         snap.forEach(doc => {
             const d = doc.data();
             total++;
-            // Compliance 'verified' করলেই পেন্ডিং ওয়ালেটে আসবে
             if (d.status === 'verified' || d.status === 'processing') {
                 processing++;
                 pWallet += (d.commission || 0);
             }
-            // Admin 'paid' নিশ্চিত করলে ফাইনাল ওয়ালেটে আসবে
             if (d.commStatus === 'paid') { 
                 fWallet += (d.commission || 0); 
             }
@@ -45,41 +51,36 @@ function loadDashboardStats() {
         document.getElementById('statActiveFiles').innerText = processing;
         document.getElementById('pendingWallet').innerText = "৳ " + (pWallet * BDT_RATE).toLocaleString();
         document.getElementById('finalWallet').innerText = "৳ " + (fWallet * BDT_RATE).toLocaleString();
-        document.getElementById('walletBalanceDisplay').innerText = "৳ " + (fWallet * BDT_RATE).toLocaleString();
     });
 }
 
-// --- 4. Advanced Search & Assessment (Points 1 & 2) ---
+// --- 4. Smart Assessment (Design preserved from 829.jpg) ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
         snap.forEach(doc => allUnis.push({ id: doc.id, ...doc.data() }));
 
-        const filterData = () => {
+        const performSearch = () => {
             const country = (document.getElementById('fCountry').value || "").toLowerCase();
             const degree = document.getElementById('fDegree').value;
-            const langTest = document.getElementById('fLangType').value;
-            const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
-            const academicScore = parseFloat(document.getElementById('fAcademicScore').value) || 0;
+            const score = parseFloat(document.getElementById('fLangScore').value) || 0;
 
             const filtered = allUnis.filter(u => {
-                const dbLangReq = parseFloat(u.ieltsReq) || 0;
-                const dbGpaReq = parseFloat(u.gpaReq) || 0;
-
+                const dbScore = parseFloat(u.ieltsReq) || 0;
                 return (u.country.toLowerCase().includes(country)) && 
-                       (degree === "" || u.degree === degree) &&
-                       (langTest === "" || u.langType === langTest) &&
-                       (langScore === 0 || langScore >= dbLangReq) &&
-                       (academicScore === 0 || academicScore >= dbGpaReq);
+                       (degree === "" || u.degree === degree) && 
+                       (score === 0 || score >= dbScore);
             });
             renderUnis(filtered);
         };
 
-        ['fCountry', 'fDegree', 'fLangType', 'fLangScore', 'fAcademicScore'].forEach(id => {
+        // ড্রপডাউন বা ইনপুট চেঞ্জ হলেই অটো সার্চ হবে
+        ['fCountry', 'fDegree', 'fLangScore'].forEach(id => {
             const el = document.getElementById(id);
-            if(el) el.oninput = filterData;
+            if(el) el.addEventListener('input', performSearch);
         });
-        filterData();
+
+        performSearch(); // Initial load
     });
 }
 
@@ -87,45 +88,32 @@ function renderUnis(unis) {
     const container = document.getElementById('assessmentResults');
     if (!container) return;
 
+    // আপনার ড্যাশবোর্ডের টেবিল ডিজাইন বজায় রাখা হয়েছে
     container.innerHTML = unis.map(u => {
-        // কমিশন ক্যালকুলেশন সব সময় টাকাতে (৳)
         const commBDT = ((u.semesterFee * u.partnerComm) / 100) * BDT_RATE;
-        
         return `
-        <div class="uni-card" style="background:#fff; border:1px solid #eee; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.02); margin-bottom:20px;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <h3 style="margin:0; color:#b8860b; font-size:20px;">${u.universityName}</h3>
-                    <p style="margin:5px 0; color:#666; font-size:14px;"><i class="fa-solid fa-location-dot"></i> ${u.country} | <b>Intake:</b> ${u.intake || 'Sep / Jan'}</p>
-                </div>
-                <span style="background:#fdf9f0; color:#b8860b; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:bold; border:1px solid #b8860b;">${u.degree}</span>
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:15px 0; font-size:13px; color:#444; background:#f9f9f9; padding:12px; border-radius:8px;">
-                <span><b>Fee:</b> ${u.currency || '$'} ${u.semesterFee.toLocaleString()}</span>
-                <span><b>Scholarship:</b> ${u.scholarship || 'Up to 30%'}</span>
-                <span><b>Language Req:</b> ${u.langType || 'IELTS'} ${u.ieltsReq || '6.0'}</span>
-                <span><b>Living Cost:</b> ${u.livingCost || 'Moderate'}</span>
-            </div>
-
-            <div style="background:#e8f5e9; border: 1px dashed #27ae60; padding:15px; border-radius:10px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <small style="color:#27ae60; font-weight:bold; text-transform:uppercase; font-size:10px;">Partner Commission</small>
-                    <h4 style="margin:0; color:#27ae60; font-size:20px;">৳ ${commBDT.toLocaleString()} <span style="font-size:12px; font-weight:normal; color:#666;">(${u.partnerComm}%)</span></h4>
-                </div>
-                <button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})" style="padding:10px 20px;">Apply Now</button>
-            </div>
-        </div>`;
+        <tr>
+            <td><b style="color:#ffcc00;">${u.universityName}</b><br><small style="color:#aaa;">Intake: ${u.intake || 'N/A'}</small></td>
+            <td>${u.country}</td>
+            <td><span class="badge" style="background:rgba(255,204,0,0.1); border:1px solid #ffcc00; color:#ffcc00;">${u.degree}</span><br><small>IELTS: ${u.ieltsReq}</small></td>
+            <td>${u.currency || '$'}${u.semesterFee.toLocaleString()}</td>
+            <td style="color:#27ae60; font-weight:bold;">৳ ${commBDT.toLocaleString()}<br><small style="color:#666;">(${u.partnerComm}%)</small></td>
+            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})" style="padding:5px 15px; font-size:12px;">Apply</button></td>
+        </tr>`;
     }).join('');
 }
 
-// --- 5. Application Submission Logic ---
+// --- 5. Application Logic ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
     document.getElementById('studentFormModal').style.display = 'flex';
     window.currentAppData = { id, commPct: comm, fee };
 };
+
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
+const CLOUDINARY_PRESET = "ihp_upload"; 
+const CLOUD_NAME = "ddziennkh"; 
 
 document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
@@ -134,7 +122,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Processing..."; btn.disabled = true;
+        btn.innerText = "Uploading Documents..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
         
@@ -157,7 +145,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
             university: document.getElementById('sUni').value, 
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, 
             partnerEmail: partnerEmail, 
-            partnerName: localStorage.getItem('partnerName') || "Partner", 
+            partnerName: partnerRealName, 
             status: 'pending', 
             docs: urls, 
             createdAt: serverTimestamp() 
@@ -174,7 +162,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 6. Tracking & PDF Viewer (Google Docs) ---
+// --- 6. Tracking Table with Google Viewer ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -191,16 +179,15 @@ function loadTracking() {
             };
 
             const docLinks = `
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 8px;">
                     ${docs.passport ? `<a href="${getSafeLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-file-pdf"></i></a>` : ''}
                     ${docs.academic ? `<a href="${getSafeLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-graduation-cap"></i></a>` : ''}
-                    ${docs.language ? `<a href="${getSafeLink(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
                 <td><b>${d.studentName}</b></td>
                 <td>${d.university}</td>
-                <td><span class="badge" style="background:${d.status === 'verified' ? '#27ae60' : (d.status === 'pending' ? '#f39c12' : '#e74c3c')}">${d.status.toUpperCase()}</span></td>
+                <td><span class="badge" style="background:${d.status === 'verified' ? '#27ae60' : '#f39c12'}">${d.status.toUpperCase()}</span></td>
                 <td>${docLinks}</td>
                 <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
             </tr>`;
@@ -209,7 +196,5 @@ function loadTracking() {
     });
 }
 
-// Initialize all functions
-loadDashboardStats(); 
-initSearch(); 
-loadTracking();
+// Start everything
+loadDashboardStats(); initSearch(); loadTracking();
