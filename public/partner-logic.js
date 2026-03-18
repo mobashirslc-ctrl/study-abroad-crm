@@ -81,7 +81,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (Modified to force PDF extension) ---
+// --- 3. Submission Logic ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -93,7 +93,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields missing!");
+    if(!sName || !sPass) return alert("Fields missing!");
 
     try {
         btn.innerText = "Uploading Documents..."; btn.disabled = true;
@@ -101,20 +101,14 @@ document.getElementById('submitAppBtn').onclick = async () => {
         let urls = {};
         
         for (const item of fileInputs) {
-            const fileInput = document.getElementById(item.id);
-            const file = fileInput.files[0];
+            const file = document.getElementById(item.id).files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
-                
-                // এখানে 'resource_type' পাঠানো হচ্ছে না কারণ আমরা '/auto/' URL ব্যবহার করছি
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                
-                if (data.secure_url) {
-                    urls[item.k] = data.secure_url;
-                }
+                if (data.secure_url) { urls[item.k] = data.secure_url; }
             }
         }
 
@@ -142,7 +136,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (Dynamic Link Fix) ---
+// --- 4. Tracking Table (Google Viewer Alternative) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -154,15 +148,15 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // --- এই লজিকটি সব ধরনের 401/404 বাইপাস করবে ---
+            // --- ALTERNATIVE VIEWER LOGIC ---
             const getSafeLink = (url) => {
                 if (!url) return "#";
-                // ক্লাউডিনারি অনেক সময় PDF ফাইলকে Raw হিসেবে গণ্য করে, তাই 'auto' পাথ ব্যবহার করা সবচেয়ে নিরাপদ।
-                // এটি লিঙ্ক থেকে /image/ বা /raw/ অংশটি সরিয়ে সরাসরি এক্সেস দিবে।
-                let safeUrl = url.replace("/image/upload/", "/upload/").replace("/raw/upload/", "/upload/");
-                
-                // যদি লিঙ্কের শেষে .pdf না থাকে তবে ব্রাউজার ওপেন করতে পারে না, সেটিও চেক করবে
-                return safeUrl;
+                // যদি PDF হয়, আমরা Google Docs Viewer ব্যবহার করে সেটি দেখাবো
+                if (url.toLowerCase().includes(".pdf")) {
+                    // এটি ক্লাউডিনারির সব বাধা এড়িয়ে গুগল ভিউয়ারে ফাইলটি ওপেন করবে
+                    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+                }
+                return url;
             };
 
             const docLinks = `
