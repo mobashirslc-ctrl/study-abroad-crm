@@ -10,48 +10,42 @@
         :root { --gold: #ffcc00; --purple-dark: #0b012d; --purple-light: #1a0b4d; --glass: rgba(255, 255, 255, 0.05); --glass-border: rgba(255, 255, 255, 0.1); --success: #2ecc71; --danger: #ff4757; }
         body { margin: 0; background: radial-gradient(circle at top right, var(--purple-light), var(--purple-dark)); font-family: 'Poppins', sans-serif; color: white; display: flex; height: 100vh; overflow: hidden; }
         
+        /* Sidebar & Layout */
         .sidebar { width: 260px; background: rgba(0,0,0,0.4); backdrop-filter: blur(15px); border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; }
         .sidebar-header { padding: 30px 20px; text-align: center; }
         .sidebar-header img { width: 80px; border-radius: 10px; border: 2px solid var(--gold); }
-        .nav-links { list-style: none; padding: 0; flex-grow: 1; overflow-y: auto; }
+        .nav-links { list-style: none; padding: 0; flex-grow: 1; }
         .nav-links li { padding: 15px 25px; cursor: pointer; color: #b1a7d1; display: flex; align-items: center; gap: 15px; transition: 0.3s; font-size: 14px; }
         .nav-links li:hover, .nav-links li.active { background: var(--glass); color: var(--gold); border-right: 4px solid var(--gold); }
         .logout-btn { padding: 20px 25px; color: var(--danger); cursor: pointer; border-top: 1px solid var(--glass-border); margin-bottom: 20px; font-weight: 600; }
 
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--glass-border); }
+        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
         
+        /* Wallet & Condition */
         .wallet-header { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px 40px; background: rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass-border); }
         .wallet-box { background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); text-align: center; }
         .wallet-box h3 { margin: 0; color: var(--gold); font-size: 20px; }
-        .wallet-box p { margin: 5px 0 0; font-size: 10px; opacity: 0.7; text-transform: uppercase; }
+        .wallet-box p { margin: 5px 0 0; font-size: 10px; opacity: 0.7; }
+        .condition-text { font-size: 9px; color: #aaa; margin-top: 5px; font-style: italic; }
 
         .content-area { padding: 20px 40px; }
         .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid var(--glass-border); padding: 20px; margin-bottom: 25px; }
 
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-        label { font-size: 10px; color: var(--gold); margin-bottom: 5px; display: block; font-weight: 600; }
-        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; font-size: 12px; }
-        
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-outline { background: transparent; color: white; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 8px; cursor: pointer; }
-
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        /* Tables & Buttons */
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--glass-border); font-size: 11px; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         .section { display: none; }
         .section.active { display: block; }
-        
-        #applyModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index: 2000; align-items:center; justify-content:center; padding: 20px; }
 
-        /* Print Area Styling */
-        #printArea { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:black; padding:40px; z-index:9999; overflow-y: auto; }
-        @media print { 
-            body * { visibility: hidden; } 
-            #printArea, #printArea * { visibility: visible; } 
-            #printArea { position: absolute; left: 0; top: 0; display: block !important; } 
-        }
+        #applyModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index: 2000; align-items:center; justify-content:center; padding: 20px; }
+
+        /* Print Area */
+        #printArea { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:black; padding:40px; z-index:9999; }
+        @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { position: absolute; left: 0; top: 0; display: block !important; } }
     </style>
 </head>
 <body>
@@ -69,44 +63,36 @@
 
     <div class="main-container">
         <div class="header">
-            <h2>Partner Dashboard</h2>
-            <div id="welcomeMsg">Welcome, <span id="partnerNameDisplay" style="color: var(--gold);">Partner</span></div>
+            <h3>Partner Portal</h3>
+            <div id="welcomeMsg">Welcome, <span id="partnerNameDisplay" style="color:var(--gold)">...</span></div>
         </div>
 
         <div class="wallet-header">
             <div class="wallet-box">
                 <p>Pending (Estimated)</p>
                 <h3 id="topPending">৳ 0</h3>
+                <div class="condition-text">*Based on student semester fee payment</div>
             </div>
             <div class="wallet-box">
                 <p>Final Balance</p>
                 <h3 id="topFinal">৳ 0</h3>
+                <div class="condition-text">*Available for withdrawal</div>
             </div>
         </div>
 
         <div class="content-area">
             <div id="assessment" class="section active">
                 <div class="card">
-                    <label style="color:var(--gold); margin-bottom:10px; display:block;">University Smart Search</label>
-                    <div class="filter-grid">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
                         <input type="text" id="fCountry" placeholder="Country">
                         <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
-                        <select id="fLangType"><option value="">Language Test</option><option value="IELTS">IELTS</option><option value="Duolingo">Duolingo</option><option value="MOI">MOI</option></select>
-                        <input type="number" id="fGPA" placeholder="Min GPA">
-                        <input type="number" id="fLang" placeholder="Min Score">
-                    </div>
-                    <div style="margin-top:15px; display:flex; gap:10px;">
-                        <button class="btn-gold" id="searchBtn" style="flex:2;">Search Now</button>
-                        <button class="btn-outline" id="refreshBtn" style="flex:1;">Refresh</button>
+                        <button class="btn-gold" id="searchBtn">Search Now</button>
                     </div>
                 </div>
-
                 <div class="card">
                     <div style="overflow-x:auto;">
-                        <table id="uniTable">
-                            <thead>
-                                <tr><th>University & Country</th><th>Entry Req (Gap/Intake)</th><th>Fees & Living</th><th>Commission</th><th>Action</th></tr>
-                            </thead>
+                        <table>
+                            <thead><tr><th>University</th><th>Gap/Intake</th><th>Fees/Living</th><th>Commission</th><th>Action</th></tr></thead>
                             <tbody id="uniList"></tbody>
                         </table>
                     </div>
@@ -115,38 +101,55 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3>Live Application Tracking</h3>
+                    <h3>Application Tracking</h3>
                     <div style="overflow-x:auto;">
                         <table>
-                            <thead>
-                                <tr><th>Student Name</th><th>Contact</th><th>Passport</th><th>Status</th><th>Staff</th><th>Docs</th><th>Date</th></tr>
-                            </thead>
+                            <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Docs</th><th>Date</th></tr></thead>
                             <tbody id="trackingList"></tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <div id="earning" class="section">
+                <div class="card">
+                    <h3>Withdrawal Records</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Request Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+                            <tbody id="withdrawList"><tr><td colspan="4" align="center">No history found.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile" class="section">
+                <div class="card" style="max-width:500px;">
+                    <h3>Agency Profile</h3>
+                    <p><b>Name:</b> <span id="pName">...</span></p>
+                    <p><b>Email:</b> <span id="pEmail">...</span></p>
+                    <p><b>Agency:</b> <span id="pAgency">...</span></p>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="applyModal">
-        <div class="card" style="width:100%; max-width:600px; background:var(--purple-dark); border:1px solid var(--gold);">
-            <h3>Application for <span id="modalUniName" style="color:var(--gold);">...</span></h3>
-            <div class="filter-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:15px;">
-                <input type="text" id="sName" placeholder="Student Full Name">
-                <input type="text" id="sContact" placeholder="Contact Number">
-                <input type="text" id="sPass" placeholder="Passport Number">
-                <input type="number" id="sGap" placeholder="Study Gap (Years)">
+        <div class="card" style="width:100%; max-width:550px; background:var(--purple-dark);">
+            <h3>Application: <span id="modalUniName" style="color:var(--gold)"></span></h3>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <input type="text" id="sName" placeholder="Student Name">
+                <input type="text" id="sPass" placeholder="Passport No">
+                <input type="text" id="sContact" placeholder="Contact">
+                <input type="number" id="sGap" placeholder="Gap (Years)">
             </div>
-            <div class="filter-grid" style="grid-template-columns: 1fr 1fr;">
-                <label>Academic<input type="file" id="pdfAcademic"></label>
-                <label>Passport<input type="file" id="pdfPassport"></label>
-                <label>Language<input type="file" id="pdfLanguage"></label>
-                <label>Others<input type="file" id="pdfOthers"></label>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <label>Academic PDF<input type="file" id="pdfAcademic"></label>
+                <label>Others PDF<input type="file" id="pdfOthers"></label>
             </div>
             <div style="margin-top:20px; display:flex; gap:10px;">
-                <button class="btn-gold" id="submitAppBtn" style="flex:2;">Confirm & Submit</button>
-                <button onclick="document.getElementById('applyModal').style.display='none'" style="flex:1; background:var(--danger); border:none; color:white; border-radius:8px; cursor:pointer;">Cancel</button>
+                <button class="btn-gold" id="submitAppBtn" style="flex:2;">Submit Now</button>
+                <button onclick="document.getElementById('applyModal').style.display='none'" style="flex:1;">Cancel</button>
             </div>
         </div>
     </div>
@@ -154,20 +157,17 @@
     <div id="printArea">
         <div style="text-align:center; border-bottom:2px solid black; padding-bottom:10px;">
             <img src="logo.jpeg" style="width:120px;">
-            <h2>Student Career Consultancy</h2>
+            <h2>Acknowledgement Slip</h2>
         </div>
-        <div style="text-align:center; margin-top:30px;">
-            <h1 style="color:green;">Application Submitted!</h1>
+        <div style="margin-top:30px; text-align:center;">
+            <h1 style="color:green;">Application Received!</h1>
             <h2 id="slipNameDisplay"></h2>
+            <p>Passport: <span id="slipPassDisplay"></span></p>
+            <p>University: <span id="slipUniDisplay"></span></p>
         </div>
-        <table style="width:100%; border-collapse:collapse; margin-top:30px;" border="1">
-            <tr><th align="left" style="padding:8px;">Passport No</th><td id="slipPassDisplay" style="padding:8px;"></td></tr>
-            <tr><th align="left" style="padding:8px;">University</th><td id="slipUniDisplay" style="padding:8px;"></td></tr>
-            <tr><th align="left" style="padding:8px;">Partner</th><td id="slipPartnerDisplay" style="padding:8px;"></td></tr>
-        </table>
         <div style="text-align:center; margin-top:40px;">
-            <p>Scan to track status</p>
             <div id="qrcode" style="display:inline-block;"></div>
+            <p>Scan to track your file</p>
         </div>
     </div>
 
