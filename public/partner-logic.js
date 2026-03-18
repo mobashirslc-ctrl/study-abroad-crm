@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -13,6 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
@@ -93,7 +95,6 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
@@ -107,13 +108,9 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
-
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                
-                if (data.secure_url) {
-                    urls[item.k] = data.secure_url;
-                }
+                if (data.secure_url) { urls[item.k] = data.secure_url; }
             }
         }
 
@@ -137,14 +134,11 @@ document.getElementById('submitAppBtn').onclick = async () => {
         document.getElementById("qrcode").innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
-    } catch (e) { 
-        alert("Upload Error: " + e.message); 
-    } finally { 
-        btn.innerText = "Confirm & Submit"; btn.disabled = false; 
-    }
+    } catch (e) { alert("Error: " + e.message); } 
+    finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (PDF URL Fix Included) ---
+// --- 4. Tracking Table (With Universal PDF Fix) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -156,12 +150,11 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // --- PDF VIEWER LOGIC ---
-            // এটি নিশ্চিত করবে যে ফাইলটি যে ফোল্ডারেই থাকুক, ব্রাউজার যেন রিড করতে পারে
+            // --- SMART LINK CONVERTER (PDF FIX) ---
             const getSafeLink = (url) => {
-                if(!url) return "#";
-                // ক্লাউডিনারি অনেক সময় পিডিএফকে ইমেজ ফোল্ডারে রাখে, এটি তা ডাইনামিকলি ঠিক করবে
-                if(url.includes(".pdf")) {
+                if (!url) return "#";
+                if (url.toLowerCase().includes(".pdf")) {
+                    // এটি সব ধরনের পাথকে /files/ এ নিয়ে যাবে যা পিডিএফ ভিউ নিশ্চিত করবে
                     return url.replace("/image/upload/", "/files/upload/").replace("/raw/upload/", "/files/upload/");
                 }
                 return url;
@@ -181,7 +174,7 @@ function loadTracking() {
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:rgba(255,204,0,0.1); color:#ffcc00; border:1px solid #ffcc00;">${d.status.toUpperCase()}</span></td>
                 <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
+                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
             </tr>`;
         });
         document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px;">No applications found.</td></tr>`;
