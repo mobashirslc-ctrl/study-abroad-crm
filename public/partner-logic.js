@@ -13,79 +13,80 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const BDT_RATE = 120; // 1 USD = 120 BDT
+const BDT_RATE = 120;
 const partnerName = localStorage.getItem('partnerName') || "Partner";
 document.getElementById('partnerDisplayName').innerText = partnerName;
 
-// --- REAL-TIME SMART SEARCH LOGIC ---
+// --- 1. SMART SEARCH LOGIC (Admin Data Sync) ---
 function initSmartSearch() {
-    const uniRef = collection(db, "universities");
-    
-    // Admin থেকে ডাটা আসার সাথে সাথে এই ফাংশনটি ট্রিগার হবে
-    onSnapshot(uniRef, (snap) => {
-        const allUniversities = [];
-        snap.forEach(doc => allUniversities.push({ id: doc.id, ...doc.data() }));
+    onSnapshot(collection(db, "universities"), (snap) => {
+        const unis = [];
+        snap.forEach(doc => unis.push({ id: doc.id, ...doc.data() }));
 
-        const filterData = () => {
+        const filter = () => {
+            const nameVal = document.getElementById('fName').value.toLowerCase();
             const countryVal = document.getElementById('fCountry').value.toLowerCase();
             const degreeVal = document.getElementById('fDegree').value;
-            const ieltsVal = document.getElementById('fIelts').value.toLowerCase();
-            const gpaVal = parseFloat(document.getElementById('fGPA').value) || 0;
+            const maxFee = parseFloat(document.getElementById('fMaxFee').value) || Infinity;
 
-            const filtered = allUniversities.filter(u => {
-                // Admin fields matching: country, degree, ieltsReq, minGPA
-                const matchCountry = (u.country || "").toLowerCase().includes(countryVal);
-                const matchDegree = degreeVal === "" || u.degree === degreeVal;
-                const matchIelts = (u.ieltsReq || "").toLowerCase().includes(ieltsVal);
-                const matchGPA = (parseFloat(u.minGPA) || 0) >= gpaVal;
-
-                return matchCountry && matchDegree && matchIelts && matchGPA;
+            const filtered = unis.filter(u => {
+                return (u.universityName.toLowerCase().includes(nameVal)) &&
+                       (u.country.toLowerCase().includes(countryVal)) &&
+                       (degreeVal === "" || u.degree === degreeVal) &&
+                       (Number(u.semesterFee) <= maxFee);
             });
 
-            renderTable(filtered);
-            document.getElementById('matchCount').innerText = `${filtered.length} Universities Found`;
+            renderUniTable(filtered);
         };
 
-        // সার্চ বক্সের ইনপুটে লিসেনার যোগ করা (Auto-suggest)
-        ['fCountry', 'fDegree', 'fIelts', 'fGPA'].forEach(id => {
-            document.getElementById(id).addEventListener('input', filterData);
-            document.getElementById(id).addEventListener('change', filterData);
+        ['fName', 'fCountry', 'fDegree', 'fMaxFee'].forEach(id => {
+            document.getElementById(id).addEventListener('input', filter);
         });
 
-        filterData(); // পেজ লোড হলে ডাটা দেখাবে
+        filter(); // Initial Load
     });
 }
 
-function renderTable(data) {
+function renderUniTable(data) {
     const tbody = document.getElementById('assessmentResults');
-    tbody.innerHTML = "";
-
-    if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; opacity:0.5;">No matching data found.</td></tr>';
-        return;
-    }
-
-    data.forEach(u => {
-        // কমিশন ক্যালকুলেশন (Fee * Comm % * Rate)
-        const commAmt = ((u.semesterFee * u.partnerComm) / 100) * BDT_RATE;
-        
-        tbody.innerHTML += `
+    tbody.innerHTML = data.map(u => {
+        const comm = ((u.semesterFee * u.partnerComm) / 100) * BDT_RATE;
+        return `
         <tr>
-            <td>
-                <b style="color:var(--gold);">${u.universityName}</b><br>
-                <small style="opacity:0.6;">${u.courseName || 'N/A'}</small>
-            </td>
+            <td><b>${u.universityName}</b><br><small>${u.courseName}</small></td>
             <td>${u.country}<br><small>Rank: #${u.rank}</small></td>
-            <td>
-                <span class="badge">${u.degree}</span><br>
-                <small>${u.ieltsReq}</small>
-            </td>
+            <td><span class="badge">${u.degree}</span><br><small>${u.ieltsReq || u.uIeltsO || 'N/A'}</small></td>
             <td>$${Number(u.semesterFee).toLocaleString()}</td>
-            <td style="color:var(--success); font-weight:bold;">৳ ${commAmt.toLocaleString()}</td>
+            <td style="color:var(--success); font-weight:bold;">৳ ${comm.toLocaleString()}</td>
             <td><button class="btn-gold" onclick="alert('Applying for ${u.universityName}')">Apply</button></td>
         </tr>`;
+    }).join('');
+    document.getElementById('matchCount').innerText = `${data.length} Results`;
+}
+
+// --- 2. FILE TRACKING LOGIC (All Files) ---
+function initTracking() {
+    // query orderBy createdAt to show newest first
+    const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
+        const tbody = document.getElementById('trackingBody');
+        let html = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            const date = d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : 'Pending';
+            html += `
+            <tr>
+                <td><b>${d.studentName}</b><br><small>${d.passportNo || ''}</small></td>
+                <td>${d.university}</td>
+                <td><small>${d.partnerName || 'Unknown'}</small></td>
+                <td><span class="badge" style="color:var(--gold); border:1px solid var(--gold);">${d.status.toUpperCase()}</span></td>
+                <td>${date}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center;">No files found.</td></tr>';
     });
 }
 
-// ইনশিয়ালাইজ
+// Start
 initSmartSearch();
+initTracking();
