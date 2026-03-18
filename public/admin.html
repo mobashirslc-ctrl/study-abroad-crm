@@ -73,8 +73,8 @@
                         <div class="form-group"><label>Semester Fee (USD)</label><input type="number" id="uSemesterFee" placeholder="e.g. 8000"></div>
                         
                         <div class="form-group"><label>Partner Comm (%)</label><input type="number" id="uPartnerComm" placeholder="e.g. 10"></div>
-                        <div class="form-group"><label>Min. Academic GPA</label><input type="number" step="0.01" id="uMinGPA" placeholder="e.g. 3.00"></div>
-                        <div class="form-group"><label>Language Req. (Type & Score)</label><input type="text" id="uIeltsO" placeholder="e.g. IELTS 6.5 No band 6"></div>
+                        <div class="form-group"><label>Min. Academic GPA (Number)</label><input type="number" step="0.01" id="uMinGPA" placeholder="e.g. 3.00"></div>
+                        <div class="form-group"><label>Min. Language Score (e.g. 6.5)</label><input type="number" step="0.1" id="uIeltsO" placeholder="e.g. 6.5"></div>
                     </div>
                     <button class="btn btn-approve" id="saveUniBtn">Save University Data</button>
                 </div>
@@ -129,7 +129,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- Tab Switching ---
         window.showTab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -138,7 +137,7 @@
             document.getElementById('page-title').innerText = id.replace('-', ' ').toUpperCase();
         };
 
-        // --- Save University (Updated with New Fields) ---
+        // --- UPDATED SAVE LOGIC FOR SMART ASSESSMENT ---
         document.getElementById('saveUniBtn').onclick = async () => {
             const btn = document.getElementById('saveUniBtn');
             const data = {
@@ -147,10 +146,11 @@
                 country: document.getElementById('uCountry').value,
                 courseName: document.getElementById('uCourse').value,
                 degree: document.getElementById('uDegree').value,
-                semesterFee: Number(document.getElementById('uSemesterFee').value),
-                partnerComm: Number(document.getElementById('uPartnerComm').value),
-                minGPA: document.getElementById('uMinGPA').value,
-                ieltsReq: document.getElementById('uIeltsO').value,
+                semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
+                partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
+                // Converting to Numbers for logical comparison in Partner Portal
+                minGPA: Number(document.getElementById('uMinGPA').value) || 0,
+                ieltsReq: Number(document.getElementById('uIeltsO').value) || 0, 
                 createdAt: serverTimestamp()
             };
 
@@ -160,13 +160,11 @@
                 btn.innerText = "Saving..."; btn.disabled = true;
                 await addDoc(collection(db, "universities"), data);
                 alert("University Added Successfully!");
-                // Clear inputs
-                document.querySelectorAll('input').forEach(i => i.value = "");
+                document.querySelectorAll('.admin-form-grid input').forEach(i => i.value = "");
             } catch (e) { alert(e.message); }
             finally { btn.innerText = "Save University Data"; btn.disabled = false; }
         };
 
-        // --- Load Universities ---
         onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
@@ -187,7 +185,6 @@
             if(confirm("Delete this university?")) await deleteDoc(doc(db, "universities", id));
         };
 
-        // --- User Management ---
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
@@ -216,4 +213,4 @@
 
     </script>
 </body>
-</html> 
+</html>
