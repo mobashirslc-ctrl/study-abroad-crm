@@ -10,39 +10,33 @@
         :root { --gold: #f1c40f; --bg: #0b012d; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --success: #2ecc71; --danger: #ff4757; }
         body { margin: 0; display: flex; background: radial-gradient(circle at top right, #1a0b4d, #0b012d); font-family: 'Poppins', sans-serif; color: white; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
         .sidebar { width: 80px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; padding: 20px 0; border-right: 1px solid var(--border); transition: 0.3s; z-index: 1000; }
         .sidebar:hover { width: 220px; align-items: flex-start; padding-left: 15px; }
         .sidebar img.logo { width: 50px; border-radius: 5px; margin-bottom: 40px; background: white; padding: 2px; }
         .nav-links { list-style: none; padding: 0; width: 100%; flex-grow: 1; }
-        .nav-links li { padding: 15px 20px; cursor: pointer; color: #888; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
-        .nav-links li.active { color: var(--gold); background: var(--glass); border-left: 4px solid var(--gold); }
-        .nav-links li span { display: none; }
+        .nav-links li { padding: 15px 20px; cursor: pointer; color: #888; display: flex; align-items: center; gap: 15px; transition: 0.2s; border-left: 4px solid transparent; }
+        .nav-links li.active { color: var(--gold); background: var(--glass); border-left-color: var(--gold); }
+        .nav-links li span { display: none; white-space: nowrap; }
         .sidebar:hover .nav-links li span { display: inline; }
 
-        /* Main Content */
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border); }
         .content-body { padding: 30px; }
         
         .card { background: var(--glass); padding: 20px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 25px; }
-        .grid-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
-        
-        input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 8px; width: 100%; outline: none; font-size: 13px; box-sizing: border-box; }
-        input:focus { border-color: var(--gold); }
+        .grid-filter { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 10px; color: white; border-radius: 8px; width: 100%; outline: none; font-size: 12px; }
         label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; font-weight: bold; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
         th { text-align: left; color: var(--gold); font-size: 11px; text-transform: uppercase; padding: 12px; border-bottom: 2px solid var(--border); }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
 
         .btn-gold { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-gold:hover { transform: scale(1.05); }
         .badge { background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 5px; font-size: 11px; color: var(--gold); }
         
         .section { display: none; }
         .section.active { display: block; }
-        
         footer { text-align: center; padding: 20px; color: #555; font-size: 12px; border-top: 1px solid var(--border); margin-top: auto; }
     </style>
 </head>
@@ -52,10 +46,10 @@
         <img src="logo.jpeg" class="logo">
         <ul class="nav-links">
             <li class="active" onclick="showSection('dashboard', this)"><i class="fa-solid fa-gauge"></i> <span>Dashboard</span></li>
-            <li onclick="showSection('tracking', this)"><i class="fa-solid fa-file-invoice"></i> <span>Applications</span></li>
+            <li onclick="showSection('tracking', this)"><i class="fa-solid fa-list-check"></i> <span>File Tracking</span></li>
             <li onclick="showSection('wallet', this)"><i class="fa-solid fa-wallet"></i> <span>Wallet</span></li>
         </ul>
-        <div onclick="logout()" style="margin-top:auto; color:var(--danger); cursor:pointer; padding-bottom:20px;"><i class="fa-solid fa-power-off"></i></div>
+        <div onclick="logout()" style="margin-top:auto; color:var(--danger); cursor:pointer; padding-bottom:20px; padding-left:25px;"><i class="fa-solid fa-power-off"></i></div>
     </div>
 
     <div class="main-container">
@@ -70,38 +64,29 @@
                 <div class="card">
                     <h4 style="margin:0 0 15px 0;"><i class="fas fa-search-plus"></i> Smart Assessment Search</h4>
                     <div class="grid-filter">
+                        <div><label>University Name</label><input type="text" id="fName" placeholder="Search Uni..."></div>
                         <div><label>Country</label><input type="text" id="fCountry" placeholder="e.g. UK"></div>
                         <div>
                             <label>Degree Type</label>
                             <select id="fDegree">
-                                <option value="">All Degrees</option>
+                                <option value="">All</option>
                                 <option value="UG">Bachelor (UG)</option>
                                 <option value="PG">Master (PG)</option>
-                                <option value="PhD">PhD</option>
-                                <option value="DIPLOMA">Diploma</option>
                             </select>
                         </div>
-                        <div><label>Language Req.</label><input type="text" id="fIelts" placeholder="e.g. IELTS 6.5"></div>
-                        <div><label>Min. GPA</label><input type="number" step="0.1" id="fGPA" placeholder="e.g. 3.0"></div>
+                        <div><label>Max Fee (USD)</label><input type="number" id="fMaxFee" placeholder="Budget"></div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h4 style="margin:0;">Eligible Universities</h4>
-                        <span id="matchCount" style="font-size:12px; color:var(--gold);">0 Matching Results</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="margin:0;">Available Universities</h4>
+                        <span id="matchCount" style="font-size:11px; color:var(--gold);">0 Results</span>
                     </div>
                     <div style="overflow-x:auto;">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>University & Course</th>
-                                    <th>Country</th>
-                                    <th>Requirements</th>
-                                    <th>Fee (USD)</th>
-                                    <th>Partner Comm. (৳)</th>
-                                    <th>Action</th>
-                                </tr>
+                                <tr><th>University</th><th>Country</th><th>Requirement</th><th>Fee</th><th>Comm (৳)</th><th>Action</th></tr>
                             </thead>
                             <tbody id="assessmentResults"></tbody>
                         </table>
@@ -110,14 +95,24 @@
             </div>
 
             <div id="tracking" class="section">
-                <div class="card"><h4>Application Tracking</h4><div id="trackingContent">No applications found.</div></div>
+                <div class="card">
+                    <h4><i class="fa-solid fa-file-lines"></i> All Processing Files</h4>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr><th>Student Name</th><th>University</th><th>Partner</th><th>Status</th><th>Date</th></tr>
+                            </thead>
+                            <tbody id="trackingBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
+
             <div id="wallet" class="section">
                 <div class="card"><h4>Wallet Balance</h4><h2 style="color:var(--success);">৳ 0.00</h2></div>
             </div>
 
         </div>
-
         <footer>&copy; 2026 <b>GORUN LTD.</b> All Rights Reserved</footer>
     </div>
 
