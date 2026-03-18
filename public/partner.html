@@ -18,7 +18,7 @@
         .nav-links li.active { background: var(--glass); color: var(--gold); border-right: 4px solid var(--gold); }
 
         .main-container { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+        .header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--glass-border); }
         
         .wallet-header { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px 40px; background: rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--glass-border); }
         .wallet-box { background: var(--glass); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); text-align: center; }
@@ -29,10 +29,10 @@
         .card { background: var(--glass); border-radius: 20px; border: 1px solid var(--glass-border); padding: 20px; margin-bottom: 25px; }
 
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
-        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 12px; outline: none; }
+        input, select { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; font-size: 12px; }
         
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
-        .btn-outline { background: transparent; color: white; border: 1px solid var(--gold); padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-outline { background: transparent; color: white; border: 1px solid var(--gold); padding: 12px 20px; border-radius: 8px; cursor: pointer; }
 
         table { width: 100%; border-collapse: collapse; min-width: 850px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--glass-border); font-size: 11px; }
@@ -43,6 +43,7 @@
 
         #applyModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index: 2000; align-items:center; justify-content:center; padding: 20px; }
         #printArea { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; color:black; padding:40px; z-index:9999; }
+        
         @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { position: absolute; left: 0; top: 0; display: block !important; } }
     </style>
 </head>
@@ -56,13 +57,13 @@
             <li onclick="switchTab('earning', this)"><i class="fas fa-wallet"></i> <span>Withdraw</span></li>
             <li onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> <span>Profile</span></li>
         </ul>
-        <div class="logout-btn" onclick="logout()" style="margin-top:auto; padding: 20px 25px; color: var(--danger); cursor: pointer;"><i class="fas fa-power-off"></i> Logout</div>
+        <div class="logout-btn" onclick="logout()" style="margin-top:auto; padding:25px; color:var(--danger); cursor:pointer;"><i class="fas fa-power-off"></i> Logout</div>
     </div>
 
     <div class="main-container">
         <div class="header">
-            <h2 style="font-size: 18px;">Partner Dashboard</h2>
-            <div id="welcomeMsg">Welcome, <span id="partnerNameDisplay" style="color:var(--gold); font-weight:bold;">...</span></div>
+            <h3>Partner Dashboard</h3>
+            <div id="welcomeMsg">Welcome, <span id="partnerNameDisplay" style="color:var(--gold);">...</span></div>
         </div>
 
         <div class="wallet-header">
@@ -82,32 +83,17 @@
             <div id="assessment" class="section active">
                 <div class="card">
                     <div class="filter-grid">
-                        <input type="text" id="fCountry" placeholder="Country (e.g. UK)">
-                        <select id="fDegree">
-                            <option value="">Degree</option>
-                            <option value="Bachelor">Bachelor</option>
-                            <option value="Master">Master</option>
-                        </select>
-                        <select id="fLangType">
-                            <option value="">Language Test</option>
-                            <option value="IELTS">IELTS</option>
-                            <option value="Duolingo">Duolingo</option>
-                            <option value="MOI">MOI</option>
-                        </select>
+                        <input type="text" id="fCountry" placeholder="Country">
+                        <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
+                        <select id="fLangType"><option value="">Lang Test</option><option value="IELTS">IELTS</option><option value="Duolingo">Duolingo</option><option value="MOI">MOI</option></select>
                         <input type="number" id="fGPA" placeholder="Min GPA">
-                        <input type="number" id="fLang" placeholder="Min Score">
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn-gold" id="searchBtn" style="flex:2;">Search Now</button>
-                        <button class="btn-outline" id="refreshBtn" style="flex:1;">Refresh</button>
-                    </div>
+                    <button class="btn-gold" id="searchBtn">Search Now</button>
                 </div>
                 <div class="card">
                     <div style="overflow-x:auto;">
-                        <table id="uniTable">
-                            <thead>
-                                <tr><th>University</th><th>Gap/Intake</th><th>Fees/Living</th><th>Commission</th><th>Action</th></tr>
-                            </thead>
+                        <table>
+                            <thead><tr><th>University</th><th>Gap/Intake</th><th>Fees/Living</th><th>Commission</th><th>Action</th></tr></thead>
                             <tbody id="uniList"></tbody>
                         </table>
                     </div>
@@ -116,57 +102,67 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3>Live File Tracking</h3>
+                    <h3>Application Tracking</h3>
                     <div style="overflow-x:auto;">
                         <table>
-                            <thead>
-                                <tr><th>Student Name</th><th>Passport No</th><th>Status</th><th>Staff</th><th>Document</th><th>Submitted Date</th></tr>
-                            </thead>
+                            <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Doc View</th><th>Date</th></tr></thead>
                             <tbody id="trackingList"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <div id="earning" class="section"><div class="card"><h3>Withdrawal History</h3><p>No history found.</p></div></div>
-            <div id="profile" class="section"><div class="card"><h3>Agency Profile</h3><p id="profData">Loading...</p></div></div>
+            <div id="earning" class="section">
+                <div class="card" style="text-align:center; border:1px solid var(--gold);">
+                    <p>Total Final Balance</p>
+                    <h2 id="withdrawDisplay" style="color:var(--gold);">৳ 0</h2>
+                    <button id="withdrawBtn" class="btn-gold" style="width:250px; opacity:0.5; cursor:not-allowed;" disabled>Request Withdrawal</button>
+                    <p class="condition-text" id="withdrawMsg">*Final balance must be > 0</p>
+                </div>
+                <div class="card">
+                    <h4>History</h4>
+                    <table id="withdrawHistory">
+                        <thead><tr><th>Date</th><th>Amount</th><th>Status</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="profile" class="section">
+                <div class="card" style="max-width:500px; margin:auto; text-align:center;">
+                    <i class="fas fa-user-shield" style="font-size:50px; color:var(--gold); margin-bottom:15px;"></i>
+                    <h3 id="pName">...</h3>
+                    <p><b>Agency:</b> <span id="pAgency">...</span></p>
+                    <p><b>Email:</b> <span id="pEmail">...</span></p>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="applyModal">
-        <div class="card" style="width:100%; max-width:600px; background:var(--purple-dark); color:white;">
-            <h3 style="margin-top:0;">Application: <span id="modalUniName" style="color:var(--gold)"></span></h3>
-            <div class="filter-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card" style="width:100%; max-width:550px; background:var(--purple-dark);">
+            <h3 id="modalUniName"></h3>
+            <div class="filter-grid" style="grid-template-columns:1fr 1fr;">
                 <input type="text" id="sName" placeholder="Student Name">
-                <input type="text" id="sPass" placeholder="Passport Number">
-                <input type="text" id="sContact" placeholder="Contact Number">
-                <input type="number" id="sGap" placeholder="Study Gap (Years)">
+                <input type="text" id="sPass" placeholder="Passport No">
+                <input type="number" id="sGap" placeholder="Study Gap">
+                <input type="file" id="pdfAcademic">
+                <input type="file" id="pdfOthers">
             </div>
-            <div class="filter-grid" style="grid-template-columns: 1fr 1fr;">
-                <div><label style="font-size:10px; color:var(--gold);">Academic PDF</label><input type="file" id="pdfAcademic"></div>
-                <div><label style="font-size:10px; color:var(--gold);">Passport PDF</label><input type="file" id="pdfPassport"></div>
-                <div><label style="font-size:10px; color:var(--gold);">Others PDF</label><input type="file" id="pdfOthers"></div>
-            </div>
-            <div style="margin-top:20px; display:flex; gap:10px;">
-                <button class="btn-gold" id="submitAppBtn" style="flex:2;">Confirm & Submit</button>
-                <button onclick="document.getElementById('applyModal').style.display='none'" class="btn-outline" style="flex:1; border-color:var(--danger); color:var(--danger);">Cancel</button>
-            </div>
+            <button class="btn-gold" id="submitAppBtn" style="width:100%; margin-top:15px;">Submit File</button>
         </div>
     </div>
 
     <div id="printArea">
         <div style="text-align:center; border-bottom:2px solid black; padding-bottom:10px;">
             <img src="logo.jpeg" style="width:120px;">
-            <h2>Acknowledgement Slip</h2>
+            <h2>Acknowledgement Receipt</h2>
         </div>
-        <div style="text-align:center; margin-top:30px;">
-            <h1 style="color:#2ecc71;">Application Received!</h1>
-            <h2 id="slipNameDisp"></h2>
-            <p>Passport: <span id="slipPassDisp"></span> | University: <span id="slipUniDisp"></span></p>
-        </div>
-        <div style="text-align:center; margin-top:30px;">
-            <div id="qrcode" style="display:inline-block;"></div>
-            <p style="font-size:12px; margin-top:10px;">Scan to track your application online.</p>
+        <div style="text-align:center; margin-top:40px;">
+            <h1 style="color:green;">Success!</h1>
+            <h3 id="slipName"></h3>
+            <p>University: <span id="slipUni"></span></p>
+            <div id="qrcode" style="display:inline-block; margin-top:20px;"></div>
         </div>
     </div>
 
