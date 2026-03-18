@@ -3,102 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | SCC Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Login & Register | Georun Ltd.</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --purple-deep: #0b012d; --purple-light: #1a0b4d; --gold: #ffcc00; --glass: rgba(255, 255, 255, 0.08); }
+        body { margin: 0; font-family: 'Poppins', sans-serif; background: radial-gradient(circle at top right, var(--purple-light), var(--purple-deep)); height: 100vh; display: flex; align-items: center; justify-content: center; color: white; overflow: hidden; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); padding: 40px; border-radius: 30px; width: 100%; max-width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: var(--gold); margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; color: #aaa; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--gold); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .toggle-link { text-align: center; margin-top: 20px; font-size: 14px; cursor: pointer; color: var(--gold); }
+        .dynamic-fields { display: none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+    </style>
 </head>
-<body class="bg-[#0b012d] flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl w-full max-w-md backdrop-blur-lg">
-        <div class="text-center mb-8">
-            <h2 class="text-3xl font-extrabold text-white">SCC Portal</h2>
-            <p class="text-gray-400 mt-2">Sign in to your dashboard</p>
-        </div>
-        
-        <div class="space-y-4">
-            <div>
-                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Email Address</label>
-                <input type="email" id="logEmail" placeholder="partner@scc.com" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
-            </div>
-            <div>
-                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Password</label>
-                <input type="password" id="logPass" placeholder="••••••••" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
-            </div>
-            <button id="loginBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Login</button>
+<body>
+
+    <div class="glass-card">
+        <div id="loginSection">
+            <h2><i class="fas fa-lock"></i> Login</h2>
+            <div class="form-group"><input type="email" id="loginEmail" placeholder="Email Address"></div>
+            <div class="form-group"><input type="password" id="loginPass" placeholder="Password"></div>
+            <button class="btn-main" id="loginBtn">Access Dashboard</button>
+            <p class="toggle-link" onclick="toggleForms('register')">Don't have an account? Register Now</p>
         </div>
 
-        <p class="text-center text-gray-400 mt-6 text-sm">
-            Don't have an account? <a href="register.html" class="text-[#ffcc00] font-bold hover:underline">Register Now</a>
-        </p>
+        <div id="registerSection" style="display: none;">
+            <h2><i class="fas fa-user-plus"></i> Registration</h2>
+            <div class="form-group">
+                <label>Register As</label>
+                <select id="userRole" onchange="handleRoleChange()">
+                    <option value="">Select Role</option>
+                    <option value="Partner">Partner</option>
+                    <option value="Compliance">Compliance Staff</option>
+                </select>
+            </div>
+
+            <div class="form-group"><input type="email" id="regEmail" placeholder="Login Email"></div>
+            <div class="form-group"><input type="password" id="regPass" placeholder="Set Password"></div>
+
+            <div id="partnerFields" class="dynamic-fields">
+                <input type="text" id="pAgency" placeholder="Agency Name" class="form-group">
+                <input type="text" id="pPerson" placeholder="Authorized Person Name" class="form-group">
+                <input type="text" id="pContact" placeholder="Contact Number" class="form-group">
+                <input type="text" id="pAddress" placeholder="Address" class="form-group">
+                <label>Trade License (PDF)</label><input type="file" id="pTrade" class="form-group">
+                <label>NID Copy (PDF)</label><input type="file" id="pNid" class="form-group">
+                <input type="text" id="pService" placeholder="Service Countries (e.g. UK, USA)">
+            </div>
+
+            <div id="complianceFields" class="dynamic-fields">
+                <input type="text" id="cName" placeholder="Employee Name" class="form-group">
+                <input type="text" id="cContact" placeholder="Contact Number" class="form-group">
+                <input type="text" id="cOrg" placeholder="Organisation Name" class="form-group">
+                <input type="text" id="cExp" placeholder="Experience Duration" class="form-group">
+                <input type="text" id="cService" placeholder="Assigned Countries">
+            </div>
+
+            <button class="btn-main" id="regBtn">Submit Request</button>
+            <p class="toggle-link" onclick="toggleForms('login')">Already have an account? Login</p>
+        </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        document.getElementById('loginBtn').onclick = async () => {
-            const email = document.getElementById('logEmail').value;
-            const pass = document.getElementById('logPass').value;
-            const btn = document.getElementById('loginBtn');
-
-            if(!email || !pass) return alert("Fill all fields!");
-
-            try {
-                btn.disabled = true;
-                btn.innerText = "Checking...";
-                
-                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                const user = userCredential.user;
-
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    
-                    if (userData.status !== "active") {
-                        alert("Account Pending! Please wait for admin approval.");
-                        await signOut(auth);
-                        btn.disabled = false;
-                        btn.innerText = "Login";
-                        return;
-                    }
-
-                    // --- CRITICAL FIX: Save session data before redirecting ---
-                    localStorage.setItem('userEmail', user.email);
-                    localStorage.setItem('userId', user.uid);
-                    localStorage.setItem('userRole', userData.role);
-                    localStorage.setItem('partnerName', userData.fullName || 'Partner');
-
-                    // Role Based Redirection
-                    if (userData.role === "partner") {
-                        window.location.replace("partner.html");
-                    } else if (userData.role === "compliance") {
-                        window.location.replace("compliance.html");
-                    } else {
-                        alert("Role not defined. Contact Admin.");
-                    }
-                } else {
-                    alert("User data not found in database.");
-                }
-
-            } catch (err) {
-                alert("Login Failed: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "Login";
-            }
-        };
+    <script type="module" src="auth.js"></script>
+    <script>
+        function toggleForms(type) {
+            document.getElementById('loginSection').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('registerSection').style.display = type === 'register' ? 'block' : 'none';
+        }
+        function handleRoleChange() {
+            const role = document.getElementById('userRole').value;
+            document.getElementById('partnerFields').style.display = role === 'Partner' ? 'block' : 'none';
+            document.getElementById('complianceFields').style.display = role === 'Compliance' ? 'block' : 'none';
+        }
     </script>
 </body>
 </html>
