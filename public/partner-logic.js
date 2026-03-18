@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- Firebase Config ---
+// --- Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,18 +14,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- Cloudinary Config (Crucial for PDF Support) ---
+// --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
-// '/auto/upload' ব্যবহার করা হয়েছে যাতে PDF এবং Image উভয়ই সাপোর্ট করে
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
 const partnerEmail = localStorage.getItem('userEmail');
 const BDT_RATE = 120;
 
+// লগইন চেক
 if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 1. Dashboard Stats ---
+// --- 1. Dashboard Stats (নিচ থেকে ডাটা নিয়ে স্ট্যাট আপডেট করবে) ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -47,7 +47,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 2. Smart Assessment ---
+// --- 2. Smart Assessment (ইউনিভার্সিটি ফিল্টার) ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -84,7 +84,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 3. Submission Logic (The PDF Fix) ---
+// --- 3. Submission Logic (ফাইল আপলোড এবং ডাটা সেভ) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -96,10 +96,11 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields missing!");
+    
+    if(!sName || !sPass) return alert("Student Name and Passport are required!");
 
     try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
+        btn.innerText = "Uploading Documents..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
         
@@ -110,17 +111,11 @@ document.getElementById('submitAppBtn').onclick = async () => {
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
 
-                // ক্লাউডিনারিকে ফোর্স করছি সব টাইপ ফাইল গ্রহণ করতে
-                const res = await fetch(CLOUDINARY_URL, { 
-                    method: "POST", 
-                    body: formData 
-                });
-                
+                const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
+                
                 if (data.secure_url) {
                     urls[item.k] = data.secure_url;
-                } else {
-                    throw new Error(data.error?.message || "Upload failed");
                 }
             }
         }
@@ -132,7 +127,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
             university: document.getElementById('sUni').value, 
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, 
             partnerEmail: partnerEmail, 
-            partnerName: localStorage.getItem('partnerName'), 
+            partnerName: localStorage.getItem('partnerName') || "Partner", 
             status: 'pending', 
             docs: urls, 
             createdAt: serverTimestamp() 
@@ -146,13 +141,13 @@ document.getElementById('submitAppBtn').onclick = async () => {
         new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 128, height: 128 });
 
     } catch (e) { 
-        alert("Upload Error: " + e.message); 
+        alert("System Error: " + e.message); 
     } finally { 
         btn.innerText = "Confirm & Submit"; btn.disabled = false; 
     }
 };
 
-// --- 4. Tracking Table (Real-time View) ---
+// --- 4. Tracking Table (ডকুমেন্ট ভিউ লিঙ্ক ফিক্সসহ) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -164,15 +159,22 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // সব ফাইলের জন্য একদম ক্লিন ইউআরএল ভিউয়ার
-            const getLink = (url) => url ? url : "#";
+            // PDF ভিউ ফিক্স করার জন্য স্মার্ট লিঙ্ক জেনারেটর
+            const getSafeLink = (url) => {
+                if(!url) return "#";
+                if(url.includes(".pdf")) {
+                    // PDF হলে /image/ ফোল্ডার প্যাথ বদলে /files/ করে দেয়
+                    return url.replace("/image/upload/", "/files/upload/");
+                }
+                return url;
+            };
 
             const docLinks = `
                 <div style="display: flex; gap: 10px;">
-                    ${docs.passport ? `<a href="${getLink(docs.passport)}" target="_blank" title="Passport" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getLink(docs.academic)}" target="_blank" title="Academic" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
-                    ${docs.language ? `<a href="${getLink(docs.language)}" target="_blank" title="Language" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
-                    ${docs.others ? `<a href="${getLink(docs.others)}" target="_blank" title="Others" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${getSafeLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-passport fa-lg"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${getSafeLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-user-graduate fa-lg"></i></a>` : ''}
+                    ${docs.language ? `<a href="${getSafeLink(docs.language)}" target="_blank" style="color:#2ecc71;"><i class="fa-solid fa-language fa-lg"></i></a>` : ''}
+                    ${docs.others ? `<a href="${getSafeLink(docs.others)}" target="_blank" style="color:#e67e22;"><i class="fa-solid fa-file-invoice fa-lg"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
@@ -181,14 +183,14 @@ function loadTracking() {
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:rgba(255,204,0,0.1); color:#ffcc00; border:1px solid #ffcc00;">${d.status.toUpperCase()}</span></td>
                 <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
+                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
             </tr>`;
         });
         document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px;">No applications found.</td></tr>`;
     });
 }
 
-// --- Initialize Everything ---
+// ফাংশনগুলো রান করা
 loadDashboardStats(); 
 initSearch(); 
 loadTracking();
