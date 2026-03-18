@@ -16,6 +16,7 @@ const db = getFirestore(app);
 
 // --- Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
+// '/auto/upload' ব্যবহার করা হয়েছে যাতে ফাইল টাইপ ক্লাউডিনারি নিজে চিনে নেয়
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
 
@@ -138,7 +139,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 4. Tracking Table (With Universal PDF Fix) ---
+// --- 4. Tracking Table (PDF URL Fix Included) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -150,12 +151,14 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // --- SMART LINK CONVERTER (PDF FIX) ---
+            // --- SMART LINK VIEWER (PDF FIX) ---
             const getSafeLink = (url) => {
                 if (!url) return "#";
                 if (url.toLowerCase().includes(".pdf")) {
-                    // এটি সব ধরনের পাথকে /files/ এ নিয়ে যাবে যা পিডিএফ ভিউ নিশ্চিত করবে
-                    return url.replace("/image/upload/", "/files/upload/").replace("/raw/upload/", "/files/upload/");
+                    // এটি সব ধরনের ভুল পাথ বদলে সরাসরি 'auto' করে দিবে যা ব্রাউজার রিড করতে পারে
+                    return url.replace("/image/upload/", "/auto/upload/")
+                              .replace("/files/upload/", "/auto/upload/")
+                              .replace("/raw/upload/", "/auto/upload/");
                 }
                 return url;
             };
@@ -174,11 +177,14 @@ function loadTracking() {
                 <td>${d.university}</td>
                 <td><span class="badge" style="background:rgba(255,204,0,0.1); color:#ffcc00; border:1px solid #ffcc00;">${d.status.toUpperCase()}</span></td>
                 <td>${docLinks}</td>
-                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Today"}</td>
+                <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
             </tr>`;
         });
         document.getElementById('trackingBody').innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px;">No applications found.</td></tr>`;
     });
 }
 
-loadDashboardStats(); initSearch(); loadTracking();
+// ফাংশনগুলো রান করা
+loadDashboardStats(); 
+initSearch(); 
+loadTracking();
