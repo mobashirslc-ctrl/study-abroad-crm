@@ -25,10 +25,8 @@
         .card { background: var(--glass); border-radius: 20px; border: 1px solid var(--glass-border); padding: 20px; margin-bottom: 25px; }
         .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
         input, select, textarea { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: white; outline: none; font-size: 12px; box-sizing: border-box; }
-        label { display: block; font-size: 11px; color: var(--gold); margin: 10px 0 5px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
         .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-outline { background: transparent; color: white; border: 1px solid var(--gold); padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; }
         table { width: 100%; border-collapse: collapse; min-width: 850px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--glass-border); font-size: 11px; }
         td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
@@ -46,9 +44,9 @@
             <li class="active" onclick="switchTab('assessment', this)"><i class="fas fa-search"></i> <span>Assessment</span></li>
             <li onclick="switchTab('tracking', this)"><i class="fas fa-tasks"></i> <span>Tracking</span></li>
             <li onclick="switchTab('earning', this)"><i class="fas fa-wallet"></i> <span>Withdraw</span></li>
-            <li onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> <span>Profile & Payment</span></li>
+            <li onclick="switchTab('profile', this)"><i class="fas fa-user-circle"></i> <span>Profile</span></li>
         </ul>
-        <div class="logout-btn" onclick="logout()" style="margin-top:auto; padding:25px; color:var(--danger); cursor:pointer;"><i class="fas fa-power-off"></i> Logout</div>
+        <div onclick="logout()" style="margin-top:auto; padding:25px; color:var(--danger); cursor:pointer;"><i class="fas fa-power-off"></i> Logout</div>
     </div>
 
     <div class="main-container">
@@ -58,16 +56,8 @@
         </div>
 
         <div class="wallet-header">
-            <div class="wallet-box">
-                <p style="margin:0; font-size:10px; opacity:0.7;">Pending (Estimated)</p>
-                <h3 id="topPending">৳ 0</h3>
-                <div class="condition-text">*Based on student semester fee payment</div>
-            </div>
-            <div class="wallet-box">
-                <p style="margin:0; font-size:10px; opacity:0.7;">Final Balance</p>
-                <h3 id="topFinal">৳ 0</h3>
-                <div class="condition-text">*Available for withdrawal</div>
-            </div>
+            <div class="wallet-box"><p style="margin:0; font-size:10px; opacity:0.7;">Pending</p><h3 id="topPending">৳ 0</h3></div>
+            <div class="wallet-box"><p style="margin:0; font-size:10px; opacity:0.7;">Final Balance</p><h3 id="topFinal">৳ 0</h3></div>
         </div>
 
         <div class="content-area">
@@ -75,52 +65,34 @@
                 <div class="card">
                     <div class="filter-grid">
                         <input type="text" id="fCountry" placeholder="Country">
-                        <select id="fDegree">
-                            <option value="">Degree</option>
-                            <option value="Bachelor">Bachelor</option>
-                            <option value="Master">Master</option>
-                        </select>
-                        <select id="fLangType">
-                            <option value="">Language Test</option>
-                            <option value="IELTS">IELTS</option>
-                            <option value="Duolingo">Duolingo</option>
-                            <option value="MOI">MOI</option>
-                        </select>
+                        <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
+                        <select id="fLangType"><option value="">Lang Test</option><option value="IELTS">IELTS</option><option value="Duolingo">Duolingo</option><option value="MOI">MOI</option></select>
                         <input type="number" id="fGPA" placeholder="Min GPA">
                         <input type="number" id="fLang" placeholder="Min Score">
                     </div>
                     <button class="btn-gold" id="searchBtn">Search Now</button>
                 </div>
-                <div class="card">
-                    <div style="overflow-x:auto;"><table><thead><tr><th>University</th><th>Gap/Intake</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead><tbody id="uniList"></tbody></table></div>
-                </div>
+                <div class="card"><div style="overflow-x:auto;"><table><thead><tr><th>University</th><th>Gap/Intake</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead><tbody id="uniList"></tbody></table></div></div>
             </div>
 
             <div id="tracking" class="section">
-                <div class="card">
-                    <h3>Application Tracking</h3>
-                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Document</th><th>Date</th></tr></thead><tbody id="trackingList"></tbody></table></div>
-                </div>
+                <div class="card"><div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Staff</th><th>Document</th><th>Date</th></tr></thead><tbody id="trackingList"></tbody></table></div></div>
             </div>
 
             <div id="earning" class="section">
-                <div class="card" style="text-align:center; border:1px solid var(--gold);">
-                    <p>Total Final Balance</p>
+                <div class="card" style="text-align:center;">
                     <h2 id="withdrawDisplay" style="color:var(--gold);">৳ 0</h2>
                     <button id="withdrawBtn" class="btn-gold" style="width:250px;" disabled>Request Withdrawal</button>
-                    <p class="condition-text" id="withdrawMsg">*Final balance must be > 0</p>
                 </div>
-                <div class="card"><h4>Withdrawal History</h4><table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead><tbody id="withdrawHistory"></tbody></table></div>
             </div>
 
             <div id="profile" class="section">
                 <div class="card" style="max-width:600px; margin:auto;">
-                    <h3 style="text-align:center; color:var(--gold);">Profile & Payment Settings</h3>
-                    <label>Agency Name</label><input type="text" id="setAgencyName">
-                    <label>Contact Number</label><input type="text" id="setPhone">
-                    <h4 style="border-top:1px solid var(--glass-border); margin-top:15px; padding-top:15px; color:var(--gold);">Payment Method</h4>
-                    <select id="setPayMethod"><option value="Bank Transfer">Bank Transfer</option><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option></select>
-                    <label>Account Details (Bank details or Mobile No)</label><textarea id="setPayDetails" rows="3"></textarea>
+                    <h3>Profile & Payment</h3>
+                    <input type="text" id="setAgencyName" placeholder="Agency Name">
+                    <input type="text" id="setPhone" placeholder="Phone">
+                    <select id="setPayMethod" style="margin-top:10px;"><option value="Bkash">Bkash</option><option value="Nagad">Nagad</option><option value="Bank Transfer">Bank Transfer</option></select>
+                    <textarea id="setPayDetails" rows="3" placeholder="Account Details" style="margin-top:10px;"></textarea>
                     <button class="btn-gold" id="saveProfileBtn" style="margin-top:20px;">Save Changes</button>
                 </div>
             </div>
@@ -133,12 +105,11 @@
             <div class="filter-grid" style="grid-template-columns:1fr 1fr;">
                 <input type="text" id="sName" placeholder="Student Name">
                 <input type="text" id="sPass" placeholder="Passport No">
-                <input type="number" id="sGap" placeholder="Study Gap">
-                <input type="file" id="pdfAcademic">
-                <input type="file" id="pdfOthers">
+                <input type="file" id="pdfAcademic" accept="application/pdf,image/*">
+                <input type="file" id="pdfOthers" accept="application/pdf,image/*">
             </div>
             <button class="btn-gold" id="submitAppBtn" style="margin-top:15px;">Confirm Submission</button>
-            <button onclick="document.getElementById('applyModal').style.display='none'" class="btn-outline" style="margin-top:10px; border-color:var(--danger); color:var(--danger);">Close</button>
+            <button onclick="document.getElementById('applyModal').style.display='none'" style="margin-top:10px; background:transparent; color:white; border:none; cursor:pointer;">Cancel</button>
         </div>
     </div>
 
