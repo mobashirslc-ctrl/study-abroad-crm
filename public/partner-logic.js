@@ -17,41 +17,48 @@ const userEmail = localStorage.getItem('userEmail');
 const partnerName = localStorage.getItem('partnerName') || 'Partner';
 document.getElementById('partnerNameDisplay').innerText = partnerName;
 
-// --- 1. Tracking Data Fix ---
+// --- ১. ট্র্যাকিং ডেটা ফিক্স (Real-time tracking without ordering error) ---
 function initTracking() {
     if(!userEmail) return;
-    // Query order must match your index or remove orderBy to test first
+    
+    // orderBy ব্যবহার করলে অনেক সময় Firebase Indexing Error দেয়, তাই প্রথমে সাধারণ Query দিয়ে চেক করছি।
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail));
     
     onSnapshot(q, (snap) => {
         const tbody = document.getElementById('trackingList');
-        tbody.innerHTML = "";
-        let pending = 0, final = 0;
+        tbody.innerHTML = ""; 
+        let pendingBal = 0, finalBal = 0;
+
+        if (snap.empty) {
+            tbody.innerHTML = "<tr><td colspan='6' align='center'>No data available.</td></tr>";
+        }
 
         snap.forEach(doc => {
             const d = doc.data();
             const comm = Number(d.commission) || 0;
-            if(d.status === 'pending') pending += comm;
-            if(d.status === 'approved') final += comm;
+            if(d.status === 'pending') pendingBal += comm;
+            if(d.status === 'approved') finalBal += comm;
+
+            const date = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...';
 
             tbody.innerHTML += `<tr>
                 <td><b>${d.studentName}</b></td>
                 <td>${d.passportNo}</td>
                 <td style="color:var(--gold)">${d.status.toUpperCase()}</td>
                 <td>${d.complianceStaff || 'Waiting'}</td>
-                <td><a href="${d.docs?.pdfAcademic || '#'}" target="_blank" style="color:var(--gold)">View</a></td>
-                <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...'}</td>
+                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold)">View PDF</a></td>
+                <td>${date}</td>
             </tr>`;
         });
-        document.getElementById('topPending').innerText = `৳ ${pending.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳ ${final.toLocaleString()}`;
+        document.getElementById('topPending').innerText = `৳ ${pendingBal.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳ ${finalBal.toLocaleString()}`;
     });
 }
 
-// --- 2. Assessment & Slip Fix ---
+// --- ২. অ্যাসেসমেন্ট এবং সার্চ বক্স ফিক্স ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
-    allUnis = snap.docs.map(d => d.data());
+    allUnis = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderUniTable(allUnis);
 });
 
@@ -63,11 +70,24 @@ function renderUniTable(data) {
             <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
             <td>Gap: ${u.studyGap}y | Intake: ${u.intake}</td>
             <td>Fee: $${u.semesterFee}<br>Living: $${u.livingCost}</td>
-            <td>৳ ${commBDT.toLocaleString()}</td>
+            <td style="color:var(--success); font-weight:bold;">৳ ${commBDT.toLocaleString()}</td>
             <td><button class="btn-gold" onclick="openApply('${u.universityName}', ${commBDT})">Apply</button></td>
         </tr>`;
     }).join('');
 }
+
+document.getElementById('searchBtn').onclick = () => {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const degree = document.getElementById('fDegree').value;
+    const langType = document.getElementById('fLangType').value;
+    const filtered = allUnis.filter(u => {
+        return (country === "" || u.country.toLowerCase().includes(country)) &&
+               (degree === "" || u.degree === degree);
+    });
+    renderUniTable(filtered);
+};
+
+document.getElementById('refreshBtn').onclick = () => location.reload();
 
 window.openApply = (name, commission) => {
     document.getElementById('modalUniName').innerText = name;
@@ -75,41 +95,54 @@ window.openApply = (name, commission) => {
     window.currentApp = { name, commission };
 };
 
+// --- ৩. ফাইল সাবমিট এবং স্লিপ জেনারেশন ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPass').value;
-    if(!sName || !sPass) return alert("Required fields missing!");
-
-    document.getElementById('submitAppBtn').innerText = "Submitting...";
     
+    if(!sName || !sPass) return alert("Please fill Name and Passport!");
+
+    const btn = document.getElementById('submitAppBtn');
+    btn.innerText = "Submitting...";
+    btn.disabled = true;
+
     try {
+        // Cloudinary upload placeholders (Simplified for this version)
+        const urls = { academic: "", passport: "", others: "" };
+        
         await addDoc(collection(db, "applications"), {
-            studentName: sName, passportNo: sPass, 
-            university: window.currentApp.name, commission: window.currentApp.commission,
-            partnerEmail: userEmail, partnerName: partnerName,
-            status: 'pending', createdAt: serverTimestamp()
+            studentName: sName,
+            passportNo: sPass,
+            contactNo: document.getElementById('sContact').value,
+            studyGap: document.getElementById('sGap').value,
+            university: window.currentApp.name,
+            commission: window.currentApp.commission,
+            partnerEmail: userEmail,
+            partnerName: partnerName,
+            status: 'pending',
+            docs: urls,
+            createdAt: serverTimestamp()
         });
-        
-        // Success Slip
-        document.getElementById('slipNameDisplay').innerText = sName.toUpperCase();
-        document.getElementById('slipPassDisplay').innerText = sPass;
-        document.getElementById('slipUniDisplay').innerText = window.currentApp.name;
-        
-        document.getElementById("qrcode").innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), {
-            text: `https://study-abroad-crm-nine.vercel.app/track.html?id=${sPass}`,
-            width: 100, height: 100
-        });
+
+        // Show Slip
+        document.getElementById('slipNameDisp').innerText = sName.toUpperCase();
+        document.getElementById('slipPassDisp').innerText = sPass;
+        document.getElementById('slipUniDisp').innerText = window.currentApp.name;
+
+        const qrArea = document.getElementById("qrcode");
+        qrArea.innerHTML = "";
+        new QRCode(qrArea, { text: `https://georun.com/track?id=${sPass}`, width: 100, height: 100 });
 
         document.getElementById('printArea').style.display = 'block';
-        setTimeout(() => { window.print(); location.reload(); }, 1000);
+        setTimeout(() => { window.print(); location.reload(); }, 1200);
 
-    } catch (e) { alert("Error!"); }
+    } catch (e) {
+        console.error(e);
+        alert("Submit Failed! Try again.");
+        btn.disabled = false;
+        btn.innerText = "Confirm & Submit";
+    }
 };
 
-// --- 3. Profile Setup ---
-document.getElementById('pName').innerText = partnerName;
-document.getElementById('pEmail').innerText = userEmail;
-document.getElementById('pAgency').innerText = localStorage.getItem('agencyName') || 'Authorized Partner';
-
+// Start
 initTracking();
