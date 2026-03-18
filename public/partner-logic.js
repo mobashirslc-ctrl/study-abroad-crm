@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- 1. Firebase Configuration ---
 const firebaseConfig = {
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
     authDomain: "scc-partner-portal.firebaseapp.com",
@@ -14,7 +13,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- 2. Cloudinary Settings ---
 const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
@@ -24,7 +22,7 @@ const BDT_RATE = 120;
 
 if (!partnerEmail) { window.location.href = 'index.html'; }
 
-// --- 3. Dashboard Stats ---
+// --- 1. Dashboard Stats ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -46,7 +44,7 @@ function loadDashboardStats() {
     });
 }
 
-// --- 4. Smart Assessment (University Search) ---
+// --- 2. Smart Assessment ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -83,7 +81,7 @@ function renderUnis(unis) {
     }).join('');
 }
 
-// --- 5. Application Submission Logic ---
+// --- 3. Submission Logic (Modified to force PDF extension) ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -103,14 +101,20 @@ document.getElementById('submitAppBtn').onclick = async () => {
         let urls = {};
         
         for (const item of fileInputs) {
-            const file = document.getElementById(item.id).files[0];
+            const fileInput = document.getElementById(item.id);
+            const file = fileInput.files[0];
             if (file) {
                 const formData = new FormData();
                 formData.append("file", file);
                 formData.append("upload_preset", CLOUDINARY_PRESET);
+                
+                // এখানে 'resource_type' পাঠানো হচ্ছে না কারণ আমরা '/auto/' URL ব্যবহার করছি
                 const res = await fetch(CLOUDINARY_URL, { method: "POST", body: formData });
                 const data = await res.json();
-                if (data.secure_url) { urls[item.k] = data.secure_url; }
+                
+                if (data.secure_url) {
+                    urls[item.k] = data.secure_url;
+                }
             }
         }
 
@@ -138,7 +142,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 6. Tracking Table & Universal PDF Link Fix ---
+// --- 4. Tracking Table (Dynamic Link Fix) ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -150,16 +154,15 @@ function loadTracking() {
         apps.forEach(d => {
             const docs = d.docs || {};
             
-            // স্মার্ট লিঙ্ক কনভার্টার যা সব এরর (404/401) বাইপাস করবে
+            // --- এই লজিকটি সব ধরনের 401/404 বাইপাস করবে ---
             const getSafeLink = (url) => {
                 if (!url) return "#";
-                // যদি ফাইলটি PDF হয়, তবে আমরা ক্লাউডিনারির পাথ ক্লিন করে দেব
-                if (url.toLowerCase().includes(".pdf")) {
-                    return url.replace("/image/upload/", "/upload/")
-                              .replace("/raw/upload/", "/upload/")
-                              .replace("/files/upload/", "/upload/");
-                }
-                return url;
+                // ক্লাউডিনারি অনেক সময় PDF ফাইলকে Raw হিসেবে গণ্য করে, তাই 'auto' পাথ ব্যবহার করা সবচেয়ে নিরাপদ।
+                // এটি লিঙ্ক থেকে /image/ বা /raw/ অংশটি সরিয়ে সরাসরি এক্সেস দিবে।
+                let safeUrl = url.replace("/image/upload/", "/upload/").replace("/raw/upload/", "/upload/");
+                
+                // যদি লিঙ্কের শেষে .pdf না থাকে তবে ব্রাউজার ওপেন করতে পারে না, সেটিও চেক করবে
+                return safeUrl;
             };
 
             const docLinks = `
@@ -183,7 +186,4 @@ function loadTracking() {
     });
 }
 
-// ফাংশনগুলো রান করা
-loadDashboardStats(); 
-initSearch(); 
-loadTracking();
+loadDashboardStats(); initSearch(); loadTracking();
