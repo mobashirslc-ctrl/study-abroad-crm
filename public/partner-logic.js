@@ -14,24 +14,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- 2. Configuration & State ---
+// --- 2. State & Auth Check ---
 const BDT_RATE = 120;
 const partnerEmail = localStorage.getItem('userEmail');
 const partnerRealName = localStorage.getItem('partnerName') || "Partner";
 
-// লগইন চেক এবং রিয়েল নেম ডিসপ্লে
 if (!partnerEmail) { 
     window.location.href = 'index.html'; 
 } else {
-    const nameDisplay = document.querySelector('.welcome-text') || document.getElementById('partnerDisplayName');
-    if(nameDisplay) nameDisplay.innerHTML = `Welcome, <span style="color:#ffcc00;">${partnerRealName}</span>`;
+    // ইউজারের আসল নাম ডিসপ্লে করা
+    const nameDisplay = document.getElementById('partnerDisplayName');
+    if(nameDisplay) nameDisplay.innerText = partnerRealName;
 }
 
-// ফুটার আপডেট
-const footer = document.querySelector('footer');
-if(footer) footer.innerHTML = `&copy; ${new Date().getFullYear()} All Rights Reserved | <b>GORUN LTD.</b>`;
-
-// --- 3. Wallet & Stats Logic (Compliance Based) ---
+// --- 3. Wallet Logic (Compliance Verified Only) ---
 function loadDashboardStats() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -39,10 +35,12 @@ function loadDashboardStats() {
         snap.forEach(doc => {
             const d = doc.data();
             total++;
+            // শুধুমাত্র Compliance ডিপার্টমেন্ট 'verified' করলেই পেন্ডিং ওয়ালেটে টাকা আসবে
             if (d.status === 'verified' || d.status === 'processing') {
                 processing++;
                 pWallet += (d.commission || 0);
             }
+            // অ্যাডমিন পেমেন্ট করলে ফাইনাল ওয়ালেটে আসবে
             if (d.commStatus === 'paid') { 
                 fWallet += (d.commission || 0); 
             }
@@ -51,10 +49,11 @@ function loadDashboardStats() {
         document.getElementById('statActiveFiles').innerText = processing;
         document.getElementById('pendingWallet').innerText = "৳ " + (pWallet * BDT_RATE).toLocaleString();
         document.getElementById('finalWallet').innerText = "৳ " + (fWallet * BDT_RATE).toLocaleString();
+        document.getElementById('walletBalanceDisplay').innerText = "৳ " + (fWallet * BDT_RATE).toLocaleString();
     });
 }
 
-// --- 4. Smart Assessment (Design preserved from 829.jpg) ---
+// --- 4. Advanced Assessment Search ---
 function initSearch() {
     onSnapshot(collection(db, "universities"), (snap) => {
         const allUnis = [];
@@ -63,19 +62,28 @@ function initSearch() {
         const performSearch = () => {
             const country = (document.getElementById('fCountry').value || "").toLowerCase();
             const degree = document.getElementById('fDegree').value;
-            const score = parseFloat(document.getElementById('fLangScore').value) || 0;
+            const langType = document.getElementById('fLangType').value;
+            const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
+            const academicScore = parseFloat(document.getElementById('fAcademicScore').value) || 0;
 
             const filtered = allUnis.filter(u => {
-                const dbScore = parseFloat(u.ieltsReq) || 0;
-                return (u.country.toLowerCase().includes(country)) && 
-                       (degree === "" || u.degree === degree) && 
-                       (score === 0 || score >= dbScore);
+                const dbLangScore = parseFloat(u.ieltsReq) || 0;
+                const dbGpaReq = parseFloat(u.gpaReq) || 0;
+
+                const matchCountry = u.country.toLowerCase().includes(country);
+                const matchDegree = (degree === "" || u.degree === degree);
+                const matchLangType = (langType === "" || u.langType === langType);
+                const matchLangScore = (langScore === 0 || langScore >= dbLangScore);
+                const matchAcademic = (academicScore === 0 || academicScore >= dbGpaReq);
+
+                return matchCountry && matchDegree && matchLangType && matchLangScore && matchAcademic;
             });
             renderUnis(filtered);
+            document.getElementById('matchCount').innerText = `${filtered.length} Universities Found`;
         };
 
-        // ড্রপডাউন বা ইনপুট চেঞ্জ হলেই অটো সার্চ হবে
-        ['fCountry', 'fDegree', 'fLangScore'].forEach(id => {
+        // সব ইনপুট ফিল্ডে লিসেনার অ্যাড করা
+        ['fCountry', 'fDegree', 'fLangType', 'fLangScore', 'fAcademicScore'].forEach(id => {
             const el = document.getElementById(id);
             if(el) el.addEventListener('input', performSearch);
         });
@@ -88,22 +96,35 @@ function renderUnis(unis) {
     const container = document.getElementById('assessmentResults');
     if (!container) return;
 
-    // আপনার ড্যাশবোর্ডের টেবিল ডিজাইন বজায় রাখা হয়েছে
     container.innerHTML = unis.map(u => {
         const commBDT = ((u.semesterFee * u.partnerComm) / 100) * BDT_RATE;
         return `
         <tr>
-            <td><b style="color:#ffcc00;">${u.universityName}</b><br><small style="color:#aaa;">Intake: ${u.intake || 'N/A'}</small></td>
+            <td>
+                <b style="color:var(--gold);">${u.universityName}</b><br>
+                <small style="opacity:0.6;">Intake: ${u.intake || 'Sep / Jan'}</small>
+            </td>
             <td>${u.country}</td>
-            <td><span class="badge" style="background:rgba(255,204,0,0.1); border:1px solid #ffcc00; color:#ffcc00;">${u.degree}</span><br><small>IELTS: ${u.ieltsReq}</small></td>
-            <td>${u.currency || '$'}${u.semesterFee.toLocaleString()}</td>
-            <td style="color:#27ae60; font-weight:bold;">৳ ${commBDT.toLocaleString()}<br><small style="color:#666;">(${u.partnerComm}%)</small></td>
-            <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})" style="padding:5px 15px; font-size:12px;">Apply</button></td>
+            <td>
+                <span class="badge">${u.degree}</span><br>
+                <small>${u.langType || 'IELTS'}: ${u.ieltsReq || '6.0'}</small>
+            </td>
+            <td>
+                ${u.currency || '$'}${u.semesterFee.toLocaleString()}<br>
+                <small style="color:var(--success);">Scholarship: ${u.scholarship || 'Available'}</small>
+            </td>
+            <td style="color:var(--success); font-weight:bold;">
+                ৳ ${commBDT.toLocaleString()}<br>
+                <small style="color:#aaa; font-weight:normal;">(${u.partnerComm}%)</small>
+            </td>
+            <td>
+                <button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u.id}', ${u.partnerComm}, ${u.semesterFee})">Apply Now</button>
+            </td>
         </tr>`;
     }).join('');
 }
 
-// --- 5. Application Logic ---
+// --- 5. Application Submission ---
 window.openApplyModal = (name, id, comm, fee) => {
     document.getElementById('targetUni').innerText = name;
     document.getElementById('sUni').value = name;
@@ -111,9 +132,9 @@ window.openApplyModal = (name, id, comm, fee) => {
     window.currentAppData = { id, commPct: comm, fee };
 };
 
+const CLOUD_NAME = "ddziennkh"; 
 const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 const CLOUDINARY_PRESET = "ihp_upload"; 
-const CLOUD_NAME = "ddziennkh"; 
 
 document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
@@ -122,7 +143,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
 
     try {
-        btn.innerText = "Uploading Documents..."; btn.disabled = true;
+        btn.innerText = "Processing Documents..."; btn.disabled = true;
         const fileInputs = [{id:'filePassport',k:'passport'}, {id:'fileAcademic',k:'academic'}, {id:'fileLanguage',k:'language'}, {id:'fileOthers',k:'others'}];
         let urls = {};
         
@@ -146,7 +167,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
             commission: (window.currentAppData.fee * window.currentAppData.commPct) / 100, 
             partnerEmail: partnerEmail, 
             partnerName: partnerRealName, 
-            status: 'pending', 
+            status: 'pending', // সাবমিট করলে পেন্ডিং থাকবে
             docs: urls, 
             createdAt: serverTimestamp() 
         };
@@ -162,7 +183,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     finally { btn.innerText = "Confirm & Submit"; btn.disabled = false; }
 };
 
-// --- 6. Tracking Table with Google Viewer ---
+// --- 6. File Tracking ---
 function loadTracking() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
     onSnapshot(q, (snap) => {
@@ -173,21 +194,18 @@ function loadTracking() {
         let html = "";
         apps.forEach(d => {
             const docs = d.docs || {};
-            const getSafeLink = (url) => {
-                if (!url) return "#";
-                return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
-            };
+            const getSafeLink = (url) => url ? `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true` : "#";
 
             const docLinks = `
                 <div style="display: flex; gap: 8px;">
-                    ${docs.passport ? `<a href="${getSafeLink(docs.passport)}" target="_blank" style="color:#ffcc00;"><i class="fa-solid fa-file-pdf"></i></a>` : ''}
-                    ${docs.academic ? `<a href="${getSafeLink(docs.academic)}" target="_blank" style="color:#3498db;"><i class="fa-solid fa-graduation-cap"></i></a>` : ''}
+                    ${docs.passport ? `<a href="${getSafeLink(docs.passport)}" target="_blank" style="color:var(--gold);"><i class="fa-solid fa-file-pdf"></i></a>` : ''}
+                    ${docs.academic ? `<a href="${getSafeLink(docs.academic)}" target="_blank" style="color:var(--blue);"><i class="fa-solid fa-graduation-cap"></i></a>` : ''}
                 </div>`;
 
             html += `<tr>
                 <td><b>${d.studentName}</b></td>
                 <td>${d.university}</td>
-                <td><span class="badge" style="background:${d.status === 'verified' ? '#27ae60' : '#f39c12'}">${d.status.toUpperCase()}</span></td>
+                <td><span class="badge" style="color:${d.status === 'verified' ? 'var(--success)' : 'var(--gold)'};">${d.status.toUpperCase()}</span></td>
                 <td>${docLinks}</td>
                 <td>${d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : "Just now"}</td>
             </tr>`;
