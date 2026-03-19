@@ -42,6 +42,7 @@
                             <tr>
                                 <th>Student & Partner</th>
                                 <th>Passport No</th>
+                                <th>Doc View</th>
                                 <th>Status</th>
                                 <th>Handled By</th>
                                 <th>Action</th>
@@ -65,19 +66,30 @@
             <div class="card" style="max-width: 600px;">
                 <h3>Staff Profile Setup</h3>
                 <div class="form-grid">
-                    <label>Full Name</label><input type="text" id="profName" class="inp">
-                    <label>Organization</label><input type="text" id="profOrg" class="inp">
-                    <label>Experience</label><input type="text" id="profExp" class="inp">
-                    <button id="saveProfileBtn" class="btn-claim">Save Profile</button>
+                    <div style="margin-bottom:15px;">
+                        <label>Full Name</label>
+                        <input type="text" id="profName" class="inp">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label>Organization</label>
+                        <input type="text" id="profOrg" class="inp">
+                    </div>
+                    <div style="margin-bottom:15px;">
+                        <label>Experience</label>
+                        <input type="text" id="profExp" class="inp">
+                    </div>
+                    <button id="saveProfileBtn" class="btn-claim" style="width:100%">Save Profile</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="reviewSlider" class="slider">
-        <button class="close-btn" onclick="closeSlider()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
-        <h2 id="targetStudent" style="color:var(--accent); margin-top:20px;">Student Name</h2>
-        <p id="targetComm" style="font-weight:bold;"></p>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="targetStudent" style="color:var(--accent); margin:0;">Student Name</h2>
+            <button onclick="closeSlider()" style="background:none; border:none; color:white; font-size:30px; cursor:pointer;">&times;</button>
+        </div>
+        <p id="targetComm" style="font-weight:bold; margin-top:10px;"></p>
         <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
         
         <label>Update Status</label>
@@ -93,14 +105,14 @@
             <option value="student_paid">STUDENT PAID TO UNI (Move to Final)</option>
         </select>
 
-        <div id="docLinksArea" style="margin-bottom:20px;"></div>
+        <div id="docLinksArea" style="margin-bottom:20px; background:rgba(255,255,255,0.05); padding:15px; border-radius:10px;"></div>
 
-        <button id="updateStatusBtn" class="btn-claim" style="width:100%;">APPLY STATUS & SYNC WALLET</button>
+        <button id="updateStatusBtn" class="btn-claim" style="width:100%; padding:15px;">APPLY STATUS & SYNC WALLET</button>
     </div>
 
     <script type="module" src="compliance-logic.js"></script>
     <script>
-        function showTab(id, el) {
+        window.showTab = function(id, el) {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(id).classList.add('active');
