@@ -1,4 +1,4 @@
-/* partner-logic.js */
+/* partner-logic.js - Updated with Fixed Wallet Logic */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -25,29 +25,22 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
-// --- Cloudinary Helper (Fixed Cloud Name & Preset) ---
+// --- Cloudinary Helper ---
 const uploadToCloudinary = async (file) => {
     if (!file) return ""; 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "ihp_upload"); // Updated to match your screenshot
+    formData.append("upload_preset", "ihp_upload");
     
     try {
-        // Cloud Name corrected: ddziennkh
         const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", {
             method: "POST", 
             body: formData
         });
-        
         const data = await res.json();
-        if (data.secure_url) {
-            return data.secure_url;
-        } else {
-            console.error("Cloudinary Error:", data.error.message);
-            return "";
-        }
+        return data.secure_url || "";
     } catch (e) { 
-        console.error("Network Error:", e);
+        console.error("Upload Error:", e);
         return ""; 
     }
 };
@@ -120,12 +113,8 @@ document.getElementById('submitAppBtn').onclick = async () => {
             commission: window.selectedUni.comm,
             partnerEmail: userEmail,
             status: 'pending', 
-            docs: { 
-                academic: u1, 
-                language: u2, 
-                passport: u3, 
-                others: u4 
-            },
+            commissionStatus: 'waiting', // Initial status
+            docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
         generateSlip(sName, sPass, window.selectedUni.name);
@@ -143,59 +132,57 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & DOUBLE TABLE Tracking Fix ---
+// --- Live Wallet & Tracking (Fixed Logic) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; 
     let finalWallet = 0;   
     let trackHtml = "";
     
-    if (snap.empty) {
-        trackHtml = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
-    } else {
-        snap.forEach(dSnap => {
-            const d = dSnap.data();
-            const comm = Number(d.commission) || 0;
-            const status = (d.status || 'pending').toLowerCase();
-            
-            // Wallet Logic: Only 'verified' adds to Pending Wallet
-            if(status === 'verified') {
-                pendingWallet += comm;
-            } 
-            else if(status === 'ready_for_payment' || status === 'paid') {
-                finalWallet += comm;
-            }
+    snap.forEach(dSnap => {
+        const d = dSnap.data();
+        const comm = Number(d.commission) || 0;
+        const commStatus = d.commissionStatus || 'waiting'; // Using commissionStatus from Compliance
+        
+        // --- Wallet Logic: Linked to Compliance commissionStatus ---
+        if(commStatus === 'pending') {
+            pendingWallet += comm; // Verified হলে এখানে যোগ হবে
+        } 
+        else if(commStatus === 'ready') {
+            finalWallet += comm;   // Student Paid হলে এখানে আসবে
+        }
 
-            let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
-            
-            // Document Links Logic
-            const docs = d.docs || {};
-            let docLinks = "";
-            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="text-decoration:none; margin-right:5px;">📄Acad</a>`;
-            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="text-decoration:none; margin-right:5px;">🆔Pass</a>`;
-            if(docs.language) docLinks += `<a href="${docs.language}" target="_blank" style="text-decoration:none;">🌐Lang</a>`;
-            if(!docLinks) docLinks = "No Docs";
+        let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
+        
+        // Document Links
+        const docs = d.docs || {};
+        let docLinks = "";
+        if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="text-decoration:none; margin-right:5px;">📄Acad</a>`;
+        if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="text-decoration:none; margin-right:5px;">🆔Pass</a>`;
+        if(!docLinks) docLinks = "No Docs";
 
-            trackHtml += `
-                <tr>
-                    <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
-                    <td><span style="color:var(--gold); font-weight:bold;">${status.toUpperCase()}</span></td>
-                    <td>${docLinks}</td>
-                    <td>${dateStr}</td>
-                </tr>`;
-        });
-    }
+        trackHtml += `
+            <tr>
+                <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
+                <td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'PENDING').toUpperCase()}</span></td>
+                <td>${docLinks}</td>
+                <td>${dateStr}</td>
+            </tr>`;
+    });
 
+    // Update Tables
     const homeBody = document.getElementById('homeTrackingBody');
     const sidebarBody = document.getElementById('sidebarTrackingBody');
+    if(homeBody) homeBody.innerHTML = trackHtml || "<tr><td colspan='4' align='center'>No records</td></tr>";
+    if(sidebarBody) sidebarBody.innerHTML = trackHtml || "<tr><td colspan='4' align='center'>No records</td></tr>";
 
-    if(homeBody) homeBody.innerHTML = trackHtml;
-    if(sidebarBody) sidebarBody.innerHTML = trackHtml;
-
+    // Update Wallet UI
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     
+    // Enable/Disable Withdrawal Button
     if(document.getElementById('wdBtn')) {
         document.getElementById('wdBtn').disabled = (finalWallet <= 0);
+        document.getElementById('wdBtn').style.opacity = (finalWallet <= 0) ? "0.5" : "1";
     }
 });
 
