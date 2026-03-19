@@ -2,7 +2,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Firebase Config
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
     authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -41,7 +40,7 @@ const uploadToCloudinary = async (file) => {
     } catch (e) { return ""; }
 };
 
-// --- University Search Logic ---
+// --- University Search & Apply ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -68,12 +67,11 @@ function renderSearch(data) {
     const container = document.getElementById('uniListContainer');
     document.getElementById('searchResultArea').style.display = 'block';
     container.innerHTML = data.map(u => {
-        return `
-        <tr>
+        return `<tr>
             <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
             <td>${u.uDegree}<br>${u.uIntake}</td>
             <td>GPA ${u.minCGPA}+ | IELTS ${u.minIELTS}+</td>
-            <td>${u.uSemFee} ${u.uCurrency}<br><small>≈ ৳${(u.uSemFee * 115).toLocaleString()}</small></td>
+            <td>৳${(u.uSemFee * 115).toLocaleString()}</td>
             <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
             <td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
         </tr>`;
@@ -86,7 +84,6 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application Submission ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
@@ -110,29 +107,22 @@ document.getElementById('submitAppBtn').onclick = async () => {
             createdAt: serverTimestamp()
         });
         generateSlip(sName, sPass, window.selectedUni.name);
-    } catch (e) { 
-        alert("Failed!"); 
-        btn.disabled = false;
-        btn.innerText = "CONFIRM ENROLLMENT";
-    }
+    } catch (e) { alert("Failed!"); btn.disabled = false; }
 };
 
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
-    const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {agency: 'Partner'};
     slip.innerHTML = `<div style="text-align:center;"><img src="logo.jpeg" style="width:100px;"><h2>Confirmation Slip</h2><p>Student: ${sName}</p><p>Passport: ${sPass}</p><p>Uni: ${uni}</p></div>`;
     document.getElementById('applyModal').style.display = 'none';
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & Tracking (UPDATED: Document Links & Logic) ---
+// --- Live Wallet & DOUBLE TABLE Tracking Fix ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; 
     let finalWallet = 0;   
     let trackHtml = "";
     
-    console.log("Fetching and Syncing Data for:", userEmail);
-
     if (snap.empty) {
         trackHtml = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
     } else {
@@ -141,30 +131,22 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
             const comm = Number(d.commission) || 0;
             const status = (d.status || 'pending').toLowerCase();
             
-            // 1. Wallet Logic: Only 'verified' adds to Pending Wallet
-            if(status === 'verified') {
-                pendingWallet += comm;
-            } 
-            // 2. Only 'ready_for_payment' or 'paid' adds to Final Wallet
-            else if(status === 'ready_for_payment' || status === 'paid') {
-                finalWallet += comm;
-            }
+            // Wallet Logic
+            if(status === 'verified') pendingWallet += comm;
+            else if(status === 'ready_for_payment' || status === 'paid') finalWallet += comm;
 
-            // Date Format
             let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
             
-            // Document Links Logic
+            // Document Links
             const docs = d.docs || {};
             let docLinks = "";
-            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" title="Academic" style="text-decoration:none;">📄Acad</a> `;
-            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" title="Passport" style="text-decoration:none;">🆔Pass</a> `;
-            if(docs.language) docLinks += `<a href="${docs.language}" target="_blank" title="Language" style="text-decoration:none;">🌐Lang</a> `;
+            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank">📄Acad</a> `;
+            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank">🆔Pass</a> `;
             if(!docLinks) docLinks = "No Docs";
 
-            // Table Row Rendering
             trackHtml += `
                 <tr>
-                    <td><b>${d.studentName || 'N/A'}</b><br><small>${d.university || 'N/A'}</small></td>
+                    <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                     <td><span style="color:var(--gold); font-weight:bold;">${status.toUpperCase()}</span></td>
                     <td>${docLinks}</td>
                     <td>${dateStr}</td>
@@ -172,13 +154,17 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
         });
     }
 
-    // UI Updates
+    // Update both Home table and Sidebar Tracking table
+    const homeBody = document.getElementById('homeTrackingBody');
+    const sidebarBody = document.getElementById('sidebarTrackingBody');
+
+    if(homeBody) homeBody.innerHTML = trackHtml;
+    if(sidebarBody) sidebarBody.innerHTML = trackHtml;
+
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
-    document.getElementById('homeTrackingBody').innerHTML = trackHtml;
     
-    const wdBtn = document.getElementById('wdBtn');
-    if(wdBtn) wdBtn.disabled = (finalWallet <= 0);
+    if(document.getElementById('wdBtn')) document.getElementById('wdBtn').disabled = (finalWallet <= 0);
 });
 
 // --- Profile Load/Save ---
@@ -199,9 +185,8 @@ document.getElementById('saveProfileBtn').onclick = async () => {
             agencyName: document.getElementById('pAgency').value, 
             contact: document.getElementById('pContact').value,
             address: document.getElementById('pAddress').value, 
-            email: userEmail,
-            lastUpdated: serverTimestamp()
+            email: userEmail
         }, { merge: true });
-        alert("Profile Saved!");
+        alert("Saved!");
     } catch (e) { alert("Error!"); }
 };
