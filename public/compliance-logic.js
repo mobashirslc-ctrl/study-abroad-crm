@@ -19,16 +19,17 @@ let currentFileId = null;
 let currentCommission = 0;
 let loggedInStaff = "";
 
+// Auth Protection
 onAuthStateChanged(auth, async (user) => {
     if (!user) window.location.replace("index.html");
     const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (userDoc.exists() && userDoc.data().role === "compliance") {
+    if (userDoc.exists() && (userDoc.data().role === "compliance" || userDoc.data().role === "admin")) {
         loggedInStaff = userDoc.data().fullName;
         document.getElementById('staffDisplay').innerText = loggedInStaff;
         document.getElementById('loader').style.display = 'none';
         initApp();
     } else {
-        alert("Compliance Access Required!");
+        alert("Compliance Access Denied!");
         signOut(auth).then(() => window.location.replace("index.html"));
     }
 });
@@ -47,36 +48,46 @@ function initApp() {
             if (handler === loggedInStaff) countServed++;
             if (d.status === 'VISA_SUCCESS') countSuccess++;
 
-            // Claim & Lock Logic
+            // Doc View Button
+            const docs = d.docs || {};
+            let docBtn = `<button onclick="viewDocs('${docs.academic}', '${docs.passport}')" class="btn-claim" style="background:#3498db; font-size:11px; padding:5px 10px;">VIEW PDF</button>`;
+            if(!docs.academic && !docs.passport) docBtn = `<span style="color:#666; font-size:11px;">No Docs</span>`;
+
+            // Claim & Action Logic
             let actionBtn = "";
             let rowStyle = "";
 
             if (!handler) {
-                // Unclaimed
-                actionBtn = `<button onclick="claimFile('${id}')" class="btn-claim" style="background:#2ecc71; color:white;">CLAIM</button>`;
+                actionBtn = `<button onclick="claimFile('${id}')" class="btn-claim" style="background:#2ecc71;">CLAIM</button>`;
             } else if (handler === loggedInStaff) {
-                // Claimed by Current Staff
                 actionBtn = `<button onclick="openReview('${id}', '${d.studentName}', ${d.commission || 0})" class="btn-claim">REVIEW</button>`;
-                rowStyle = "background: rgba(241, 196, 15, 0.05);";
+                rowStyle = "background: rgba(241, 196, 15, 0.1);";
             } else {
-                // Locked by others
-                actionBtn = `<span style="color:#666; font-size:12px;"><i class="fas fa-lock"></i> Locked</span>`;
+                actionBtn = `<span style="color:#777; font-size:12px;"><i class="fas fa-lock"></i> Locked</span>`;
                 rowStyle = "opacity: 0.5; pointer-events: none;";
             }
 
             html += `<tr style="${rowStyle}">
                 <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
                 <td>${d.passportNo || 'N/A'}</td>
+                <td>${docBtn}</td>
                 <td><span style="color:var(--accent); font-size:12px;">${(d.status || 'PENDING').toUpperCase()}</span></td>
                 <td><i class="fas fa-user-circle"></i> ${handler || 'Queue'}</td>
                 <td>${actionBtn}</td>
             </tr>`;
         });
-        tbody.innerHTML = html;
+        tbody.innerHTML = html || '<tr><td colspan="6" align="center">No files in queue</td></tr>';
         document.getElementById('hTotal').innerText = countServed;
         document.getElementById('hSuccess').innerText = countSuccess;
     });
 }
+
+// Global View Docs Function
+window.viewDocs = (acad, pass) => {
+    if (acad && acad !== "undefined") window.open(acad, '_blank');
+    if (pass && pass !== "undefined") window.open(pass, '_blank');
+    if (!acad && !pass) alert("No documents uploaded for this student.");
+};
 
 window.claimFile = async (id) => {
     if(!confirm("Claim this file for processing?")) return;
@@ -85,7 +96,7 @@ window.claimFile = async (id) => {
             complianceMember: loggedInStaff,
             claimedAt: serverTimestamp()
         });
-    } catch (e) { alert("Error claiming file!"); }
+    } catch (e) { alert("Claim failed!"); }
 };
 
 window.openReview = async (id, name, comm) => {
@@ -97,9 +108,9 @@ window.openReview = async (id, name, comm) => {
     const docSnap = await getDoc(doc(db, "applications", id));
     const docs = docSnap.data().docs || {};
     let dHtml = "";
-    if(docs.academic) dHtml += `<a href="${docs.academic}" target="_blank" style="color:var(--accent); text-decoration:none; display:block; margin:10px 0;">📄 View Academic PDF</a>`;
-    if(docs.passport) dHtml += `<a href="${docs.passport}" target="_blank" style="color:var(--accent); text-decoration:none; display:block; margin:10px 0;">🆔 View Passport PDF</a>`;
-    document.getElementById('docLinksArea').innerHTML = dHtml || "No Documents Uploaded";
+    if(docs.academic) dHtml += `<a href="${docs.academic}" target="_blank" style="color:var(--accent); text-decoration:none; display:block; margin-bottom:10px;">📄 View Academic Record</a>`;
+    if(docs.passport) dHtml += `<a href="${docs.passport}" target="_blank" style="color:var(--accent); text-decoration:none; display:block;">🆔 View Passport Copy</a>`;
+    document.getElementById('docLinksArea').innerHTML = dHtml || "No Documents Available";
 
     document.getElementById('reviewSlider').classList.add('active');
 };
@@ -109,7 +120,7 @@ window.closeSlider = () => document.getElementById('reviewSlider').classList.rem
 document.getElementById('updateStatusBtn').onclick = async () => {
     const newStatus = document.getElementById('statusSelect').value;
     const btn = document.getElementById('updateStatusBtn');
-    btn.disabled = true; btn.innerText = "Updating...";
+    btn.disabled = true; btn.innerText = "Syncing Wallet...";
 
     let updateData = {
         status: newStatus.toUpperCase(),
@@ -122,10 +133,10 @@ document.getElementById('updateStatusBtn').onclick = async () => {
 
     try {
         await updateDoc(doc(db, "applications", currentFileId), updateData);
-        alert("Status & Wallet Synced!");
+        alert("Status Updated Successfully!");
         closeSlider();
     } catch (e) { alert("Update failed!"); }
     btn.disabled = false; btn.innerText = "APPLY STATUS & SYNC WALLET";
 };
 
-document.getElementById('logoutBtn').onclick = () => signOut(auth);
+document.getElementById('logoutBtn').onclick = () => signOut(auth).then(()=> window.location.replace("index.html"));
