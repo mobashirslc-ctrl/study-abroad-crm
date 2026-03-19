@@ -27,7 +27,6 @@
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         .form-group label { font-size: 0.7rem; color: var(--accent); text-transform: uppercase; }
         input, select, textarea { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--accent); }
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
@@ -43,7 +42,6 @@
         .active-section { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Document Links */
         .doc-link { color: var(--blue); text-decoration: none; font-weight: bold; font-size: 0.8rem; border: 1px solid var(--blue); padding: 2px 5px; border-radius: 4px; margin-right: 5px; }
         .doc-link:hover { background: var(--blue); color: white; }
     </style>
@@ -56,7 +54,7 @@
         <div onclick="showTab('partners')" id="m-partners" class="nav-item"><i class="fas fa-users-cog"></i> User Management</div>
         <div onclick="showTab('payouts')" id="m-payouts" class="nav-item"><i class="fas fa-wallet"></i> Closing & Payouts</div>
         <div style="margin-top:auto; padding:20px;">
-            <div class="nav-item" style="color:var(--danger);" onclick="logout()"><i class="fas fa-power-off"></i> Logout</div>
+            <div class="nav-item" style="color:var(--danger);" onclick="logout()"><i class="fas fa-power-off"></i> Logout Admin</div>
         </div>
     </div>
 
@@ -64,7 +62,7 @@
         <div class="main">
             <div class="header">
                 <h2 id="page-title">University Management</h2>
-                <div style="color:var(--accent); font-weight:bold;">SUPER ADMIN</div>
+                <div style="color:var(--accent); font-weight:bold;">SUPER ADMIN PANEL</div>
             </div>
 
             <div id="uni-manage" class="section active-section">
@@ -87,7 +85,7 @@
                     <button class="btn btn-pay" id="saveUniBtn" style="width: auto; padding: 12px 30px;">Save University</button>
                 </div>
                 <div class="card">
-                    <table id="uniTable">
+                    <table>
                         <thead><tr><th>Name</th><th>Country</th><th>Degree</th><th>Comm (BDT)</th><th>Action</th></tr></thead>
                         <tbody id="uniTableBody"></tbody>
                     </table>
@@ -96,15 +94,15 @@
 
             <div id="partners" class="section">
                 <div class="card">
-                    <h3><i class="fas fa-users"></i> System Users & Approvals</h3>
+                    <h3><i class="fas fa-users"></i> User Approvals & Expiry</h3>
                     <table>
                         <thead>
                             <tr>
-                                <th>User Name</th>
-                                <th>Contact & Org</th>
+                                <th>Name & Email</th>
+                                <th>Agency/Org</th>
                                 <th>Role</th>
                                 <th>Status</th>
-                                <th>Expiry (Partner Only)</th>
+                                <th>Expiry (Partner)</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -115,14 +113,13 @@
 
             <div id="payouts" class="section">
                 <div class="card">
-                    <h3><i class="fas fa-check-double"></i> Ready for Final Closing</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.7;">Files marked as 'VISA APPROVED' by Compliance Team will appear here.</p>
+                    <h3><i class="fas fa-check-double"></i> Ready for Closing</h3>
                     <table>
                         <thead>
                             <tr>
                                 <th>Student</th>
-                                <th>Partner Email</th>
-                                <th>Documents (Cloudinary)</th>
+                                <th>Partner</th>
+                                <th>Docs</th>
                                 <th>Comm BDT</th>
                                 <th>Action</th>
                             </tr>
@@ -138,23 +135,22 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc, where, getDocs, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Your Config
         const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
+            authDomain: "ihp-portal-v3.firebaseapp.com",
+            projectId: "ihp-portal-v3",
+            storageBucket: "ihp-portal-v3.firebasestorage.app",
+            messagingSenderId: "481157902534",
+            appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- NAVIGATION ---
+        // Navigation
         window.showTab = (id) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -163,7 +159,7 @@
             document.getElementById('page-title').innerText = id.replace('-', ' ').toUpperCase();
         };
 
-        // --- UNIVERSITY DATA ---
+        // UNIVERSITY LOGIC
         document.getElementById('saveUniBtn').onclick = async () => {
             const u = {
                 name: document.getElementById('uName').value,
@@ -187,24 +183,26 @@
             });
             document.getElementById('uniTableBody').innerHTML = html;
         });
+
         window.deleteUni = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db, "universities", id)); };
 
-        // --- USER MANAGEMENT (Real-time) ---
+        // USER MANAGEMENT LOGIC (FIXED)
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const user = docSnap.data();
                 const id = docSnap.id;
-                const isPartner = user.role === 'partner';
+                const roleLower = (user.role || "").toLowerCase();
+                const statusStr = (user.status || "pending").toUpperCase();
                 
                 html += `
                 <tr>
-                    <td><b>${user.fullName || 'N/A'}</b><br><small>${user.email}</small></td>
-                    <td>${user.phone || 'N/A'}<br><small style="color:var(--accent)">${user.agencyName || 'No Agency'}</small></td>
-                    <td><span class="badge" style="background:var(--blue)">${user.role.toUpperCase()}</span></td>
-                    <td><b style="color:${user.status === 'approved' ? 'var(--success)' : 'var(--danger)'}">${(user.status || 'pending').toUpperCase()}</b></td>
+                    <td><b>${user.fullName || user.personName || 'N/A'}</b><br><small>${user.email}</small></td>
+                    <td>${user.agencyName || user.agencyName || 'No Agency'}<br><small>${user.phone || user.contact || ''}</small></td>
+                    <td><span class="badge" style="background:var(--blue)">${roleLower.toUpperCase()}</span></td>
+                    <td><b style="color:${statusStr === 'APPROVED' ? 'var(--success)' : 'var(--danger)'}">${statusStr}</b></td>
                     <td>
-                        ${isPartner ? `<input type="date" value="${user.expiryDate || ''}" onchange="updateExpiry('${id}', this.value)" style="padding:4px; font-size:0.75rem;">` : 'N/A'}
+                        ${roleLower === 'partner' ? `<input type="date" value="${user.expiryDate || ''}" onchange="updateExpiry('${id}', this.value)">` : 'N/A'}
                     </td>
                     <td>
                         <button onclick="updateUserStatus('${id}', 'approved')" class="btn btn-approve">Approve</button>
@@ -215,50 +213,53 @@
             document.getElementById('userTableBody').innerHTML = html;
         });
 
+        // বাটন ফিক্স: এটি এখন 'approved' এবং isApproved: true আপডেট করবে
         window.updateUserStatus = async (id, status) => {
-            await updateDoc(doc(db, "users", id), { status: status });
-            alert("User status updated!");
+            try {
+                const userRef = doc(db, "users", id);
+                await updateDoc(userRef, { 
+                    status: status, // ডাটাবেজে 'approved' হিসেবে যাবে
+                    isApproved: status === 'approved' ? true : false 
+                });
+                alert("User status set to: " + status);
+            } catch (e) {
+                alert("Error updating: " + e.message);
+            }
         };
 
         window.updateExpiry = async (id, date) => {
             await updateDoc(doc(db, "users", id), { expiryDate: date });
         };
 
-        // --- PAYOUTS & CLOSING (Cloudinary Integration) ---
+        // PAYOUTS
         onSnapshot(query(collection(db, "applications"), where("status", "==", "VISA APPROVED")), (snap) => {
             let html = "";
             snap.forEach(d => {
                 const app = d.data();
-                const docs = app.docs || {}; // Cloudinary URLs
                 html += `
                 <tr>
                     <td><b>${app.studentName}</b></td>
                     <td>${app.partnerEmail}</td>
-                    <td>
-                        <a href="${docs.passport || '#'}" target="_blank" class="doc-link">Pass</a>
-                        <a href="${docs.academic || '#'}" target="_blank" class="doc-link">Acad</a>
-                        <a href="${docs.language || '#'}" target="_blank" class="doc-link">IELTS</a>
-                    </td>
+                    <td><a href="${app.docs?.passport || '#'}" target="_blank" class="doc-link">View Docs</a></td>
                     <td>৳ ${app.commissionBDT}</td>
-                    <td><button onclick="closeAndPay('${d.id}', '${app.partnerEmail}', ${app.commissionBDT})" class="btn btn-pay">FINAL SUCCESS & PAY</button></td>
+                    <td><button onclick="closeAndPay('${d.id}', '${app.partnerEmail}', ${app.commissionBDT})" class="btn btn-pay">RELEASE PAYMENT</button></td>
                 </tr>`;
             });
-            document.getElementById('payoutTableBody').innerHTML = html || "<tr><td colspan='5' align='center'>No files ready for closing.</td></tr>";
+            document.getElementById('payoutTableBody').innerHTML = html || "<tr><td colspan='5' align='center'>No files pending payout.</td></tr>";
         });
 
         window.closeAndPay = async (appId, email, amount) => {
-            if(!confirm("Release payment to Partner Wallet?")) return;
+            if(!confirm("Release payment to Partner?")) return;
             const q = query(collection(db, "users"), where("email", "==", email));
             const pSnap = await getDocs(q);
             if(!pSnap.empty) {
-                const pRef = doc(db, "users", pSnap.docs[0].id);
-                const pData = pSnap.docs[0].data();
-                await updateDoc(pRef, {
-                    pendingBal: (pData.pendingBal || 0) - amount,
-                    finalBal: (pData.finalBal || 0) + amount
+                const pDoc = pSnap.docs[0];
+                await updateDoc(doc(db, "users", pDoc.id), {
+                    pendingBal: (pDoc.data().pendingBal || 0) - amount,
+                    finalBal: (pDoc.data().finalBal || 0) + amount
                 });
                 await updateDoc(doc(db, "applications", appId), { status: "CLOSED & PAID" });
-                alert("Payment Released & Wallet Updated!");
+                alert("Payment Released!");
             }
         };
 
