@@ -1,6 +1,6 @@
 /* partner-logic.js */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -53,7 +53,7 @@ function renderSearch(data) {
     const container = document.getElementById('uniListContainer');
     document.getElementById('searchResultArea').style.display = 'block';
     container.innerHTML = data.map(u => {
-        const commBDT = (u.partnerComm || 0); // Assuming already in BDT or calculated
+        const commBDT = (u.partnerComm || 0);
         return `
         <tr>
             <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
@@ -81,7 +81,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Student Name & Passport Required");
 
     try {
-        const appRef = await addDoc(collection(db, "applications"), {
+        await addDoc(collection(db, "applications"), {
             studentName: sName, studentPhone: sPhone, passportNo: sPass,
             university: window.selectedUni.name, commission: window.selectedUni.comm,
             partnerEmail: userEmail, status: 'pending', createdAt: serverTimestamp()
@@ -93,7 +93,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
 
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
-    const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {name: 'Official Partner'};
+    const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {agency: 'Official Partner'};
     
     slip.innerHTML = `
         <div style="text-align:center;">
@@ -117,16 +117,18 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Real-time Wallet & Tracking ---
+// --- Real-time Wallet & Tracking (Compliance Updated) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pending = 0, final = 0, trackHtml = "";
-    snap.forEach(doc => {
-        const d = doc.data();
+    snap.forEach(docSnap => {
+        const d = docSnap.data();
         const c = Number(d.commission) || 0;
-        if(d.status === 'pending') pending += c; 
-        else if(d.status === 'ready_for_payment' || d.status === 'paid') final += c;
+        const status = d.status || 'pending';
+
+        if(status === 'pending') pending += c; 
+        else if(status === 'ready_for_payment' || status === 'paid') final += c;
         
-        trackHtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:var(--gold)">${d.status}</span></td><td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td></tr>`;
+        trackHtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:var(--gold)">${status.toUpperCase()}</span></td><td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td></tr>`;
     });
     
     document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
@@ -134,19 +136,47 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     document.getElementById('homeTrackingBody').innerHTML = trackHtml;
     
     // Withdraw Button Logic
+    const wdBtn = document.getElementById('wdBtn');
     if(final > 0) {
-        document.getElementById('wdBtn').disabled = false;
+        wdBtn.disabled = false;
         document.getElementById('wdWarning').style.display = 'none';
     }
 });
 
-// Profile Save Logic
-document.getElementById('saveProfileBtn').onclick = () => {
-    const profile = {
-        agency: document.getElementById('pAgency').value,
-        contact: document.getElementById('pContact').value,
-        address: document.getElementById('pAddress').value
-    };
-    localStorage.setItem('partnerProfile', JSON.stringify(profile));
-    alert("Profile Updated Successfully!");
+// --- Profile Save & Auto-Load Logic ---
+// পেজ লোড হওয়ার সময় প্রোফাইল ডাটা রিট্রিভ করা
+const loadProfile = async () => {
+    if(!userEmail) return;
+    const docRef = doc(db, "partners", userEmail);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById('pAgency').value = data.agencyName || "";
+        document.getElementById('pContact').value = data.contact || "";
+        document.getElementById('pAddress').value = data.address || "";
+        localStorage.setItem('partnerProfile', JSON.stringify({agency: data.agencyName}));
+    }
+};
+loadProfile();
+
+document.getElementById('saveProfileBtn').onclick = async () => {
+    const agency = document.getElementById('pAgency').value;
+    const contact = document.getElementById('pContact').value;
+    const address = document.getElementById('pAddress').value;
+
+    try {
+        await setDoc(doc(db, "partners", userEmail), {
+            agencyName: agency,
+            contact: contact,
+            address: address,
+            email: userEmail,
+            lastUpdated: serverTimestamp()
+        }, { merge: true });
+
+        localStorage.setItem('partnerProfile', JSON.stringify({agency: agency}));
+        alert("Profile Updated Successfully!");
+    } catch (e) {
+        alert("Error saving profile!");
+    }
 };
