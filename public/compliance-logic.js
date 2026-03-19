@@ -1,121 +1,112 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
+    authDomain: "ihp-portal-v3.firebaseapp.com",
+    projectId: "ihp-portal-v3",
+    storageBucket: "ihp-portal-v3.firebasestorage.app",
+    messagingSenderId: "481157902534",
+    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let currentActiveId = null;
+let currentFileId = null;
 let currentCommission = 0;
-let staffName = "Compliance Member";
+let loggedInStaff = "";
 
-// ১. অথেনটিকেশন চেক
+// Auth & Role Protection
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && (userDoc.data().role === "compliance" || userDoc.data().role === "admin")) {
-            staffName = userDoc.data().fullName;
-            document.getElementById('staffNameDisplay').innerText = staffName;
-        } else {
-            alert("Unauthorized Access!");
-            window.location.replace("index.html");
-        }
+    if (!user) window.location.replace("index.html");
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (userDoc.exists() && userDoc.data().role === "compliance") {
+        loggedInStaff = userDoc.data().fullName;
+        document.getElementById('staffDisplay').innerText = loggedInStaff;
+        document.getElementById('loader').style.display = 'none';
+        initApp();
     } else {
-        window.location.replace("index.html");
+        alert("Compliance Access Required!");
+        signOut(auth).then(() => window.location.replace("index.html"));
     }
 });
 
-// ২. রিয়েল-টাইম অ্যাপ্লিকেশন লিস্ট লোড
-const loadApplications = () => {
-    const q = query(collection(db, "applications"), orderBy("timestamp", "desc"));
-    onSnapshot(q, (snap) => {
+function initApp() {
+    // Load Incoming Files
+    onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
+        const tbody = document.getElementById('incomingTableBody');
         let html = "";
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
-            const id = docSnap.id;
-            
-            html += `
-            <tr onclick="openStatusSlider('${id}', '${d.studentName}', ${d.commissionBDT || 0})" style="cursor:pointer">
-                <td>${d.studentName}</td>
-                <td>${d.university}</td>
-                <td><span class="status-badge ${d.status.toLowerCase()}">${d.status}</span></td>
-                <td>${d.complianceMember}</td>
-                <td>৳ ${Math.round(d.commissionBDT || 0).toLocaleString()}</td>
-                <td>${d.dateTime}</td>
+        let countServed = 0, countSuccess = 0;
+        
+        snap.forEach(dSnap => {
+            const d = dSnap.data();
+            const id = dSnap.id;
+            if (d.complianceMember === loggedInStaff) countServed++;
+            if (d.status === 'VISA_SUCCESS') countSuccess++;
+
+            html += `<tr>
+                <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
+                <td>${d.passportNo || 'N/A'}</td>
+                <td><button onclick="viewDocs('${id}')" class="btn-claim" style="padding:5px 10px;">Docs</button></td>
+                <td><span style="color:var(--accent)">${(d.status || 'PENDING').toUpperCase()}</span></td>
+                <td>${d.complianceMember || 'Waiting...'}</td>
+                <td><button onclick="openReview('${id}', '${d.studentName}', ${d.commission || 0})" class="btn-claim">Review</button></td>
             </tr>`;
         });
-        document.getElementById('complianceTableBody').innerHTML = html;
+        tbody.innerHTML = html;
+        document.getElementById('hTotal').innerText = countServed;
+        document.getElementById('hSuccess').innerText = countSuccess;
     });
-};
+}
 
-// ৩. স্ট্যাটাস স্লাইডার ওপেন করা
-window.openStatusSlider = (id, name, commission) => {
-    currentActiveId = id;
-    currentCommission = commission;
+window.openReview = async (id, name, comm) => {
+    currentFileId = id;
+    currentCommission = Number(comm) || 0;
     document.getElementById('targetStudent').innerText = name;
-    document.getElementById('targetComm').innerText = `Commission: ৳ ${commission.toLocaleString()}`;
-    document.getElementById('statusSlider').style.right = "0";
+    document.getElementById('targetComm').innerText = `Commission: ৳ ${currentCommission.toLocaleString()}`;
+    
+    // Show Doc Links
+    const docSnap = await getDoc(doc(db, "applications", id));
+    const docs = docSnap.data().docs || {};
+    let dHtml = "";
+    if(docs.academic) dHtml += `<a href="${docs.academic}" target="_blank" style="color:white;">📄 Academic PDF</a><br>`;
+    if(docs.passport) dHtml += `<a href="${docs.passport}" target="_blank" style="color:white;">🆔 Passport PDF</a>`;
+    document.getElementById('docLinksArea').innerHTML = dHtml || "No Documents Uploaded";
+
+    document.getElementById('reviewSlider').classList.add('active');
 };
 
-window.closeSlider = () => {
-    document.getElementById('statusSlider').style.right = "-400px";
-};
+window.closeSlider = () => document.getElementById('reviewSlider').classList.remove('active');
 
-// ৪. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক লজিক (CRITICAL PART)
-document.getElementById('applyStatusBtn').onclick = async () => {
-    if (!currentActiveId) return;
-    
-    const selectedStatus = document.getElementById('statusSelect').value;
-    const btn = document.getElementById('applyStatusBtn');
-    
-    // ডাটাবেজ আপডেট অবজেক্ট
-    let updateData = { 
-        status: selectedStatus.toUpperCase(),
-        complianceMember: staffName,
-        lastUpdated: new Date().toISOString()
+document.getElementById('updateStatusBtn').onclick = async () => {
+    const newStatus = document.getElementById('statusSelect').value;
+    const btn = document.getElementById('updateStatusBtn');
+    btn.disabled = true; btn.innerText = "Syncing...";
+
+    let updateData = {
+        status: newStatus.toUpperCase(),
+        complianceMember: loggedInStaff,
+        updatedAt: serverTimestamp()
     };
 
-    // --- ওয়ালেট ক্যালকুলেশন লজিক ---
-    if (selectedStatus === "verified") {
-        // ফাইল ভেরিফাইড হলে টাকা পেন্ডিং ওয়ালেটে যাবে
-        updateData.pendingAmount = currentCommission;
-        updateData.finalAmount = 0;
-    } 
-    else if (selectedStatus === "fees_paid") {
-        // টিউশন ফি পেইড হলে পেন্ডিং থেকে কেটে ফাইনালে যাবে
-        updateData.pendingAmount = 0;
-        updateData.finalAmount = currentCommission;
-    } 
-    else if (selectedStatus === "rejected" || selectedStatus === "refund") {
-        // রিজেক্ট হলে সব জিরো
-        updateData.pendingAmount = 0;
-        updateData.finalAmount = 0;
+    // --- CRITICAL WALLET SYNC LOGIC ---
+    if (newStatus === "verified") {
+        updateData.commissionStatus = "pending"; // Partner er pending wallet e add hobe
+    } else if (newStatus === "visa_rejected") {
+        updateData.commissionStatus = "removed"; // Pending theke minus hobe
+    } else if (newStatus === "student_paid") {
+        updateData.commissionStatus = "ready"; // Final balance e jabe, withdraw active hobe
     }
 
     try {
-        btn.disabled = true;
-        btn.innerText = "Syncing Wallet...";
-        
-        await updateDoc(doc(db, "applications", currentActiveId), updateData);
-        
-        alert("Status Updated & Wallet Synced!");
+        await updateDoc(doc(db, "applications", currentFileId), updateData);
+        alert("Wallet & Status Updated!");
         closeSlider();
-    } catch (e) {
-        alert("Error updating: " + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Apply Status & Update Wallet";
-    }
+    } catch (e) { alert("Error!"); }
+    btn.disabled = false; btn.innerText = "APPLY STATUS & SYNC WALLET";
 };
 
-loadApplications();
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
