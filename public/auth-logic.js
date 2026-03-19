@@ -15,56 +15,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- Login Logic (এটি আগে ছিল না, তাই বাটন কাজ করছিল না) ---
-async function handleLogin() {
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPass').value;
-    const loginBtn = document.getElementById('loginBtn');
-
-    if (!email || !pass) return alert("Please enter email and password!");
-
-    try {
-        loginBtn.innerText = "Accessing...";
-        loginBtn.disabled = true;
-
-        const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-        const user = userCredential.user;
-
-        // Firestore থেকে ইউজারের ডাটা এবং স্ট্যাটাস চেক করা
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-
-            // স্ট্যাটাস চেক (অ্যাডমিন এপ্রুভ করেছে কি না)
-            if (userData.status !== 'approved') {
-                alert("আপনার অ্যাকাউন্টটি এখনো Approved নয়। বর্তমান স্ট্যাটাস: " + (userData.status || 'Pending'));
-                await auth.signOut(); // এপ্রুভ না হলে লগআউট করে দিবে
-                location.reload();
-                return;
-            }
-
-            // রোল অনুযায়ী রিডাইরেক্ট
-            const role = userData.role.toLowerCase();
-            if (role === 'admin') {
-                window.location.href = "admin.html";
-            } else if (role === 'compliance') {
-                window.location.href = "compliance.html";
-            } else {
-                window.location.href = "partner.html";
-            }
-        } else {
-            alert("Error: ইউজার প্রোফাইল ডাটাবেজে পাওয়া যায়নি!");
-        }
-
-    } catch (error) {
-        alert("Login Failed: " + error.message);
-        loginBtn.innerText = "ACCESS PORTAL";
-        loginBtn.disabled = false;
-    }
-}
-
-// --- Cloudinary Upload ---
+// --- Cloudinary Upload Function ---
 async function uploadToCloudinary(file) {
     if (!file) return "";
     const formData = new FormData();
@@ -77,53 +28,60 @@ async function uploadToCloudinary(file) {
             body: formData 
         });
         const data = await res.json();
-        return data.secure_url || "";
+        if (data.secure_url) return data.secure_url;
+        throw new Error(data.error?.message || "Cloudinary upload failed");
     } catch (e) {
-        return "";
+        console.error("Cloudinary Error:", e);
+        return ""; // ফাইল আপলোড না হলে খালি স্ট্রিং পাঠাবে
     }
 }
 
 // --- Registration Logic ---
 async function handleRegister() {
-    const email = document.getElementById('regEmail').value;
+    const email = document.getElementById('regEmail').value.trim();
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) return alert("সবগুলো তথ্য পূরণ করুন!");
+    if (!role || !email || !pass) return alert("Email, Password and Role are required!");
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing...";
+    regBtn.innerText = "Processing... Please Wait";
     regBtn.disabled = true;
 
     try {
         let tradeUrl = ""; 
         let nidUrl = "";
         
+        // ফাইল আপলোড অংশ
         if (role === 'Partner') {
-            const tradeFile = document.getElementById('pTrade').files[0];
-            const nidFile = document.getElementById('pNid').files[0];
+            const tradeFile = document.getElementById('pTrade')?.files[0];
+            const nidFile = document.getElementById('pNid')?.files[0];
             if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
             if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
+        // Firebase Auth User Creation
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // Firestore-এ ডাটা সেভ
-        await setDoc(doc(db, "users", user.uid), {
+        // Firestore Data Mapping (Safe Access using Optional Chaining)
+        const userData = {
             uid: user.uid,
             email: email,
-            role: role.toLowerCase(), // role-কে lowercase করে রাখা ভালো (admin, partner, compliance)
+            role: role.toLowerCase(),
             status: 'pending',
-            fullName: document.getElementById('pPerson')?.value || document.getElementById('cName')?.value || "",
-            phone: document.getElementById('pContact')?.value || document.getElementById('cContact')?.value || "",
-            agencyName: document.getElementById('pAgency')?.value || document.getElementById('cOrg')?.value || "",
+            isApproved: false,
+            fullName: document.getElementById('pPerson')?.value || document.getElementById('cName')?.value || "N/A",
+            phone: document.getElementById('pContact')?.value || document.getElementById('cContact')?.value || "N/A",
+            agencyName: document.getElementById('pAgency')?.value || document.getElementById('cOrg')?.value || "N/A",
             tradeLicense: tradeUrl,
             nidPdf: nidUrl,
             createdAt: new Date().toISOString()
-        });
+        };
 
-        alert("রেজিস্ট্রেশন সফল! অ্যাডমিন এপ্রুভ করার পর লগইন করতে পারবেন।");
+        await setDoc(doc(db, "users", user.uid), userData);
+
+        alert("Registration Successful! Please wait for Admin approval.");
         location.reload();
 
     } catch (error) {
@@ -133,6 +91,52 @@ async function handleRegister() {
     }
 }
 
-// --- Event Listeners ---
+// --- Login Logic ---
+async function handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (!email || !pass) return alert("Enter email and password!");
+
+    try {
+        loginBtn.innerText = "Accessing...";
+        loginBtn.disabled = true;
+
+        const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+        const user = userCredential.user;
+
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        
+        if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const currentStatus = (userData.status || "").toLowerCase();
+
+            if (currentStatus !== 'approved') {
+                alert("Account not approved. Status: " + userData.status);
+                await auth.signOut();
+                location.reload();
+                return;
+            }
+
+            const role = (userData.role || "").toLowerCase();
+            if (role === 'admin') window.location.href = "admin.html";
+            else if (role === 'compliance') window.location.href = "compliance.html";
+            else window.location.href = "partner.html";
+
+        } else {
+            alert("Profile not found in database!");
+            loginBtn.innerText = "ACCESS PORTAL";
+            loginBtn.disabled = false;
+        }
+
+    } catch (error) {
+        alert("Login Failed: " + error.message);
+        loginBtn.innerText = "ACCESS PORTAL";
+        loginBtn.disabled = false;
+    }
+}
+
+// Listeners
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
