@@ -23,21 +23,15 @@
         td { padding: 18px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .btn-claim { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-claim:hover { transform: scale(1.05); background: #fff; }
-        .btn-locked { background: rgba(255,255,255,0.05); color: #666; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: not-allowed; }
         
-        .slider { position: fixed; right: -500px; top: 0; width: 450px; height: 100vh; background: rgba(10, 0, 30, 0.98); backdrop-filter: blur(40px); border-left: 3px solid var(--accent); padding: 40px; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000; box-shadow: -20px 0 60px rgba(0,0,0,0.8); overflow-y: auto; }
+        .slider { position: fixed; right: -500px; top: 0; width: 450px; height: 100vh; background: rgba(10, 0, 30, 0.98); backdrop-filter: blur(40px); border-left: 3px solid var(--accent); padding: 40px; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000; overflow-y: auto; }
         .slider.active { right: 0; }
         
-        .doc-link { display: block; background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: white; text-decoration: none; font-size: 13px; margin-bottom: 10px; transition: 0.3s; text-align: center; }
-        .doc-link:hover { background: var(--accent); color: black; }
-        .doc-link.disabled { opacity: 0.3; pointer-events: none; }
-
-        select { width: 100%; background: #1a003d; color: white; border: 1px solid var(--accent); padding: 15px; border-radius: 10px; margin-top: 10px; font-size: 1rem; outline: none; }
-        .content-section { display: none; }
-        .active-section { display: block; animation: slideUp 0.5s ease; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         #loader { position: fixed; inset: 0; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .spinner { width: 40px; height: 40px; border: 4px solid rgba(241, 196, 15, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .content-section { display: none; }
+        .active-section { display: block; }
     </style>
 </head>
 <body>
@@ -81,223 +75,79 @@
                 </table>
             </div>
         </div>
-
-        <div id="history" class="content-section">
-            <div class="card"><h3>Review History</h3><p id="historyCount">You have processed 0 files.</p></div>
         </div>
-
-        <div id="profile" class="content-section">
-            <div class="card">
-                <h3>Staff Profile</h3>
-                <div style="background: rgba(255,255,255,0.02); padding: 20px; border-radius: 10px;">
-                    <p id="staffProfileName">Name: Loading...</p>
-                    <p id="staffProfileEmail">Email: Loading...</p>
-                    <p id="staffProfileRole">Role: Compliance Officer</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="slider" class="slider">
-        <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:30px;">
-            <h3 style="margin:0; color:var(--accent);">Decision Center</h3>
-            <i class="fas fa-times" style="cursor:pointer; font-size:1.5rem;" onclick="closeSlider()"></i>
-        </div>
-        
-        <div style="background:var(--glass); padding:20px; border-radius:15px; margin-bottom:25px; border: 1px solid var(--border);">
-            <p style="margin:0; font-size:0.8rem; opacity:0.6;">Reviewing Student:</p>
-            <div id="reviewingStudent" style="font-size:1.2rem; font-weight:bold; margin-top:5px;">---</div>
-            <p id="targetCommDisp" style="margin-top:5px; color:var(--accent); font-size:0.8rem; font-weight:bold;"></p>
-        </div>
-
-        <label style="font-size:0.85rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">Student Documents</label>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:15px 0 25px 0;">
-            <a id="btnPass" target="_blank" class="doc-link">Passport <i class="fas fa-external-link-alt"></i></a>
-            <a id="btnAcad" target="_blank" class="doc-link">Academic <i class="fas fa-external-link-alt"></i></a>
-            <a id="btnLang" target="_blank" class="doc-link">Language <i class="fas fa-external-link-alt"></i></a>
-            <a id="btnOther" target="_blank" class="doc-link">Others <i class="fas fa-external-link-alt"></i></a>
-        </div>
-
-        <label style="font-size:0.85rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">Set New Status</label>
-        <select id="statusSelect">
-            <option value="review">🔍 Start In Review</option>
-            <option value="verified">✅ Verified (Add to Pending Wallet)</option>
-            <option value="fees">💰 Fees Paid (Wait for Admin Closing)</option>
-            <option value="missing">📂 Missing Documents</option>
-            <option value="rejected">❌ Rejected</option>
-        </select>
-
-        <button id="applyStatusBtn" style="width:100%; margin-top:30px; padding:18px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; font-size:1rem; cursor:pointer;">Update Decision & Sync Wallet</button>
-    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, getDocs, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // CRITICAL: Updated Config to match index.html
         const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
+            authDomain: "ihp-portal-v3.firebaseapp.com",
+            projectId: "ihp-portal-v3",
+            storageBucket: "ihp-portal-v3.firebasestorage.app",
+            messagingSenderId: "481157902534",
+            appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        let currentActiveId = null;
-        let currentPartnerEmail = "";
-        let currentCommission = 0;
         let staffName = "Staff";
 
-        // 1. Auth Check
+        // Auth Logic with Role & Status Protection
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.replace("index.html");
             } else {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && (userDoc.data().role === "compliance" || userDoc.data().role === "admin")) {
-                    staffName = userDoc.data().fullName || "Officer";
-                    document.getElementById('staffDisplay').innerText = staffName;
-                    document.getElementById('staffProfileName').innerText = `Name: ${staffName}`;
-                    document.getElementById('staffProfileEmail').innerText = `Email: ${user.email}`;
-                    
-                    document.getElementById('loader').style.display = 'none';
-                    document.body.classList.add('auth-ready');
-                    startLiveUpdates();
-                } else {
-                    alert("Unauthorized Access!");
-                    signOut(auth).then(() => window.location.replace("index.html"));
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        const role = (userData.role || "").toLowerCase();
+                        const status = (userData.status || "").toLowerCase();
+
+                        // Access Control
+                        if ((role === "compliance" || role === "admin") && status === "approved") {
+                            staffName = userData.fullName || "Officer";
+                            document.getElementById('staffDisplay').innerText = staffName;
+                            document.getElementById('loader').style.display = 'none';
+                            document.body.classList.add('auth-ready');
+                            startLiveUpdates();
+                        } else {
+                            alert("Access Denied: You are not an approved compliance officer.");
+                            signOut(auth).then(() => window.location.replace("index.html"));
+                        }
+                    } else {
+                        signOut(auth).then(() => window.location.replace("index.html"));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    window.location.replace("index.html");
                 }
             }
         });
 
-        // 2. Real-time Incoming Files Queue
         function startLiveUpdates() {
             onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
                 const tbody = document.getElementById('incomingTableBody');
                 let html = "";
-                let processedCount = 0;
-
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
-                    const id = docSnap.id;
-                    const isClaimed = data.complianceMember && data.complianceMember !== "Unassigned";
-                    const isMine = data.complianceMember === staffName;
-
-                    if(isMine) processedCount++;
-
-                    html += `
-                        <tr>
-                            <td><b>${data.studentName}</b><br><small>${data.university || 'N/A'}</small></td>
-                            <td>${data.passportNumber || data.passport || 'N/A'}</td>
-                            <td><span style="color:${isClaimed ? '#2ecc71' : 'var(--accent)'}">${data.status}</span></td>
-                            <td>${isClaimed ? `<i class="fas fa-user-shield"></i> ${data.complianceMember}` : '<span style="opacity:0.5">Queue</span>'}</td>
-                            <td>
-                                ${!isClaimed ? 
-                                    `<button class="btn-claim" onclick="claimFile('${id}')">Claim</button>` : 
-                                    (isMine ? `<button class="btn-claim" style="background:#fff" onclick="openReviewSlider('${id}', '${data.studentName}', ${JSON.stringify(data.docs || {})}, '${data.partnerEmail}', ${data.commissionBDT || 0})">Review</button>` : `<button class="btn-locked" disabled><i class="fas fa-lock"></i></button>`)
-                                }
-                            </td>
-                        </tr>`;
+                    html += `<tr>
+                        <td><b>${data.studentName}</b></td>
+                        <td>${data.passportNumber || 'N/A'}</td>
+                        <td>${data.status}</td>
+                        <td>${data.complianceMember || 'Queue'}</td>
+                        <td><button class="btn-claim">Review</button></td>
+                    </tr>`;
                 });
-                tbody.innerHTML = html || '<tr><td colspan="5" style="text-align:center; opacity:0.5;">Empty Queue</td></tr>';
-                document.getElementById('historyCount').innerText = `You have processed ${processedCount} files.`;
+                tbody.innerHTML = html || '<tr><td colspan="5" align="center">No data found</td></tr>';
             });
         }
-
-        // 3. Claim Function
-        window.claimFile = async (id) => {
-            if(confirm("Claim this file for verification?")) {
-                await updateDoc(doc(db, "applications", id), {
-                    complianceMember: staffName,
-                    status: "IN REVIEW",
-                    claimedAt: serverTimestamp()
-                });
-            }
-        };
-
-        // 4. Slider Control
-        window.openReviewSlider = (id, name, docs, pEmail, commission) => {
-            currentActiveId = id;
-            currentPartnerEmail = pEmail;
-            currentCommission = commission;
-            
-            document.getElementById('reviewingStudent').innerText = name;
-            document.getElementById('targetCommDisp').innerText = `Estimated Commission: ৳ ${commission.toLocaleString()}`;
-
-            const setDoc = (btnId, url) => {
-                const btn = document.getElementById(btnId);
-                if(url) {
-                    btn.href = url;
-                    btn.classList.remove('disabled');
-                    btn.innerHTML = btnId.replace('btn', '') + " <i class='fas fa-external-link-alt'></i>";
-                } else {
-                    btn.href = "#";
-                    btn.classList.add('disabled');
-                    btn.innerText = "No File";
-                }
-            };
-
-            setDoc('btnPass', docs?.passport);
-            setDoc('btnAcad', docs?.academic);
-            setDoc('btnLang', docs?.language);
-            setDoc('btnOther', docs?.others);
-
-            document.getElementById('slider').classList.add('active');
-        };
-
-        window.closeSlider = () => document.getElementById('slider').classList.remove('active');
-
-        // 5. Decision & Wallet Sync Logic (The Master Logic)
-        document.getElementById('applyStatusBtn').onclick = async () => {
-            const selectedStatus = document.getElementById('statusSelect').value;
-            const btn = document.getElementById('applyStatusBtn');
-
-            try {
-                btn.disabled = true;
-                btn.innerText = "Syncing Wallet...";
-
-                // Update Application Status
-                await updateDoc(doc(db, "applications", currentActiveId), {
-                    status: selectedStatus.toUpperCase(),
-                    decisionDate: serverTimestamp(),
-                    complianceMember: staffName
-                });
-
-                // WALLET SYNC: If Verified or Fees Paid, add to Partner's Pending Wallet
-                if (selectedStatus === "verified" || selectedStatus === "fees") {
-                    const pQuery = query(collection(db, "users"), where("email", "==", currentPartnerEmail));
-                    const pSnap = await getDocs(pQuery);
-                    
-                    if(!pSnap.empty) {
-                        const pDoc = pSnap.docs[0];
-                        const pRef = doc(db, "users", pDoc.id);
-                        const oldPending = pDoc.data().pendingBal || 0;
-                        
-                        // Add to pending balance
-                        await updateDoc(pRef, {
-                            pendingBal: oldPending + currentCommission
-                        });
-                    }
-                }
-
-                alert("Decision Saved & Partner Wallet Updated!");
-                closeSlider();
-            } catch (e) { alert("Error: " + e.message); }
-            finally { btn.disabled = false; btn.innerText = "Update Decision & Sync Wallet"; }
-        };
-
-        // Navigation
-        window.openTab = (tabId) => {
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active-section'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active-section');
-            document.getElementById('nav-' + tabId).classList.add('active');
-        };
 
         document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.replace("index.html"));
     </script>
