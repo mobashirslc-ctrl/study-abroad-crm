@@ -2,13 +2,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// UPDATED: Match with Admin.html config
 const firebaseConfig = { 
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
+    authDomain: "ihp-portal-v3.firebaseapp.com", 
+    projectId: "ihp-portal-v3", 
+    storageBucket: "ihp-portal-v3.firebasestorage.app", 
+    messagingSenderId: "481157902534", 
+    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7" 
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,27 +26,22 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
-// --- Cloudinary Upload Helper (Real-time Cloudinary) ---
+// --- Cloudinary Helper ---
 const uploadToCloudinary = async (file) => {
     if (!file) return null;
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "lhp_upload"); // Your preset from screenshot
-    
+    formData.append("upload_preset", "lhp_upload");
     try {
-        const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/image/upload", { // Your Cloud Name
-            method: "POST",
-            body: formData
+        const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/image/upload", {
+            method: "POST", body: formData
         });
         const data = await res.json();
         return data.secure_url;
-    } catch (e) {
-        console.error("Cloudinary Error:", e);
-        return null;
-    }
+    } catch (e) { return null; }
 };
 
-// --- University & Search Logic ---
+// --- University Search Logic (Real-time) ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -65,7 +61,6 @@ document.getElementById('searchBtn').onclick = () => {
                (degree === "" || u.uDegree === degree) &&
                (gpa >= minGPA) && (langScore >= minLang);
     });
-
     renderSearch(filtered);
 };
 
@@ -73,15 +68,14 @@ function renderSearch(data) {
     const container = document.getElementById('uniListContainer');
     document.getElementById('searchResultArea').style.display = 'block';
     container.innerHTML = data.map(u => {
-        const commBDT = (u.partnerComm || 0);
         return `
         <tr>
             <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
-            <td>${u.uDegree}<br>${u.uIntake || 'All Intakes'}</td>
+            <td>${u.uDegree}<br>${u.uIntake}</td>
             <td>GPA ${u.minCGPA}+ | IELTS ${u.minIELTS}+</td>
             <td>${u.uSemFee} ${u.uCurrency}<br><small>≈ ৳${(u.uSemFee * 115).toLocaleString()}</small></td>
-            <td style="color:var(--gold); font-weight:bold;">৳${Number(commBDT).toLocaleString()}</td>
-            <td><button class="btn-gold" onclick="openApply('${u.uName}', '${commBDT}')">APPLY</button></td>
+            <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
+            <td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
         </tr>`;
     }).join('');
 }
@@ -92,138 +86,81 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application Submission with Cloudinary ---
+// --- Application Submission ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
     const sPass = document.getElementById('appSPass').value;
-    
-    // Files from inputs
     const fAcad = document.getElementById('fileAcad').files[0];
     const fLang = document.getElementById('fileLang').files[0];
     const fPass = document.getElementById('filePass').files[0];
     const fOther = document.getElementById('fileOther').files[0];
 
-    if(!sName || !sPass) return alert("Student Name & Passport Required");
-
+    if(!sName || !sPass) return alert("Required fields missing!");
     const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING TO CLOUDINARY..."; 
-    btn.disabled = true;
+    btn.innerText = "UPLOADING..."; btn.disabled = true;
 
     try {
-        // Parallel Upload to Cloudinary
-        const [urlAcad, urlLang, urlPass, urlOther] = await Promise.all([
-            uploadToCloudinary(fAcad),
-            uploadToCloudinary(fLang),
-            uploadToCloudinary(fPass),
-            uploadToCloudinary(fOther)
+        const [u1, u2, u3, u4] = await Promise.all([
+            uploadToCloudinary(fAcad), uploadToCloudinary(fLang),
+            uploadToCloudinary(fPass), uploadToCloudinary(fOther)
         ]);
 
-        // Save to Firestore with Cloudinary Links
         await addDoc(collection(db, "applications"), {
-            studentName: sName,
-            studentPhone: sPhone,
-            passportNo: sPass,
-            university: window.selectedUni.name,
-            commission: window.selectedUni.comm,
-            partnerEmail: userEmail,
-            status: 'pending',
-            docs: {
-                academic: urlAcad,
-                language: urlLang,
-                passport: urlPass,
-                others: urlOther
-            },
+            studentName: sName, studentPhone: sPhone, passportNo: sPass,
+            university: window.selectedUni.name, commission: window.selectedUni.comm,
+            partnerEmail: userEmail, status: 'pending', docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
-        
         generateSlip(sName, sPass, window.selectedUni.name);
-    } catch (e) { 
-        alert("Submission Failed!"); 
-        btn.disabled = false;
-        btn.innerText = "CONFIRM ENROLLMENT";
-    }
+    } catch (e) { alert("Failed!"); btn.disabled = false; }
 };
 
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
     const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {agency: 'Official Partner'};
-    
-    slip.innerHTML = `
-        <div style="text-align:center;">
-            <img src="logo.jpeg" style="width:150px;">
-            <h1 style="color:#1a0b4d; margin:20px 0;">Confirmation Letter</h1>
-            <h2 style="background:#f1c40f; padding:10px;">CONGRATULATIONS: ${sName}</h2>
-        </div>
-        <table style="width:100%; border:1px solid #ddd; margin-top:20px;">
-            <tr><td><b>Passport:</b> ${sPass}</td><td><b>University:</b> ${uni}</td></tr>
-            <tr><td><b>Agency:</b> ${partnerInfo.agency || 'SCC Partner'}</td><td><b>Date:</b> ${new Date().toLocaleDateString()}</td></tr>
-        </table>
-        <div style="margin-top:30px; text-align:center;">
-            <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:10px;"></div>
-            <p>Scan to track your file live</p>
-        </div>
-    `;
-    
-    new QRCode(document.getElementById("qrcode"), "https://study-abroad-crm-nine.vercel.app/track.html");
-    
+    slip.innerHTML = `<div style="text-align:center;"><img src="logo.jpeg" style="width:120px;"><h2>Confirmation Slip</h2><h3>${sName}</h3><p>Passport: ${sPass}</p><p>Uni: ${uni}</p></div>`;
     document.getElementById('applyModal').style.display = 'none';
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Real-time Wallet & Tracking ---
+// --- Live Wallet & Tracking ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pending = 0, final = 0, trackHtml = "";
-    snap.forEach(docSnap => {
-        const d = docSnap.data();
+    snap.forEach(dSnap => {
+        const d = dSnap.data();
         const c = Number(d.commission) || 0;
-        const status = d.status || 'pending';
-
-        if(status === 'pending') pending += c; 
-        else if(status === 'ready_for_payment' || status === 'paid') final += c;
-        
-        trackHtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:var(--gold)">${status.toUpperCase()}</span></td><td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td></tr>`;
+        const s = d.status || 'pending';
+        if(s === 'pending') pending += c; 
+        else if(s === 'ready_for_payment' || s === 'paid') final += c;
+        trackHtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${s.toUpperCase()}</td><td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td></tr>`;
     });
-    
     document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
     document.getElementById('homeTrackingBody').innerHTML = trackHtml;
-    
-    const wdBtn = document.getElementById('wdBtn');
-    if(final > 0) {
-        wdBtn.disabled = false;
-        document.getElementById('wdWarning').style.display = 'none';
-    }
+    if(final > 0) document.getElementById('wdBtn').disabled = false;
 });
 
-// --- Profile Save & Auto-Load ---
-const loadProfile = async () => {
+// --- Profile Load/Save ---
+(async () => {
     if(!userEmail) return;
-    const docRef = doc(db, "partners", userEmail);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        document.getElementById('pAgency').value = data.agencyName || "";
-        document.getElementById('pContact').value = data.contact || "";
-        document.getElementById('pAddress').value = data.address || "";
-        localStorage.setItem('partnerProfile', JSON.stringify({agency: data.agencyName}));
+    const dSnap = await getDoc(doc(db, "partners", userEmail));
+    if (dSnap.exists()) {
+        const d = dSnap.data();
+        document.getElementById('pAgency').value = d.agencyName || "";
+        document.getElementById('pContact').value = d.contact || "";
+        document.getElementById('pAddress').value = d.address || "";
     }
-};
-loadProfile();
+})();
 
 document.getElementById('saveProfileBtn').onclick = async () => {
     const agency = document.getElementById('pAgency').value;
-    const contact = document.getElementById('pContact').value;
-    const address = document.getElementById('pAddress').value;
-
     try {
         await setDoc(doc(db, "partners", userEmail), {
-            agencyName: agency, contact: contact, address: address,
-            email: userEmail, lastUpdated: serverTimestamp()
+            agencyName: agency, contact: document.getElementById('pContact').value,
+            address: document.getElementById('pAddress').value, email: userEmail
         }, { merge: true });
-
-        localStorage.setItem('partnerProfile', JSON.stringify({agency: agency}));
-        alert("Profile Updated Successfully!");
-    } catch (e) { alert("Error saving profile!"); }
+        localStorage.setItem('partnerProfile', JSON.stringify({agency}));
+        alert("Saved!");
+    } catch (e) { alert("Error!"); }
 };
