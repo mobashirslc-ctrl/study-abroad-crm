@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+// ১. আপনার সঠিক Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
     authDomain: "ihp-portal-v3.firebaseapp.com",
@@ -15,71 +16,77 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- Cloudinary Upload Function ---
+// ২. Cloudinary Upload Function (এখানের লিঙ্কে কোনো ভুল নেই)
 async function uploadToCloudinary(file) {
     if (!file) return "";
+    
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'ihp_upload'); // আপনার Cloudinary Settings এ এই নাম থাকতে হবে
+    formData.append('upload_preset', 'ihp_upload'); // আপনার Cloudinary তে এই প্রিসেটটি 'Unsigned' থাকতে হবে
 
     try {
+        console.log("Cloudinary-তে ফাইল আপলোড শুরু হচ্ছে...");
         const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { 
             method: 'POST', 
             body: formData 
         });
+        
         const data = await res.json();
         if (data.secure_url) {
-            console.log("Upload Success:", data.secure_url);
+            console.log("আপলোড সফল! লিঙ্ক:", data.secure_url);
             return data.secure_url;
         } else {
-            console.error("Cloudinary Error Data:", data);
+            console.error("Cloudinary Error:", data);
             return "";
         }
     } catch (e) {
-        console.error("Cloudinary Fetch Error:", e);
+        console.error("Fetch Error:", e);
         return "";
     }
 }
 
-// --- Registration Logic ---
+// ৩. Registration Logic
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) return alert("Email, Password, and Role are mandatory!");
+    if (!role || !email || !pass) return alert("সবগুলো ঘর পূরণ করুন!");
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Uploading Documents...";
+    regBtn.innerText = "ফাইল আপলোড হচ্ছে... অপেক্ষা করুন";
     regBtn.disabled = true;
 
     try {
-        let tradeUrl = "", nidUrl = "";
+        let tradeUrl = ""; 
+        let nidUrl = "";
         
+        // শুধু পার্টনারদের জন্য ফাইল আপলোড হবে
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade').files[0];
             const nidFile = document.getElementById('pNid').files[0];
-            
-            // ফাইল আপলোড হওয়ার জন্য অপেক্ষা করবে
+
             if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
             if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
+        // Firebase Auth দিয়ে ইউজার তৈরি
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // এই অবজেক্টটি ঠিক অ্যাডমিন প্যানেলের সাথে ম্যাচ করবে
+        // ৪. Firestore-এ ডাটা সেভ (অ্যাডমিন প্যানেলের সাথে ১০০% ম্যাচ করা নাম)
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false, // Boolean
-            status: 'pending', // String
-            tradeLicense: tradeUrl, // Cloudinary Link
-            nidPdf: nidUrl,        // Cloudinary Link
+            isApproved: false,
+            status: 'pending',
+            tradeLicense: tradeUrl, // অ্যাডমিন প্যানেল এই নামেই খুঁজবে
+            nidPdf: nidUrl,        // অ্যাডমিন প্যানেল এই নামেই খুঁজবে
             createdAt: new Date().toISOString()
         };
 
+        // নির্দিষ্ট রোলের তথ্য যোগ করা
         if (role === 'Partner') {
             userData.agencyName = document.getElementById('pAgency').value;
             userData.personName = document.getElementById('pPerson').value;
@@ -95,20 +102,22 @@ async function handleRegister() {
         }
 
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("Registration Successful! Please wait for Admin Approval.");
+        alert("রেজিস্ট্রেশন সফল হয়েছে! অ্যাডমিন অ্যাপ্রুভালের জন্য অপেক্ষা করুন।");
         location.reload();
 
     } catch (error) {
-        alert("Registration Error: " + error.message);
+        alert("Error: " + error.message);
         regBtn.innerText = "SUBMIT REQUEST";
         regBtn.disabled = false;
     }
 }
 
-// --- Login Logic ---
+// ৫. Login Logic
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
+
+    if(!email || !pass) return alert("ইমেইল এবং পাসওয়ার্ড দিন");
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -118,8 +127,9 @@ async function handleLogin() {
         if (userDoc.exists()) {
             const data = userDoc.data();
 
+            // অ্যাপ্রুভাল চেক
             if (!data.isApproved && data.status !== 'active') {
-                alert("Account Pending Approval!");
+                alert("আপনার অ্যাকাউন্টটি এখনো পেন্ডিং আছে।");
                 await signOut(auth);
                 return;
             }
@@ -129,7 +139,7 @@ async function handleLogin() {
             window.location.href = data.role === 'Partner' ? "partner.html" : "compliance.html";
         }
     } catch (error) {
-        alert("Login Error: " + error.message);
+        alert("লগইন ব্যর্থ: " + error.message);
     }
 }
 
