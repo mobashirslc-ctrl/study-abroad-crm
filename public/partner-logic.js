@@ -25,6 +25,26 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
+// --- Cloudinary Upload Helper (Real-time Cloudinary) ---
+const uploadToCloudinary = async (file) => {
+    if (!file) return null;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "lhp_upload"); // Your preset from screenshot
+    
+    try {
+        const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/image/upload", { // Your Cloud Name
+            method: "POST",
+            body: formData
+        });
+        const data = await res.json();
+        return data.secure_url;
+    } catch (e) {
+        console.error("Cloudinary Error:", e);
+        return null;
+    }
+};
+
 // --- University & Search Logic ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
@@ -72,23 +92,57 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application & Slip Generation ---
+// --- Application Submission with Cloudinary ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
     const sPass = document.getElementById('appSPass').value;
     
+    // Files from inputs
+    const fAcad = document.getElementById('fileAcad').files[0];
+    const fLang = document.getElementById('fileLang').files[0];
+    const fPass = document.getElementById('filePass').files[0];
+    const fOther = document.getElementById('fileOther').files[0];
+
     if(!sName || !sPass) return alert("Student Name & Passport Required");
 
+    const btn = document.getElementById('submitAppBtn');
+    btn.innerText = "UPLOADING TO CLOUDINARY..."; 
+    btn.disabled = true;
+
     try {
+        // Parallel Upload to Cloudinary
+        const [urlAcad, urlLang, urlPass, urlOther] = await Promise.all([
+            uploadToCloudinary(fAcad),
+            uploadToCloudinary(fLang),
+            uploadToCloudinary(fPass),
+            uploadToCloudinary(fOther)
+        ]);
+
+        // Save to Firestore with Cloudinary Links
         await addDoc(collection(db, "applications"), {
-            studentName: sName, studentPhone: sPhone, passportNo: sPass,
-            university: window.selectedUni.name, commission: window.selectedUni.comm,
-            partnerEmail: userEmail, status: 'pending', createdAt: serverTimestamp()
+            studentName: sName,
+            studentPhone: sPhone,
+            passportNo: sPass,
+            university: window.selectedUni.name,
+            commission: window.selectedUni.comm,
+            partnerEmail: userEmail,
+            status: 'pending',
+            docs: {
+                academic: urlAcad,
+                language: urlLang,
+                passport: urlPass,
+                others: urlOther
+            },
+            createdAt: serverTimestamp()
         });
         
         generateSlip(sName, sPass, window.selectedUni.name);
-    } catch (e) { alert("Submission Failed!"); }
+    } catch (e) { 
+        alert("Submission Failed!"); 
+        btn.disabled = false;
+        btn.innerText = "CONFIRM ENROLLMENT";
+    }
 };
 
 function generateSlip(sName, sPass, uni) {
@@ -117,7 +171,7 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Real-time Wallet & Tracking (Compliance Updated) ---
+// --- Real-time Wallet & Tracking ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pending = 0, final = 0, trackHtml = "";
     snap.forEach(docSnap => {
@@ -135,7 +189,6 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
     document.getElementById('homeTrackingBody').innerHTML = trackHtml;
     
-    // Withdraw Button Logic
     const wdBtn = document.getElementById('wdBtn');
     if(final > 0) {
         wdBtn.disabled = false;
@@ -143,8 +196,7 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     }
 });
 
-// --- Profile Save & Auto-Load Logic ---
-// পেজ লোড হওয়ার সময় প্রোফাইল ডাটা রিট্রিভ করা
+// --- Profile Save & Auto-Load ---
 const loadProfile = async () => {
     if(!userEmail) return;
     const docRef = doc(db, "partners", userEmail);
@@ -167,16 +219,11 @@ document.getElementById('saveProfileBtn').onclick = async () => {
 
     try {
         await setDoc(doc(db, "partners", userEmail), {
-            agencyName: agency,
-            contact: contact,
-            address: address,
-            email: userEmail,
-            lastUpdated: serverTimestamp()
+            agencyName: agency, contact: contact, address: address,
+            email: userEmail, lastUpdated: serverTimestamp()
         }, { merge: true });
 
         localStorage.setItem('partnerProfile', JSON.stringify({agency: agency}));
         alert("Profile Updated Successfully!");
-    } catch (e) {
-        alert("Error saving profile!");
-    }
+    } catch (e) { alert("Error saving profile!"); }
 };
