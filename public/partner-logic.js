@@ -25,19 +25,31 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
-// --- Cloudinary Helper ---
+// --- Cloudinary Helper (Fixed Cloud Name & Preset) ---
 const uploadToCloudinary = async (file) => {
     if (!file) return ""; 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "lhp_upload");
+    formData.append("upload_preset", "ihp_upload"); // Updated to match your screenshot
+    
     try {
-        const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/auto/upload", {
-            method: "POST", body: formData
+        // Cloud Name corrected: ddziennkh
+        const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", {
+            method: "POST", 
+            body: formData
         });
+        
         const data = await res.json();
-        return data.secure_url || "";
-    } catch (e) { return ""; }
+        if (data.secure_url) {
+            return data.secure_url;
+        } else {
+            console.error("Cloudinary Error:", data.error.message);
+            return "";
+        }
+    } catch (e) { 
+        console.error("Network Error:", e);
+        return ""; 
+    }
 };
 
 // --- University Search & Apply ---
@@ -84,6 +96,7 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
+// --- Application Submission ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
@@ -91,7 +104,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
     
     const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING..."; btn.disabled = true;
+    btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
 
     try {
         const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
@@ -100,14 +113,27 @@ document.getElementById('submitAppBtn').onclick = async () => {
         const u4 = await uploadToCloudinary(document.getElementById('fileOther').files[0]);
 
         await addDoc(collection(db, "applications"), {
-            studentName: sName, studentPhone: sPhone, passportNo: sPass,
-            university: window.selectedUni.name, commission: window.selectedUni.comm,
-            partnerEmail: userEmail, status: 'pending', 
-            docs: { academic: u1, language: u2, passport: u3, others: u4 },
+            studentName: sName,
+            studentPhone: sPhone,
+            passportNo: sPass,
+            university: window.selectedUni.name,
+            commission: window.selectedUni.comm,
+            partnerEmail: userEmail,
+            status: 'pending', 
+            docs: { 
+                academic: u1, 
+                language: u2, 
+                passport: u3, 
+                others: u4 
+            },
             createdAt: serverTimestamp()
         });
         generateSlip(sName, sPass, window.selectedUni.name);
-    } catch (e) { alert("Failed!"); btn.disabled = false; }
+    } catch (e) { 
+        alert("Failed to submit!"); 
+        btn.disabled = false;
+        btn.innerText = "CONFIRM ENROLLMENT";
+    }
 };
 
 function generateSlip(sName, sPass, uni) {
@@ -131,17 +157,22 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
             const comm = Number(d.commission) || 0;
             const status = (d.status || 'pending').toLowerCase();
             
-            // Wallet Logic
-            if(status === 'verified') pendingWallet += comm;
-            else if(status === 'ready_for_payment' || status === 'paid') finalWallet += comm;
+            // Wallet Logic: Only 'verified' adds to Pending Wallet
+            if(status === 'verified') {
+                pendingWallet += comm;
+            } 
+            else if(status === 'ready_for_payment' || status === 'paid') {
+                finalWallet += comm;
+            }
 
             let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
             
-            // Document Links
+            // Document Links Logic
             const docs = d.docs || {};
             let docLinks = "";
-            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank">📄Acad</a> `;
-            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank">🆔Pass</a> `;
+            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="text-decoration:none; margin-right:5px;">📄Acad</a>`;
+            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="text-decoration:none; margin-right:5px;">🆔Pass</a>`;
+            if(docs.language) docLinks += `<a href="${docs.language}" target="_blank" style="text-decoration:none;">🌐Lang</a>`;
             if(!docLinks) docLinks = "No Docs";
 
             trackHtml += `
@@ -154,7 +185,6 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
         });
     }
 
-    // Update both Home table and Sidebar Tracking table
     const homeBody = document.getElementById('homeTrackingBody');
     const sidebarBody = document.getElementById('sidebarTrackingBody');
 
@@ -164,7 +194,9 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     
-    if(document.getElementById('wdBtn')) document.getElementById('wdBtn').disabled = (finalWallet <= 0);
+    if(document.getElementById('wdBtn')) {
+        document.getElementById('wdBtn').disabled = (finalWallet <= 0);
+    }
 });
 
 // --- Profile Load/Save ---
@@ -187,6 +219,6 @@ document.getElementById('saveProfileBtn').onclick = async () => {
             address: document.getElementById('pAddress').value, 
             email: userEmail
         }, { merge: true });
-        alert("Saved!");
-    } catch (e) { alert("Error!"); }
+        alert("Profile Saved!");
+    } catch (e) { alert("Error saving profile!"); }
 };
