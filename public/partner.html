@@ -3,59 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Partner Dashboard</title>
+    <title>SCC | Partner Dashboard 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #1a0b4d; --accent: #f1c40f; --glass: rgba(255, 255, 255, 0.1); --border: rgba(255, 255, 255, 0.2); --success: #2ecc71; --danger: #ff4757; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: radial-gradient(circle at top right, #2b0054, #070014); color: white; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Sidebar */
-        .sidebar { width: 260px; background: rgba(0,0,0,0.8); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; }
+        /* Sidebar & Layout */
+        .sidebar { width: 260px; background: rgba(0,0,0,0.9); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; }
         .logo { text-align: center; padding-bottom: 30px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
         .logo img { width: 150px; background: white; padding: 5px; border-radius: 5px; }
         .nav-item { padding: 15px 25px; cursor: pointer; color: #bbb; transition: 0.3s; display: flex; align-items: center; gap: 12px; font-size: 14px; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
 
-        /* Main Content */
         .wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
         .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
-        
         .main { padding: 30px; }
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(15px); }
 
-        /* Wallet Boxes */
+        /* Wallet System */
         .wallet-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .wallet-box { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 25px; border-radius: 20px; display: flex; align-items: center; gap: 20px; }
+        .wallet-box { background: var(--glass); border: 1px solid var(--border); padding: 25px; border-radius: 20px; display: flex; align-items: center; gap: 20px; }
         .wallet-icon { font-size: 30px; color: var(--accent); background: rgba(241, 196, 15, 0.1); padding: 15px; border-radius: 15px; }
-        .wallet-info h4 { font-size: 14px; opacity: 0.7; margin-bottom: 5px; }
-        .wallet-info h2 { font-size: 24px; font-weight: bold; }
+        .wallet-info h4 { font-size: 12px; opacity: 0.7; text-transform: uppercase; }
+        .wallet-info h2 { font-size: 22px; font-weight: bold; color: var(--accent); }
 
-        /* Form Controls */
-        .reg-input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; outline: none; font-size: 13px; }
-        .form-group label { font-size: 11px; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .btn-gold { background: var(--accent); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        /* Form & Inputs */
+        .reg-input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; margin-bottom: 10px; outline: none; }
+        .form-group label { font-size: 11px; color: var(--accent); margin-bottom: 5px; display: block; }
+        .btn-gold { background: var(--accent); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; }
         .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4); }
 
-        /* Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 15px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 12px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        /* Modal / Popup */
+        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); }
+        .modal-content { background: #1a0b4d; border: 1px solid var(--accent); margin: 5% auto; padding: 30px; border-radius: 20px; width: 60%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
 
-        /* Section Handling */
+        /* Print Area */
+        #printArea { display:none; }
+        @media print { body * { display:none; } #printArea { display:block !important; color: black; background: white; height: 100vh; } }
+
         .content-section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .footer { padding: 20px; text-align: center; font-size: 12px; opacity: 0.5; margin-top: auto; border-top: 1px solid var(--border); }
-        .logout-btn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 13px; }
-        .logout-btn:hover { background: var(--danger); color: white; }
+        .active-section { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 1px solid var(--border); font-size: 12px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo"><img src="logo.jpeg" alt="SCC LOGO"></div>
+        <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
         <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home / Refresh</div>
         <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-search-plus"></i> Smart Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-map-marker-alt"></i> Tracking</div>
@@ -66,7 +66,7 @@
     <div class="wrapper">
         <div class="top-bar">
             <div id="welcomeUser">Welcome, <span id="pNameDisp" style="color:var(--accent);">Partner</span></div>
-            <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            <button onclick="localStorage.clear(); location.href='index.html'" style="background:none; border:1px solid var(--danger); color:var(--danger); padding:5px 15px; border-radius:5px; cursor:pointer;">Logout</button>
         </div>
 
         <div class="main">
@@ -74,86 +74,95 @@
                 <div class="wallet-container">
                     <div class="wallet-box">
                         <div class="wallet-icon"><i class="fas fa-hourglass-half"></i></div>
-                        <div class="wallet-info">
-                            <h4>Pending Commission</h4>
-                            <h2 id="pendingWallet">0.00 BDT</h2>
-                        </div>
+                        <div class="wallet-info"><h4>Pending Commission</h4><h2 id="pendingWallet">0.00 BDT</h2></div>
                     </div>
                     <div class="wallet-box" style="border-color: var(--success);">
                         <div class="wallet-icon" style="color:var(--success);"><i class="fas fa-check-circle"></i></div>
-                        <div class="wallet-info">
-                            <h4>Final Earning</h4>
-                            <h2 id="finalWallet">0.00 BDT</h2>
-                        </div>
+                        <div class="wallet-info"><h4>Final Earning</h4><h2 id="finalWallet">0.00 BDT</h2></div>
                     </div>
                 </div>
-                <div class="card">
-                    <h3>Recent Notifications</h3>
-                    <p style="opacity:0.6; font-size: 14px; margin-top: 10px;">Check your tracking tab for latest updates on student files.</p>
-                </div>
+                <div class="card"><h3>Recent Updates</h3><p style="opacity:0.6;">Welcome to Student Career Consultancy Partner Portal.</p></div>
             </div>
 
             <div id="assessment" class="content-section">
                 <div class="card">
-                    <h3 style="color:var(--accent); margin-bottom: 20px;"><i class="fas fa-filter"></i> Search Universities</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
-                        <div class="form-group">
-                            <label>Country</label>
-                            <input type="text" id="searchCountry" placeholder="e.g. UK" class="reg-input">
-                        </div>
-                        <div class="form-group">
-                            <label>Degree</label>
+                    <h3 style="color:var(--accent); margin-bottom:20px;">University Search Filter</h3>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:15px;">
+                        <div class="form-group"><label>Country</label><input type="text" id="searchCountry" placeholder="e.g. UK" class="reg-input"></div>
+                        <div class="form-group"><label>Degree</label>
                             <select id="searchDegree" class="reg-input">
                                 <option value="">All Degrees</option>
                                 <option value="UG">Bachelor (UG)</option>
                                 <option value="PG">Master (PG)</option>
                                 <option value="Foundation">Foundation</option>
-                                <option value="Diploma">Diploma</option>
-                                <option value="PhD">PhD</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Min Score (IELTS/PTE)</label>
-                            <input type="number" id="searchScore" placeholder="Score" class="reg-input">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: flex-end;">
-                            <button onclick="searchUniversity()" class="btn-gold" style="width:100%;"><i class="fas fa-search"></i> Find Courses</button>
-                        </div>
+                        <div class="form-group"><label>IELTS/PTE Score</label><input type="number" id="searchScore" placeholder="Score" class="reg-input"></div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;"><button onclick="searchUniversity()" class="btn-gold">SEARCH</button></div>
                     </div>
                 </div>
-
-                <div class="card" style="overflow-x:auto; padding: 10px;">
+                <div class="card" style="overflow-x:auto;">
                     <table>
-                        <thead>
-                            <tr>
-                                <th>University</th>
-                                <th>Country</th>
-                                <th>Degree</th>
-                                <th>Tuition (USD)</th>
-                                <th>Commission (BDT)</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="uniResultsBody">
-                            <tr><td colspan="6" style="text-align:center; padding:30px; opacity:0.5;">Use the filter above to find universities.</td></tr>
-                        </tbody>
+                        <thead><tr><th>University</th><th>Country</th><th>Fee (USD)</th><th>Your Comm (BDT)</th><th>Action</th></tr></thead>
+                        <tbody id="uniResultsBody"></tbody>
                     </table>
                 </div>
             </div>
-
-            <div id="tracking" class="content-section"><h3>Live File Tracking Under Construction</h3></div>
-            <div id="earning" class="content-section"><h3>Earnings & Withdrawals Under Construction</h3></div>
-            <div id="profile" class="content-section"><h3>Profile Settings Under Construction</h3></div>
+            
+            <div id="tracking" class="content-section"><h2>Live Student Tracking</h2><div id="trackList" class="card"></div></div>
+            <div id="earning" class="content-section"><h2>Withdrawals</h2></div>
+            <div id="profile" class="content-section"><h2>Partner Profile Settings</h2></div>
         </div>
 
-        <div class="footer">
-            2026 @ all rights and reserved GORUN LTD.
+        <div class="footer" style="padding:20px; text-align:center; font-size:11px; opacity:0.5;">2026 @ all rights and reserved GORUN LTD.</div>
+    </div>
+
+    <div id="applyModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalUniName" style="color:var(--accent);">University Name</h2>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:20px;">
+                <input type="text" id="sName" placeholder="Student Name" class="reg-input">
+                <input type="text" id="sContact" placeholder="Student Contact" class="reg-input">
+                <input type="text" id="sPassport" placeholder="Passport Number" class="reg-input">
+                <input type="email" id="sEmail" placeholder="Student Email" class="reg-input">
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:10px;">
+                <div class="form-group"><label>Academic (PDF)</label><input type="file" id="pdfAcademic"></div>
+                <div class="form-group"><label>Language (PDF)</label><input type="file" id="pdfLang"></div>
+                <div class="form-group"><label>Passport (PDF)</label><input type="file" id="pdfPass"></div>
+                <div class="form-group"><label>Others (PDF)</label><input type="file" id="pdfOther"></div>
+            </div>
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button id="submitAppBtn" onclick="submitApplication()" class="btn-gold">CONFIRM & SUBMIT</button>
+                <button onclick="document.getElementById('applyModal').style.display='none'" style="background:none; border:1px solid var(--border); color:white; padding:10px 20px; border-radius:10px; cursor:pointer;">Cancel</button>
+            </div>
         </div>
     </div>
 
+    <div id="printArea">
+        <div style="text-align:center; padding: 50px;">
+            <img src="logo.jpeg" style="width:200px;">
+            <h1 style="margin-top:20px; color:#1a0b4d;">ACKNOWLEDGEMENT SLIP</h1>
+            <p>Official Confirmation of Application Submission</p>
+            <div style="margin:30px 0; border:3px solid #f1c40f; padding:20px; border-radius:15px;">
+                <h2 style="color:#27ae60;">Congratulations, <span id="slipStudentName"></span>!</h2>
+                <p>Your application for <b><span id="slipUni"></span></b> is successful.</p>
+            </div>
+            <table style="width:100%; border:1px solid #ddd; text-align:left;">
+                <tr><th style="padding:10px;">Passport</th><td id="slipPassport" style="padding:10px;"></td></tr>
+                <tr><th style="padding:10px;">Partner Agency</th><td id="slipPartner" style="padding:10px;"></td></tr>
+            </table>
+            <div style="margin-top:50px;">
+                <div id="qrcode" style="display:flex; justify-content:center; margin-bottom:15px;"></div>
+                <p>Scan to Track: study-abroad-crm-nine.vercel.app/track.html</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
@@ -167,61 +176,92 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const rateUSD = 120; // ১ USD = ১২০ টাকা
+        let selectedUniName = "";
+        const rateUSD = 120;
 
-        // Tab Navigation
-        window.showTab = (tabId, element) => {
+        window.showTab = (id, el) => {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active-section');
-            element.classList.add('active');
+            document.getElementById(id).classList.add('active-section');
+            el.classList.add('active');
         };
 
-        // Search University (Admin Data Sync)
         window.searchUniversity = async () => {
-            const country = document.getElementById('searchCountry').value.trim().toLowerCase();
-            const degree = document.getElementById('searchDegree').value;
-            const score = parseFloat(document.getElementById('searchScore').value) || 0;
+            const country = document.getElementById('searchCountry').value.toLowerCase();
             const resultsBody = document.getElementById('uniResultsBody');
+            resultsBody.innerHTML = "Searching...";
+            
+            const q = query(collection(db, "universities"));
+            const snap = await getDocs(q);
+            let html = "";
+            snap.forEach(docSnap => {
+                const u = docSnap.data();
+                if(!country || u.country.toLowerCase().includes(country)) {
+                    const bdtComm = (u.semesterFee * (u.partnerComm / 100)) * rateUSD;
+                    html += `<tr>
+                        <td><b>${u.universityName}</b><br><small>${u.courseName}</small></td>
+                        <td>${u.country}</td><td>$${u.semesterFee}</td>
+                        <td style="color:var(--success); font-weight:bold;">${bdtComm.toLocaleString()} ৳</td>
+                        <td><button onclick="openApply('${u.universityName}')" class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td>
+                    </tr>`;
+                }
+            });
+            resultsBody.innerHTML = html || "No results found.";
+        };
 
-            resultsBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px;">Searching...</td></tr>`;
+        window.openApply = (name) => {
+            selectedUniName = name;
+            document.getElementById('modalUniName').innerText = name;
+            document.getElementById('applyModal').style.display = 'block';
+        };
+
+        async function upload(file) {
+            if(!file) return "";
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'ihp_upload');
+            const res = await fetch('https://api.cloudinary.com/v1_1/ddziennkh/image/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.secure_url || "";
+        }
+
+        window.submitApplication = async () => {
+            const btn = document.getElementById('submitAppBtn');
+            btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
+            
+            const sName = document.getElementById('sName').value;
+            const passport = document.getElementById('sPassport').value;
 
             try {
-                const q = query(collection(db, "universities"));
-                const querySnapshot = await getDocs(q);
-                let html = "";
+                const urls = await Promise.all([
+                    upload(document.getElementById('pdfAcademic').files[0]),
+                    upload(document.getElementById('pdfLang').files[0]),
+                    upload(document.getElementById('pdfPass').files[0]),
+                    upload(document.getElementById('pdfOther').files[0])
+                ]);
 
-                querySnapshot.forEach((docSnap) => {
-                    const u = docSnap.data();
-                    
-                    // Filter Logic
-                    const matchCountry = !country || u.country.toLowerCase().includes(country);
-                    const matchDegree = !degree || u.degree === degree;
-                    const matchScore = u.ieltsReq <= score || score === 0;
-
-                    if (matchCountry && matchDegree && matchScore) {
-                        // Commission Calculation: (Fee * Comm%) * 120
-                        const bdtComm = (u.semesterFee * (u.partnerComm / 100)) * rateUSD;
-
-                        html += `
-                        <tr>
-                            <td><b>${u.universityName}</b><br><small style="color:var(--accent);">${u.courseName}</small></td>
-                            <td>${u.country}</td>
-                            <td>${u.degree}</td>
-                            <td>$${u.semesterFee.toLocaleString()}</td>
-                            <td style="color:var(--success); font-weight:bold;">${bdtComm.toLocaleString()} ৳</td>
-                            <td><button onclick="alert('Applying for: ${u.universityName}')" class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td>
-                        </tr>`;
-                    }
+                await addDoc(collection(db, "applications"), {
+                    studentName: sName,
+                    passport: passport,
+                    university: selectedUniName,
+                    partnerEmail: localStorage.getItem('userEmail'),
+                    status: 'Pending Review',
+                    docs: urls,
+                    createdAt: serverTimestamp()
                 });
 
-                resultsBody.innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:20px;">No matching results.</td></tr>`;
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+                document.getElementById('slipStudentName').innerText = sName;
+                document.getElementById('slipUni').innerText = selectedUniName;
+                document.getElementById('slipPassport').innerText = passport;
+                document.getElementById('slipPartner').innerText = document.getElementById('pNameDisp').innerText;
+                
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), "https://study-abroad-crm-nine.vercel.app/track.html?id=" + passport);
+                
+                window.print();
+                location.reload();
+            } catch (e) { alert(e.message); btn.innerText = "CONFIRM & SUBMIT"; btn.disabled = false; }
         };
-
-        window.logout = () => { localStorage.clear(); window.location.href = 'index.html'; };
     </script>
 </body>
 </html>
