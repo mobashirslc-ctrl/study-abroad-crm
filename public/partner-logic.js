@@ -125,38 +125,48 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & Tracking (FIXED LOGIC) ---
+// --- Live Wallet & Tracking (UPDATED: Document Links & Logic) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; 
     let finalWallet = 0;   
     let trackHtml = "";
     
-    console.log("Syncing Data for:", userEmail); // ডিবাগিং এর জন্য
+    console.log("Fetching and Syncing Data for:", userEmail);
 
     if (snap.empty) {
-        trackHtml = "<tr><td colspan='4' style='text-align:center;'>No applications found</td></tr>";
+        trackHtml = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
     } else {
         snap.forEach(dSnap => {
             const d = dSnap.data();
             const comm = Number(d.commission) || 0;
             const status = (d.status || 'pending').toLowerCase();
             
-            // Wallet Logic: Only 'verified' status adds to Pending Wallet
+            // 1. Wallet Logic: Only 'verified' adds to Pending Wallet
             if(status === 'verified') {
                 pendingWallet += comm;
             } 
-            // Only 'ready_for_payment' or 'paid' adds to Final Wallet
+            // 2. Only 'ready_for_payment' or 'paid' adds to Final Wallet
             else if(status === 'ready_for_payment' || status === 'paid') {
                 finalWallet += comm;
             }
 
-            let dateStr = d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : '...';
+            // Date Format
+            let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
             
+            // Document Links Logic
+            const docs = d.docs || {};
+            let docLinks = "";
+            if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" title="Academic" style="text-decoration:none;">📄Acad</a> `;
+            if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" title="Passport" style="text-decoration:none;">🆔Pass</a> `;
+            if(docs.language) docLinks += `<a href="${docs.language}" target="_blank" title="Language" style="text-decoration:none;">🌐Lang</a> `;
+            if(!docLinks) docLinks = "No Docs";
+
+            // Table Row Rendering
             trackHtml += `
                 <tr>
-                    <td>${d.studentName}</td>
-                    <td>${d.university}</td>
+                    <td><b>${d.studentName || 'N/A'}</b><br><small>${d.university || 'N/A'}</small></td>
                     <td><span style="color:var(--gold); font-weight:bold;">${status.toUpperCase()}</span></td>
+                    <td>${docLinks}</td>
                     <td>${dateStr}</td>
                 </tr>`;
         });
