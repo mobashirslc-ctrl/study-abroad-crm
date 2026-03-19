@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// UPDATED: Match with Admin.html config
+// Firebase Config
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
     authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -26,34 +26,22 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
-// --- Cloudinary Helper (Fixed: Using /auto/ to support PDF & Images) ---
+// --- Cloudinary Helper ---
 const uploadToCloudinary = async (file) => {
     if (!file) return ""; 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "lhp_upload");
-    
     try {
-        // 'auto' endpoint ensures Cloudinary detects PDF vs Image correctly
         const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/auto/upload", {
-            method: "POST", 
-            body: formData
+            method: "POST", body: formData
         });
-        
         const data = await res.json();
-        if (data.secure_url) {
-            return data.secure_url;
-        } else {
-            console.error("Cloudinary Detailed Error:", data);
-            return "";
-        }
-    } catch (e) { 
-        console.error("Cloudinary Connection Error:", e);
-        return ""; 
-    }
+        return data.secure_url || "";
+    } catch (e) { return ""; }
 };
 
-// --- University Search Logic (Real-time) ---
+// --- University Search Logic ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -98,51 +86,32 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application Submission (Sequential Upload to prevent failures) ---
+// --- Application Submission ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
     const sPass = document.getElementById('appSPass').value;
-    
-    const fAcad = document.getElementById('fileAcad').files[0];
-    const fLang = document.getElementById('fileLang').files[0];
-    const fPass = document.getElementById('filePass').files[0];
-    const fOther = document.getElementById('fileOther').files[0];
-
-    if(!sName || !sPass) return alert("Student Name & Passport Required!");
+    if(!sName || !sPass) return alert("Required fields missing!");
     
     const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING TO CLOUD..."; btn.disabled = true;
+    btn.innerText = "UPLOADING..."; btn.disabled = true;
 
     try {
-        // Uploading files one by one to avoid timeout/network failure
-        const u1 = await uploadToCloudinary(fAcad);
-        const u2 = await uploadToCloudinary(fLang);
-        const u3 = await uploadToCloudinary(fPass);
-        const u4 = await uploadToCloudinary(fOther);
+        const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
+        const u2 = await uploadToCloudinary(document.getElementById('fileLang').files[0]);
+        const u3 = await uploadToCloudinary(document.getElementById('filePass').files[0]);
+        const u4 = await uploadToCloudinary(document.getElementById('fileOther').files[0]);
 
-        // Save to Firestore with Cloudinary links (if upload fails, link will be "")
         await addDoc(collection(db, "applications"), {
-            studentName: sName,
-            studentPhone: sPhone,
-            passportNo: sPass,
-            university: window.selectedUni.name,
-            commission: window.selectedUni.comm,
-            partnerEmail: userEmail,
-            status: 'pending',
-            docs: { 
-                academic: u1, 
-                language: u2, 
-                passport: u3, 
-                others: u4 
-            },
+            studentName: sName, studentPhone: sPhone, passportNo: sPass,
+            university: window.selectedUni.name, commission: window.selectedUni.comm,
+            partnerEmail: userEmail, status: 'pending', 
+            docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
-        
         generateSlip(sName, sPass, window.selectedUni.name);
     } catch (e) { 
-        console.error("Firestore Error:", e);
-        alert("Submission Failed! Error: " + e.message); 
+        alert("Failed!"); 
         btn.disabled = false;
         btn.innerText = "CONFIRM ENROLLMENT";
     }
@@ -150,77 +119,79 @@ document.getElementById('submitAppBtn').onclick = async () => {
 
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
-    const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {agency: 'Official Partner'};
-    
-    slip.innerHTML = `
-        <div style="text-align:center;">
-            <img src="logo.jpeg" style="width:120px;">
-            <h2 style="color:#1a0b4d;">CONFIRMATION SLIP</h2>
-            <hr>
-            <h3>${sName}</h3>
-            <p><b>Passport:</b> ${sPass}</p>
-            <p><b>University:</b> ${uni}</p>
-            <p><b>Agency:</b> ${partnerInfo.agency || 'SCC Partner'}</p>
-            <p><b>Date:</b> ${new Date().toLocaleDateString()}</p>
-        </div>
-    `;
-    
+    const partnerInfo = JSON.parse(localStorage.getItem('partnerProfile')) || {agency: 'Partner'};
+    slip.innerHTML = `<div style="text-align:center;"><img src="logo.jpeg" style="width:100px;"><h2>Confirmation Slip</h2><p>Student: ${sName}</p><p>Passport: ${sPass}</p><p>Uni: ${uni}</p></div>`;
     document.getElementById('applyModal').style.display = 'none';
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & Tracking ---
+// --- Live Wallet & Tracking (FIXED LOGIC) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
-    let pending = 0, final = 0, trackHtml = "";
-    snap.forEach(dSnap => {
-        const d = dSnap.data();
-        const c = Number(d.commission) || 0;
-        const s = d.status || 'pending';
-        
-        if(s === 'pending') pending += c; 
-        else if(s === 'ready_for_payment' || s === 'paid') final += c;
-        
-        trackHtml += `<tr>
-            <td>${d.studentName}</td>
-            <td>${d.university}</td>
-            <td><span style="color:var(--gold)">${s.toUpperCase()}</span></td>
-            <td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td>
-        </tr>`;
-    });
+    let pendingWallet = 0; 
+    let finalWallet = 0;   
+    let trackHtml = "";
     
-    document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
-    document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
+    console.log("Syncing Data for:", userEmail); // ডিবাগিং এর জন্য
+
+    if (snap.empty) {
+        trackHtml = "<tr><td colspan='4' style='text-align:center;'>No applications found</td></tr>";
+    } else {
+        snap.forEach(dSnap => {
+            const d = dSnap.data();
+            const comm = Number(d.commission) || 0;
+            const status = (d.status || 'pending').toLowerCase();
+            
+            // Wallet Logic: Only 'verified' status adds to Pending Wallet
+            if(status === 'verified') {
+                pendingWallet += comm;
+            } 
+            // Only 'ready_for_payment' or 'paid' adds to Final Wallet
+            else if(status === 'ready_for_payment' || status === 'paid') {
+                finalWallet += comm;
+            }
+
+            let dateStr = d.createdAt?.toDate() ? d.createdAt.toDate().toLocaleDateString() : '...';
+            
+            trackHtml += `
+                <tr>
+                    <td>${d.studentName}</td>
+                    <td>${d.university}</td>
+                    <td><span style="color:var(--gold); font-weight:bold;">${status.toUpperCase()}</span></td>
+                    <td>${dateStr}</td>
+                </tr>`;
+        });
+    }
+
+    // UI Updates
+    document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
+    document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     document.getElementById('homeTrackingBody').innerHTML = trackHtml;
     
-    if(final > 0) document.getElementById('wdBtn').disabled = false;
+    const wdBtn = document.getElementById('wdBtn');
+    if(wdBtn) wdBtn.disabled = (finalWallet <= 0);
 });
 
 // --- Profile Load/Save ---
 (async () => {
     if(!userEmail) return;
-    try {
-        const dSnap = await getDoc(doc(db, "partners", userEmail));
-        if (dSnap.exists()) {
-            const d = dSnap.data();
-            document.getElementById('pAgency').value = d.agencyName || "";
-            document.getElementById('pContact').value = d.contact || "";
-            document.getElementById('pAddress').value = d.address || "";
-        }
-    } catch (e) { console.error("Profile load error:", e); }
+    const dSnap = await getDoc(doc(db, "partners", userEmail));
+    if (dSnap.exists()) {
+        const d = dSnap.data();
+        document.getElementById('pAgency').value = d.agencyName || "";
+        document.getElementById('pContact').value = d.contact || "";
+        document.getElementById('pAddress').value = d.address || "";
+    }
 })();
 
 document.getElementById('saveProfileBtn').onclick = async () => {
-    const agency = document.getElementById('pAgency').value;
     try {
         await setDoc(doc(db, "partners", userEmail), {
-            agencyName: agency, 
+            agencyName: document.getElementById('pAgency').value, 
             contact: document.getElementById('pContact').value,
             address: document.getElementById('pAddress').value, 
             email: userEmail,
             lastUpdated: serverTimestamp()
         }, { merge: true });
-        
-        localStorage.setItem('partnerProfile', JSON.stringify({agency}));
         alert("Profile Saved!");
-    } catch (e) { alert("Error saving profile!"); }
+    } catch (e) { alert("Error!"); }
 };
