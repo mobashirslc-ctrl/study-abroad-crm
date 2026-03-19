@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ১. আপনার পাঠানো Firebase Configuration (Verified)
+// ১. Firebase Configuration (From Image 887)
 const firebaseConfig = {
     apiKey: "AIzaSyDonKHMy dghjn3nAwjtsvQFDyT-78DGqOk",
     authDomain: "ihp-portal-v3.firebaseapp.com",
@@ -17,51 +17,90 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ২. রেজিস্ট্রেশন ফাংশন (Step 1.3, 1.4 & 1.5 এর জন্য)
+// ২. Cloudinary Upload Function (Using 'ihp_upload' preset from Image 891)
+async function uploadToCloudinary(file) {
+    if (!file) return "";
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ihp_upload'); // আপনার স্ক্রিনশট অনুযায়ী Unsigned প্রিসেট
+
+    try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { 
+            method: 'POST', 
+            body: formData 
+        });
+        const data = await res.json();
+        return data.secure_url;
+    } catch (e) {
+        console.error("Cloudinary Error:", e);
+        return "";
+    }
+}
+
+// ৩. Registration Function (Unified Step 1)
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role) return alert("দয়া করে Partner অথবা Compliance সিলেক্ট করুন।");
+    if (!role || !email || !pass) return alert("Please fill all required fields!");
+
+    const regBtn = document.getElementById('regBtn');
+    regBtn.innerText = "Processing Files...";
+    regBtn.disabled = true;
 
     try {
+        let tradeUrl = "", nidUrl = "";
+        
+        // রোল অনুযায়ী ফাইল হ্যান্ডলিং (Step 1.4)
+        if (role === 'Partner') {
+            const tradeFile = document.getElementById('pTrade').files[0];
+            const nidFile = document.getElementById('pNid').files[0];
+            tradeUrl = await uploadToCloudinary(tradeFile);
+            nidUrl = await uploadToCloudinary(nidFile);
+        }
+
+        // Auth ইউজার তৈরি
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
+        // Firestore ডাটা অবজেক্ট (Step 1.4 & 1.5)
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false, // Step 1.6: ডিফল্টভাবে অনুমোদন বন্ধ থাকবে
+            isApproved: false, // Step 1.6: Admin approval logic
             createdAt: new Date().toISOString()
         };
 
-        // রোল অনুযায়ী ডাটা ক্যাটাগরি সেট করা
         if (role === 'Partner') {
             userData.agencyName = document.getElementById('pAgency').value;
-            userData.authorizedPerson = document.getElementById('pPerson').value;
+            userData.personName = document.getElementById('pPerson').value;
             userData.contact = document.getElementById('pContact').value;
             userData.address = document.getElementById('pAddress').value;
-            userData.serviceCountries = document.getElementById('pService').value;
-            // PDF ফাইলের লিঙ্কগুলো এখানে যোগ হবে (Cloudinary implementation-এর পর)
+            userData.countries = document.getElementById('pService').value;
+            userData.tradeLicense = tradeUrl;
+            userData.nidPdf = nidUrl;
         } else if (role === 'Compliance') {
             userData.employeeName = document.getElementById('cName').value;
+            userData.contact = document.getElementById('cContact').value;
             userData.organisation = document.getElementById('cOrg').value;
             userData.experience = document.getElementById('cExp').value;
-            userData.assignedCountries = document.getElementById('cService').value;
+            userData.countries = document.getElementById('cService').value;
         }
 
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("রেজিস্ট্রেশন সফল! অ্যাডমিন অনুমোদন না দেওয়া পর্যন্ত অপেক্ষা করুন।");
+        alert("Registration Request Submitted! Wait for Admin Approval.");
         location.reload();
 
     } catch (error) {
-        alert("ভুল হয়েছে: " + error.message);
+        alert("Registration Failed: " + error.message);
+        regBtn.innerText = "Submit Request";
+        regBtn.disabled = false;
     }
 }
 
-// ৩. লগইন ফাংশন (Step 1.6: Admin Approval Check)
+// ৪. Login Function (Step 1.6)
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
@@ -70,35 +109,25 @@ async function handleLogin() {
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // ডাটাবেজ থেকে চেক করা অ্যাপ্রুভাল আছে কি না
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        
         if (userDoc.exists()) {
             const data = userDoc.data();
 
             if (!data.isApproved) {
-                alert("আপনার অ্যাকাউন্ট এখনো অ্যাডমিন দ্বারা অনুমোদিত নয়।");
+                alert("Account Pending! Admin has not approved you yet.");
                 await signOut(auth);
                 return;
             }
 
-            // সেশন ডাটা সেভ করা
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', data.role);
-            localStorage.setItem('userName', data.agencyName || data.employeeName);
-
-            // রোল অনুযায়ী ড্যাশবোর্ডে রিডিরেক্ট
-            if (data.role === 'Partner') {
-                window.location.href = "partner.html";
-            } else if (data.role === 'Compliance') {
-                window.location.href = "compliance.html";
-            }
+            window.location.href = data.role === 'Partner' ? "partner.html" : "compliance.html";
         }
     } catch (error) {
-        alert("লগইন ব্যর্থ: " + error.message);
+        alert("Login Error: " + error.message);
     }
 }
 
-// বাটনগুলোর সাথে ইভেন্ট কানেক্ট করা
+// Event Listeners
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
