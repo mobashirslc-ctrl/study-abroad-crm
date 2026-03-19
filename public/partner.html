@@ -3,122 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Partner Portal 2026</title>
+    <title>SCC | Partner Dashboard 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #1a0b4d; --accent: #f1c40f; --glass: rgba(255, 255, 255, 0.08); --border: rgba(255, 255, 255, 0.15); --success: #2ecc71; --danger: #ff4757; --gold: #f1c40f; }
+        :root { 
+            --primary: #1a0b4d; 
+            --accent: #f1c40f; 
+            --glass: rgba(255, 255, 255, 0.08); 
+            --border: rgba(255, 255, 255, 0.15); 
+            --success: #2ecc71; 
+            --danger: #ff4757; 
+            --gold: #f1c40f; 
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: radial-gradient(circle at top right, #2b0054, #070014); color: white; height: 100vh; display: flex; overflow: hidden; }
+        body { 
+            background: radial-gradient(circle at top right, #2b0054, #070014); 
+            color: white; 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden; 
+        }
 
+        /* Sidebar Design */
         .sidebar { width: 260px; background: rgba(0,0,0,0.9); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .logo { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo img { width: 140px; background: white; padding: 5px; border-radius: 5px; }
         .nav-item { padding: 15px 25px; cursor: pointer; color: #bbb; display: flex; align-items: center; gap: 12px; font-size: 14px; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
 
+        /* Main Wrapper */
         .wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
+        .top-bar { 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(0,0,0,0.3); 
+            border-bottom: 1px solid var(--border); 
+            backdrop-filter: blur(10px); 
+            position: sticky; top: 0; z-index: 100; 
+        }
         .main { padding: 30px; flex: 1; }
-        
+
+        /* Wallet Boxes */
         .wallet-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .wallet-box { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; }
-        
+        .wallet-box { 
+            background: var(--glass); 
+            border: 1px solid var(--border); 
+            padding: 20px; 
+            border-radius: 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            transition: 0.3s;
+        }
+        .wallet-box:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .wallet-icon { font-size: 24px; color: var(--gold); background: rgba(241,196,15,0.1); padding: 10px; border-radius: 10px; }
+
+        /* Cards & Inputs */
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(15px); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        .reg-input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; outline: none; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+        .reg-input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; outline: none; transition: 0.3s; }
+        .reg-input:focus { border-color: var(--accent); }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-gold:hover { background: #d4ac0d; transform: scale(1.02); }
 
+        /* Table Design */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 12px; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: #ddd; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; border: 1px solid; }
 
-        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); justify-content:center; align-items:center; }
-        .modal-content { background: #1a0b4d; border: 1px solid var(--gold); padding: 30px; border-radius: 20px; width: 60%; }
-        
-        #printArea { display:none; }
-        @media print { body * { display:none; } #printArea { display:block !important; color:black; background:white; padding:50px; } }
+        /* Glassmorphism Modal */
+        .modal { 
+            display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; 
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); 
+            justify-content:center; align-items:center; 
+        }
+        .modal-content { 
+            background: rgba(26, 11, 77, 0.9); 
+            border: 1px solid var(--gold); 
+            padding: 35px; 
+            border-radius: 25px; 
+            width: 70%; 
+            max-width: 900px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
 
+        /* Section Handling */
         .section { display: none; }
-        .active-section { display: block; }
+        .active-section { display: block; animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Print Area */
+        #printArea { display:none; }
+        @media print { body * { display:none; } #printArea { display:block !important; color:black; background:white; padding:40px; } }
+
+        .footer { text-align: center; padding: 15px; font-size: 11px; opacity: 0.5; border-top: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
-        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
+        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home/Refresh</div>
         <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Smart Assessment</div>
-        <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-tasks"></i> Tracking</div>
-        <div class="nav-item" onclick="showTab('earning', this)"><i class="fas fa-wallet"></i> Earning</div>
+        <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
+        <div class="nav-item" onclick="showTab('earning', this)"><i class="fas fa-wallet"></i> Withdraw & Earning</div>
+        <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</div>
     </div>
 
     <div class="wrapper">
         <div class="top-bar">
-            <div>Welcome, <span id="partnerTitle" style="color:var(--gold); font-weight:bold;">Partner</span></div>
-            <button onclick="localStorage.clear(); location.href='index.html'" class="btn-gold" style="background:var(--danger); color:white; padding:5px 15px;">Logout</button>
+            <div style="font-size: 16px;">Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
+            <button onclick="localStorage.clear(); location.href='index.html'" class="btn-gold" style="background:var(--danger); color:white; padding:6px 15px; font-size:12px;">Logout</button>
         </div>
 
         <div class="main">
             <div id="home" class="section active-section">
                 <div class="wallet-container">
-                    <div class="wallet-box"><div><p style="font-size:10px; opacity:0.6;">PENDING</p><h2 id="topPending">৳0</h2></div></div>
-                    <div class="wallet-box" style="border-color: var(--success);"><div><p style="font-size:10px; opacity:0.6;">FINAL</p><h2 id="topFinal">৳0</h2></div></div>
+                    <div class="wallet-box">
+                        <div class="wallet-icon"><i class="fas fa-clock"></i></div>
+                        <div><p style="font-size:10px; opacity:0.6;">PENDING EARNING</p><h2 id="topPending">৳0</h2></div>
+                    </div>
+                    <div class="wallet-box" style="border-color: var(--success);">
+                        <div class="wallet-icon" style="color:var(--success);"><i class="fas fa-check-double"></i></div>
+                        <div><p style="font-size:10px; opacity:0.6;">FINAL WALLET</p><h2 id="topFinal">৳0</h2></div>
+                    </div>
                 </div>
-                <div class="card"><h3>Recent Status</h3><table><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
+                <div class="card">
+                    <h3>Recent Files Status</h3>
+                    <div style="overflow-x:auto;"><table id="homeTable"><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
+                </div>
             </div>
 
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:20px;">Search Filter</h3>
+                    <h3 style="color:var(--gold); margin-bottom:15px;"><i class="fas fa-search"></i> Smart Search Filter</h3>
                     <div class="form-grid">
-                        <input type="text" id="fCountry" placeholder="Country" class="reg-input">
+                        <input type="text" id="fCountry" placeholder="Target Country" class="reg-input">
                         <select id="fDegree" class="reg-input">
-                            <option value="">Degree</option>
-                            <option value="Bachelor">Bachelor (Ug)</option>
-                            <option value="Master">Master (Pg)</option>
-                            <option value="Foundation">Foundation</option>
+                            <option value="">Degree</option><option>Bachelor</option><option>Master</option><option>Foundation</option><option>Diploma</option>
                         </select>
-                        <input type="number" step="0.01" id="fGPA" placeholder="Student GPA" class="reg-input">
-                        <input type="number" step="0.1" id="fLangScore" placeholder="IELTS/Lang Score" class="reg-input">
+                        <select id="fLangType" class="reg-input">
+                            <option value="">Language</option><option>IELTS</option><option>PTE</option><option>MOI</option><option>DUOLINGO</option>
+                        </select>
+                        <input type="number" step="0.01" id="fGPA" placeholder="Academic Score" class="reg-input">
+                        <input type="number" step="0.1" id="fLangScore" placeholder="Lang Score" class="reg-input">
                         <button id="searchBtn" class="btn-gold">SEARCH</button>
                     </div>
                 </div>
                 <div id="searchResultArea" style="display:none;" class="card">
-                    <table>
-                        <thead><tr><th>University</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead>
-                        <tbody id="uniListContainer"></tbody>
-                    </table>
+                    <h4 style="margin-bottom:15px;">Available Opportunities</h4>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>University</th><th>Details</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
+                            <tbody id="uniListContainer"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <table><thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th></tr></thead><tbody id="trackingList"></tbody></table>
+                    <h3>Full Application List</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead><tr><th>Student Name</th><th>Passport No</th><th>University</th><th>Status</th><th>Updated</th><th>Preview</th></tr></thead>
+                            <tbody id="trackingList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="earning" class="section">
+                <div class="card">
+                    <h2>Final Balance: <span id="withdrawFinal" style="color:var(--success);">৳0</span></h2>
+                    <div style="max-width:400px; margin-top:20px;">
+                        <select id="wMethod" class="reg-input" style="margin-bottom:10px;"><option>Bkash</option><option>Nagad</option><option>Bank Transfer</option></select>
+                        <input type="text" id="wAcc" placeholder="Account Number" class="reg-input" style="margin-bottom:10px;">
+                        <input type="number" id="wAmount" placeholder="Amount" class="reg-input" style="margin-bottom:10px;">
+                        <button id="withdrawBtn" class="btn-gold" style="width:100%;" disabled>WITHDRAW REQUEST</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile" class="section">
+                <div class="card">
+                    <h3>Partner Profile Settings</h3>
+                    <div class="form-grid" style="margin-top:20px;">
+                        <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input">
+                        <input type="text" id="pPerson" placeholder="Proprietor Name" class="reg-input">
+                        <input type="text" id="pContact" placeholder="Contact No" class="reg-input">
+                        <button onclick="saveProfile()" class="btn-gold">UPDATE PROFILE</button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <div class="footer">2026 @ All Rights Reserved | GORUN LTD</div>
     </div>
 
     <div id="applyModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalUniName" style="color:var(--gold);"></h2>
+            <h2 id="modalUniName" style="color:var(--gold);">University</h2>
             <div class="form-grid" style="margin-top:20px;">
-                <input type="text" id="sName" placeholder="Student Name" class="reg-input">
-                <input type="text" id="sPass" placeholder="Passport No" class="reg-input">
-                <input type="file" id="pdfAcademic">
+                <input type="text" id="sName" placeholder="Student Full Name" class="reg-input">
+                <input type="text" id="sPass" placeholder="Passport Number" class="reg-input">
+                <input type="text" id="sContact" placeholder="Student Contact" class="reg-input">
             </div>
-            <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:20px;">SUBMIT FILE</button>
+            <div class="form-grid" style="margin-top:15px;">
+                <div><label style="font-size:10px; opacity:0.6;">Academic PDF</label><input type="file" id="pdfAcademic" class="reg-input"></div>
+                <div><label style="font-size:10px; opacity:0.6;">Other Docs</label><input type="file" id="pdfOthers" class="reg-input"></div>
+            </div>
+            <div style="margin-top:25px; display:flex; gap:15px;">
+                <button id="submitAppBtn" class="btn-gold" style="flex:1;">CONFIRM SUBMISSION</button>
+                <button onclick="document.getElementById('applyModal').style.display='none'" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
+            </div>
         </div>
     </div>
 
     <div id="printArea">
-        <div style="text-align:center; border:2px solid #000; padding:30px;">
-            <img src="logo.jpeg" style="width:120px;">
-            <h1>CONFIRMATION SLIP</h1>
-            <h2 id="slipName"></h2>
-            <p>University: <b id="slipUni"></b></p>
-            <div id="qrcode" style="display:flex; justify-content:center; margin-top:20px;"></div>
+        <div style="text-align:center; border:2px solid #000; padding:40px; border-radius:20px;">
+            <img src="logo.jpeg" style="width:150px;">
+            <h1 style="margin-top:20px; color:#1a0b4d;">OFFICIAL CONFIRMATION</h1>
+            <div style="margin:30px 0; border:4px solid #f1c40f; padding:20px; border-radius:15px;">
+                <h2 id="slipName">STUDENT NAME</h2>
+                <p>Application for: <b id="slipUni">University</b></p>
+            </div>
+            <div style="text-align:left; margin-bottom:20px;">
+                <p><b>Passport:</b> <span id="slipPass"></span></p>
+                <p><b>Date:</b> <span id="slipDate"></span></p>
+                <p><b>Tracking ID:</b> <span id="slipID"></span></p>
+            </div>
+            <div id="qrcode" style="display:flex; justify-content:center; margin:20px 0;"></div>
+            <p style="font-size:12px;">Scan to Track: study-abroad-crm-nine.vercel.app/track.html</p>
         </div>
     </div>
 
@@ -126,7 +246,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, getDocs, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Config (Using your scc-partner-portal)
+        // Firebase Config
         const firebaseConfig = { 
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -140,6 +260,7 @@
         const db = getFirestore(app);
         const userEmail = localStorage.getItem('userEmail');
 
+        // Navigation Switcher
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -147,12 +268,13 @@
             if(el) el.classList.add('active');
         };
 
+        // --- Logic Engine ---
         let allUnis = [];
         onSnapshot(collection(db, "universities"), (snap) => {
-            allUnis = snap.docs.map(d => d.data());
+            allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
         });
 
-        // FIXED Search Logic to match your Admin fields
+        // Fixed Smart Search
         document.getElementById('searchBtn').onclick = () => {
             const country = document.getElementById('fCountry').value.trim().toLowerCase();
             const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
@@ -177,56 +299,130 @@
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(u => `
                     <tr>
-                        <td><b>${u.name || u.uName || u.universityName}</b><br><small>${u.country || u.uCountry}</small></td>
-                        <td>${u.semesterFee || u.uSemFee} ${u.currency || u.uCurrency}</td>
-                        <td style="color:var(--gold); font-weight:bold;">৳${(u.partnerComm || 50000).toLocaleString()}</td>
-                        <td><button class="btn-gold" onclick="openApply('${u.name || u.uName || u.universityName}', '${u.partnerComm || 50000}')">Apply</button></td>
+                        <td><b>${u.uName || u.universityName || u.name}</b><br><small>${u.uCountry || u.country}</small></td>
+                        <td>Gap: ${u.studyGap || u.gapAllowed}y | Intake: ${u.intake}</td>
+                        <td>${u.uSemFee || u.semesterFee} ${u.uCurrency || u.currency}</td>
+                        <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
+                        <td><button class="btn-gold" style="padding:6px 12px; font-size:11px;" onclick="openApply('${u.uName || u.universityName || u.name}', '${u.partnerComm}')">Apply</button></td>
                     </tr>`).join('');
             } else {
-                container.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No match found. Try lower GPA/IELTS.</td></tr>`;
+                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--danger);">No matching university found.</td></tr>`;
             }
         };
 
-        window.openApply = (n, c) => {
-            document.getElementById('modalUniName').innerText = n;
+        // Cloudinary Upload
+        async function uploadToCloud(file) {
+            if (!file) return "";
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'ml_default'); 
+            try {
+                const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                return data.secure_url;
+            } catch (e) { return ""; }
+        }
+
+        window.openApply = (name, comm) => {
+            document.getElementById('modalUniName').innerText = name;
             document.getElementById('applyModal').style.display = 'flex';
-            window.selectedApp = { name: n, comm: c };
+            window.selectedApp = { name, comm };
         };
 
+        // Application Submission
         document.getElementById('submitAppBtn').onclick = async () => {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            if(!name || !pass) return alert("Fill all fields");
+            const cont = document.getElementById('sContact').value;
+            const file1 = document.getElementById('pdfAcademic').files[0];
 
-            await addDoc(collection(db, "applications"), {
-                studentName: name, passportNo: pass, partnerEmail: userEmail,
-                university: window.selectedApp.name, commission: window.selectedApp.comm,
-                status: 'pending', createdAt: serverTimestamp()
-            });
+            if (!name || !pass || !file1) return alert("Please fill mandatory fields!");
 
-            document.getElementById('slipName').innerText = name;
-            document.getElementById('slipUni').innerText = window.selectedApp.name;
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: pass, width: 100, height: 100 });
-            
-            alert("Submitted!");
-            window.print();
-            location.reload();
+            const btn = document.getElementById('submitAppBtn');
+            btn.innerText = "UPLOADING..."; btn.disabled = true;
+
+            const url1 = await uploadToCloud(file1);
+            const url2 = await uploadToCloud(document.getElementById('pdfOthers').files[0]);
+
+            try {
+                const docRef = await addDoc(collection(db, "applications"), {
+                    studentName: name, passportNo: pass, studentContact: cont, partnerEmail: userEmail,
+                    university: window.selectedApp.name, commission: window.selectedApp.comm,
+                    status: 'pending', docs: { academic: url1, others: url2 },
+                    createdAt: serverTimestamp()
+                });
+
+                // Acknowledgement Slip
+                document.getElementById('slipName').innerText = name;
+                document.getElementById('slipUni').innerText = window.selectedApp.name;
+                document.getElementById('slipPass').innerText = pass;
+                document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
+                document.getElementById('slipID').innerText = docRef.id;
+
+                document.getElementById('qrcode').innerHTML = "";
+                new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 120, height: 120 });
+
+                alert("Application Submitted Successfully!");
+                window.print();
+                location.reload();
+            } catch (e) { alert("Submission Failed!"); btn.disabled = false; }
         };
 
+        // Live Tracking & Wallet
         onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail), orderBy("createdAt", "desc")), (snap) => {
-            let p = 0, f = 0, html = "", hhtml = "";
+            const tbody = document.getElementById('trackingList');
+            const hbody = document.getElementById('homeTrackingBody');
+            tbody.innerHTML = ""; hbody.innerHTML = "";
+            let pending = 0, final = 0;
+
             snap.forEach(doc => {
                 const d = doc.data();
-                const c = Number(d.commission) || 0;
-                if(d.status === 'pending') p += c; else f += c;
-                html += `<tr><td>${d.studentName}</td><td>${d.passportNo}</td><td>${d.university}</td><td>${d.status}</td></tr>`;
-                hhtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td></tr>`;
+                const comm = Number(d.commission) || 0;
+                if(d.status === 'pending') pending += comm;
+                if(d.status === 'approved') final += comm;
+
+                const row = `
+                <tr>
+                    <td><b>${d.studentName}</b></td>
+                    <td>${d.passportNo}</td>
+                    <td>${d.university}</td>
+                    <td><span class="status-badge" style="color:var(--gold); border-color:var(--gold);">${d.status}</span></td>
+                    <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...'}</td>
+                    <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--success);"><i class="fas fa-eye"></i> View</a></td>
+                </tr>`;
+                tbody.innerHTML += row;
+                hbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.university}</td><td><span style="color:var(--gold)">${d.status}</span></td></tr>`;
             });
-            document.getElementById('topPending').innerText = `৳${p.toLocaleString()}`;
-            document.getElementById('topFinal').innerText = `৳${f.toLocaleString()}`;
-            document.getElementById('trackingList').innerHTML = html;
-            document.getElementById('homeTrackingBody').innerHTML = hhtml;
+
+            document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
+            document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
+            document.getElementById('withdrawFinal').innerText = `৳${final.toLocaleString()}`;
+            document.getElementById('withdrawBtn').disabled = final <= 0;
+        });
+
+        // Profile Update
+        window.saveProfile = async () => {
+            const q = query(collection(db, "users"), where("email", "==", userEmail));
+            const s = await getDocs(q);
+            if(!s.empty) {
+                await updateDoc(doc(db, "users", s.docs[0].id), {
+                    agencyName: document.getElementById('pAgency').value,
+                    personName: document.getElementById('pPerson').value,
+                    contact: document.getElementById('pContact').value
+                });
+                alert("Profile Updated!");
+            }
+        };
+
+        // Sync initial profile info
+        onSnapshot(query(collection(db, "users"), where("email", "==", userEmail)), (snap) => {
+            if(!snap.empty) {
+                const u = snap.docs[0].data();
+                document.getElementById('welcomeName').innerText = u.agencyName || "Partner";
+                document.getElementById('pAgency').value = u.agencyName || "";
+                document.getElementById('pPerson').value = u.personName || "";
+                document.getElementById('pContact').value = u.contact || "";
+            }
         });
     </script>
 </body>
