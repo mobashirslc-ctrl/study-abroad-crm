@@ -3,153 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Compliance Dashboard</title>
+    <title>SCC | Compliance Dashboard 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary: #2b0054; --bg-dark: #12002b; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --accent: #f1c40f; --success: #2ecc71; --error: #e74c3c; }
-        body { background: linear-gradient(145deg, var(--bg-dark), var(--primary)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; min-height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
-        body.auth-ready { opacity: 1; }
-        .sidebar { width: 250px; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--border); position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 1000; }
-        .logo-box { padding: 30px 20px; text-align: center; }
-        .logo-box img { width: 100%; max-height: 60px; object-fit: contain; background: #fff; padding: 5px; border-radius: 5px; }
-        .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #b0b0b0; cursor: pointer; transition: 0.3s; font-size: 0.95rem; border-left: 4px solid transparent; text-decoration: none; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: white; border-left: 4px solid var(--accent); }
-        .main { margin-left: 250px; padding: 40px; height: 100vh; overflow-y: auto; box-sizing: border-box; position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-        .staff-info-badge { background: rgba(241, 196, 15, 0.15); padding: 12px 25px; border-radius: 50px; border: 2px solid var(--accent); color: var(--accent); font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 10px; box-shadow: 0 0 15px rgba(241, 196, 15, 0.2); }
-        .card { background: var(--glass); border: 1px solid var(--border); border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 18px; color: var(--accent); font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border); }
-        td { padding: 18px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-        .btn-claim { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-claim:hover { transform: scale(1.05); background: #fff; }
-        
-        .slider { position: fixed; right: -500px; top: 0; width: 450px; height: 100vh; background: rgba(10, 0, 30, 0.98); backdrop-filter: blur(40px); border-left: 3px solid var(--accent); padding: 40px; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000; overflow-y: auto; }
-        .slider.active { right: 0; }
-        
-        #loader { position: fixed; inset: 0; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(241, 196, 15, 0.1); border-left-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .content-section { display: none; }
-        .active-section { display: block; }
-    </style>
+    <link rel="stylesheet" href="style-compliance.css">
 </head>
 <body>
     <div id="loader">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: var(--accent);">Securing Staff Session...</p>
+        <p>Securing Staff Session...</p>
     </div>
 
     <div class="sidebar">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC LOGO"></div>
-        <div onclick="openTab('incoming')" id="nav-incoming" class="nav-item active"><i class="fas fa-list-ul"></i> Incoming Files</div>
-        <div onclick="openTab('history')" id="nav-history" class="nav-item"><i class="fas fa-history"></i> My History</div>
-        <div onclick="openTab('profile')" id="nav-profile" class="nav-item"><i class="fas fa-user-circle"></i> Profile</div>
-        <div style="margin-top:auto; padding:20px; border-top: 1px solid var(--border);">
-            <div id="logoutBtn" class="nav-item" style="color:var(--error);"><i class="fas fa-sign-out-alt"></i> Logout Staff</div>
+        <div class="logo-box"><img src="logo.jpeg" alt="SCC"></div>
+        <div onclick="showTab('incoming', this)" class="nav-item active"><i class="fas fa-file-import"></i> Incoming Files</div>
+        <div onclick="showTab('history', this)" class="nav-item"><i class="fas fa-user-clock"></i> Staff History</div>
+        <div onclick="showTab('profile', this)" class="nav-item"><i class="fas fa-id-badge"></i> Staff Profile</div>
+        <div style="margin-top:auto; padding:20px;">
+            <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </div>
 
     <div class="main">
         <div class="header">
-            <h2 style="margin:0; font-weight: 300; letter-spacing: 1px;">Compliance Dashboard</h2>
-            <div class="staff-info-badge">
-                <i class="fas fa-shield-alt"></i> STAFF: <span id="staffDisplay">...</span>
+            <h2>Compliance Management</h2>
+            <div class="staff-badge">
+                <i class="fas fa-user-shield"></i> <span id="staffDisplay">Loading...</span>
             </div>
         </div>
 
-        <div id="incoming" class="content-section active-section">
+        <div id="incoming" class="content-section active">
             <div class="card">
-                <h3 style="margin-top:0;"><i class="fas fa-folder-open" style="color:var(--accent)"></i> Active File Queue</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Passport No</th>
-                            <th>Status</th>
-                            <th>Handled By</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="incomingTableBody"></tbody>
-                </table>
+                <h3><i class="fas fa-list"></i> Incoming File Queue</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student & Partner</th>
+                                <th>Passport No</th>
+                                <th>Docs</th>
+                                <th>Status</th>
+                                <th>Handled By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incomingTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
+        <div id="history" class="content-section">
+            <div class="stat-grid">
+                <div class="stat-box"><h3>Total Served</h3><h2 id="hTotal">0</h2></div>
+                <div class="stat-box"><h3>Visa Success</h3><h2 id="hSuccess">0</h2></div>
+                <div class="stat-box"><h3>Partners Served</h3><h2 id="hPartners">0</h2></div>
+            </div>
         </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, getDocs, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        <div id="profile" class="content-section">
+            <div class="card" style="max-width: 600px;">
+                <h3>Staff Profile Setup</h3>
+                <div class="form-grid">
+                    <label>Full Name</label><input type="text" id="profName" class="inp">
+                    <label>Organization</label><input type="text" id="profOrg" class="inp">
+                    <label>Experience</label><input type="text" id="profExp" class="inp">
+                    <button id="saveProfileBtn" class="btn-claim">Save Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // CRITICAL: Updated Config to match index.html
-        const firebaseConfig = {
-            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
-            authDomain: "ihp-portal-v3.firebaseapp.com",
-            projectId: "ihp-portal-v3",
-            storageBucket: "ihp-portal-v3.firebasestorage.app",
-            messagingSenderId: "481157902534",
-            appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7"
-        };
+    <div id="reviewSlider" class="slider">
+        <button class="close-btn" onclick="closeSlider()">&times;</button>
+        <h2 id="targetStudent" style="color:var(--accent);">Student Name</h2>
+        <p id="targetComm" style="font-weight:bold;"></p>
+        <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
+        
+        <label>Update Status</label>
+        <select id="statusSelect" class="inp" style="margin-bottom:20px;">
+            <option value="pending">PENDING (Neutral)</option>
+            <option value="verified">VERIFIED (Add to Pending Wallet)</option>
+            <option value="uni_apply">UNIVERSITY APPLIED</option>
+            <option value="offer_done">OFFER LETTER DONE</option>
+            <option value="doc_missing">DOCUMENTS MISSING</option>
+            <option value="visa_apply">APPLYING VISA</option>
+            <option value="visa_rejected">VISA REJECTED (Minus from Wallet)</option>
+            <option value="visa_success">VISA SUCCESS</option>
+            <option value="student_paid">STUDENT PAID TO UNI (Move to Final)</option>
+        </select>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        <div id="docLinksArea" style="margin-bottom:20px;"></div>
 
-        let staffName = "Staff";
+        <button id="updateStatusBtn" class="btn-claim" style="width:100%;">APPLY STATUS & SYNC WALLET</button>
+    </div>
 
-        // Auth Logic with Role & Status Protection
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) {
-                window.location.replace("index.html");
-            } else {
-                try {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists()) {
-                        const userData = userDoc.data();
-                        const role = (userData.role || "").toLowerCase();
-                        const status = (userData.status || "").toLowerCase();
-
-                        // Access Control
-                        if ((role === "compliance" || role === "admin") && status === "approved") {
-                            staffName = userData.fullName || "Officer";
-                            document.getElementById('staffDisplay').innerText = staffName;
-                            document.getElementById('loader').style.display = 'none';
-                            document.body.classList.add('auth-ready');
-                            startLiveUpdates();
-                        } else {
-                            alert("Access Denied: You are not an approved compliance officer.");
-                            signOut(auth).then(() => window.location.replace("index.html"));
-                        }
-                    } else {
-                        signOut(auth).then(() => window.location.replace("index.html"));
-                    }
-                } catch (e) {
-                    console.error(e);
-                    window.location.replace("index.html");
-                }
-            }
-        });
-
-        function startLiveUpdates() {
-            onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
-                const tbody = document.getElementById('incomingTableBody');
-                let html = "";
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    html += `<tr>
-                        <td><b>${data.studentName}</b></td>
-                        <td>${data.passportNumber || 'N/A'}</td>
-                        <td>${data.status}</td>
-                        <td>${data.complianceMember || 'Queue'}</td>
-                        <td><button class="btn-claim">Review</button></td>
-                    </tr>`;
-                });
-                tbody.innerHTML = html || '<tr><td colspan="5" align="center">No data found</td></tr>';
-            });
+    <script type="module" src="compliance-logic.js"></script>
+    <script>
+        function showTab(id, el) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
         }
-
-        document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.replace("index.html"));
     </script>
 </body>
 </html>
