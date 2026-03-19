@@ -1,5 +1,6 @@
+/* partner-logic.js */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -14,138 +15,91 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const userEmail = localStorage.getItem('userEmail');
 
-let allUnis = [];
+// --- Navigation Functions ---
+window.showTab = (id, el) => {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active-section');
+    if(el) el.classList.add('active');
+};
 
-// ১. এডমিন ডাটা সিঙ্ক
+window.logout = () => {
+    localStorage.clear();
+    location.href = 'index.html';
+};
+
+window.closeModal = () => {
+    document.getElementById('applyModal').style.display = 'none';
+};
+
+// --- University Logic ---
+let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
-    allUnis = snap.docs.map(d => d.data());
+    allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
 });
 
-// ২. স্মার্ট সার্চ লজিক
 document.getElementById('searchBtn').onclick = () => {
-    const country = document.getElementById('fCountry').value.toLowerCase();
-    const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
-    const lang = parseFloat(document.getElementById('fLang').value) || 0;
-    const degree = document.getElementById('fDegree').value;
+    const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
+    const gpaInput = parseFloat(document.getElementById('fGPA').value) || 0;
+    const langInput = parseFloat(document.getElementById('fLangScore').value) || 0;
+    const degreeInput = document.getElementById('fDegree').value;
 
     const filtered = allUnis.filter(u => {
-        return (country === "" || u.country.toLowerCase().includes(country)) &&
-               (degree === "" || u.degree === degree) &&
-               (gpa >= (parseFloat(u.minGPA) || 0)) &&
-               (lang >= (parseFloat(u.minLangScore) || 0));
+        const dbCountry = (u.uCountry || u.country || "").toLowerCase();
+        const dbDegree = (u.uDegree || u.degree || "");
+        const minGPA = parseFloat(u.minCGPA || u.minGPA || 0);
+        const minLang = parseFloat(u.minIELTS || u.minLangScore || 0);
+
+        const cMatch = countryInput === "" || dbCountry.includes(countryInput);
+        const dMatch = degreeInput === "" || dbDegree === degreeInput || (degreeInput === "Bachelor" && dbDegree === "Ug");
+        const gMatch = gpaInput >= minGPA;
+        const lMatch = langInput >= minLang;
+
+        return cMatch && dMatch && gMatch && lMatch;
     });
 
-    const resultArea = document.getElementById('searchResultArea');
     const container = document.getElementById('uniListContainer');
-    resultArea.style.display = 'block';
-
+    document.getElementById('searchResultArea').style.display = 'block';
+    
     if (filtered.length > 0) {
         container.innerHTML = filtered.map(u => `
             <tr>
-                <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                <td>Gap: ${u.studyGap}y | Intake: ${u.intake}</td>
-                <td>$${u.semesterFee}</td>
-                <td style="color:var(--gold); font-weight:bold;">৳${u.partnerComm}</td>
-                <td><button class="btn-gold" style="padding:8px 15px; font-size:11px;" onclick="openApply('${u.universityName}', '${u.partnerComm}')">Apply</button></td>
+                <td><b>${u.uName || u.name}</b><br><small>${u.uCountry || u.country}</small></td>
+                <td>GPA: ${u.minCGPA || 0} | IELTS: ${u.minIELTS || 0}</td>
+                <td>${u.uSemFee || 0} ${u.uCurrency || 'USD'}</td>
+                <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
+                <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openApply('${u.uName || u.name}', '${u.partnerComm}')">Apply</button></td>
             </tr>`).join('');
     } else {
-        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:40px; color:var(--danger);">No University matches this student's GPA/Score.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">No University found.</td></tr>`;
     }
 };
 
-// ৩. ক্লাউডিনারি আপলোড ফাংশন
-async function uploadToCloud(file) {
-    if (!file) return "";
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'ml_default'); 
-    try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { method: 'POST', body: formData });
-        const data = await res.json();
-        return data.secure_url;
-    } catch (e) { return ""; }
-}
-
-window.openApply = (name, comm) => {
-    document.getElementById('modalUniName').innerText = name;
+window.openApply = (n, c) => {
+    window.selectedApp = { name: n, comm: c };
+    document.getElementById('modalUniName').innerText = n;
     document.getElementById('applyModal').style.display = 'flex';
-    window.selectedApp = { name, comm };
 };
 
-// ৪. সাবমিট এবং স্লিপ প্রিন্ট
-document.getElementById('submitAppBtn').onclick = async () => {
-    const name = document.getElementById('sName').value;
-    const pass = document.getElementById('sPass').value;
-    const file1 = document.getElementById('pdfAcademic').files[0];
-    const file2 = document.getElementById('pdfOthers').files[0];
+// --- Application Logic ---
+document.getElementById('submitBtn').onclick = async () => {
+    const name = document.getElementById('appSName').value;
+    const pass = document.getElementById('appSPass').value;
+    if(!name || !pass) return alert("Fill Name and Passport");
 
-    if (!name || !pass || !file1) return alert("Fill Name, Passport & Academic PDF!");
-
-    const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING FILES...";
-    btn.disabled = true;
-
-    const url1 = await uploadToCloud(file1);
-    const url2 = await uploadToCloud(file2);
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = "SUBMITTING..."; btn.disabled = true;
 
     try {
-        const docRef = await addDoc(collection(db, "applications"), {
+        await addDoc(collection(db, "applications"), {
             studentName: name, passportNo: pass, partnerEmail: userEmail,
             university: window.selectedApp.name, commission: window.selectedApp.comm,
-            status: 'pending', docs: { academic: url1, others: url2 },
-            createdAt: serverTimestamp()
+            status: 'pending', createdAt: serverTimestamp()
         });
-
-        // স্লিপ ডাটা
-        document.getElementById('slipName').innerText = name;
-        document.getElementById('slipPass').innerText = pass;
-        document.getElementById('slipUni').innerText = window.selectedApp.name;
-        document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
-        document.getElementById('slipID').innerText = docRef.id;
-
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 120, height: 120 });
-
-        alert("Application Submitted Successfully!");
-        window.print();
+        alert("Application Submitted!"); 
         location.reload();
-    } catch (e) { alert("Submission Failed!"); btn.disabled = false; }
+    } catch (e) { 
+        alert("Failed!"); 
+        btn.disabled = false; btn.innerText = "SUBMIT";
+    }
 };
-
-// ৫. লাইভ ট্র্যাকিং ও প্রিভিউ ফিক্স
-function initTracking() {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail));
-    onSnapshot(q, (snap) => {
-        const tbody = document.getElementById('trackingList');
-        tbody.innerHTML = "";
-        let pending = 0, final = 0;
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            const comm = Number(d.commission) || 0;
-            if(d.status === 'pending') pending += comm;
-            if(d.status === 'approved') final += comm;
-
-            const pdfUrl = d.docs?.academic || "#";
-            // No Preview Fix: গুগল ড্রাইভ ভিউয়ারের বদলে ডাইরেক্ট লিঙ্ক + ব্রাউজার ভিউয়ার ট্রাই
-            const viewLink = pdfUrl !== "#" ? `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true` : "#";
-
-            tbody.innerHTML += `
-            <tr>
-                <td><b>${d.studentName}</b></td>
-                <td>${d.passportNo}</td>
-                <td>${d.university}</td>
-                <td><span class="status-badge" style="background:rgba(255,204,0,0.1); color:var(--gold); border:1px solid var(--gold);">${d.status.toUpperCase()}</span></td>
-                <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...'}</td>
-                <td>
-                    <a href="${pdfUrl}" target="_blank" style="color:var(--success); text-decoration:none; font-size:12px; margin-right:10px;"><i class="fas fa-external-link-alt"></i> Direct</a>
-                    <a href="${viewLink}" target="_blank" style="color:var(--gold); text-decoration:none; font-size:12px;"><i class="fas fa-eye"></i> Google View</a>
-                </td>
-            </tr>`;
-        });
-        document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
-    });
-}
-
-initTracking();
