@@ -2,9 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ১. সঠিক Firebase Configuration (গ্যাপ রিমুভ করা হয়েছে)
+// Firebase Configuration (Verified from your Image 887)
 const firebaseConfig = {
-    apiKey: "AIzaSyDonKHMy-dghjn3nAwjtsvQFDyT-78DGqOk", // এখানে মাঝখানের গ্যাপটি মুছে দেওয়া হয়েছে
+    apiKey: "AIzaSyDonKHMy dghjn3nAwjtsvQFDyT-78DGqOk", // স্ক্রিনশটের মতো স্পেস সহ দেওয়া হয়েছে
     authDomain: "ihp-portal-v3.firebaseapp.com",
     projectId: "ihp-portal-v3",
     storageBucket: "ihp-portal-v3.firebasestorage.app",
@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ২. Cloudinary আপলোড ফাংশন (ihp_upload preset)
+// Cloudinary Upload Function (Unsigned 'ihp_upload' from Image 891)
 async function uploadToCloudinary(file) {
     if (!file) return "";
     const formData = new FormData();
@@ -30,43 +30,49 @@ async function uploadToCloudinary(file) {
             body: formData 
         });
         const data = await res.json();
-        return data.secure_url;
+        return data.secure_url || "";
     } catch (e) {
         console.error("Cloudinary Error:", e);
         return "";
     }
 }
 
-// ৩. রেজিস্ট্রেশন লজিক
+// registration process (Step 1.3, 1.4, 1.5 & 1.6)
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) return alert("সবগুলো ফিল্ড পূরণ করুন!");
+    if (!role || !email || !pass) {
+        alert("Please fill in Email, Password, and Role.");
+        return;
+    }
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing...";
+    regBtn.innerText = "Uploading Files...";
     regBtn.disabled = true;
 
     try {
         let tradeUrl = "", nidUrl = "";
         
+        // Partner specific file uploads
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade').files[0];
             const nidFile = document.getElementById('pNid').files[0];
-            tradeUrl = await uploadToCloudinary(tradeFile);
-            nidUrl = await uploadToCloudinary(nidFile);
+            if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
+            if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
+        // Firebase Auth User Creation
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
+        // User Data Object
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false,
+            isApproved: false, // Default: Pending Admin Approval
             createdAt: new Date().toISOString()
         };
 
@@ -78,7 +84,7 @@ async function handleRegister() {
             userData.countries = document.getElementById('pService').value;
             userData.tradeLicense = tradeUrl;
             userData.nidPdf = nidUrl;
-        } else {
+        } else if (role === 'Compliance') {
             userData.employeeName = document.getElementById('cName').value;
             userData.contact = document.getElementById('cContact').value;
             userData.organisation = document.getElementById('cOrg').value;
@@ -86,21 +92,25 @@ async function handleRegister() {
             userData.countries = document.getElementById('cService').value;
         }
 
+        // Save to Firestore
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("Registration Request Submitted! Please wait for Admin Approval.");
+        alert("Registration Submitted! Wait for Admin Approval.");
         location.reload();
 
     } catch (error) {
-        alert("Registration Failed: " + error.message);
+        console.error("Firebase Error:", error.code);
+        alert("Error: " + error.message);
         regBtn.innerText = "Submit Request";
         regBtn.disabled = false;
     }
 }
 
-// ৪. লগইন লজিক
+// Login Process (Admin approval guard)
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
+
+    if (!email || !pass) return alert("Enter email and password.");
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -111,11 +121,12 @@ async function handleLogin() {
             const data = userDoc.data();
 
             if (!data.isApproved) {
-                alert("আপনার অ্যাকাউন্ট এখনো অনুমোদিত নয়। অ্যাডমিনের সাথে যোগাযোগ করুন।");
+                alert("Account Pending! Your registration is not yet approved.");
                 await signOut(auth);
                 return;
             }
 
+            // Success: Store and Redirect
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', data.role);
             window.location.href = data.role === 'Partner' ? "partner.html" : "compliance.html";
@@ -125,6 +136,6 @@ async function handleLogin() {
     }
 }
 
-// ইভেন্ট লিসেনার
+// Connect Buttons
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
