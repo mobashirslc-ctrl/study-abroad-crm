@@ -41,7 +41,7 @@
                     <h3 style="margin-bottom:15px; color:var(--gold);">Live Tracking (Recent Files)</h3>
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>Student</th><th>University</th><th>Status</th><th>Last Update</th></tr></thead>
+                            <thead><tr><th>Student/Uni</th><th>Status</th><th>Documents</th><th>Date</th></tr></thead>
                             <tbody id="homeTrackingBody"></tbody>
                         </table>
                     </div>
@@ -85,11 +85,11 @@
 
             <div id="tracking" class="section">
                 <div class="card">
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Full Application Tracking</h3>
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>Student Name</th><th>Passport</th><th>University</th><th>Status</th><th>Documents</th></tr></thead>
-                            <tbody id="fullTrackingBody"></tbody>
-                        </table>
+                            <thead><tr><th>Student/Uni</th><th>Status</th><th>Documents</th><th>Date</th></tr></thead>
+                            <tbody id="sidebarTrackingBody"></tbody> </table>
                     </div>
                 </div>
             </div>
@@ -146,8 +146,7 @@
     </div>
 
     <div id="printArea" style="display:none;">
-        <div id="slipContent">
-            </div>
+        <div id="slipContent"></div>
     </div>
 
     <script type="module" src="partner-logic.js"></script>
