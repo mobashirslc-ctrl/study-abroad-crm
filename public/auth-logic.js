@@ -2,9 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ১. Firebase Configuration (From Image 887)
+// ১. সঠিক Firebase Configuration (গ্যাপ রিমুভ করা হয়েছে)
 const firebaseConfig = {
-    apiKey: "AIzaSyDonKHMy dghjn3nAwjtsvQFDyT-78DGqOk",
+    apiKey: "AIzaSyDonKHMy-dghjn3nAwjtsvQFDyT-78DGqOk", // এখানে মাঝখানের গ্যাপটি মুছে দেওয়া হয়েছে
     authDomain: "ihp-portal-v3.firebaseapp.com",
     projectId: "ihp-portal-v3",
     storageBucket: "ihp-portal-v3.firebasestorage.app",
@@ -17,12 +17,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ২. Cloudinary Upload Function (Using 'ihp_upload' preset from Image 891)
+// ২. Cloudinary আপলোড ফাংশন (ihp_upload preset)
 async function uploadToCloudinary(file) {
     if (!file) return "";
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'ihp_upload'); // আপনার স্ক্রিনশট অনুযায়ী Unsigned প্রিসেট
+    formData.append('upload_preset', 'ihp_upload'); 
 
     try {
         const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { 
@@ -37,22 +37,21 @@ async function uploadToCloudinary(file) {
     }
 }
 
-// ৩. Registration Function (Unified Step 1)
+// ৩. রেজিস্ট্রেশন লজিক
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) return alert("Please fill all required fields!");
+    if (!role || !email || !pass) return alert("সবগুলো ফিল্ড পূরণ করুন!");
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing Files...";
+    regBtn.innerText = "Processing...";
     regBtn.disabled = true;
 
     try {
         let tradeUrl = "", nidUrl = "";
         
-        // রোল অনুযায়ী ফাইল হ্যান্ডলিং (Step 1.4)
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade').files[0];
             const nidFile = document.getElementById('pNid').files[0];
@@ -60,16 +59,14 @@ async function handleRegister() {
             nidUrl = await uploadToCloudinary(nidFile);
         }
 
-        // Auth ইউজার তৈরি
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // Firestore ডাটা অবজেক্ট (Step 1.4 & 1.5)
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false, // Step 1.6: Admin approval logic
+            isApproved: false,
             createdAt: new Date().toISOString()
         };
 
@@ -81,7 +78,7 @@ async function handleRegister() {
             userData.countries = document.getElementById('pService').value;
             userData.tradeLicense = tradeUrl;
             userData.nidPdf = nidUrl;
-        } else if (role === 'Compliance') {
+        } else {
             userData.employeeName = document.getElementById('cName').value;
             userData.contact = document.getElementById('cContact').value;
             userData.organisation = document.getElementById('cOrg').value;
@@ -90,7 +87,7 @@ async function handleRegister() {
         }
 
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("Registration Request Submitted! Wait for Admin Approval.");
+        alert("Registration Request Submitted! Please wait for Admin Approval.");
         location.reload();
 
     } catch (error) {
@@ -100,7 +97,7 @@ async function handleRegister() {
     }
 }
 
-// ৪. Login Function (Step 1.6)
+// ৪. লগইন লজিক
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
@@ -114,7 +111,7 @@ async function handleLogin() {
             const data = userDoc.data();
 
             if (!data.isApproved) {
-                alert("Account Pending! Admin has not approved you yet.");
+                alert("আপনার অ্যাকাউন্ট এখনো অনুমোদিত নয়। অ্যাডমিনের সাথে যোগাযোগ করুন।");
                 await signOut(auth);
                 return;
             }
@@ -128,6 +125,6 @@ async function handleLogin() {
     }
 }
 
-// Event Listeners
+// ইভেন্ট লিসেনার
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
