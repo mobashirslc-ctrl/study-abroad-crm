@@ -14,7 +14,9 @@
     </div>
 
     <div class="sidebar">
-        <div class="logo-box"><img src="logo.jpeg" alt="SCC"></div>
+        <div class="logo-box">
+            <img src="logo.jpeg" alt="SCC" class="small-logo">
+        </div>
         <div onclick="showTab('incoming', this)" class="nav-item active"><i class="fas fa-file-import"></i> Incoming Files</div>
         <div onclick="showTab('history', this)" class="nav-item"><i class="fas fa-user-clock"></i> Staff History</div>
         <div onclick="showTab('profile', this)" class="nav-item"><i class="fas fa-id-badge"></i> Staff Profile</div>
@@ -40,7 +42,6 @@
                             <tr>
                                 <th>Student & Partner</th>
                                 <th>Passport No</th>
-                                <th>Docs</th>
                                 <th>Status</th>
                                 <th>Handled By</th>
                                 <th>Action</th>
@@ -74,8 +75,8 @@
     </div>
 
     <div id="reviewSlider" class="slider">
-        <button class="close-btn" onclick="closeSlider()">&times;</button>
-        <h2 id="targetStudent" style="color:var(--accent);">Student Name</h2>
+        <button class="close-btn" onclick="closeSlider()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+        <h2 id="targetStudent" style="color:var(--accent); margin-top:20px;">Student Name</h2>
         <p id="targetComm" style="font-weight:bold;"></p>
         <hr style="border:0; border-top:1px solid var(--border); margin:20px 0;">
         
