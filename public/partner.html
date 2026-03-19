@@ -5,46 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCC | Partner Dashboard 2026</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        :root { 
-            --primary: #1a0b4d; --accent: #f1c40f; --glass: rgba(255, 255, 255, 0.08); 
-            --border: rgba(255, 255, 255, 0.15); --success: #2ecc71; --danger: #ff4757; --gold: #f1c40f; 
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
-        body { background: radial-gradient(circle at top right, #2b0054, #070014); color: white; height: 100vh; display: flex; overflow: hidden; }
-
-        /* Sidebar & Layout */
-        .sidebar { width: 260px; background: rgba(0,0,0,0.9); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-        .logo { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
-        .logo img { width: 140px; background: white; padding: 5px; border-radius: 5px; }
-        .nav-item { padding: 15px 25px; cursor: pointer; color: #bbb; display: flex; align-items: center; gap: 12px; font-size: 14px; transition: 0.3s; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
-
-        .wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
-        .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
-        .main { padding: 30px; flex: 1; }
-
-        /* Cards & Forms */
-        .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(15px); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
-        .reg-input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; outline: none; font-size: 13px; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        
-        /* Tables */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 11px; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: #ddd; }
-
-        /* Sections */
-        .section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Modal */
-        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); justify-content:center; align-items:center; }
-        .modal-content { background: rgba(26, 11, 77, 0.9); border: 1px solid var(--gold); padding: 35px; border-radius: 25px; width: 70%; max-width: 800px; }
-    </style>
 </head>
 <body>
 
@@ -58,7 +20,7 @@
     <div class="wrapper">
         <div class="top-bar">
             <div>Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
-            <button onclick="localStorage.clear(); location.href='index.html'" class="btn-gold" style="background:var(--danger); color:white; padding:5px 15px;">Logout</button>
+            <button onclick="logout()" class="btn-gold" style="background:var(--danger); color:white; padding:5px 15px;">Logout</button>
         </div>
 
         <div class="main">
@@ -102,6 +64,10 @@
                     <table><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="trackingList"></tbody></table>
                 </div>
             </div>
+            
+            <div id="earning" class="section">
+                <div class="card"><h3>Earning Dashboard</h3><p>Coming Soon...</p></div>
+            </div>
         </div>
     </div>
 
@@ -114,100 +80,11 @@
             </div>
             <div style="margin-top:25px; display:flex; gap:15px;">
                 <button id="submitBtn" class="btn-gold" style="flex:1;">SUBMIT</button>
-                <button onclick="document.getElementById('applyModal').style.display='none'" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
+                <button onclick="closeModal()" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const userEmail = localStorage.getItem('userEmail');
-
-        window.showTab = (id, el) => {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active-section');
-            if(el) el.classList.add('active');
-        };
-
-        let allUnis = [];
-        // ডাটা লোড করা হচ্ছে
-        onSnapshot(collection(db, "universities"), (snap) => {
-            allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            console.log("Universities loaded:", allUnis.length);
-        });
-
-        // ফিক্সড সার্চ লজিক
-        document.getElementById('searchBtn').onclick = () => {
-            const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
-            const gpaInput = parseFloat(document.getElementById('fGPA').value) || 0;
-            const langInput = parseFloat(document.getElementById('fLangScore').value) || 0;
-            const degreeInput = document.getElementById('fDegree').value;
-
-            // ফিল্টারিং শুরু
-            const filtered = allUnis.filter(u => {
-                // অ্যাডমিনের ফিল্ডগুলো (uCountry, uDegree, minCGPA, minIELTS) চেক
-                const dbCountry = (u.uCountry || u.country || "").toLowerCase();
-                const dbDegree = (u.uDegree || u.degree || "");
-                const minGPA = parseFloat(u.minCGPA || u.minGPA || 0);
-                const minLang = parseFloat(u.minIELTS || u.minLangScore || 0);
-
-                const cMatch = countryInput === "" || dbCountry.includes(countryInput);
-                const dMatch = degreeInput === "" || dbDegree === degreeInput || (degreeInput === "Bachelor" && dbDegree === "Ug");
-                const gMatch = gpaInput >= minGPA;
-                const lMatch = langInput >= minLang;
-
-                return cMatch && dMatch && gMatch && lMatch;
-            });
-
-            const container = document.getElementById('uniListContainer');
-            document.getElementById('searchResultArea').style.display = 'block';
-            
-            if (filtered.length > 0) {
-                container.innerHTML = filtered.map(u => `
-                    <tr>
-                        <td><b>${u.uName || u.name}</b><br><small>${u.uCountry || u.country}</small></td>
-                        <td>GPA: ${u.minCGPA || 0} | IELTS: ${u.minIELTS || 0}</td>
-                        <td>${u.uSemFee || 0} ${u.uCurrency || 'USD'}</td>
-                        <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openApply('${u.uName || u.name}', '${u.partnerComm}')">Apply</button></td>
-                    </tr>`).join('');
-            } else {
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">No University found. Try decreasing GPA/Score or check spelling.</td></tr>`;
-            }
-        };
-
-        window.openApply = (n, c) => {
-            window.selectedApp = { name: n, comm: c };
-            document.getElementById('modalUniName').innerText = n;
-            document.getElementById('applyModal').style.display = 'flex';
-        };
-
-        document.getElementById('submitBtn').onclick = async () => {
-            const name = document.getElementById('appSName').value;
-            const pass = document.getElementById('appSPass').value;
-            if(!name || !pass) return alert("Fill Name and Passport");
-
-            await addDoc(collection(db, "applications"), {
-                studentName: name, passportNo: pass, partnerEmail: userEmail,
-                university: window.selectedApp.name, commission: window.selectedApp.comm,
-                status: 'pending', createdAt: serverTimestamp()
-            });
-            alert("Application Submitted!"); location.reload();
-        };
-    </script>
+    <script type="module" src="partner-logic.js"></script>
 </body>
 </html>
