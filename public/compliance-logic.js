@@ -117,26 +117,43 @@ window.openReview = async (id, name, comm) => {
 
 window.closeSlider = () => document.getElementById('reviewSlider').classList.remove('active');
 
+// --- WALLET SYNC UPDATED LOGIC ---
 document.getElementById('updateStatusBtn').onclick = async () => {
     const newStatus = document.getElementById('statusSelect').value;
     const btn = document.getElementById('updateStatusBtn');
-    btn.disabled = true; btn.innerText = "Syncing Wallet...";
+    
+    if (!currentFileId) return;
+
+    btn.disabled = true; 
+    btn.innerText = "Syncing Wallet...";
 
     let updateData = {
         status: newStatus.toUpperCase(),
+        complianceMember: loggedInStaff,
         updatedAt: serverTimestamp()
     };
 
-    if (newStatus === "verified") updateData.commissionStatus = "pending";
-    else if (newStatus === "visa_rejected") updateData.commissionStatus = "removed";
-    else if (newStatus === "student_paid") updateData.commissionStatus = "ready";
+    // স্ট্যাটাস অনুযায়ী কমিশন স্ট্যাটাস সেট করা যাতে পার্টনার ওয়ালেট মুভ করে
+    if (newStatus === "verified") {
+        updateData.commissionStatus = "pending"; // Pending বক্সে যাবে
+    } 
+    else if (newStatus === "visa_rejected") {
+        updateData.commissionStatus = "removed"; // ওয়ালেট থেকে রিমুভ হবে
+    } 
+    else if (newStatus === "student_paid") {
+        updateData.commissionStatus = "ready";   // পেন্ডিং থেকে ফাইনালে মুভ করবে
+    }
 
     try {
         await updateDoc(doc(db, "applications", currentFileId), updateData);
-        alert("Status Updated Successfully!");
+        alert("Status Updated & Wallet Synced!");
         closeSlider();
-    } catch (e) { alert("Update failed!"); }
-    btn.disabled = false; btn.innerText = "APPLY STATUS & SYNC WALLET";
+    } catch (e) { 
+        alert("Update failed: " + e.message); 
+    } finally {
+        btn.disabled = false; 
+        btn.innerText = "APPLY STATUS & SYNC WALLET";
+    }
 };
 
 document.getElementById('logoutBtn').onclick = () => signOut(auth).then(()=> window.location.replace("index.html"));
