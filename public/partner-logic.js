@@ -26,29 +26,30 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
-// --- Cloudinary Helper (Fixed with Auto-endpoint and Error Logs) ---
+// --- Cloudinary Helper (Fixed: Using /auto/ to support PDF & Images) ---
 const uploadToCloudinary = async (file) => {
-    if (!file) return null;
+    if (!file) return ""; 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "lhp_upload");
+    
     try {
-        // Use /auto/upload to handle both images and PDFs correctly
+        // 'auto' endpoint ensures Cloudinary detects PDF vs Image correctly
         const res = await fetch("https://api.cloudinary.com/v1_1/ddziernkh/auto/upload", {
-            method: "POST", body: formData
+            method: "POST", 
+            body: formData
         });
         
-        if (!res.ok) {
-            const err = await res.json();
-            console.error("Cloudinary Error Log:", err);
-            return null;
-        }
-
         const data = await res.json();
-        return data.secure_url;
+        if (data.secure_url) {
+            return data.secure_url;
+        } else {
+            console.error("Cloudinary Detailed Error:", data);
+            return "";
+        }
     } catch (e) { 
         console.error("Cloudinary Connection Error:", e);
-        return null; 
+        return ""; 
     }
 };
 
@@ -97,7 +98,7 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application Submission (Improved Error Handling) ---
+// --- Application Submission (Sequential Upload to prevent failures) ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
@@ -108,21 +109,19 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const fPass = document.getElementById('filePass').files[0];
     const fOther = document.getElementById('fileOther').files[0];
 
-    if(!sName || !sPass) return alert("Required fields missing!");
+    if(!sName || !sPass) return alert("Student Name & Passport Required!");
     
     const btn = document.getElementById('submitAppBtn');
     btn.innerText = "UPLOADING TO CLOUD..."; btn.disabled = true;
 
     try {
-        // Parallel Upload with improved helper
-        const [u1, u2, u3, u4] = await Promise.all([
-            uploadToCloudinary(fAcad), 
-            uploadToCloudinary(fLang),
-            uploadToCloudinary(fPass), 
-            uploadToCloudinary(fOther)
-        ]);
+        // Uploading files one by one to avoid timeout/network failure
+        const u1 = await uploadToCloudinary(fAcad);
+        const u2 = await uploadToCloudinary(fLang);
+        const u3 = await uploadToCloudinary(fPass);
+        const u4 = await uploadToCloudinary(fOther);
 
-        // Firestore application creation
+        // Save to Firestore with Cloudinary links (if upload fails, link will be "")
         await addDoc(collection(db, "applications"), {
             studentName: sName,
             studentPhone: sPhone,
@@ -132,10 +131,10 @@ document.getElementById('submitAppBtn').onclick = async () => {
             partnerEmail: userEmail,
             status: 'pending',
             docs: { 
-                academic: u1 || "", 
-                language: u2 || "", 
-                passport: u3 || "", 
-                others: u4 || "" 
+                academic: u1, 
+                language: u2, 
+                passport: u3, 
+                others: u4 
             },
             createdAt: serverTimestamp()
         });
@@ -143,7 +142,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
         generateSlip(sName, sPass, window.selectedUni.name);
     } catch (e) { 
         console.error("Firestore Error:", e);
-        alert("Submission Failed! Check console for errors."); 
+        alert("Submission Failed! Error: " + e.message); 
         btn.disabled = false;
         btn.innerText = "CONFIRM ENROLLMENT";
     }
@@ -156,12 +155,13 @@ function generateSlip(sName, sPass, uni) {
     slip.innerHTML = `
         <div style="text-align:center;">
             <img src="logo.jpeg" style="width:120px;">
-            <h2>Confirmation Slip</h2>
+            <h2 style="color:#1a0b4d;">CONFIRMATION SLIP</h2>
+            <hr>
             <h3>${sName}</h3>
-            <p>Passport: ${sPass}</p>
-            <p>University: ${uni}</p>
-            <p>Agency: ${partnerInfo.agency}</p>
-            <p>Date: ${new Date().toLocaleDateString()}</p>
+            <p><b>Passport:</b> ${sPass}</p>
+            <p><b>University:</b> ${uni}</p>
+            <p><b>Agency:</b> ${partnerInfo.agency || 'SCC Partner'}</p>
+            <p><b>Date:</b> ${new Date().toLocaleDateString()}</p>
         </div>
     `;
     
@@ -183,7 +183,7 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
         trackHtml += `<tr>
             <td>${d.studentName}</td>
             <td>${d.university}</td>
-            <td>${s.toUpperCase()}</td>
+            <td><span style="color:var(--gold)">${s.toUpperCase()}</span></td>
             <td>${d.createdAt?.toDate().toLocaleDateString() || '...'}</td>
         </tr>`;
     });
@@ -216,7 +216,8 @@ document.getElementById('saveProfileBtn').onclick = async () => {
             agencyName: agency, 
             contact: document.getElementById('pContact').value,
             address: document.getElementById('pAddress').value, 
-            email: userEmail
+            email: userEmail,
+            lastUpdated: serverTimestamp()
         }, { merge: true });
         
         localStorage.setItem('partnerProfile', JSON.stringify({agency}));
