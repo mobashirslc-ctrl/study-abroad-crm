@@ -2,9 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ১. আপনার ফায়ারবেস কনফিগ (ছবি ৮৮৭ থেকে ভেরিফাইড এবং ফিক্সড)
+// ১. আপনার দেওয়া সর্বশেষ সঠিক Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDonKHMy-dghjn3nAwjtsvQFDyT-78DGqOk", // স্পেস রিমুভ করা হয়েছে, এখন এটি ১০০% ভ্যালিড
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", // Verified API Key
     authDomain: "ihp-portal-v3.firebaseapp.com",
     projectId: "ihp-portal-v3",
     storageBucket: "ihp-portal-v3.firebasestorage.app",
@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ২. Cloudinary আপলোড ফাংশন (ihp_upload preset - ছবি ৮৯১ থেকে)
+// ২. Cloudinary আপলোড ফাংশন (ihp_upload preset)
 async function uploadToCloudinary(file) {
     if (!file) return "";
     const formData = new FormData();
@@ -37,36 +37,42 @@ async function uploadToCloudinary(file) {
     }
 }
 
-// ৩. রেজিস্ট্রেশন ফাংশন (Step 1.3 - 1.6)
+// ৩. রেজিস্ট্রেশন প্রসেস (PRD অনুযায়ী)
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) return alert("Email, Password, and Role are mandatory!");
+    if (!role || !email || !pass) {
+        alert("Please fill in Email, Password, and select a Role.");
+        return;
+    }
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing...";
+    regBtn.innerText = "Processing Assets...";
     regBtn.disabled = true;
 
     try {
         let tradeUrl = "", nidUrl = "";
         
+        // পার্টনার হলে ফাইল আপলোড হবে
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade').files[0];
             const nidFile = document.getElementById('pNid').files[0];
-            if(tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
-            if(nidFile) nidUrl = await uploadToCloudinary(nidFile);
+            if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
+            if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
+        // Firebase-এ ইউজার তৈরি
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
+        // Firestore ডাটা অবজেক্ট
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false,
+            isApproved: false, // ডিফল্টভাবে পেন্ডিং থাকবে
             createdAt: new Date().toISOString()
         };
 
@@ -86,21 +92,24 @@ async function handleRegister() {
             userData.countries = document.getElementById('cService').value;
         }
 
+        // Firestore-এ সেভ করা
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("Success! Now wait for Admin Approval.");
+        alert("Registration Successful! Now waiting for Admin Approval.");
         location.reload();
 
     } catch (error) {
-        alert("Firebase Error: " + error.message);
+        alert("Registration Error: " + error.message);
         regBtn.innerText = "Submit Request";
         regBtn.disabled = false;
     }
 }
 
-// ৪. লগইন ফাংশন
+// ৪. লগইন প্রসেস (অ্যাপ্রুভাল চেক সহ)
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
+
+    if (!email || !pass) return alert("Please enter email and password.");
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -110,21 +119,23 @@ async function handleLogin() {
         if (userDoc.exists()) {
             const data = userDoc.data();
 
+            // অ্যাপ্রুভাল চেক লজিক
             if (!data.isApproved) {
-                alert("Account Pending! Contact Admin for approval.");
+                alert("Your account is pending! Admin has not approved you yet.");
                 await signOut(auth);
                 return;
             }
 
+            // সেশন ডাটা রাখা এবং রিডিরেক্ট
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', data.role);
             window.location.href = data.role === 'Partner' ? "partner.html" : "compliance.html";
         }
     } catch (error) {
-        alert("Login Error: " + error.message);
+        alert("Login Failed: " + error.message);
     }
 }
 
-// ইভেন্ট কানেক্ট
+// ইভেন্ট লিসেনার কানেক্ট করা
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
