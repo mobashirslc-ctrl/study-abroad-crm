@@ -19,7 +19,6 @@ let currentFileId = null;
 let currentCommission = 0;
 let loggedInStaff = "";
 
-// Auth & Role Protection
 onAuthStateChanged(auth, async (user) => {
     if (!user) window.location.replace("index.html");
     const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -35,7 +34,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 function initApp() {
-    // Load Incoming Files
     onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById('incomingTableBody');
         let html = "";
@@ -44,16 +42,34 @@ function initApp() {
         snap.forEach(dSnap => {
             const d = dSnap.data();
             const id = dSnap.id;
-            if (d.complianceMember === loggedInStaff) countServed++;
+            const handler = d.complianceMember || null;
+
+            if (handler === loggedInStaff) countServed++;
             if (d.status === 'VISA_SUCCESS') countSuccess++;
 
-            html += `<tr>
+            // Claim & Lock Logic
+            let actionBtn = "";
+            let rowStyle = "";
+
+            if (!handler) {
+                // Unclaimed
+                actionBtn = `<button onclick="claimFile('${id}')" class="btn-claim" style="background:#2ecc71; color:white;">CLAIM</button>`;
+            } else if (handler === loggedInStaff) {
+                // Claimed by Current Staff
+                actionBtn = `<button onclick="openReview('${id}', '${d.studentName}', ${d.commission || 0})" class="btn-claim">REVIEW</button>`;
+                rowStyle = "background: rgba(241, 196, 15, 0.05);";
+            } else {
+                // Locked by others
+                actionBtn = `<span style="color:#666; font-size:12px;"><i class="fas fa-lock"></i> Locked</span>`;
+                rowStyle = "opacity: 0.5; pointer-events: none;";
+            }
+
+            html += `<tr style="${rowStyle}">
                 <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
                 <td>${d.passportNo || 'N/A'}</td>
-                <td><button onclick="viewDocs('${id}')" class="btn-claim" style="padding:5px 10px;">Docs</button></td>
-                <td><span style="color:var(--accent)">${(d.status || 'PENDING').toUpperCase()}</span></td>
-                <td>${d.complianceMember || 'Waiting...'}</td>
-                <td><button onclick="openReview('${id}', '${d.studentName}', ${d.commission || 0})" class="btn-claim">Review</button></td>
+                <td><span style="color:var(--accent); font-size:12px;">${(d.status || 'PENDING').toUpperCase()}</span></td>
+                <td><i class="fas fa-user-circle"></i> ${handler || 'Queue'}</td>
+                <td>${actionBtn}</td>
             </tr>`;
         });
         tbody.innerHTML = html;
@@ -62,18 +78,27 @@ function initApp() {
     });
 }
 
+window.claimFile = async (id) => {
+    if(!confirm("Claim this file for processing?")) return;
+    try {
+        await updateDoc(doc(db, "applications", id), {
+            complianceMember: loggedInStaff,
+            claimedAt: serverTimestamp()
+        });
+    } catch (e) { alert("Error claiming file!"); }
+};
+
 window.openReview = async (id, name, comm) => {
     currentFileId = id;
     currentCommission = Number(comm) || 0;
     document.getElementById('targetStudent').innerText = name;
     document.getElementById('targetComm').innerText = `Commission: ৳ ${currentCommission.toLocaleString()}`;
     
-    // Show Doc Links
     const docSnap = await getDoc(doc(db, "applications", id));
     const docs = docSnap.data().docs || {};
     let dHtml = "";
-    if(docs.academic) dHtml += `<a href="${docs.academic}" target="_blank" style="color:white;">📄 Academic PDF</a><br>`;
-    if(docs.passport) dHtml += `<a href="${docs.passport}" target="_blank" style="color:white;">🆔 Passport PDF</a>`;
+    if(docs.academic) dHtml += `<a href="${docs.academic}" target="_blank" style="color:var(--accent); text-decoration:none; display:block; margin:10px 0;">📄 View Academic PDF</a>`;
+    if(docs.passport) dHtml += `<a href="${docs.passport}" target="_blank" style="color:var(--accent); text-decoration:none; display:block; margin:10px 0;">🆔 View Passport PDF</a>`;
     document.getElementById('docLinksArea').innerHTML = dHtml || "No Documents Uploaded";
 
     document.getElementById('reviewSlider').classList.add('active');
@@ -84,28 +109,22 @@ window.closeSlider = () => document.getElementById('reviewSlider').classList.rem
 document.getElementById('updateStatusBtn').onclick = async () => {
     const newStatus = document.getElementById('statusSelect').value;
     const btn = document.getElementById('updateStatusBtn');
-    btn.disabled = true; btn.innerText = "Syncing...";
+    btn.disabled = true; btn.innerText = "Updating...";
 
     let updateData = {
         status: newStatus.toUpperCase(),
-        complianceMember: loggedInStaff,
         updatedAt: serverTimestamp()
     };
 
-    // --- CRITICAL WALLET SYNC LOGIC ---
-    if (newStatus === "verified") {
-        updateData.commissionStatus = "pending"; // Partner er pending wallet e add hobe
-    } else if (newStatus === "visa_rejected") {
-        updateData.commissionStatus = "removed"; // Pending theke minus hobe
-    } else if (newStatus === "student_paid") {
-        updateData.commissionStatus = "ready"; // Final balance e jabe, withdraw active hobe
-    }
+    if (newStatus === "verified") updateData.commissionStatus = "pending";
+    else if (newStatus === "visa_rejected") updateData.commissionStatus = "removed";
+    else if (newStatus === "student_paid") updateData.commissionStatus = "ready";
 
     try {
         await updateDoc(doc(db, "applications", currentFileId), updateData);
-        alert("Wallet & Status Updated!");
+        alert("Status & Wallet Synced!");
         closeSlider();
-    } catch (e) { alert("Error!"); }
+    } catch (e) { alert("Update failed!"); }
     btn.disabled = false; btn.innerText = "APPLY STATUS & SYNC WALLET";
 };
 
