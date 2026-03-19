@@ -11,57 +11,46 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: radial-gradient(circle at top right, #2b0054, #070014); color: white; height: 100vh; display: flex; overflow: hidden; }
 
-        /* Sidebar */
         .sidebar { width: 260px; background: rgba(0,0,0,0.9); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .logo { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo img { width: 140px; background: white; padding: 5px; border-radius: 5px; }
         .nav-item { padding: 15px 25px; cursor: pointer; color: #bbb; display: flex; align-items: center; gap: 12px; font-size: 14px; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
 
-        /* Main Content */
         .wrapper { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
         .main { padding: 30px; flex: 1; }
         
-        /* Wallet Stats */
         .wallet-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .wallet-box { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; }
-        .wallet-icon { font-size: 24px; color: var(--gold); }
-
-        /* UI Elements */
+        
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(15px); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
         .reg-input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; outline: none; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Table */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 12px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; text-transform: uppercase; font-weight: bold; }
 
-        /* Modal & Print */
         .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); justify-content:center; align-items:center; }
-        .modal-content { background: #1a0b4d; border: 1px solid var(--gold); padding: 30px; border-radius: 20px; width: 60%; max-width: 800px; }
+        .modal-content { background: #1a0b4d; border: 1px solid var(--gold); padding: 30px; border-radius: 20px; width: 60%; }
         
         #printArea { display:none; }
         @media print { body * { display:none; } #printArea { display:block !important; color:black; background:white; padding:50px; } }
 
         .section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.4s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .active-section { display: block; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
-        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home/Refresh</div>
+        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
         <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Smart Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-tasks"></i> Tracking</div>
-        <div class="nav-item" onclick="showTab('earning', this)"><i class="fas fa-wallet"></i> Withdraw & Earning</div>
-        <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user"></i> Profile</div>
+        <div class="nav-item" onclick="showTab('earning', this)"><i class="fas fa-wallet"></i> Earning</div>
     </div>
 
     <div class="wrapper">
@@ -73,110 +62,63 @@
         <div class="main">
             <div id="home" class="section active-section">
                 <div class="wallet-container">
-                    <div class="wallet-box">
-                        <div class="wallet-icon"><i class="fas fa-hourglass-half"></i></div>
-                        <div><p style="font-size:10px; opacity:0.6;">PENDING EARNING</p><h2 id="topPending">৳0</h2></div>
-                    </div>
-                    <div class="wallet-box" style="border-color: var(--success);">
-                        <div class="wallet-icon" style="color:var(--success);"><i class="fas fa-check-circle"></i></div>
-                        <div><p style="font-size:10px; opacity:0.6;">FINAL WALLET</p><h2 id="topFinal">৳0</h2></div>
-                    </div>
+                    <div class="wallet-box"><div><p style="font-size:10px; opacity:0.6;">PENDING</p><h2 id="topPending">৳0</h2></div></div>
+                    <div class="wallet-box" style="border-color: var(--success);"><div><p style="font-size:10px; opacity:0.6;">FINAL</p><h2 id="topFinal">৳0</h2></div></div>
                 </div>
-                <div class="card">
-                    <h3>Recent File Status</h3>
-                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
-                </div>
+                <div class="card"><h3>Recent Status</h3><table><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
             </div>
 
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:20px;">Smart Student Matcher</h3>
+                    <h3 style="color:var(--gold); margin-bottom:20px;">Search Filter</h3>
                     <div class="form-grid">
-                        <input type="text" id="fCountry" placeholder="Target Country" class="reg-input">
-                        <select id="fDegree" class="reg-input"><option value="">Degree</option><option>Ug</option><option>Pg</option><option>Foundation</option><option>Diploma</option></select>
-                        <select id="fLangType" class="reg-input"><option value="">Language</option><option>IELTS</option><option>PTE</option><option>MOI</option><option>DUOLINGO</option></select>
-                        <input type="number" id="fGPA" placeholder="Academic GPA" class="reg-input">
-                        <input type="number" id="fLangScore" placeholder="Language Score" class="reg-input">
-                        <button id="searchBtn" class="btn-gold">SEARCH MATCHES</button>
+                        <input type="text" id="fCountry" placeholder="Country" class="reg-input">
+                        <select id="fDegree" class="reg-input">
+                            <option value="">Degree</option>
+                            <option value="Bachelor">Bachelor (Ug)</option>
+                            <option value="Master">Master (Pg)</option>
+                            <option value="Foundation">Foundation</option>
+                        </select>
+                        <input type="number" step="0.01" id="fGPA" placeholder="Student GPA" class="reg-input">
+                        <input type="number" step="0.1" id="fLangScore" placeholder="IELTS/Lang Score" class="reg-input">
+                        <button id="searchBtn" class="btn-gold">SEARCH</button>
                     </div>
                 </div>
-                <div id="searchResultArea" style="display:none;">
-                    <div class="card">
-                        <table>
-                            <thead><tr><th>University</th><th>Requirements</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead>
-                            <tbody id="uniListContainer"></tbody>
-                        </table>
-                    </div>
+                <div id="searchResultArea" style="display:none;" class="card">
+                    <table>
+                        <thead><tr><th>University</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead>
+                        <tbody id="uniListContainer"></tbody>
+                    </table>
                 </div>
             </div>
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3>Full Application List</h3>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th><th>Documents</th></tr></thead>
-                            <tbody id="trackingList"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="earning" class="section">
-                <div class="card">
-                    <h2>Available for Withdraw: <span id="withdrawBal" style="color:var(--success);">৳0</span></h2>
-                    <div style="max-width:400px; margin-top:20px;">
-                        <select class="reg-input" style="margin-bottom:10px;"><option>Bkash</option><option>Nagad</option><option>Bank</option></select>
-                        <input type="text" placeholder="Account Details" class="reg-input" style="margin-bottom:10px;">
-                        <button id="withdrawBtn" class="btn-gold" style="width:100%;" disabled>SUBMIT REQUEST</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="profile" class="section">
-                <div class="card">
-                    <h3>Partner Profile Settings</h3>
-                    <div class="form-grid" style="margin-top:20px;">
-                        <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input">
-                        <input type="text" id="pPerson" placeholder="Proprietor Name" class="reg-input">
-                        <input type="text" id="pContact" placeholder="Contact Number" class="reg-input">
-                        <button onclick="saveProfile()" class="btn-gold">UPDATE PROFILE</button>
-                    </div>
+                    <table><thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th></tr></thead><tbody id="trackingList"></tbody></table>
                 </div>
             </div>
         </div>
-        <div style="text-align:center; padding:15px; font-size:10px; opacity:0.5; border-top:1px solid var(--border);">2026 @ All Rights Reserved | GORUN LTD</div>
     </div>
 
     <div id="applyModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalUniName" style="color:var(--gold);">University</h2>
+            <h2 id="modalUniName" style="color:var(--gold);"></h2>
             <div class="form-grid" style="margin-top:20px;">
-                <input type="text" id="sName" placeholder="Student Full Name" class="reg-input">
-                <input type="text" id="sPass" placeholder="Passport Number" class="reg-input">
-                <div><label style="font-size:10px;">Academic PDF</label><input type="file" id="pdfAcademic"></div>
-                <div><label style="font-size:10px;">Others (Optional)</label><input type="file" id="pdfOthers"></div>
+                <input type="text" id="sName" placeholder="Student Name" class="reg-input">
+                <input type="text" id="sPass" placeholder="Passport No" class="reg-input">
+                <input type="file" id="pdfAcademic">
             </div>
-            <div style="margin-top:25px; display:flex; gap:10px;">
-                <button id="submitAppBtn" class="btn-gold" style="flex:1;">CONFIRM SUBMISSION</button>
-                <button onclick="document.getElementById('applyModal').style.display='none'" style="background:none; border:none; color:white; cursor:pointer;">Cancel</button>
-            </div>
+            <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:20px;">SUBMIT FILE</button>
         </div>
     </div>
 
     <div id="printArea">
-        <div style="text-align:center; border:2px solid #000; padding:30px; border-radius:15px;">
-            <img src="logo.jpeg" style="width:150px;">
-            <h2 style="margin-top:20px;">OFFICIAL CONFIRMATION SLIP</h2>
-            <div style="margin:20px 0; border:4px solid #f1c40f; padding:20px;">
-                <h1>CONGRATULATIONS!</h1>
-                <h2 id="slipName"></h2>
-                <p>Application for: <b id="slipUni"></b></p>
-            </div>
-            <p>Date: <span id="slipDate"></span> | Slip ID: <span id="slipID"></span></p>
-            <p>Passport: <b id="slipPass"></b></p>
-            <div id="qrcode" style="margin-top:20px; display:flex; justify-content:center;"></div>
-            <p style="margin-top:10px; font-size:12px;">Scan to Track: study-abroad-crm-nine.vercel.app/track.html</p>
+        <div style="text-align:center; border:2px solid #000; padding:30px;">
+            <img src="logo.jpeg" style="width:120px;">
+            <h1>CONFIRMATION SLIP</h1>
+            <h2 id="slipName"></h2>
+            <p>University: <b id="slipUni"></b></p>
+            <div id="qrcode" style="display:flex; justify-content:center; margin-top:20px;"></div>
         </div>
     </div>
 
@@ -184,6 +126,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, getDocs, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Firebase Config (Using your scc-partner-portal)
         const firebaseConfig = { 
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -204,140 +147,87 @@
             if(el) el.classList.add('active');
         };
 
-        // --- Logic Engine ---
         let allUnis = [];
         onSnapshot(collection(db, "universities"), (snap) => {
             allUnis = snap.docs.map(d => d.data());
         });
 
+        // FIXED Search Logic to match your Admin fields
         document.getElementById('searchBtn').onclick = () => {
-            const country = document.getElementById('fCountry').value.toLowerCase();
+            const country = document.getElementById('fCountry').value.trim().toLowerCase();
             const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
             const lang = parseFloat(document.getElementById('fLangScore').value) || 0;
             const degree = document.getElementById('fDegree').value;
 
             const filtered = allUnis.filter(u => {
-                return (country === "" || u.country.toLowerCase().includes(country)) &&
-                       (degree === "" || u.degree === degree) &&
-                       (gpa >= (parseFloat(u.minGPA) || 0)) &&
-                       (lang >= (parseFloat(u.minLangScore) || 0));
+                const uCountry = (u.country || u.uCountry || "").toLowerCase();
+                const uDegree = (u.degree || u.uDegree || "");
+                const minGPA = parseFloat(u.minCGPA || u.minGPA || 0);
+                const minLang = parseFloat(u.minIELTS || u.minLangScore || 0);
+
+                return (country === "" || uCountry.includes(country)) &&
+                       (degree === "" || uDegree === degree) &&
+                       (gpa >= minGPA) &&
+                       (lang >= minLang);
             });
 
-            document.getElementById('searchResultArea').style.display = 'block';
             const container = document.getElementById('uniListContainer');
+            document.getElementById('searchResultArea').style.display = 'block';
+            
             if (filtered.length > 0) {
                 container.innerHTML = filtered.map(u => `
                     <tr>
-                        <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                        <td>GPA: ${u.minGPA} | Gap: ${u.studyGap}y</td>
-                        <td>$${u.semesterFee}</td>
-                        <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm).toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:6px 12px; font-size:11px;" onclick="openApply('${u.universityName}', '${u.partnerComm}')">Apply</button></td>
+                        <td><b>${u.name || u.uName || u.universityName}</b><br><small>${u.country || u.uCountry}</small></td>
+                        <td>${u.semesterFee || u.uSemFee} ${u.currency || u.uCurrency}</td>
+                        <td style="color:var(--gold); font-weight:bold;">৳${(u.partnerComm || 50000).toLocaleString()}</td>
+                        <td><button class="btn-gold" onclick="openApply('${u.name || u.uName || u.universityName}', '${u.partnerComm || 50000}')">Apply</button></td>
                     </tr>`).join('');
             } else {
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--danger);">No match found.</td></tr>`;
+                container.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No match found. Try lower GPA/IELTS.</td></tr>`;
             }
         };
 
-        async function uploadToCloud(file) {
-            if (!file) return "";
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'ml_default'); 
-            try {
-                const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { method: 'POST', body: formData });
-                const data = await res.json();
-                return data.secure_url;
-            } catch (e) { return ""; }
-        }
-
-        window.openApply = (name, comm) => {
-            document.getElementById('modalUniName').innerText = name;
+        window.openApply = (n, c) => {
+            document.getElementById('modalUniName').innerText = n;
             document.getElementById('applyModal').style.display = 'flex';
-            window.selectedApp = { name, comm };
+            window.selectedApp = { name: n, comm: c };
         };
 
         document.getElementById('submitAppBtn').onclick = async () => {
             const name = document.getElementById('sName').value;
             const pass = document.getElementById('sPass').value;
-            const file1 = document.getElementById('pdfAcademic').files[0];
-            const file2 = document.getElementById('pdfOthers').files[0];
+            if(!name || !pass) return alert("Fill all fields");
 
-            if (!name || !pass || !file1) return alert("Fill mandatory fields!");
+            await addDoc(collection(db, "applications"), {
+                studentName: name, passportNo: pass, partnerEmail: userEmail,
+                university: window.selectedApp.name, commission: window.selectedApp.comm,
+                status: 'pending', createdAt: serverTimestamp()
+            });
 
-            const btn = document.getElementById('submitAppBtn');
-            btn.innerText = "UPLOADING..."; btn.disabled = true;
-
-            const url1 = await uploadToCloud(file1);
-            const url2 = await uploadToCloud(file2);
-
-            try {
-                const docRef = await addDoc(collection(db, "applications"), {
-                    studentName: name, passportNo: pass, partnerEmail: userEmail,
-                    university: window.selectedApp.name, commission: window.selectedApp.comm,
-                    status: 'pending', docs: { academic: url1, others: url2 },
-                    createdAt: serverTimestamp()
-                });
-
-                document.getElementById('slipName').innerText = name;
-                document.getElementById('slipPass').innerText = pass;
-                document.getElementById('slipUni').innerText = window.selectedApp.name;
-                document.getElementById('slipDate').innerText = new Date().toLocaleDateString();
-                document.getElementById('slipID').innerText = docRef.id;
-
-                document.getElementById('qrcode').innerHTML = "";
-                new QRCode(document.getElementById("qrcode"), { text: docRef.id, width: 120, height: 120 });
-
-                alert("Success!");
-                window.print();
-                location.reload();
-            } catch (e) { alert("Failed!"); btn.disabled = false; }
+            document.getElementById('slipName').innerText = name;
+            document.getElementById('slipUni').innerText = window.selectedApp.name;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: pass, width: 100, height: 100 });
+            
+            alert("Submitted!");
+            window.print();
+            location.reload();
         };
 
-        // Tracking & Wallet Sync
         onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail), orderBy("createdAt", "desc")), (snap) => {
-            const tbody = document.getElementById('trackingList');
-            const hbody = document.getElementById('homeTrackingBody');
-            tbody.innerHTML = ""; hbody.innerHTML = "";
-            let pending = 0, final = 0;
-
+            let p = 0, f = 0, html = "", hhtml = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const comm = Number(d.commission) || 0;
-                if(d.status === 'pending') pending += comm;
-                if(d.status === 'approved') final += comm;
-
-                const row = `
-                <tr>
-                    <td><b>${d.studentName}</b></td>
-                    <td>${d.passportNo}</td>
-                    <td>${d.university}</td>
-                    <td><span class="status-badge" style="color:var(--gold); border:1px solid var(--gold);">${d.status}</span></td>
-                    <td>${d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleDateString() : '...'}</td>
-                    <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--success);">View PDF</a></td>
-                </tr>`;
-                tbody.innerHTML += row;
-                hbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.passportNo}</td><td>${d.university}</td><td>${d.status}</td></tr>`;
+                const c = Number(d.commission) || 0;
+                if(d.status === 'pending') p += c; else f += c;
+                html += `<tr><td>${d.studentName}</td><td>${d.passportNo}</td><td>${d.university}</td><td>${d.status}</td></tr>`;
+                hhtml += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td></tr>`;
             });
-            document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
-            document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
-            document.getElementById('withdrawBal').innerText = `৳${final.toLocaleString()}`;
-            document.getElementById('withdrawBtn').disabled = final <= 0;
+            document.getElementById('topPending').innerText = `৳${p.toLocaleString()}`;
+            document.getElementById('topFinal').innerText = `৳${f.toLocaleString()}`;
+            document.getElementById('trackingList').innerHTML = html;
+            document.getElementById('homeTrackingBody').innerHTML = hhtml;
         });
-
-        // Profile Update
-        window.saveProfile = async () => {
-            const q = query(collection(db, "users"), where("email", "==", userEmail));
-            const s = await getDocs(q);
-            if(!s.empty) {
-                await updateDoc(doc(db, "users", s.docs[0].id), {
-                    agencyName: document.getElementById('pAgency').value,
-                    personName: document.getElementById('pPerson').value,
-                    contact: document.getElementById('pContact').value
-                });
-                alert("Profile Saved!");
-            }
-        };
     </script>
 </body>
 </html>
