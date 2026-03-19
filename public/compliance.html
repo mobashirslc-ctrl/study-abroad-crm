@@ -25,7 +25,6 @@
         .btn-claim:hover { transform: scale(1.05); background: #fff; }
         .btn-locked { background: rgba(255,255,255,0.05); color: #666; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: not-allowed; }
         
-        /* Slider Styles */
         .slider { position: fixed; right: -500px; top: 0; width: 450px; height: 100vh; background: rgba(10, 0, 30, 0.98); backdrop-filter: blur(40px); border-left: 3px solid var(--accent); padding: 40px; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); z-index: 2000; box-shadow: -20px 0 60px rgba(0,0,0,0.8); overflow-y: auto; }
         .slider.active { right: 0; }
         
@@ -108,6 +107,7 @@
         <div style="background:var(--glass); padding:20px; border-radius:15px; margin-bottom:25px; border: 1px solid var(--border);">
             <p style="margin:0; font-size:0.8rem; opacity:0.6;">Reviewing Student:</p>
             <div id="reviewingStudent" style="font-size:1.2rem; font-weight:bold; margin-top:5px;">---</div>
+            <p id="targetCommDisp" style="margin-top:5px; color:var(--accent); font-size:0.8rem; font-weight:bold;"></p>
         </div>
 
         <label style="font-size:0.85rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">Student Documents</label>
@@ -121,18 +121,18 @@
         <label style="font-size:0.85rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">Set New Status</label>
         <select id="statusSelect">
             <option value="review">🔍 Start In Review</option>
-            <option value="verified">✅ Verified (Pending Commission)</option>
-            <option value="fees">💰 Fees Paid (Confirm Commission)</option>
+            <option value="verified">✅ Verified (Add to Pending Wallet)</option>
+            <option value="fees">💰 Fees Paid (Wait for Admin Closing)</option>
             <option value="missing">📂 Missing Documents</option>
             <option value="rejected">❌ Rejected</option>
         </select>
 
-        <button id="applyStatusBtn" style="width:100%; margin-top:30px; padding:18px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; font-size:1rem; cursor:pointer;">Update Decision & Wallet</button>
+        <button id="applyStatusBtn" style="width:100%; margin-top:30px; padding:18px; background:var(--success); color:white; border:none; border-radius:12px; font-weight:bold; font-size:1rem; cursor:pointer;">Update Decision & Sync Wallet</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, getDoc, getDocs, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -149,15 +149,17 @@
         const auth = getAuth(app);
 
         let currentActiveId = null;
+        let currentPartnerEmail = "";
+        let currentCommission = 0;
         let staffName = "Staff";
 
-        // ১. অথেনটিকেশন চেক
+        // 1. Auth Check
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 window.location.replace("index.html");
             } else {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().role === "compliance") {
+                if (userDoc.exists() && (userDoc.data().role === "compliance" || userDoc.data().role === "admin")) {
                     staffName = userDoc.data().fullName || "Officer";
                     document.getElementById('staffDisplay').innerText = staffName;
                     document.getElementById('staffProfileName').innerText = `Name: ${staffName}`;
@@ -167,13 +169,13 @@
                     document.body.classList.add('auth-ready');
                     startLiveUpdates();
                 } else {
-                    alert("Unauthorized!");
+                    alert("Unauthorized Access!");
                     signOut(auth).then(() => window.location.replace("index.html"));
                 }
             }
         });
 
-        // ২. ডাটা রিয়েলটাইম আপডেট
+        // 2. Real-time Incoming Files Queue
         function startLiveUpdates() {
             onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
                 const tbody = document.getElementById('incomingTableBody');
@@ -190,14 +192,14 @@
 
                     html += `
                         <tr>
-                            <td><b>${data.studentName}</b></td>
-                            <td>${data.passportNumber || 'N/A'}</td>
+                            <td><b>${data.studentName}</b><br><small>${data.university || 'N/A'}</small></td>
+                            <td>${data.passportNumber || data.passport || 'N/A'}</td>
                             <td><span style="color:${isClaimed ? '#2ecc71' : 'var(--accent)'}">${data.status}</span></td>
                             <td>${isClaimed ? `<i class="fas fa-user-shield"></i> ${data.complianceMember}` : '<span style="opacity:0.5">Queue</span>'}</td>
                             <td>
                                 ${!isClaimed ? 
                                     `<button class="btn-claim" onclick="claimFile('${id}')">Claim</button>` : 
-                                    (isMine ? `<button class="btn-claim" style="background:#fff" onclick="openReviewSlider('${id}', '${data.studentName}', ${JSON.stringify(data.docs || {})})">Review</button>` : `<button class="btn-locked" disabled><i class="fas fa-lock"></i></button>`)
+                                    (isMine ? `<button class="btn-claim" style="background:#fff" onclick="openReviewSlider('${id}', '${data.studentName}', ${JSON.stringify(data.docs || {})}, '${data.partnerEmail}', ${data.commissionBDT || 0})">Review</button>` : `<button class="btn-locked" disabled><i class="fas fa-lock"></i></button>`)
                                 }
                             </td>
                         </tr>`;
@@ -207,22 +209,26 @@
             });
         }
 
-        // ৩. ক্লেইম লজিক
+        // 3. Claim Function
         window.claimFile = async (id) => {
-            if(confirm("Confirm Claim?")) {
+            if(confirm("Claim this file for verification?")) {
                 await updateDoc(doc(db, "applications", id), {
                     complianceMember: staffName,
-                    status: "IN REVIEW"
+                    status: "IN REVIEW",
+                    claimedAt: serverTimestamp()
                 });
             }
         };
 
-        // ৪. স্লাইডার কন্ট্রোল (ফাইল ভিউসহ)
-        window.openReviewSlider = (id, name, docs) => {
+        // 4. Slider Control
+        window.openReviewSlider = (id, name, docs, pEmail, commission) => {
             currentActiveId = id;
+            currentPartnerEmail = pEmail;
+            currentCommission = commission;
+            
             document.getElementById('reviewingStudent').innerText = name;
+            document.getElementById('targetCommDisp').innerText = `Estimated Commission: ৳ ${commission.toLocaleString()}`;
 
-            // ফাইল লিঙ্কগুলো সেট করা
             const setDoc = (btnId, url) => {
                 const btn = document.getElementById(btnId);
                 if(url) {
@@ -236,35 +242,56 @@
                 }
             };
 
-            setDoc('btnPass', docs.passport);
-            setDoc('btnAcad', docs.academic);
-            setDoc('btnLang', docs.language);
-            setDoc('btnOther', docs.others);
+            setDoc('btnPass', docs?.passport);
+            setDoc('btnAcad', docs?.academic);
+            setDoc('btnLang', docs?.language);
+            setDoc('btnOther', docs?.others);
 
             document.getElementById('slider').classList.add('active');
         };
 
         window.closeSlider = () => document.getElementById('slider').classList.remove('active');
 
-        // ৫. ডিসিশন আপডেট
+        // 5. Decision & Wallet Sync Logic (The Master Logic)
         document.getElementById('applyStatusBtn').onclick = async () => {
-            const status = document.getElementById('statusSelect').value;
+            const selectedStatus = document.getElementById('statusSelect').value;
             const btn = document.getElementById('applyStatusBtn');
 
             try {
                 btn.disabled = true;
-                btn.innerText = "Processing...";
+                btn.innerText = "Syncing Wallet...";
+
+                // Update Application Status
                 await updateDoc(doc(db, "applications", currentActiveId), {
-                    status: status.toUpperCase(),
-                    decisionDate: new Date().toISOString()
+                    status: selectedStatus.toUpperCase(),
+                    decisionDate: serverTimestamp(),
+                    complianceMember: staffName
                 });
-                alert("Decision Saved!");
+
+                // WALLET SYNC: If Verified or Fees Paid, add to Partner's Pending Wallet
+                if (selectedStatus === "verified" || selectedStatus === "fees") {
+                    const pQuery = query(collection(db, "users"), where("email", "==", currentPartnerEmail));
+                    const pSnap = await getDocs(pQuery);
+                    
+                    if(!pSnap.empty) {
+                        const pDoc = pSnap.docs[0];
+                        const pRef = doc(db, "users", pDoc.id);
+                        const oldPending = pDoc.data().pendingBal || 0;
+                        
+                        // Add to pending balance
+                        await updateDoc(pRef, {
+                            pendingBal: oldPending + currentCommission
+                        });
+                    }
+                }
+
+                alert("Decision Saved & Partner Wallet Updated!");
                 closeSlider();
-            } catch (e) { alert(e.message); }
-            finally { btn.disabled = false; btn.innerText = "Update Decision & Wallet"; }
+            } catch (e) { alert("Error: " + e.message); }
+            finally { btn.disabled = false; btn.innerText = "Update Decision & Sync Wallet"; }
         };
 
-        // ট্যাব নেভিগেশন
+        // Navigation
         window.openTab = (tabId) => {
             document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
