@@ -14,6 +14,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background: radial-gradient(circle at top right, #2b0054, #070014); color: white; height: 100vh; display: flex; overflow: hidden; }
 
+        /* Sidebar & Layout */
         .sidebar { width: 260px; background: rgba(0,0,0,0.9); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
         .logo { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo img { width: 140px; background: white; padding: 5px; border-radius: 5px; }
@@ -24,35 +25,32 @@
         .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
         .main { padding: 30px; flex: 1; }
 
+        /* Cards & Forms */
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(15px); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
         .reg-input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.4); color: white; outline: none; font-size: 13px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         
-        .wallet-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .wallet-box { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; }
-
+        /* Tables */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 1px solid var(--border); font-size: 11px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; color: #ddd; }
 
-        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); justify-content:center; align-items:center; }
-        .modal-content { background: rgba(26, 11, 77, 0.9); border: 1px solid var(--gold); padding: 35px; border-radius: 25px; width: 70%; max-width: 800px; }
-
+        /* Sections */
         .section { display: none; }
         .active-section { display: block; animation: fadeIn 0.4s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        #printArea { display:none; }
-        @media print { body * { display:none; } #printArea { display:block !important; color:black; background:white; padding:40px; } }
+        /* Modal */
+        .modal { display:none; position:fixed; z-index:2000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); justify-content:center; align-items:center; }
+        .modal-content { background: rgba(26, 11, 77, 0.9); border: 1px solid var(--gold); padding: 35px; border-radius: 25px; width: 70%; max-width: 800px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
         <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
-        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
-        <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Smart Assessment</div>
+        <div class="nav-item active" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Smart Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
         <div class="nav-item" onclick="showTab('earning', this)"><i class="fas fa-wallet"></i> Earning</div>
     </div>
@@ -66,11 +64,11 @@
         <div class="main">
             <div id="assessment" class="section active-section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
+                    <h3 style="color:var(--gold); margin-bottom:15px;">University Search Filter</h3>
                     <div class="form-grid">
-                        <input type="text" id="fCountry" placeholder="Country" class="reg-input">
+                        <input type="text" id="fCountry" placeholder="Target Country" class="reg-input">
                         <select id="fDegree" class="reg-input">
-                            <option value="">Degree</option>
+                            <option value="">Select Degree</option>
                             <option value="Bachelor">Bachelor (Ug)</option>
                             <option value="Master">Master (Pg)</option>
                             <option value="Foundation">Foundation</option>
@@ -82,7 +80,7 @@
                             <option value="Duolingo">Duolingo</option>
                             <option value="MOI">MOI</option>
                         </select>
-                        <input type="number" step="0.01" id="fGPA" placeholder="GPA" class="reg-input">
+                        <input type="number" step="0.01" id="fGPA" placeholder="Student GPA" class="reg-input">
                         <input type="number" step="0.1" id="fLangScore" placeholder="Score" class="reg-input">
                         <button id="searchBtn" class="btn-gold">SEARCH</button>
                     </div>
@@ -91,21 +89,19 @@
                 <div id="searchResultArea" style="display:none;" class="card">
                     <div style="overflow-x:auto;">
                         <table>
-                            <thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Commission</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Min. Req</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead>
                             <tbody id="uniListContainer"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <div id="home" class="section">
-                <div class="wallet-container">
-                    <div class="wallet-box"><div><p style="opacity:0.6; font-size:10px;">PENDING</p><h2 id="topPending">৳0</h2></div></div>
-                    <div class="wallet-box"><div><p style="opacity:0.6; font-size:10px;">FINAL</p><h2 id="topFinal">৳0</h2></div></div>
+            <div id="tracking" class="section">
+                <div class="card">
+                    <h3>Application Tracking</h3>
+                    <table><thead><tr><th>Student</th><th>University</th><th>Status</th></tr></thead><tbody id="trackingList"></tbody></table>
                 </div>
-                <div class="card"><tbody id="homeTrackingBody"></tbody></div>
             </div>
-            <div id="tracking" class="section"><div class="card"><table><tbody id="trackingList"></tbody></table></div></div>
         </div>
     </div>
 
@@ -115,7 +111,6 @@
             <div class="form-grid" style="margin-top:20px;">
                 <input type="text" id="appSName" placeholder="Student Name" class="reg-input">
                 <input type="text" id="appSPass" placeholder="Passport No" class="reg-input">
-                <input type="file" id="fAcad" class="reg-input">
             </div>
             <div style="margin-top:25px; display:flex; gap:15px;">
                 <button id="submitBtn" class="btn-gold" style="flex:1;">SUBMIT</button>
@@ -126,7 +121,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -149,32 +144,33 @@
         };
 
         let allUnis = [];
+        // ডাটা লোড করা হচ্ছে
         onSnapshot(collection(db, "universities"), (snap) => {
             allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            console.log("Loaded Unis:", allUnis);
+            console.log("Universities loaded:", allUnis.length);
         });
 
-        // FIXED SEARCH LOGIC (Case Insensitive)
+        // ফিক্সড সার্চ লজিক
         document.getElementById('searchBtn').onclick = () => {
             const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
             const gpaInput = parseFloat(document.getElementById('fGPA').value) || 0;
-            const langScoreInput = parseFloat(document.getElementById('fLangScore').value) || 0;
+            const langInput = parseFloat(document.getElementById('fLangScore').value) || 0;
             const degreeInput = document.getElementById('fDegree').value;
-            const langTypeInput = document.getElementById('fLangType').value;
 
+            // ফিল্টারিং শুরু
             const filtered = allUnis.filter(u => {
-                // অ্যাডমিন প্যানেলের ডেটা ফিল্ড চেক
+                // অ্যাডমিনের ফিল্ডগুলো (uCountry, uDegree, minCGPA, minIELTS) চেক
                 const dbCountry = (u.uCountry || u.country || "").toLowerCase();
                 const dbDegree = (u.uDegree || u.degree || "");
                 const minGPA = parseFloat(u.minCGPA || u.minGPA || 0);
                 const minLang = parseFloat(u.minIELTS || u.minLangScore || 0);
 
-                const countryMatch = countryInput === "" || dbCountry.includes(countryInput);
-                const degreeMatch = degreeInput === "" || dbDegree.includes(degreeInput) || (degreeInput === "Bachelor" && dbDegree === "Ug");
-                const gpaMatch = gpaInput >= minGPA;
-                const langMatch = langScoreInput >= minLang;
+                const cMatch = countryInput === "" || dbCountry.includes(countryInput);
+                const dMatch = degreeInput === "" || dbDegree === degreeInput || (degreeInput === "Bachelor" && dbDegree === "Ug");
+                const gMatch = gpaInput >= minGPA;
+                const lMatch = langInput >= minLang;
 
-                return countryMatch && degreeMatch && gpaMatch && langMatch;
+                return cMatch && dMatch && gMatch && lMatch;
             });
 
             const container = document.getElementById('uniListContainer');
@@ -185,12 +181,12 @@
                     <tr>
                         <td><b>${u.uName || u.name}</b><br><small>${u.uCountry || u.country}</small></td>
                         <td>GPA: ${u.minCGPA || 0} | IELTS: ${u.minIELTS || 0}</td>
-                        <td>${u.uSemFee || u.semesterFee} ${u.uCurrency || 'USD'}</td>
+                        <td>${u.uSemFee || 0} ${u.uCurrency || 'USD'}</td>
                         <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:6px 12px; font-size:11px;" onclick="openApply('${u.uName || u.name}', '${u.partnerComm}')">Apply</button></td>
+                        <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openApply('${u.uName || u.name}', '${u.partnerComm}')">Apply</button></td>
                     </tr>`).join('');
             } else {
-                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">No match found. Please try lower GPA/IELTS or check country name.</td></tr>`;
+                container.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--danger);">No University found. Try decreasing GPA/Score or check spelling.</td></tr>`;
             }
         };
 
@@ -200,33 +196,18 @@
             document.getElementById('applyModal').style.display = 'flex';
         };
 
-        // ফাইল সাবমিশন লজিক (Cloudinary ছাড়াই বেসিক ফায়ারবেস ট্র্যাকিং)
         document.getElementById('submitBtn').onclick = async () => {
             const name = document.getElementById('appSName').value;
             const pass = document.getElementById('appSPass').value;
             if(!name || !pass) return alert("Fill Name and Passport");
 
-            try {
-                await addDoc(collection(db, "applications"), {
-                    studentName: name, passportNo: pass, partnerEmail: userEmail,
-                    university: window.selectedApp.name, commission: window.selectedApp.comm,
-                    status: 'pending', createdAt: serverTimestamp()
-                });
-                alert("Success!"); location.reload();
-            } catch (e) { alert("Failed!"); }
-        };
-
-        // Realtime Wallet Update
-        onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
-            let p = 0, f = 0;
-            snap.forEach(doc => {
-                const d = doc.data();
-                const comm = Number(d.commission) || 0;
-                if(d.status === 'pending') p += comm; else f += comm;
+            await addDoc(collection(db, "applications"), {
+                studentName: name, passportNo: pass, partnerEmail: userEmail,
+                university: window.selectedApp.name, commission: window.selectedApp.comm,
+                status: 'pending', createdAt: serverTimestamp()
             });
-            document.getElementById('topPending').innerText = `৳${p.toLocaleString()}`;
-            document.getElementById('topFinal').innerText = `৳${f.toLocaleString()}`;
-        });
+            alert("Application Submitted!"); location.reload();
+        };
     </script>
 </body>
 </html>
