@@ -36,8 +36,8 @@
         .btn-approve { width: 100%; margin-top: 20px; font-size: 1rem; color: black; background: var(--accent); }
         .btn-delete { background: var(--danger); }
         .badge { padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 0.7rem; }
-        .doc-link { color: var(--blue); text-decoration: none; font-size: 11px; display: block; margin-bottom: 4px; }
-        .doc-link:hover { color: var(--accent); text-decoration: underline; }
+        .doc-link { color: var(--blue); text-decoration: none; font-size: 11px; display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+        .doc-link:hover { color: var(--accent); }
 
         .section { display: none; }
         .active-section { display: block; animation: fadeIn 0.4s ease; }
@@ -75,6 +75,8 @@
                             <select id="uDegree">
                                 <option value="UG">Bachelor (UG)</option>
                                 <option value="PG">Master (PG)</option>
+                                <option value="Foundation">Foundation</option>
+                                <option value="Diploma">Diploma</option>
                                 <option value="PhD">PhD</option>
                             </select>
                         </div>
@@ -88,12 +90,14 @@
 
                 <div class="card">
                     <h3><i class="fas fa-list"></i> Existing Universities</h3>
-                    <table>
-                        <thead>
-                            <tr><th>Uni Name</th><th>Rank</th><th>Country</th><th>Degree</th><th>Fee</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="uniTableBody"></tbody>
-                    </table>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr><th>Uni Name</th><th>Rank</th><th>Country</th><th>Degree</th><th>Fee (USD)</th><th>Comm %</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="uniTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -111,8 +115,7 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="userTableBody">
-                                </tbody>
+                            <tbody id="userTableBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -131,7 +134,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
             authDomain: "ihp-portal-v3.firebaseapp.com",
@@ -144,113 +146,4 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- Navigation ---
-        window.showTab = (id) => {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active-section');
-            document.getElementById('m-' + id).classList.add('active');
-            
-            const titles = { 'uni-manage': 'University Management', 'partners': 'User Management', 'payouts': 'Payouts Control' };
-            document.getElementById('page-title').innerText = titles[id];
-        };
-
-        // --- University Management Logic ---
-        document.getElementById('saveUniBtn').onclick = async () => {
-            const btn = document.getElementById('saveUniBtn');
-            const data = {
-                universityName: document.getElementById('uName').value,
-                rank: document.getElementById('uRank').value || "N/A",
-                country: document.getElementById('uCountry').value,
-                courseName: document.getElementById('uCourse').value,
-                degree: document.getElementById('uDegree').value,
-                semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
-                partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
-                minGPA: Number(document.getElementById('uMinGPA').value) || 0,
-                ieltsReq: Number(document.getElementById('uIeltsO').value) || 0, 
-                createdAt: serverTimestamp()
-            };
-
-            if(!data.universityName || !data.country) return alert("Fill mandatory fields!");
-
-            try {
-                btn.innerText = "Saving..."; btn.disabled = true;
-                await addDoc(collection(db, "universities"), data);
-                alert("University Added!");
-                document.querySelectorAll('.admin-form-grid input').forEach(i => i.value = "");
-            } catch (e) { alert(e.message); }
-            finally { btn.innerText = "Save University Data"; btn.disabled = false; }
-        };
-
-        onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
-            let html = "";
-            snap.forEach(docSnap => {
-                const u = docSnap.data();
-                html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.courseName}</small></td>
-                    <td>#${u.rank}</td><td>${u.country}</td>
-                    <td><span class="badge" style="background:var(--blue);">${u.degree}</span></td>
-                    <td>$${u.semesterFee}</td>
-                    <td><button onclick="deleteUni('${docSnap.id}')" class="btn btn-delete"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
-            });
-            document.getElementById('uniTableBody').innerHTML = html;
-        });
-
-        window.deleteUni = async (id) => {
-            if(confirm("Delete this university?")) await deleteDoc(doc(db, "universities", id));
-        };
-
-        // --- User Management Logic (Fixed for isApproved & status) ---
-        onSnapshot(collection(db, "users"), (snap) => {
-            let html = "";
-            snap.forEach(docSnap => {
-                const user = docSnap.data();
-                const id = docSnap.id;
-
-                // Smart status check (Checks isApproved if status field is missing)
-                let currentStatus = user.status || (user.isApproved ? 'active' : 'pending');
-                const statusColor = currentStatus === 'active' ? 'var(--success)' : '#f39c12';
-                
-                // Doc View Logic (Shows PDF Links if exist)
-                let docHtml = "";
-                if(user.role === 'Partner' || user.role === 'Compliance'){
-                    docHtml += user.tradeLicense ? `<a href="${user.tradeLicense}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Trade License</a>` : "";
-                    docHtml += user.nidPdf ? `<a href="${user.nidPdf}" target="_blank" class="doc-link"><i class="fas fa-id-card"></i> NID Document</a>` : "";
-                    if(!docHtml) docHtml = `<small style="color:gray;">No Docs</small>`;
-                } else {
-                    docHtml = `<small style="color:gray;">N/A</small>`;
-                }
-
-                html += `<tr>
-                    <td>
-                        <b>${user.agencyName || user.employeeName || user.fullName || 'New User'}</b><br>
-                        <small style="opacity:0.6;">${user.email}</small>
-                    </td>
-                    <td><span class="badge" style="background:var(--glass); border:1px solid var(--border);">${user.role}</span></td>
-                    <td>${docHtml}</td>
-                    <td><span class="badge" style="background:${statusColor}; color:black;">${currentStatus.toUpperCase()}</span></td>
-                    <td>
-                        ${currentStatus !== 'active' ? `<button onclick="updateStatus('${id}', 'active')" class="btn" style="background:var(--success); color:black; margin-bottom:5px;">APPROVE</button><br>` : ''}
-                        <button onclick="updateStatus('${id}', 'disabled')" class="btn btn-delete" style="padding: 4px 10px;">DISABLE</button>
-                    </td>
-                </tr>`;
-            });
-            document.getElementById('userTableBody').innerHTML = html;
-        });
-
-        window.updateStatus = async (id, status) => {
-            if(confirm(`Set user to ${status}?`)) {
-                await updateDoc(doc(db, "users", id), { 
-                    status: status,
-                    isApproved: status === 'active' 
-                });
-                alert("User updated!");
-            }
-        };
-
-        window.logout = () => { localStorage.clear(); window.location.href = 'index.html'; };
-
-    </script>
-</body>
-</html>
+        // Navigation Logic
