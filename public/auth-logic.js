@@ -2,27 +2,25 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// ১. আপনার দেওয়া সর্বশেষ সঠিক Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", // Verified API Key
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
     authDomain: "ihp-portal-v3.firebaseapp.com",
     projectId: "ihp-portal-v3",
     storageBucket: "ihp-portal-v3.firebasestorage.app",
     messagingSenderId: "481157902534",
-    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7",
-    measurementId: "G-P9S5BHTY6F"
+    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// ২. Cloudinary আপলোড ফাংশন (ihp_upload preset)
+// --- Cloudinary Upload Function ---
 async function uploadToCloudinary(file) {
     if (!file) return "";
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'ihp_upload'); 
+    formData.append('upload_preset', 'ihp_upload'); // আপনার Cloudinary Settings এ এই নাম থাকতে হবে
 
     try {
         const res = await fetch('https://api.cloudinary.com/v1_1/dbtf7uocu/auto/upload', { 
@@ -30,49 +28,55 @@ async function uploadToCloudinary(file) {
             body: formData 
         });
         const data = await res.json();
-        return data.secure_url || "";
+        if (data.secure_url) {
+            console.log("Upload Success:", data.secure_url);
+            return data.secure_url;
+        } else {
+            console.error("Cloudinary Error Data:", data);
+            return "";
+        }
     } catch (e) {
-        console.error("Cloudinary Error:", e);
+        console.error("Cloudinary Fetch Error:", e);
         return "";
     }
 }
 
-// ৩. রেজিস্ট্রেশন প্রসেস (PRD অনুযায়ী)
+// --- Registration Logic ---
 async function handleRegister() {
     const email = document.getElementById('regEmail').value;
     const pass = document.getElementById('regPass').value;
     const role = document.getElementById('userRole').value;
 
-    if (!role || !email || !pass) {
-        alert("Please fill in Email, Password, and select a Role.");
-        return;
-    }
+    if (!role || !email || !pass) return alert("Email, Password, and Role are mandatory!");
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing Assets...";
+    regBtn.innerText = "Uploading Documents...";
     regBtn.disabled = true;
 
     try {
         let tradeUrl = "", nidUrl = "";
         
-        // পার্টনার হলে ফাইল আপলোড হবে
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade').files[0];
             const nidFile = document.getElementById('pNid').files[0];
+            
+            // ফাইল আপলোড হওয়ার জন্য অপেক্ষা করবে
             if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
             if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
-        // Firebase-এ ইউজার তৈরি
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // Firestore ডাটা অবজেক্ট
+        // এই অবজেক্টটি ঠিক অ্যাডমিন প্যানেলের সাথে ম্যাচ করবে
         let userData = {
             uid: user.uid,
             email: email,
             role: role,
-            isApproved: false, // ডিফল্টভাবে পেন্ডিং থাকবে
+            isApproved: false, // Boolean
+            status: 'pending', // String
+            tradeLicense: tradeUrl, // Cloudinary Link
+            nidPdf: nidUrl,        // Cloudinary Link
             createdAt: new Date().toISOString()
         };
 
@@ -82,8 +86,6 @@ async function handleRegister() {
             userData.contact = document.getElementById('pContact').value;
             userData.address = document.getElementById('pAddress').value;
             userData.countries = document.getElementById('pService').value;
-            userData.tradeLicense = tradeUrl;
-            userData.nidPdf = nidUrl;
         } else if (role === 'Compliance') {
             userData.employeeName = document.getElementById('cName').value;
             userData.contact = document.getElementById('cContact').value;
@@ -92,24 +94,21 @@ async function handleRegister() {
             userData.countries = document.getElementById('cService').value;
         }
 
-        // Firestore-এ সেভ করা
         await setDoc(doc(db, "users", user.uid), userData);
-        alert("Registration Successful! Now waiting for Admin Approval.");
+        alert("Registration Successful! Please wait for Admin Approval.");
         location.reload();
 
     } catch (error) {
         alert("Registration Error: " + error.message);
-        regBtn.innerText = "Submit Request";
+        regBtn.innerText = "SUBMIT REQUEST";
         regBtn.disabled = false;
     }
 }
 
-// ৪. লগইন প্রসেস (অ্যাপ্রুভাল চেক সহ)
+// --- Login Logic ---
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value;
     const pass = document.getElementById('loginPass').value;
-
-    if (!email || !pass) return alert("Please enter email and password.");
 
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -119,23 +118,21 @@ async function handleLogin() {
         if (userDoc.exists()) {
             const data = userDoc.data();
 
-            // অ্যাপ্রুভাল চেক লজিক
-            if (!data.isApproved) {
-                alert("Your account is pending! Admin has not approved you yet.");
+            if (!data.isApproved && data.status !== 'active') {
+                alert("Account Pending Approval!");
                 await signOut(auth);
                 return;
             }
 
-            // সেশন ডাটা রাখা এবং রিডিরেক্ট
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', data.role);
             window.location.href = data.role === 'Partner' ? "partner.html" : "compliance.html";
         }
     } catch (error) {
-        alert("Login Failed: " + error.message);
+        alert("Login Error: " + error.message);
     }
 }
 
-// ইভেন্ট লিসেনার কানেক্ট করা
+// Event Listeners
 document.getElementById('regBtn')?.addEventListener('click', handleRegister);
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
