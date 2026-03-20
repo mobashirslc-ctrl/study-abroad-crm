@@ -77,7 +77,7 @@ onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), 
     document.getElementById('loader').style.display = 'none';
 });
 
-// --- ৪. APPLY STATUS & WALLET SYNC (The Guaranteed Fix) ---
+// --- ৪. APPLY STATUS & WALLET SYNC ---
 const updateBtn = document.getElementById('updateStatusBtn');
 if (updateBtn) {
     updateBtn.onclick = async () => {
@@ -94,28 +94,28 @@ if (updateBtn) {
             const appSnap = await getDoc(appRef);
             const appData = appSnap.data();
 
-            // পার্টনার ড্যাশবোর্ডের লজিক অনুযায়ী commissionStatus সেট করা
-            // মনে রাখবেন: পার্টনার কোডে 'pending' মানেই পেন্ডিং ওয়ালেটে টাকা যোগ হওয়া
-            let cStatus = appData.commissionStatus || 'waiting'; 
+            // পার্টনার ড্যাশবোর্ডের লজিক অনুযায়ী commissionStatus হ্যান্ডেল করা
+            let cStatus = 'waiting'; // ডিফল্ট বা রিজেক্ট হলে টাকা জিরো হয়ে যাবে
             
             if (newStatus === 'verified') {
-                cStatus = 'pending';
+                cStatus = 'pending'; // পেন্ডিং ওয়ালেটে যোগ হবে
             } else if (newStatus === 'visa_success' || newStatus === 'student_paid') {
-                cStatus = 'ready';
+                cStatus = 'ready'; // ফাইনাল ব্যালেন্সে যোগ হবে
+            } else if (newStatus === 'visa_rejected' || newStatus === 'doc_missing') {
+                cStatus = 'failed'; // এটি দিলে পার্টনার ড্যাশবোর্ডের ক্যালকুলেশন থেকে এই টাকা বাদ পড়ে যাবে
             }
 
-            // অত্যন্ত গুরুত্বপূর্ণ: কমিশন ভ্যালু নিশ্চিত করা
             const currentComm = appData.commission || 0;
 
             await updateDoc(appRef, {
                 status: newStatus,
                 commissionStatus: cStatus,
-                commission: Number(currentComm), // নিশ্চিত করা হচ্ছে এটি Number
+                commission: Number(currentComm),
                 handledBy: staffEmail,
                 updatedAt: serverTimestamp()
             });
 
-            alert("Success! Partner wallet is now updated.");
+            alert(`Status updated to ${newStatus.toUpperCase()}. Wallet synced.`);
             closeSlider();
 
         } catch (e) {
