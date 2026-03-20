@@ -64,13 +64,13 @@
                         <div class="form-group"><label>City</label><input type="text" id="uCity"></div>
                         <div class="form-group"><label>Degree</label>
                             <select id="uDegree">
-                                <option value="Bachelor">Bachelor (Ug)</option>
-                                <option value="Master">Master (Pg)</option>
+                                <option value="Bachelor">Bachelor</option>
+                                <option value="Master">Master</option>
                                 <option value="Foundation">Foundation</option>
                                 <option value="Diploma">Diploma</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>Language Requirement</label>
+                        <div class="form-group"><label>Language Req.</label>
                             <select id="uLanguage">
                                 <option value="IELTS">IELTS</option>
                                 <option value="MOI">MOI</option>
@@ -79,6 +79,7 @@
                                 <option value="None">No Requirement</option>
                             </select>
                         </div>
+                        <div class="form-group"><label>Min Score</label><input type="number" step="0.1" id="uScore" placeholder="Ex: 6.0"></div>
                         <div class="form-group"><label>Semester Fee ($)</label><input type="number" id="uSemFee"></div>
                         <div class="form-group"><label>Partner Comm (%)</label><input type="number" id="uPartPercent"></div>
                         <div class="form-group"><label>Min GPA</label><input type="number" step="0.1" id="uMinCGPA"></div>
@@ -89,7 +90,7 @@
                 <div class="card">
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>University</th><th>Country</th><th>Degree</th><th>Language</th><th>Comm (BDT)</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Country</th><th>Degree</th><th>Lang/Score</th><th>Comm (BDT)</th><th>Action</th></tr></thead>
                             <tbody id="uniTableBody"></tbody>
                         </table>
                     </div>
@@ -98,19 +99,10 @@
 
             <div id="partners" class="section">
                 <div class="card">
-                    <h3><i class="fas fa-user-shield"></i> User Approval & Expiry Control</h3>
+                    <h3>User Approval & Expiry Control</h3>
                     <div class="table-wrapper">
                         <table>
-                            <thead>
-                                <tr>
-                                    <th>User Name / Agency</th>
-                                    <th>Role</th>
-                                    <th>Contact</th>
-                                    <th>Status</th>
-                                    <th>Partner Expiry</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th>User/Agency</th><th>Role</th><th>Contact</th><th>Status</th><th>Expiry</th><th>Actions</th></tr></thead>
                             <tbody id="userTableBody"></tbody>
                         </table>
                     </div>
@@ -120,7 +112,6 @@
             <div id="payouts" class="section">
                 <div class="card"><h3>Closing & Payouts</h3><p>System integrating with Wallet...</p></div>
             </div>
-
         </div>
     </div>
 
@@ -163,9 +154,9 @@
                     uCity: document.getElementById('uCity').value,
                     uDegree: document.getElementById('uDegree').value,
                     uLanguage: document.getElementById('uLanguage').value,
+                    uScore: parseFloat(document.getElementById('uScore').value) || 0,
                     uSemFee: sFee,
                     partnerComm: calculatedComm,
-                    uPartPercent: pPercent,
                     minCGPA: document.getElementById('uMinCGPA').value,
                     createdAt: serverTimestamp()
                 };
@@ -174,12 +165,11 @@
                     saveUniBtn.disabled = true;
                     saveUniBtn.innerText = "Syncing...";
                     await addDoc(collection(db, "universities"), uniData);
-                    alert("University Added & Synced!");
+                    alert("Added Successfully!");
                     location.reload();
                 } catch (e) {
                     alert("Error: " + e.message);
                     saveUniBtn.disabled = false;
-                    saveUniBtn.innerText = "SAVE & SYNC TO PARTNERS";
                 }
             };
         }
@@ -192,7 +182,7 @@
                     <td><b>${u.uName}</b></td>
                     <td>${u.uCountry}</td>
                     <td>${u.uDegree}</td>
-                    <td><span class="status-pill active">${u.uLanguage || 'IELTS'}</span></td>
+                    <td>${u.uLanguage} (${u.uScore})</td>
                     <td>৳${Number(u.partnerComm || 0).toLocaleString()}</td>
                     <td><button class="btn" style="background:var(--danger); color:white;" onclick="deleteUni('${d.id}')">Delete</button></td>
                 </tr>`;
@@ -201,18 +191,17 @@
         });
 
         window.deleteUni = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db, "universities", id)); };
-
+        
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const u = docSnap.data();
                 const id = docSnap.id;
-                const statusClass = u.status || 'pending';
                 html += `<tr>
                     <td><b>${u.fullName || 'User'}</b><br><small>${u.agencyName || 'No Agency'}</small></td>
                     <td>${u.role || 'Partner'}</td>
                     <td>${u.email}</td>
-                    <td><span class="status-pill ${statusClass}">${statusClass.toUpperCase()}</span></td>
+                    <td><span class="status-pill ${u.status || 'pending'}">${(u.status || 'pending').toUpperCase()}</span></td>
                     <td><input type="date" value="${u.expiryDate || ''}" onchange="updateExpiry('${id}', this.value)"></td>
                     <td>
                         <button class="btn" style="background:var(--success); color:white;" onclick="updateStatus('${id}', 'active')">Approve</button>
