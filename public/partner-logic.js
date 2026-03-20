@@ -1,4 +1,4 @@
-/* partner-logic.js - Updated with Fixed Wallet Logic */
+/* partner-logic.js - Updated with Student Contact & Passport No */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -31,7 +31,6 @@ const uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "ihp_upload");
-    
     try {
         const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", {
             method: "POST", 
@@ -39,10 +38,7 @@ const uploadToCloudinary = async (file) => {
         });
         const data = await res.json();
         return data.secure_url || "";
-    } catch (e) { 
-        console.error("Upload Error:", e);
-        return ""; 
-    }
+    } catch (e) { return ""; }
 };
 
 // --- University Search & Apply ---
@@ -89,22 +85,18 @@ window.openApply = (name, comm) => {
     document.getElementById('applyModal').style.display = 'flex';
 };
 
-// --- Application Submission ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const sName = document.getElementById('appSName').value;
     const sPhone = document.getElementById('appSPhone').value;
     const sPass = document.getElementById('appSPass').value;
     if(!sName || !sPass) return alert("Required fields missing!");
-    
     const btn = document.getElementById('submitAppBtn');
     btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
-
     try {
         const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
         const u2 = await uploadToCloudinary(document.getElementById('fileLang').files[0]);
         const u3 = await uploadToCloudinary(document.getElementById('filePass').files[0]);
         const u4 = await uploadToCloudinary(document.getElementById('fileOther').files[0]);
-
         await addDoc(collection(db, "applications"), {
             studentName: sName,
             studentPhone: sPhone,
@@ -113,7 +105,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
             commission: window.selectedUni.comm,
             partnerEmail: userEmail,
             status: 'pending', 
-            commissionStatus: 'waiting', // Initial status
+            commissionStatus: 'waiting',
             docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
@@ -132,7 +124,7 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & Tracking (Fixed Logic) ---
+// --- Live Wallet & Tracking (Update: Added Contact & Passport Column) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; 
     let finalWallet = 0;   
@@ -141,45 +133,35 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     snap.forEach(dSnap => {
         const d = dSnap.data();
         const comm = Number(d.commission) || 0;
-        const commStatus = d.commissionStatus || 'waiting'; // Using commissionStatus from Compliance
+        const commStatus = d.commissionStatus || 'waiting';
         
-        // --- Wallet Logic: Linked to Compliance commissionStatus ---
-        if(commStatus === 'pending') {
-            pendingWallet += comm; // Verified হলে এখানে যোগ হবে
-        } 
-        else if(commStatus === 'ready') {
-            finalWallet += comm;   // Student Paid হলে এখানে আসবে
-        }
+        if(commStatus === 'pending') { pendingWallet += comm; } 
+        else if(commStatus === 'ready') { finalWallet += comm; }
 
         let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
-        
-        // Document Links
         const docs = d.docs || {};
         let docLinks = "";
         if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="text-decoration:none; margin-right:5px;">📄Acad</a>`;
         if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="text-decoration:none; margin-right:5px;">🆔Pass</a>`;
-        if(!docLinks) docLinks = "No Docs";
 
+        // Notun Column er Row Content
         trackHtml += `
             <tr>
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
-                <td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'PENDING').toUpperCase()}</span></td>
-                <td>${docLinks}</td>
+                <td>${d.studentPhone || 'N/A'}</td> <td>${d.passportNo || 'N/A'}</td>  <td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'PENDING').toUpperCase()}</span></td>
+                <td>${docLinks || 'No Docs'}</td>
                 <td>${dateStr}</td>
             </tr>`;
     });
 
-    // Update Tables
     const homeBody = document.getElementById('homeTrackingBody');
     const sidebarBody = document.getElementById('sidebarTrackingBody');
-    if(homeBody) homeBody.innerHTML = trackHtml || "<tr><td colspan='4' align='center'>No records</td></tr>";
-    if(sidebarBody) sidebarBody.innerHTML = trackHtml || "<tr><td colspan='4' align='center'>No records</td></tr>";
+    if(homeBody) homeBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
+    if(sidebarBody) sidebarBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
 
-    // Update Wallet UI
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     
-    // Enable/Disable Withdrawal Button
     if(document.getElementById('wdBtn')) {
         document.getElementById('wdBtn').disabled = (finalWallet <= 0);
         document.getElementById('wdBtn').style.opacity = (finalWallet <= 0) ? "0.5" : "1";
