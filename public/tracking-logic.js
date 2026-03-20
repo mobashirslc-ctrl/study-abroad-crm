@@ -53,7 +53,7 @@ document.getElementById('trackBtn').addEventListener('click', () => {
 
                 // --- ⏱ TIME DURATION & ESTIMATE LOGIC ---
                 let estimateText = "Processing your documents...";
-                let duration = "2-3 Days"; // Default
+                let duration = "2-3 Days";
 
                 if (rawStatus.includes("PENDING")) {
                     estimateText = "Initial screening and document verification.";
@@ -64,9 +64,6 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                 } else if (rawStatus.includes("VISA") || rawStatus.includes("EMBASSY")) {
                     estimateText = "Visa file is under embassy processing.";
                     duration = "15-21 Days";
-                } else if (rawStatus.includes("SUCCESS")) {
-                    estimateText = "Process completed. Best of luck!";
-                    duration = "Done";
                 }
 
                 // --- 🖥️ UI RENDERING (LARGE & PURPLE) ---
@@ -75,20 +72,27 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                         <div class="info-row"><span class="label">STUDENT</span> <span class="val">${d.studentName || 'N/A'}</span></div>
                         <div class="info-row"><span class="label">PASSPORT</span> <span class="val">${d.passportNo || 'N/A'}</span></div>
                     </div>
+
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(162, 155, 254, 0.05); border-radius: 15px; border: 1px dashed rgba(162, 155, 254, 0.3);">
+                        <div style="font-size: 10px; color: #a29bfe; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">OFFICIAL PARTNER</div>
+                        <div style="font-size: 14px; font-weight: bold; color: #fff;">${d.partnerName || 'Authorized SSC Partner'}</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px;">📞 ${d.partnerPhone || 'Contact Agency'}</div>
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px;">📍 ${d.partnerAddress || 'Bangladesh Office'}</div>
+                    </div>
                     
-                    <div style="margin-top:25px; text-align:center; padding:20px; background:rgba(162, 155, 254, 0.1); border:1px solid rgba(162, 155, 254, 0.4); border-radius:20px;">
-                        <div style="font-size:11px; opacity:0.7; color:#a29bfe; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
+                    <div style="margin-top:20px; text-align:center; padding:20px; background:rgba(46, 204, 113, 0.1); border:1px solid #2ecc71; border-radius:20px;">
+                        <div style="font-size:11px; color:#2ecc71; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
                         <div style="font-size:24px; font-weight:900; color:#2ecc71; margin-top:5px;">${rawStatus}</div>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <div style="flex: 1; padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 10px; color: #3498db; font-weight: bold;">TIME PERIOD</div>
-                            <div style="font-size: 15px; font-weight: bold; color: #fff; margin-top: 5px;">${duration}</div>
+                        <div style="flex: 1; padding: 12px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 9px; color: #3498db; font-weight: bold;">TIME PERIOD</div>
+                            <div style="font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px;">${duration}</div>
                         </div>
-                        <div style="flex: 2; padding: 15px; background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 12px;">
-                            <div style="font-size: 10px; color: #f1c40f; font-weight: bold;">NEXT STEP IDEA</div>
-                            <div style="font-size: 12px; color: #fff; margin-top: 5px;">${estimateText}</div>
+                        <div style="flex: 1.5; padding: 12px; background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 12px;">
+                            <div style="font-size: 9px; color: #f1c40f; font-weight: bold;">NEXT STEP IDEA</div>
+                            <div style="font-size: 11px; color: #fff; margin-top: 4px;">${estimateText}</div>
                         </div>
                     </div>
                 `;
