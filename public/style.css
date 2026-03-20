@@ -49,16 +49,8 @@ footer { text-align: center; padding: 20px; border-top: 1px solid var(--border);
 
 /* --- PRINT LOGIC --- */
 #printArea { display: none; }
-
 @media print {
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { 
-        display: block !important; 
-        position: absolute; 
-        left: 0; 
-        top: 0; 
-        width: 100%; 
-    }
-    @page { margin: 0; }
+    body { background: white !important; color: black !important; }
+    .sidebar, .wrapper, .modal, .top-bar, footer { display: none !important; }
+    #printArea { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
 }
