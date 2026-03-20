@@ -6,12 +6,11 @@
     <title>SSC Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- 🎨 DEEP PURPLE GLASS THEME (Reference 1089.jpg) --- */
+        /* --- 🎨 DEEP PURPLE PREMIUM THEME --- */
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: #090919; 
-            background-image: radial-gradient(circle at 10% 10%, #1e1b4b 0%, transparent 50%),
-                              radial-gradient(circle at 90% 90%, #2d1b4b 0%, transparent 50%);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #090919; /* Very dark purple/black background */
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090919 70%);
             color: #fff;
             display: flex;
             justify-content: center;
@@ -21,132 +20,140 @@
             padding: 20px;
         }
 
-        /* --- 📏 BIGGER LAYOUT --- */
+        /* --- 📏 EXTRA LARGE LAYOUT --- */
         .container {
-            background: rgba(25, 25, 50, 0.75); 
+            background: rgba(25, 25, 50, 0.8); /* Deep Glass Effect */
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            padding: 50px 40px; 
-            border-radius: 35px;
-            border: 2px solid rgba(162, 155, 254, 0.4); /* Glow Purple Border */
-            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+            padding: 60px 50px; /* Maximum padding for a large look */
+            border-radius: 40px;
+            border: 2px solid rgba(162, 155, 254, 0.5); /* Bright Purple Border */
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.9);
             width: 100%;
-            max-width: 500px; /* Boro and attractive size */
+            max-width: 600px; /* Increased width for a bigger appearance */
             text-align: center;
+            box-sizing: border-box;
         }
 
-        /* --- 🖼️ LOGO INTEGRATION (logo.jpeg) --- */
+        /* --- 🖼️ LOGO FIX --- */
         .logo-box {
             margin-bottom: 30px;
         }
         .logo-box img { 
-            width: 180px; /* Boro logo size */
+            width: 220px; /* Large Logo size */
             height: auto;
             display: block;
             margin: 0 auto;
-            filter: drop-shadow(0 0 15px rgba(162, 155, 254, 0.7));
+            /* White background often helps jpeg logos look better on dark themes */
+            background: white; 
+            padding: 10px;
+            border-radius: 15px;
+            filter: drop-shadow(0 0 15px rgba(162, 155, 254, 0.6));
         }
 
         h2 { 
-            font-size: 15px; 
+            font-size: 18px; 
             text-transform: uppercase; 
-            letter-spacing: 4px; 
-            color: #a29bfe; 
-            margin-bottom: 35px;
-            font-weight: bold;
+            letter-spacing: 5px; 
+            color: #a29bfe; /* Vivid Purple */
+            margin-bottom: 40px;
+            font-weight: 800;
         }
 
-        /* Large Inputs */
+        /* --- ⌨️ BIGGER PURPLE INPUTS --- */
         input {
             width: 100%;
-            padding: 18px;
-            margin-bottom: 15px;
-            border-radius: 15px;
-            border: 1px solid rgba(162, 155, 254, 0.3);
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(162, 155, 254, 0.4);
             background: rgba(15, 15, 35, 0.9);
             color: white;
             box-sizing: border-box;
-            font-size: 17px;
+            font-size: 20px; /* Large font for readability */
             transition: 0.3s;
             text-align: center;
         }
         input:focus {
             border-color: #a29bfe;
-            box-shadow: 0 0 20px rgba(162, 155, 254, 0.3);
+            box-shadow: 0 0 30px rgba(162, 155, 254, 0.3);
             outline: none;
         }
 
-        /* Green Tracker Button */
         button {
             width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            padding: 22px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60); /* Green button */
             color: white;
             border: none;
-            border-radius: 15px;
+            border-radius: 20px;
             cursor: pointer;
-            font-weight: 800;
-            font-size: 16px;
+            font-weight: 900;
+            font-size: 18px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
-            transition: 0.2s;
+            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.4);
+            transition: 0.3s;
         }
-        button:active { transform: scale(0.97); }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(46, 204, 113, 0.5);
+        }
 
-        /* --- ✈️ BIMAN (PLANE) FLYING ANIMATION --- */
+        /* --- ✈️ PLANE ANIMATION --- */
         #result {
             display: none;
-            margin-top: 40px;
-            padding: 30px;
+            margin-top: 50px;
+            padding: 35px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            position: relative;
+            border-radius: 30px;
+            border: 1px solid rgba(162, 155, 254, 0.2);
         }
 
         .track-header {
             position: relative;
-            height: 50px;
+            height: 70px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             border-bottom: 1px solid rgba(162, 155, 254, 0.2);
         }
 
         .plane-anim {
             position: absolute;
-            left: -60px;
-            color: #3498db; /* Blue color biman */
-            font-size: 30px;
+            left: -100px;
+            color: #3498db; 
+            font-size: 40px; /* Larger Plane */
             animation: flyAcross 4s infinite linear;
         }
 
         @keyframes flyAcross {
-            0% { left: -20%; opacity: 0; transform: translateY(0); }
+            0% { left: -25%; opacity: 0; transform: translateY(0); }
             15% { opacity: 1; }
-            50% { transform: translateY(-10px) rotate(5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
             85% { opacity: 1; }
-            100% { left: 120%; opacity: 0; }
+            100% { left: 125%; opacity: 0; }
         }
 
         .info-row { 
             display: flex; 
             justify-content: space-between; 
-            font-size: 15px; 
-            margin: 15px 0; 
-            padding-bottom: 10px;
+            font-size: 18px; 
+            margin: 20px 0; 
+            padding-bottom: 15px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .label { color: #a29bfe; font-weight: 600; }
+        .val { font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="logo-box">
-            <img src="logo.jpeg" alt="SSC Logo">
+            <img src="logo.jpeg" alt="Student Career Consultancy">
         </div>
         
-        <h2>Live Application Tracker</h2>
+        <h2>Live Tracker</h2>
         
         <input type="text" id="passportInput" placeholder="Enter Passport Number...">
         <button id="trackBtn">Track Status Now</button>
