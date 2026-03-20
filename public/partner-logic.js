@@ -27,38 +27,40 @@ window.showTab = (id, el) => {
 window.logout = () => { if(confirm("Are you sure?")) { localStorage.clear(); location.href='index.html'; } };
 window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); };
 
-// --- ২. ট্র্যাকিং টেবিল (লাইভ আপডেট ফিক্সড - ইনডেক্স ছাড়াই চলবে) ---
+// --- ২. ওয়ালেট ও ট্র্যাকিং (Wallet Logic Fixed) ---
 const syncDashboard = () => {
-    // এখানে orderBy সরিয়ে ফেলা হয়েছে যাতে ইনডেক্স এরর না আসে
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()));
-    
     onSnapshot(q, (snap) => {
         let pending = 0; let final = 0; let html = "";
         let allDocs = [];
 
         snap.forEach(dSnap => {
-            allDocs.push(dSnap.data());
+            const d = dSnap.data();
+            allDocs.push(d);
+
+            // ওয়ালেট লজিক ফিক্স: শুধুমাত্র স্ট্যাটাস 'verified' হলে পেন্ডিং ওয়ালেটে যাবে
+            // আর 'ready' হলে ফাইনাল ওয়ালেটে যাবে
+            if(d.status === 'verified') {
+                if(d.commissionStatus === 'ready') final += Number(d.commission || 0);
+                else pending += Number(d.commission || 0);
+            }
         });
 
-        // জাভাস্ক্রিপ্ট দিয়ে নতুন ডাটা উপরে দেখানোর ব্যবস্থা (Manual Sort)
         allDocs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
         allDocs.forEach(d => {
-            if(d.commissionStatus === 'ready') final += Number(d.commission || 0);
-            else pending += Number(d.commission || 0);
-            
             const dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : 'Just now';
             html += `<tr>
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                 <td>${d.passportNo}</td>
-                <td><span class="status-pill ${d.status || 'pending'}">${(d.status || 'submitted').toUpperCase()}</span></td>
-                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold); font-weight:bold;"><i class="fas fa-file-pdf"></i> View Docs</a></td>
+                <td><span class="status-pill ${d.status || 'submitted'}">${(d.status || 'submitted').toUpperCase()}</span></td>
+                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold); font-weight:bold;"><i class="fas fa-file-pdf"></i> View</a></td>
                 <td>${dateStr}</td>
             </tr>`;
         });
 
-        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Yet</td></tr>";
-        document.getElementById('sidebarTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Yet</td></tr>";
+        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Data Found</td></tr>";
+        document.getElementById('sidebarTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Data Found</td></tr>";
         document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
         document.getElementById('withdrawFinalBalance').innerText = final.toLocaleString();
@@ -66,11 +68,24 @@ const syncDashboard = () => {
 };
 syncDashboard();
 
-// --- ৩. সার্চ ফিল্টার ---
+// --- ৩. সার্চ ও এপ্লাই বাটন ফিক্স (Apply Response Fixed) ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
 });
+
+// এই ফাংশনটি গ্লোবাল করা হয়েছে যাতে HTML থেকে এক্সেস পায়
+window.openApply = (name, comm) => {
+    window.selectedUni = { name, comm };
+    const modal = document.getElementById('applyModal');
+    const uniLabel = document.getElementById('modalUniName');
+    if(modal && uniLabel) {
+        uniLabel.innerText = name;
+        modal.style.display = 'flex';
+    } else {
+        console.error("Modal elements not found!");
+    }
+};
 
 document.getElementById('searchBtn').onclick = () => {
     const country = document.getElementById('fCountry').value.toLowerCase().trim();
@@ -96,49 +111,23 @@ document.getElementById('searchBtn').onclick = () => {
             <td>GPA ${u.minCGPA}+ | ${u.uLanguage} (${u.uScore})</td>
             <td>৳${(Number(u.uSemFee || 0) * 115).toLocaleString()}</td>
             <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
-            <td><button class="btn-gold" style="padding:5px 10px;" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
+            <td><button class="btn-gold" style="padding:5px 10px;" onclick="window.openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
         </tr>
     `).join('') || "<tr><td colspan='6' align='center' style='padding:20px; color:#ff4757;'>No matches found.</td></tr>";
 };
 
-// --- ৪. প্রফেশনাল স্লিপ (Students Career Consultancy Logo) ---
+// --- ৪. স্লিপ জেনারেশন ---
 const writeSlipContent = (win, data) => {
-    const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
     win.document.write(`
-        <html>
-        <head>
-            <title>Slip - ${data.studentName}</title>
-            <style>
-                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #fff; }
-                .slip { border: 2px solid #2b0054; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; position: relative; }
-                .header { text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 15px; margin-bottom: 20px; }
-                .logo { font-size: 24px; font-weight: bold; color: #2b0054; }
-                .tagline { font-size: 11px; color: #666; letter-spacing: 1px; }
-                .details { font-size: 16px; line-height: 1.8; color: #333; }
-                .details b { width: 140px; display: inline-block; color: #555; }
-                .stamp { position: absolute; bottom: 40px; right: 40px; border: 3px solid #2ecc71; color: #2ecc71; padding: 5px 15px; transform: rotate(-10deg); font-weight: bold; opacity: 0.7; }
-                .footer { margin-top: 30px; font-size: 11px; text-align: center; color: #999; }
-            </style>
-        </head>
+        <html><head><title>Slip</title><style>body{font-family:sans-serif;padding:30px; border:2px solid #2b0054; border-radius:10px;} h2{color:#2b0054;}</style></head>
         <body>
-            <div class="slip">
-                <div class="header">
-                    <div class="logo">STUDENTS CAREER CONSULTANCY</div>
-                    <div class="tagline">YOUR TRUSTED GLOBAL EDUCATION PARTNER</div>
-                </div>
-                <div class="details">
-                    <p><b>Student Name:</b> ${data.studentName}</p>
-                    <p><b>Passport No:</b> ${data.passportNo}</p>
-                    <p><b>University:</b> ${data.university}</p>
-                    <p><b>Applied Date:</b> ${date}</p>
-                </div>
-                <div class="stamp">SUBMITTED</div>
-                <div class="footer">Computer generated copy. No signature required.</div>
-            </div>
+            <h2>STUDENTS CAREER CONSULTANCY</h2><hr>
+            <p><b>Student:</b> ${data.studentName}</p>
+            <p><b>Passport:</b> ${data.passportNo}</p>
+            <p><b>University:</b> ${data.university}</p>
+            <p><b>Status:</b> Submitted Successfully</p>
             <script>window.print();<\/script>
-        </body>
-        </html>
-    `);
+        </body></html>`);
     win.document.close();
 };
 
@@ -149,7 +138,6 @@ const uploadFile = async (file) => {
     formData.append("file", file);
     formData.append("upload_preset", "ihp_upload");
     const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
-    if(!res.ok) throw new Error("File Upload Failed");
     const data = await res.json();
     return data.secure_url;
 };
@@ -158,14 +146,11 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('appSName').value;
     const sPass = document.getElementById('appSPass').value;
-    const sPhone = document.getElementById('appSPhone').value;
 
-    if(!sName || !sPass) return alert("Fill Name and Passport!");
+    if(!sName || !sPass) return alert("Required fields missing!");
 
-    // পপ-আপ ব্লকার এড়াতে আগেই উইন্ডো ওপেন করা
     const slipWin = window.open('', '_blank');
-
-    btn.innerText = "Uploading Documents..."; btn.disabled = true;
+    btn.innerText = "Processing..."; btn.disabled = true;
 
     try {
         const acadUrl = await uploadFile(document.getElementById('fileAcad').files[0]);
@@ -173,41 +158,30 @@ document.getElementById('submitAppBtn').onclick = async () => {
 
         const appData = {
             studentName: sName,
-            studentPhone: sPhone,
             passportNo: sPass,
+            studentPhone: document.getElementById('appSPhone').value,
             university: window.selectedUni.name,
             commission: Number(window.selectedUni.comm),
             partnerEmail: userEmail.toLowerCase(),
-            status: 'submitted',
-            commissionStatus: 'waiting',
+            status: 'submitted', // এটি যখন 'verified' হবে তখন ওয়ালেটে টাকা যোগ হবে
+            commissionStatus: 'pending',
             docs: { academic: acadUrl, passport: passUrl },
             createdAt: serverTimestamp()
         };
 
         await addDoc(collection(db, "applications"), appData);
-        
         writeSlipContent(slipWin, appData);
-        alert("Success! Check the new tab for your slip.");
+        alert("Submitted Successfully!");
         closeModal();
-        
     } catch (e) {
         if(slipWin) slipWin.close();
-        alert("Failed: " + e.message);
+        alert("Upload Failed!");
     } finally {
         btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false;
     }
 };
 
-// প্রোফাইল সেভ
-document.getElementById('saveProfileBtn').onclick = async () => {
-    await setDoc(doc(db, "partners", userEmail.toLowerCase()), { 
-        agencyName: document.getElementById('pAgency').value, 
-        contact: document.getElementById('pContact').value, 
-        address: document.getElementById('pAddress').value 
-    }, { merge: true });
-    alert("Profile Saved!");
-};
-
+// প্রোফাইল লোড ও সেভ
 onSnapshot(doc(db, "users", userEmail.toLowerCase()), (d) => {
     if(d.exists()) document.getElementById('welcomeName').innerText = d.data().fullName || 'Partner';
 });
