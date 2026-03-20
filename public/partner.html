@@ -46,17 +46,8 @@
                     <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
                     <div class="form-grid">
                         <input type="text" id="fCountry" placeholder="Country" class="reg-input">
-                        <select id="fDegree" class="reg-input">
-                            <option value="">Degree</option>
-                            <option value="Ug">Bachelor</option>
-                            <option value="Pg">Master</option>
-                        </select>
-                        <select id="fLangType" class="reg-input">
-                            <option value="">Language</option>
-                            <option value="IELTS">IELTS</option>
-                            <option value="PTE">PTE</option>
-                            <option value="MOI">MOI</option>
-                        </select>
+                        <select id="fDegree" class="reg-input"><option value="">Degree</option><option value="Ug">Bachelor</option><option value="Pg">Master</option></select>
+                        <select id="fLangType" class="reg-input"><option value="">Language</option><option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="MOI">MOI</option></select>
                         <input type="number" id="fGPA" placeholder="GPA" class="reg-input">
                         <input type="number" id="fLangScore" placeholder="Score" class="reg-input">
                         <button id="searchBtn" class="btn-gold">SEARCH</button>
@@ -126,22 +117,6 @@
             </div>
             <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:25px;">CONFIRM ENROLLMENT</button>
             <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer; width:100%;">Close</button>
-        </div>
-    </div>
-
-    <div id="withdrawModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <h3 style="color:var(--gold); margin-bottom:15px;">Withdraw Request</h3>
-            <p id="wdAvailableText" style="font-size:12px; margin-bottom:15px;"></p>
-            <select id="wdMethod" class="reg-input" style="margin-bottom:10px;">
-                <option value="Bkash">Bkash</option>
-                <option value="Nagad">Nagad</option>
-                <option value="Bank">Bank Transfer</option>
-            </select>
-            <textarea id="wdAccountDetails" class="reg-input" placeholder="Account Number & Details" style="margin-bottom:10px; height: 80px;"></textarea>
-            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Amount to Withdraw" style="margin-bottom:15px;">
-            <button id="confirmWdBtn" class="btn-gold" style="width:100%;">SUBMIT REQUEST</button>
-            <button onclick="document.getElementById('withdrawModal').style.display='none'" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer; width:100%;">Cancel</button>
         </div>
     </div>
 
