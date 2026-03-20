@@ -40,13 +40,25 @@
             </div>
             <div id="assessment" class="section">
                 <div class="card">
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
                     <div class="form-grid">
                         <input type="text" id="fCountry" placeholder="Country" class="reg-input">
                         <select id="fDegree" class="reg-input">
-                            <option value="">Degree</option><option value="Ug">Bachelor</option><option value="Pg">Master</option>
+                            <option value="">Degree</option>
+                            <option value="Ug">Bachelor (Ug)</option>
+                            <option value="Pg">Master (Pg)</option>
+                            <option value="Foundation">Foundation</option>
+                            <option value="Diploma">Diploma</option>
+                        </select>
+                        <select id="fLangType" class="reg-input">
+                            <option value="">Language</option>
+                            <option value="IELTS">IELTS</option>
+                            <option value="PTE">PTE</option>
+                            <option value="MOI">MOI</option>
+                            <option value="Duolingo">Duolingo</option>
                         </select>
                         <input type="number" id="fGPA" placeholder="GPA" class="reg-input">
-                        <input type="number" id="fLangScore" placeholder="IELTS Score" class="reg-input">
+                        <input type="number" id="fLangScore" placeholder="Score" class="reg-input">
                         <button id="searchBtn" class="btn-gold">SEARCH</button>
                     </div>
                 </div>
@@ -59,8 +71,22 @@
                     </div>
                 </div>
             </div>
-            <div id="tracking" class="section"><div class="card"><table><thead><tr><th>Student/Uni</th><th>Status</th><th>Date</th></tr></thead><tbody id="sidebarTrackingBody"></tbody></table></div></div>
-            <div id="withdraw" class="section"><div class="card"><button id="wdBtn" class="btn-gold">WITHDRAW NOW</button></div></div>
+            <div id="tracking" class="section">
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Student/Uni</th><th>Contact</th><th>Passport</th><th>Status</th><th>Docs</th><th>Date</th></tr></thead>
+                            <tbody id="sidebarTrackingBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="withdraw" class="section">
+                <div class="card" style="text-align:center;">
+                    <i class="fas fa-wallet" style="font-size:40px; color:var(--gold); margin-bottom:15px;"></i>
+                    <button id="wdBtn" class="btn-gold">WITHDRAW NOW</button>
+                </div>
+            </div>
             <div id="profile" class="section">
                 <div class="card">
                     <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input" style="margin-bottom:10px;">
@@ -73,6 +99,7 @@
             <footer>2026 @ SCC</footer>
         </div>
     </div>
+
     <div id="applyModal" class="modal">
         <div class="modal-content">
             <h2 id="modalUniName" style="color:var(--gold); margin-bottom:15px;"></h2>
@@ -82,14 +109,26 @@
                 <input type="text" id="appSPass" placeholder="Passport No" class="reg-input">
             </div>
             <div class="form-grid" style="margin-top:10px;">
-                <input type="file" id="fileAcad" class="reg-input"><input type="file" id="fileLang" class="reg-input">
-                <input type="file" id="filePass" class="reg-input"><input type="file" id="fileOther" class="reg-input">
+                <div><label style="font-size:10px;">Academic PDF</label><input type="file" id="fileAcad" class="reg-input"></div>
+                <div><label style="font-size:10px;">Language PDF</label><input type="file" id="fileLang" class="reg-input"></div>
+                <div><label style="font-size:10px;">Passport PDF</label><input type="file" id="filePass" class="reg-input"></div>
+                <div><label style="font-size:10px;">Others PDF</label><input type="file" id="fileOther" class="reg-input"></div>
             </div>
             <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:20px;">CONFIRM ENROLLMENT</button>
             <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer;">Cancel</button>
         </div>
     </div>
-    <div id="withdrawModal" class="modal"><div class="modal-content"><h3>Withdraw</h3><input type="number" id="wdReqAmount" class="reg-input"><select id="wdMethod" class="reg-input"><option value="Bkash">Bkash</option></select><textarea id="wdAccountDetails" class="reg-input"></textarea><button id="confirmWdBtn" class="btn-gold">Submit</button></div></div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <h3>Withdraw</h3>
+            <p id="wdAvailableText" style="font-size:12px; margin-bottom:10px;"></p>
+            <select id="wdMethod" class="reg-input" style="margin-bottom:10px;"><option value="Bkash">Bkash</option><option value="Bank">Bank</option></select>
+            <textarea id="wdAccountDetails" class="reg-input" placeholder="Account Details" style="margin-bottom:10px;"></textarea>
+            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Amount">
+            <button id="confirmWdBtn" class="btn-gold" style="width:100%; margin-top:10px;">Submit Request</button>
+        </div>
+    </div>
 
     <div id="printArea">
         <div id="slipContent"></div>
