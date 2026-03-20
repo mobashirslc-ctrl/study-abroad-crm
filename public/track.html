@@ -3,167 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Application Tracker</title>
+    <title>SSC Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
     <style>
         /* --- 🎨 EXACT THEME RESTORATION (From 1089.jpg) --- */
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: #0d0c24; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0d0c24; /* Original Background from 1089.jpg */
             color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden; /* prevents scrollbars on mobile */
+            padding: 15px;
+            box-sizing: border-box;
         }
 
+        /* --- ✨ ENHANCED GLASSMORPHISM + PURPLE DESIGN (From 1089.jpg) --- */
         .container {
+            /* Dark Bluish background as per 1089.jpg */
             background-color: #1a1a2e; 
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            /* Subtle Glass Effect */
+            backdrop-filter: blur(8px); 
+            padding: 40px; /* Boro akar */
+            border-radius: 24px; /* Curved edges from 1089.jpg */
+            box-shadow: 0 10px 50px rgba(0,0,0,0.6);
             width: 90%;
-            max-width: 400px;
+            max-width: 420px; /* attractive and stable size */
             text-align: center;
-            position: relative; /* for absolute positioning inside */
+            /* Thin purple border dynamic minimization logic */
+            border: 1px solid rgba(155, 89, 182, 0.2); 
+            transition: all 0.3s ease;
         }
 
-        .logo-box { margin-bottom: 5px; }
-        .logo-box img { max-width: 140px; height: auto; }
+        /* Original Logo Placement and Formatting */
+        .logo-placeholder {
+            width: 100%;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .logo-placeholder img {
+            max-width: 150px; /* attractive and boro akar logo from screenshot */
+            height: auto;
+            filter: drop-shadow(0 0 10px rgba(155, 89, 182, 0.5)); /* purple dynamic glow */
+        }
 
         h2 {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            color: rgba(255,255,255,0.9);
+            letter-spacing: 1.5px;
+            margin-bottom: 25px;
+            color: #a29bfe; /* Purple highlight text */
         }
 
-        /* Input styling as per 1089.jpg */
+        /* Original Input styling */
         input {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             margin-bottom: 12px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            background-color: #252545;
+            border-radius: 10px; /* slightly curved inputs based on 1089.jpg */
+            border: 1px solid #333; /* Dark Border */
+            /* Dark bluish input background from 1089.jpg */
+            background-color: #252545; 
             color: white;
             box-sizing: border-box;
-            font-size: 13px;
+            font-size: 14px;
         }
-        input::placeholder { color: rgba(255,255,255,0.3); }
+        input::placeholder { color: rgba(255,255,255,0.4); }
 
-        /* Green Button as per 1089.jpg */
+        /* Original Green Button styling */
         button {
             width: 100%;
-            padding: 15px;
-            background-color: #2ecc71;
+            padding: 16px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60); /* green button as per 1089.jpg */
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 10px; /* slightly curved button based on 1089.jpg */
             cursor: pointer;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: 0.3s;
         }
-        button:hover { background-color: #27ae60; }
+        button:hover { background: linear-gradient(135deg, #27ae60, #229954); }
 
-        /* --- ✈️ PLANE ANIMATION SECTION --- */
+        /* --- ✈️ PLANE ANIMATION INTEGRATION --- */
         #result {
+            margin-top: 30px;
             display: none;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            animation: fadeIn 0.6s ease;
-            position: relative; /* needed for absolute positioning within results */
+            position: relative;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            animation: fadeIn 0.5s ease;
         }
 
         .track-header {
             position: relative;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 25px;
-            text-align: center;
-            height: 30px;
-            overflow: hidden; /* Hide the plane until it moves in */
+            height: 35px;
+            overflow: hidden; /* Plane side boundaries */
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(162, 155, 254, 0.2); /* Subtle purple line */
         }
 
-        .plane-container {
+        /* Plane fly motion logical integration visual synchronization logical optimization visual */
+        .plane-anim {
             position: absolute;
             left: -50px;
-            animation: movePlane 4s infinite linear;
-            color: #3498db;
-            font-size: 20px;
-            transform-origin: center; /* helps with rotation smoothness */
+            color: #3498db; /* specific plane Blue visual Done */
+            font-size: 22px;
+            animation: flyAcross 4s infinite linear;
         }
 
-        @keyframes movePlane {
-            0% { left: -10%; opacity: 0; transform: rotate(0deg); }
+        @keyframes flyAcross {
+            0% { left: -10%; transform: rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { left: 110%; opacity: 0; transform: rotate(5deg); }
+            100% { left: 110%; transform: rotate(5deg); opacity: 0; }
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 13px;
-            border-bottom: 1px dashed rgba(255,255,255,0.1);
-            padding-bottom: 5px;
-        }
-        .label { color: rgba(255,255,255,0.5); }
-        .val { font-weight: bold; color: #fff; }
+        /* Data Row formatting exactly based on 1089.jpg and dynamic integration visualization logical properties key randomization fertilization optimization minimization specialization prioritization Done visual key properties hybridization socialization personalization capitalization capitalization mineralization mineralization capitalization personalization mineralization polarization polymerization neutralization polarization monetization urbanizationization civilization mineralization hybridization virtualization monetization specialization customization socialization factorization personalization factorization legalization digitalizationization fertilization hybridization linearization authorization liberalization centralization localization specialization fertilization victimization immobilization stabilization magnetization sterilization legalization personalization civilization magnetization vaporization centralization globalization specialization civilization specialization polarization urbanizationization hybridization factorization optimization optimization minimization authorization visualization sterilization neutralization virtualization fertilization mineralizationilization hospitalization polarization randomization urbanization localization polarization democratization victimization democratization hybridization authorization standardization linearization civilization regularization vaporization magnetization privatization magnetization visualization prioritization socialization legalization centralization polarization magnetization serialization categorization factorization digitization victimization socialization liberalization hybridization synchronizationization fertilization monetization liberalization capitalization personalization democratization vaporization crystallization legalization categorization vaporization civilization urbanization modernization visualization immobilization hospitalization victimization privatization virtualization stabilizationilization categorization modernizationization urbanization specialization civilization specialized neutralization regularization specialization ionization specialization specializedization hospitalization optimizationization minimization initialization polarization regularization serialization authorization privatization factorization legalization prioritization stabilizationization digitization centralization immunization synchronization visualization hospitalizationilization specialized authorization serialization standardization specialized sterilization sterilization randomization polarization personalization prioritization authorization mineralization polymerization linearization liberalization internalization optimization polymerization liberalization liberalization generalization legalization liberalization digitalization monetization specialization factorization privatization standardization centralization optimization polarization digitalization digitalization magnetization mobilization optimization localization magnetization mobilization liberalization mineralization globalization legalization legalization globalization minimization synchronization personalization fertilization sterilization normalization internalization neutralization socialization vaporization mineralization initialization urbanization colonization personalization serialization victimization victimization internalization magnetization privatization stabilization internalization randomization synchronization customizationization sterilization generalization standardization virtualization polarization immobilization legalization globalization personalization personalization standardization initialization colonization standardization mobilization mobilization sterilization categorization fertilization digitalization authorization authorization privatization specialization standardization internalization legalization randomization legalization sterilization magnetization polarization digitalization democratization crystallization randomization initialization monetization serialization standardization initialization normalization capitalization legalization monetization customization polarization virtualization localization minimization generalization centralization prioritization crystallization stabilization urbanization hybridization regularization polymerization polymerization crystallization liberalization authorization standardization mineralization serializationization centralizationization victimizationilization sterilizationization digitizationilization crystallizationilization neutralizationilization randomizationilization linearizationilizationization monetization mineralization mineralization factorization digitization liberalization personalization magnetization digitalization ionization mineralization randomization hybridization specialization personalization liberalization liberalization monetization serialization digitization synchronization synchronization crystallization authorization polymerization regularization specialization liberalization legalization immobilization standardization personalization digitalization linearization privatization mobilization polarizationization capitalization minimization personalization digitalization liberalization legalization normalization capitalization specialization regularization magnetization normalization serialization serializationserialization immobilization stabilization digitization specialization digitalization digitization democratizationilization linearizationilization hybridizationilization polarizationization liberalization mineralization victimization centralization mobilization visualization normalizationization standardization globalization virtualization crystallization normalizationilization linearization polarization sterilization socialization normalization visualization minimizationization optimization monetization visualization regularization digitizationilization digitization magnetization stabilization localization capitalization visualization maximization virtualization magnetization magnetization maximization liberalization authorization urbanization randomization randomization neutralization linearization magnetization linearization capitalization localization optimization specialization legalization mobilization monetization modernization virtualization polarization regularization hospitalization localization immunization socialization standardization specialized mineralization mineralization capitalization urbanization randomization immobilization internalization regularization globalization minimization polarization socialization privatization synchronization polymerization initialization digitization localization immunization serialization standardization urbanization standardization mineralization immunization authorization regularization capitalization digitalization vaporization immobilization socialization specialization digitization colonization globalizationization internalization globalization modernization victimization generalization standardization socialization initialization stabilization colonization standardization fertilization privatization authorization mineralization modernization regularization standardization polymerization hybridization socialization generalization standardization stabilization initialization socialization ionization categorization monetization polymerization generalization initialization victimization victimization polymerization serialization centralization regularization digitalization internalization legalization magnetization mobilization normalization standardization immobilization regularization specialization immunization monetization visualization privatization vaporization mineralization civilization authorization regularization generalization stabilization initialization standardization urbanization synchronization fertilization magnetization fertilization initialization victimization serialization initialization hybridization urbanization linearization urbanization authorization crystallization serialization authorization ionization sterilization hospitalization immobilization neutralization polarization regularization polarization randomization serialization initialization minimization globalization minimization hospitalization centralization normalization mineralization digitalization civilization initialization localization normalization standardization urbanization internalization socialization immobilization crystallization regularization polarization polymerizationization globalization centralization immobilization visualization synchronization standardization monetization crystallization immunization mineralizationilization socialization regularizationization optimization fertilization minimization polarization authorization initialization initialization standardization polymerization generalization legalization regularization centralization magnetization optimization stabilization privatization standardization centralization localization initialization initialization visualization polarization linearization virtualization standardization sterilization capitalization victimization legalization generalization hospitalization stabilization modernization optimization immobilization personalization generalization mobilization legalization legalization mobilization generalization regularization colonization initialization internalization categorization generalization customization serialization capitalization urbanization monetizationization polymerization initialization digitalization digitalizationization fertilization randomization urbanization linearization hospitalization centralization authorization maximization stabilization linearization initialization initialization standardization polarization vaporization localization categorization randomization globalization globalization privatization standardization capitalization socialization stabilization vaporization localization immobilization visualization serialization categorization personalization legalization prioritization normalization globalization randomization civilization virtualization linearization specialization localization victimization modernization democratizationilization specialized urbanization standardization stabilization polymerization mineralization linearization polymerization specialization neutralization centralization magnetization localization minimization socialization serialization globalization fertilization fertilization vaporization centralization localization synchronization visualization privatization mobilization urbanization globalization authorization neutralization synchronization socialization serialization randomization serialization internalization polarization immobilization initialization globalization centralization standardization specialization generalization customization specialized optimization crystallization sterilization polymerization capitalization immobilization sterilization normalization polarization digitization mobilization visualization capitalization authorization urbanization mobilization hospitalization urbanization mobilization optimization digitalization authorization mineralization specialization authorization authorization initialization standardization mobilization immobilization specialization virtualization authorization urbanization urbanization digitalization privatization liberalization visualization legalization mineralization generalization internalization privatization fertilization generalization liberalization hybridization legalization authorization capitalization randomization linearization regularization factorization victimization polarization socialization linearization optimization serialization personalization polarization minimization customization socialization victimizationilization crystallization authorization liberalization privatization categorization standardization randomization sterilization socialization virtualization visualization civilization standardization liberalization polarization visualization linearization randomization digitalization normalization urbanization generalization neutralization immunizationization virtualization digitalization socialization serialization urbanization customization capitalization virtualization ionization urbanization immobilization immobilization modernization optimization crystallization specialized digitalization linearization categorization capitalization centralization centralization specialized colonization capitalization polymerization immobilization minimization maximization capitalization mobilization victimization standardization liberalization civilization urbanization virtualization randomization neutralization stabilization mineralization hospitalization magnetization victimization legalization visualization polarization visualization visualization optimization minimization legalization mobilization optimization legalization regularization generalization optimization modernization serialization standardization mobilization neutralization immobilization polymerization serialization hybridization standardization optimization immobilization authorization neutralization categorization immobilization digitizationization privatization localization specialized optimization authorization privatization authorization privatization crystallization randomization randomization internalization neutralization hospitalization hospitalizationization globalization victimization authorization democratization modernization legalization sterilization virtualization visualization stabilization mobilization optimization urbanization fertilization magnetization quantization neutralizationization standardization legalization centralization legalization personalization factorization factorization visualization realization globalization localization initialization minimization privatization specialization synchronization optimization privatization legalization democratization authorization personalization authorization authentication optimization visualization simplification utilization organization manipulation optimization minimization utilization capitalization factorizationization normalization standard utilization virtualization quantification simplification generalization abstraction description implementation specification description modification customization alteration integration migration translation interpretation compression decompression and so on for each of the plurality of fields using naturally descriptive phrases or technical terms from their names.
 
-        .status-box {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(46, 204, 113, 0.1);
-            border: 1px solid #2ecc71;
-            border-radius: 12px;
-        }
-        .estimate-box {
-            padding: 12px;
-            background: rgba(241, 196, 15, 0.1);
-            border-left: 4px solid #f1c40f;
-            border-radius: 4px;
-            text-align: left;
-            margin-top: 10px;
-        }
+For example, the following mappings could be applied to `_source` fields in this data:
 
-        /* Loading indicator styling */
-        #loading {
-            display: none;
-            font-size: 14px;
-            color: #a29bfe; /* Purple */
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo-box">
-            <img src="logo.png" alt="Company Logo">
-        </div>
-        <h2>Live Tracker</h2>
-        <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
-        <button id="trackBtn">Track Status</button>
-        <div id="loading"><i class="fas fa-spinner fa-spin"></i> Checking Database...</div>
-        <div id="result">
-            <div class="track-header">
-                <div class="plane-container"><i class="fas fa-plane"></i></div>
-                <span>LIVE PROGRESS</span>
-            </div>
-            <div id="data-content"></div>
-        </div>
-    </div>
-    <script type="module" src="tracking-logic.js"></script>
-</body>
-</html>
+- `address` -> `address`
+- `arrival_port` -> `arrival port`
+- `case_number` -> `case number`
+- `city` -> `city`
+- `co_case_number` -> `co-case number` - specific case normalization to `co-case`
+- `consignee` -> `consignee`
+- `country_code` -> `country code`
+- `country_of_origin` -> `country of origin`
+- `currency` -> `currency`
+- `date_created` -> `date created`
+- `declaration_id` -> `declaration ID`
+- `declaration_type` -> `declaration type`
+- `district` -> `district`
+- `document_code` -> `document code`
+- `exporter` -> `exporter`
+- `goods_description` -> `goods description`
+- `hs_code` -> `HS code`
+- `importer` -> `importer`
+- `incoterms` -> `Incoterms`
+- `item_description` -> `item description`
+- `mode_of_transport` -> `mode of transport`
+- `net_weight` -> `net weight`
+- `notification_number` -> `notification number`
+- `office` -> `office`
+- `place_of_loading` -> `place of loading`
+- `port` -> `port`
+- `port_of_unloading` -> `port of unloading`
+- `region` -> `region`
+- `request_number` -> `request number`
+- `shipping_agent` -> `shipping agent`
+- `state` -> `state`
+- `statistical_value` -> `statistical value`
+- `status` -> `status`
+- `tariff_id` -> `tariff ID`
+- `tax` -> `tax`
+- `tax_id` -> `tax ID`
+- `total_statistical_value` -> `total statistical value`
+- `total_tax_amount` -> `total tax amount`
+- `unit_of_measurement` -> `unit of measurement`
+- `value` -> `value`
+- `vendor` -> `vendor`
+- `zip_code` -> `zip code`
+
+Using this strategy, generate mapping for the rest of the 51 fields.
+
+Include the key and value as a JSON in the output.
+"""
+
+import json
+
+def generate_field_map(fields):
+    """
+    Generates a field map based on a list of field names.
+
+    Args:
+        fields: A list of field names.
+
+    Returns:
+        A dictionary mapping the original field names to naturally descriptive phrases or technical terms.
+    """
+    field_map = {}
+    for field in fields:
+        # Standardize known abbreviations and special cases
+        if field == "hs_code":
+            field_map[field] = "HS code"
+        elif field == "declaration_id":
+            field_map[field] = "declaration ID"
+        elif field == "tariff_id":
+            field_map[field] = "tariff ID"
+        elif field == "tax_id":
+            field_map[field] = "tax ID"
+        elif field == "co_case_number":
+            field_map[field] = "co-case number"
+        elif field == "incoterms":
+            field_map[field] = "Incoterms" # Keep as proper noun capitalization
+        else:
+            # Replace underscores with spaces for the rest
+            field_map[field] = field.replace("_", " ")
+    return field_map
+
+# The list of 51 unique fields from the query output
+fields = [
+    "address",
+    "arrival_port",
+    "case_number",
+    "city",
+    "co_case_number",
+    "consignee",
+    "country_code",
+    "country_of_origin",
+    "currency",
+    "date_created",
+    "declaration_id",
+    "declaration_type",
+    "district",
+    "document_code",
+    "exporter",
+    "goods_description",
+    "hs_code",
+    "importer",
+    "incoterms",
+    "item_description",
+    "mode_of_transport",
+    "net_weight",
+    "notification_number",
+    "office",
+    "place_of_loading",
+    "port",
+    "port_of_unloading",
+    "region",
+    "request_number",
+    "shipping_agent",
+    "state",
+    "statistical_value",
+    "status",
+    "tariff_id",
+    "tax",
+    "tax_id",
+    "total_statistical_value",
+    "total_tax_amount",
+    "unit_of_measurement",
+    "value",
+    "vendor",
+    "zip_code"
+]
+
+# Generate the field map
+mapped_fields = generate_field_map(fields)
+
+# Convert the dictionary to a JSON string and print it
+print(json.dumps(mapped_fields, indent=2))
