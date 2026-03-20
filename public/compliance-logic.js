@@ -15,35 +15,33 @@ const db = getFirestore(app);
 
 // সেশন থেকে ডাটা নেওয়া
 const staffEmail = localStorage.getItem('userEmail');
-const staffRole = localStorage.getItem('userRole');
 
-// ১. স্টাফের নাম লোড করার সহজ এবং ফিক্সড পদ্ধতি
+// প্রোটেকশন
+if (!staffEmail) {
+    window.location.href = 'index.html';
+}
+
+// --- ১. স্টাফের নাম লোড করা (FIXED) ---
 async function displayStaffName() {
     const displayElement = document.getElementById('staffDisplay');
-    if (!staffEmail) {
-        window.location.href = 'index.html';
-        return;
+    if (displayElement) {
+        displayElement.innerText = staffEmail.split('@')[0].toUpperCase(); // Default
     }
-    
-    // প্রথমে ইমেইলটি দেখাবে যাতে "Loading" আটকে না থাকে
-    displayElement.innerText = staffEmail.split('@')[0].toUpperCase();
 
     try {
-        // সব ইউজারদের থেকে এই ইমেইলের ইউজারকে খুঁজে বের করা
         onSnapshot(collection(db, "users"), (snap) => {
             snap.forEach(userDoc => {
-                if (userDoc.data().email === staffEmail) {
-                    displayElement.innerText = userDoc.data().fullName || staffEmail;
+                const uData = userDoc.data();
+                if (uData.email && uData.email.toLowerCase() === staffEmail.toLowerCase()) {
+                    if (displayElement) displayElement.innerText = uData.fullName || staffEmail;
                 }
             });
         });
-    } catch (e) {
-        console.error("Staff Name Load Error", e);
-    }
+    } catch (e) { console.error("Name load error:", e); }
 }
 displayStaffName();
 
-// ২. রিভিউ স্লাইডার ওপেন
+// --- ২. রিভিউ স্লাইডার ওপেন (Global Scope) ---
 window.openReview = async (id, sName) => {
     window.currentAppId = id;
     const slider = document.getElementById('reviewSlider');
@@ -54,24 +52,27 @@ window.openReview = async (id, sName) => {
     if (slider) slider.classList.add('active');
 
     if (docArea) {
-        docArea.innerHTML = "Loading Docs...";
-        const snap = await getDoc(doc(db, "applications", id));
-        if (snap.exists()) {
-            const d = snap.data().docs || {};
-            docArea.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:12px;">Academic PDF</a>` : ''}
-                    ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:12px;">Passport PDF</a>` : ''}
-                </div>`;
-        }
+        docArea.innerHTML = "Fetching Documents...";
+        try {
+            const snap = await getDoc(doc(db, "applications", id));
+            if (snap.exists()) {
+                const d = snap.data().docs || {};
+                docArea.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                        ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Academic PDF</a>` : ''}
+                        ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Passport PDF</a>` : ''}
+                    </div>`;
+            } else { docArea.innerHTML = "No documents found."; }
+        } catch (e) { docArea.innerHTML = "Error loading docs."; }
     }
 };
 
 window.closeSlider = () => {
-    document.getElementById('reviewSlider').classList.remove('active');
+    const slider = document.getElementById('reviewSlider');
+    if (slider) slider.classList.remove('active');
 };
 
-// ৩. টেবিল লোড
+// --- ৩. রিয়েল-টাইম অ্যাপ্লিকেশন লিস্ট ---
 onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
     const tbody = document.getElementById('incomingTableBody');
     if (!tbody) return;
@@ -81,63 +82,72 @@ onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), 
         html += `
             <tr>
                 <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
-                <td>${d.passportNo || 'A690234'}</td>
+                <td>${d.passportNo || 'N/A'}</td>
                 <td><i class="fas fa-file-pdf" style="color:var(--accent)"></i></td>
                 <td><span class="status-pill">${(d.status || 'PENDING').toUpperCase()}</span></td>
                 <td><small>${d.handledBy || 'Unclaimed'}</small></td>
                 <td><button class="btn-claim" onclick="openReview('${dSnap.id}', '${d.studentName}')">Review</button></td>
             </tr>`;
     });
-    tbody.innerHTML = html;
-    document.getElementById('loader').style.display = 'none';
+    tbody.innerHTML = html || '<tr><td colspan="6" align="center">No files in queue.</td></tr>';
+    const loader = document.getElementById('loader');
+    if (loader) loader.style.display = 'none';
 });
 
-// ৪. APPLY STATUS & WALLET SYNC (এরর ফিক্সড ভার্সন)
+// --- ৪. APPLY STATUS & WALLET SYNC (Safe & Error-Proof Version) ---
 const updateBtn = document.getElementById('updateStatusBtn');
 if (updateBtn) {
     updateBtn.onclick = async () => {
         const newStatus = document.getElementById('statusSelect').value;
         const appId = window.currentAppId;
 
-        if (!appId) return alert("Select a file first!");
+        if (!appId) return alert("Please select an application first!");
 
-        updateBtn.innerText = "Processing...";
+        updateBtn.innerText = "Syncing...";
         updateBtn.disabled = true;
 
         try {
             const appRef = doc(db, "applications", appId);
             const appSnap = await getDoc(appRef);
             
-            if (!appSnap.exists()) throw new Error("Application data not found!");
+            if (!appSnap.exists()) throw new Error("Application records missing!");
             const appData = appSnap.data();
 
-            // মেইন আপডেট
+            // ১. মেইন স্ট্যাটাস আপডেট
             await updateDoc(appRef, {
                 status: newStatus,
                 handledBy: staffEmail,
                 updatedAt: serverTimestamp()
             });
 
-            // ওয়ালেট সিঙ্ক (শুধুমাত্র ভেরিফাইড হলে)
-            if (newStatus === 'verified' || newStatus === 'visa_success') {
-                const partnerEmail = appData.partnerEmail;
-                const commission = Number(appData.commission || 0);
+            // ২. ওয়ালেট সিঙ্ক লজিক
+            const successTriggers = ['verified', 'visa_success', 'student_paid'];
+            if (successTriggers.includes(newStatus.toLowerCase())) {
+                
+                // আইডি না থাকলে অল্টারনেট ইমেইল ব্যবহারের চেষ্টা
+                const partnerKey = appData.partnerUid || appData.partnerEmail;
 
-                // ইমেইল দিয়ে পার্টনারকে খুঁজে বের করা (indexOf এরর এড়াতে)
-                const userQuery = await getDoc(doc(db, "users", appData.partnerUid || "no-id"));
-                if (userQuery.exists()) {
-                    const currentBal = Number(userQuery.data().walletBalance || 0);
-                    await updateDoc(doc(db, "users", userQuery.id), {
-                        walletBalance: currentBal + commission
-                    });
+                if (partnerKey) {
+                    const commission = Number(appData.commission || 0);
+                    const pRef = doc(db, "users", partnerKey);
+                    const pSnap = await getDoc(pRef);
+
+                    if (pSnap.exists()) {
+                        const currentBal = Number(pSnap.data().walletBalance || 0);
+                        await updateDoc(pRef, {
+                            walletBalance: currentBal + commission
+                        });
+                        console.log("Wallet synced!");
+                    }
                 }
             }
 
-            alert("Status Updated Successfully!");
+            alert("Update Successful!");
             closeSlider();
+
         } catch (e) {
-            console.error(e);
-            alert("Update Success with Wallet Note: " + e.message);
+            console.error("Sync Error:", e);
+            alert("Updated with sync note: " + e.message);
             closeSlider();
         } finally {
             updateBtn.innerText = "APPLY STATUS & SYNC WALLET";
@@ -146,8 +156,11 @@ if (updateBtn) {
     };
 }
 
-// ৫. লগআউট
-document.getElementById('logoutBtn').onclick = () => {
-    localStorage.clear();
-    window.location.href = 'index.html';
-};
+// --- ৫. লগআউট ---
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.onclick = () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    };
+}
