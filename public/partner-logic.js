@@ -133,34 +133,31 @@ function generateSlip(sName, sPass, uni) {
                     <p style="font-size: 9px; color: #d4af37; margin: 5px 0 0 0; font-weight: bold;">STUDENT CAREER CONSULTANT</p>
                 </div>
                 <div style="text-align: right;">
-                    <h2 style="color: #d4af37; margin: 0; font-size: 18px;">ACKNOWLEDGMENT SLIP</h2>
+                    <h2 style="color: #d4af37; margin: 0; font-size: 18px; text-transform: uppercase;">Acknowledgment Slip</h2>
                     <p style="font-size: 11px; margin: 3px 0; color: #666;">Date: ${today}</p>
                 </div>
             </div>
-
             <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">STUDENT INFORMATION</p>
             <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa; width: 35%;">Name:</td><td style="padding: 8px; font-weight: bold;">${sName}</td></tr>
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Passport:</td><td style="padding: 8px; font-weight: bold;">${sPass}</td></tr>
+                <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Phone:</td><td style="padding: 8px; font-weight: bold;">${studentPhone}</td></tr>
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">University:</td><td style="padding: 8px; font-weight: bold; color:#d4af37;">${uni}</td></tr>
             </table>
-
             <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">PROCESSING PARTNER</p>
             <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 25px;">
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa; width: 35%;">Agency:</td><td style="padding: 8px; font-weight: bold;">${pName}</td></tr>
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Contact:</td><td style="padding: 8px; font-weight: bold;">${pContact}</td></tr>
             </table>
-
             <div style="display: flex; align-items: center; background: #fdfaf0; border: 1px solid #f3ebd1; padding: 15px;">
                 <div id="qrcode" style="background: #fff; padding: 5px; border: 1px solid #ddd;"></div>
                 <div style="margin-left: 20px;">
                     <p style="margin: 0; font-size: 13px; font-weight: bold;">Scan to Track Status</p>
-                    <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Track your file on our portal using your Passport Number.</p>
+                    <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Track your file status using your Passport Number.</p>
                 </div>
             </div>
-
             <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #999; border-top: 1px dashed #ccc; padding-top: 15px;">
-                <p>This is a system-generated document. Study Compass Center (SCC) | 2026</p>
+                <p>This is a system-generated document. SCC | 2026</p>
             </div>
         </div>
     `;
@@ -175,7 +172,6 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1500);
 }
 
-// --- All other listeners (Wallet, Tracking, Profile) stay exactly as your running code ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; let finalWallet = 0; let trackHtml = "";
     snap.forEach(dSnap => {
