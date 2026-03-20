@@ -6,10 +6,10 @@
     <title>SSC Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- 🎨 ADVANCED PURPLE GLASSMORPHISM (Based on 1089.jpg) --- */
+        /* --- 🎨 PREMIUM PURPLE THEME (Reference 1089.jpg) --- */
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0d0c24); 
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background: radial-gradient(circle at top, #1e1b4b, #0d0c24); 
             color: #fff;
             display: flex;
             justify-content: center;
@@ -19,111 +19,130 @@
             padding: 20px;
         }
 
+        /* Aro boro layout */
         .container {
-            background: rgba(26, 26, 46, 0.85); /* Deep Glass Effect */
-            backdrop-filter: blur(15px);
-            padding: 40px; /* Boro size */
-            border-radius: 28px;
-            border: 1px solid rgba(162, 155, 254, 0.3); /* Purple Glow Border */
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            background: rgba(30, 30, 60, 0.6); 
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 50px 40px; /* Boro padding */
+            border-radius: 32px;
+            border: 1px solid rgba(162, 155, 254, 0.4); /* Purple Glow */
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8), inset 0 0 20px rgba(162, 155, 254, 0.1);
             width: 100%;
-            max-width: 450px; /* Aro attractive and boro */
+            max-width: 500px; /* Maximum attraction size */
             text-align: center;
+            animation: containerEntry 0.8s ease-out;
         }
 
-        /* SSC Logo Section */
-        .logo-box { margin-bottom: 20px; }
+        @keyframes containerEntry {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Logo add kora hoyeche */
+        .logo-box {
+            margin-bottom: 25px;
+        }
         .logo-box img { 
-            max-width: 160px; 
+            max-width: 180px; /* Aro boro logo */
             height: auto;
-            filter: drop-shadow(0 0 12px rgba(162, 155, 254, 0.6));
+            filter: drop-shadow(0 0 15px rgba(162, 155, 254, 0.7));
         }
 
         h2 { 
-            font-size: 14px; 
+            font-size: 16px; 
             text-transform: uppercase; 
-            letter-spacing: 3px; 
-            color: #a29bfe; /* Purple text */
-            margin-bottom: 30px; 
+            letter-spacing: 4px; 
+            color: #a29bfe; 
+            margin-bottom: 35px;
+            font-weight: 600;
         }
 
-        /* Attractive Inputs */
+        /* Large Purple Inputs */
+        .input-group {
+            margin-bottom: 20px;
+        }
         input {
             width: 100%;
-            padding: 16px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(37, 37, 69, 0.8);
+            padding: 18px;
+            border-radius: 15px;
+            border: 1px solid rgba(162, 155, 254, 0.3);
+            background: rgba(20, 20, 40, 0.8);
             color: white;
             box-sizing: border-box;
-            font-size: 15px;
-            transition: 0.3s;
+            font-size: 16px;
+            transition: 0.4s;
+            text-align: center;
         }
         input:focus {
             border-color: #a29bfe;
-            background: rgba(48, 48, 88, 0.9);
+            background: rgba(30, 30, 60, 1);
+            box-shadow: 0 0 20px rgba(162, 155, 254, 0.3);
             outline: none;
         }
 
+        /* Green Tracker Button */
         button {
             width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60); /* Green button */
+            padding: 18px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
+            font-weight: 800;
+            font-size: 16px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+            transition: 0.3s;
         }
+        button:active { transform: scale(0.98); }
 
-        /* --- ✈️ PLANE ANIMATION (Restored 1069.jpg) --- */
+        /* --- ✈️ ADVANCED PLANE ANIMATION (Reference 1069.jpg) --- */
         #result {
             display: none;
-            margin-top: 30px;
-            animation: fadeIn 0.6s ease;
+            margin-top: 40px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            position: relative;
         }
 
         .track-header {
             position: relative;
-            height: 40px;
+            height: 50px;
             overflow: hidden;
-            margin-bottom: 15px;
-            border-bottom: 1px solid rgba(162, 155, 254, 0.2);
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(162, 155, 254, 0.3);
         }
 
         .plane-anim {
             position: absolute;
-            left: -50px;
-            color: #3498db; /* Plane Blue Color */
-            font-size: 24px;
-            animation: flyAcross 4s infinite linear;
+            left: -60px;
+            color: #3498db; /* Blue Plane */
+            font-size: 28px;
+            animation: flyPath 4s infinite linear;
         }
 
-        @keyframes flyAcross {
-            0% { left: -15%; opacity: 0; transform: rotate(0deg); }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { left: 115%; opacity: 0; transform: rotate(5deg); }
+        @keyframes flyPath {
+            0% { left: -20%; opacity: 0; transform: translateY(0) rotate(0deg); }
+            20% { opacity: 1; }
+            50% { transform: translateY(-10px) rotate(5deg); }
+            80% { opacity: 1; }
+            100% { left: 120%; opacity: 0; transform: translateY(0) rotate(0deg); }
         }
 
-        /* Result Data Styling */
+        /* Status & Data styling */
         .info-row { 
             display: flex; 
             justify-content: space-between; 
-            font-size: 14px; 
-            margin: 12px 0; 
-            padding-bottom: 8px;
+            font-size: 15px; 
+            margin: 15px 0; 
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 10px;
         }
-        .label { color: #a29bfe; font-weight: 500; }
-        .val { font-weight: bold; color: #fff; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .label { color: #a29bfe; }
     </style>
 </head>
 <body>
@@ -135,8 +154,10 @@
         
         <h2>Live Tracker</h2>
         
-        <input type="text" id="passportInput" placeholder="Enter Passport Number...">
-        <button id="trackBtn">Track Status</button>
+        <div class="input-group">
+            <input type="text" id="passportInput" placeholder="Enter Passport Number...">
+        </div>
+        <button id="trackBtn">Track Status Now</button>
 
         <div id="result">
             <div class="track-header">
