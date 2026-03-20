@@ -17,12 +17,14 @@ let unsubscribe = null;
 const passportInput = document.getElementById('passportInput');
 const resultDiv = document.getElementById('result');
 const dataContent = document.getElementById('data-content');
+const loadingDiv = document.getElementById('loading');
 
 // Auto-Clear logic when input is removed
 passportInput.addEventListener('input', () => {
     if (passportInput.value.trim() === "") {
         if (unsubscribe) unsubscribe();
         resultDiv.style.display = "none";
+        loadingDiv.style.display = "none"; // Hide loading too
         dataContent.innerHTML = "";
     }
 });
@@ -33,6 +35,10 @@ document.getElementById('trackBtn').addEventListener('click', () => {
 
     if (unsubscribe) unsubscribe();
 
+    // Show loading indicator
+    loadingDiv.style.display = "block";
+    resultDiv.style.display = "none"; // Hide previous results while loading
+
     const q = query(
         collection(db, "applications"), 
         where("passportNo", "==", inputVal),
@@ -41,6 +47,9 @@ document.getElementById('trackBtn').addEventListener('click', () => {
     );
     
     unsubscribe = onSnapshot(q, (snap) => {
+        // Hide loading indicator regardless of the result
+        loadingDiv.style.display = "none";
+
         if (snap.empty) {
             alert("❌ No Record Found.");
             resultDiv.style.display = "none";
@@ -56,24 +65,32 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                     timeAgo = diffMins < 1 ? "Just Now" : `${diffMins} mins ago`;
                 }
 
-                let estimateText = "Processing your file.";
-                if (rawStatus.includes("PENDING")) estimateText = "Screening: Update in 24-48 hours.";
-                else if (rawStatus.includes("APPLIED")) estimateText = "University review: 7-14 working days.";
-                else if (rawStatus.includes("VISA")) estimateText = "Embassy result: 15-21 days.";
+                let estimateText = "Our team is processing your file.";
+                if (rawStatus.includes("PENDING")) estimateText = "Initial screening: Expect update in 24-48 hours.";
+                else if (rawStatus.includes("APPLIED")) estimateText = "University review: Offer letter takes 7-14 working days.";
+                else if (rawStatus.includes("OFFER")) estimateText = "Payment/CAS verification: 5-7 working days.";
+                else if (rawStatus.includes("VISA")) estimateText = "Embassy processing: Results usually in 15-21 days.";
 
                 dataContent.innerHTML = `
-                    <div class="info-row"><span class="label">Student:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                    <div class="info-row"><span class="label">Student Name:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                    <div class="info-row"><span class="label">Passport No:</span> <span class="val">${d.passportNo}</span></div>
                     <div class="status-box">
                         <div style="font-size:10px; opacity:0.7;">CURRENT STATUS</div>
                         <div style="font-size:18px; font-weight:bold; color:#2ecc71;">${rawStatus}</div>
                         <div style="font-size:11px; color:rgba(255,255,255,0.6);">⏱ ${timeAgo}</div>
                     </div>
                     <div class="estimate-box">
-                        <div style="font-size:11px; font-weight:bold; color:#f1c40f;">📅 EXPECTED UPDATE</div>
+                        <div style="font-size:11px; font-weight:bold; color:#f1c40f;">📅 EXPECTED NEXT STEP</div>
                         <div style="font-size:13px;">${estimateText}</div>
                     </div>
+                    <div style="font-size:11px; color: rgba(255,255,255,0.5); margin-top:15px;">Your application is handled at our central hub.</div>
                 `;
             });
         }
+    }, (error) => {
+        // Handle potential errors like missing indexes
+        loadingDiv.style.display = "none";
+        console.error("Firebase Error:", error);
+        alert("A technical issue occurred. Please try again later.");
     });
 });
