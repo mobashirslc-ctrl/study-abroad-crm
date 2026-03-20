@@ -2,13 +2,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  // Your existing config...
-  apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-  authDomain: "scc-partner-portal.firebaseapp.com",
-  projectId: "scc-partner-portal",
-  storageBucket: "scc-partner-portal.firebasestorage.app",
-  messagingSenderId: "13013457431",
-  appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
+    authDomain: "ihp-portal-v3.firebaseapp.com", 
+    projectId: "ihp-portal-v3", 
+    storageBucket: "ihp-portal-v3.firebasestorage.app", 
+    messagingSenderId: "481157902534", 
+    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7" 
 };
 
 const app = initializeApp(firebaseConfig);
@@ -24,52 +23,64 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
         return;
     }
 
-    resultDiv.style.display = "none"; // Hide previous results
-    
+    // Reset UI
+    resultDiv.style.display = "none";
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+
     try {
+        // Dashboard-e 'passportNo' field use kora hoyeche, tai query-te seta-i thakbe
         const q = query(collection(db, "applications"), where("passportNo", "==", inputVal));
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            alert("❌ No Record Found for this Passport Number.");
+            alert("❌ No Record Found. Please check your Passport Number.");
         } else {
             resultDiv.style.display = "block";
-            dataContent.innerHTML = "";
             
             snap.forEach(doc => {
                 const d = doc.data();
-                const currentStatus = (d.status || "submitted").toLowerCase();
+                const rawStatus = (d.status || 'pending').toLowerCase();
 
-                // Clear active classes from all steps
-                document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                // --- SMART MAPPING LOGIC ---
+                // Dashboard-er status-ke Tracking-er 4-ta step-e map kora:
+                let activeStep = 1; // Default: Submitted
 
-                // Logic to light up the steps
-                if(currentStatus === 'submitted') document.getElementById('step-submitted').classList.add('active');
-                if(currentStatus === 'compliance') {
-                    document.getElementById('step-submitted').classList.add('active');
-                    document.getElementById('step-compliance').classList.add('active');
-                }
-                if(currentStatus === 'processing' || currentStatus === 'university') {
-                    document.getElementById('step-submitted').classList.add('active');
-                    document.getElementById('step-compliance').classList.add('active');
-                    document.getElementById('step-university').classList.add('active');
-                }
-                if(currentStatus === 'approved' || currentStatus === 'visa' || currentStatus === 'outcome') {
-                    document.querySelectorAll('.step').forEach(s => s.classList.add('active'));
+                if (rawStatus === 'pending') {
+                    activeStep = 1; // Step 1: Submitted
+                } else if (rawStatus === 'reviewing' || rawStatus === 'compliance') {
+                    activeStep = 2; // Step 2: Compliance
+                } else if (rawStatus === 'processing' || rawStatus === 'university') {
+                    activeStep = 3; // Step 3: Processing
+                } else if (rawStatus === 'approved' || rawStatus === 'visa_success' || rawStatus === 'outcome') {
+                    activeStep = 4; // Step 4: Outcome
                 }
 
+                // Stepper update kora
+                updateStepperUI(activeStep);
+
+                // Data display kora
                 dataContent.innerHTML = `
-                    <div class="info-row"><span class="label">Name:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
-                    <div class="info-row"><span class="label">University:</span> <span class="val">${d.university || 'N/A'}</span></div>
-                    <div class="info-row"><span class="label">Last Update:</span> <span class="val">${d.lastUpdate || 'Just Now'}</span></div>
-                    <p style="font-size:12px; color:#ddd; margin-top:15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:10px;">
-                        <b>Message:</b> ${d.complianceNote || "Your application is currently being processed by our compliance team."}
-                    </p>
+                    <div class="info-row"><span class="label">Student:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                    <div class="info-row"><span class="label">University:</span> <span class="val">${d.university || 'Under Evaluation'}</span></div>
+                    <div class="info-row"><span class="label">Current Stage:</span> <span class="val" style="color:#2ecc71;">${rawStatus.toUpperCase()}</span></div>
+                    <div style="margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:13px; opacity:0.9;">
+                        <b>Note:</b> ${d.complianceNote || "Your file is being handled by our official processing team. Please wait for the next update."}
+                    </div>
                 `;
             });
         }
     } catch (error) {
         console.error("Error:", error);
-        alert("System error. Please try again later.");
+        alert("Connection Error. Please try again.");
     }
 });
+
+function updateStepperUI(stepNumber) {
+    const steps = ['submitted', 'compliance', 'university', 'outcome'];
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`step-${steps[i-1]}`);
+        if (i <= stepNumber) {
+            el.classList.add('active');
+        }
+    }
+}
