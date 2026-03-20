@@ -14,14 +14,35 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const staffEmail = localStorage.getItem('userEmail');
 
-if (!staffEmail) { window.location.href = 'index.html'; }
+// লোডার সরানোর ফাংশন
+const hideLoader = () => {
+    const loader = document.getElementById('loader'); // আপনার HTML-এ যদি id="loader" থাকে
+    const overlay = document.querySelector('.securing-session-overlay'); // আপনার স্ক্রিনশটের লোডিং টেক্সট ওভারলে
+    if(loader) loader.style.display = 'none';
+    if(overlay) overlay.style.display = 'none';
+};
 
-// --- ১. স্টাফের নাম লোড ---
+if (!staffEmail) { 
+    window.location.href = 'index.html'; 
+}
+
+// --- ১. স্টাফের নাম লোড ও সেশন চেক ---
 async function displayStaffName() {
     const displayElement = document.getElementById('staffDisplay');
-    onSnapshot(doc(db, "users", staffEmail.toLowerCase()), (d) => {
-        if (d.exists() && displayElement) displayElement.innerText = d.data().fullName || staffEmail;
-    });
+    try {
+        onSnapshot(doc(db, "users", staffEmail.toLowerCase()), (d) => {
+            if (d.exists()) {
+                if (displayElement) displayElement.innerText = d.data().fullName || staffEmail;
+            }
+            // প্রোফাইল ডেটা বা সেশন নিশ্চিত হলেই লোডার সরিয়ে দেব
+            hideLoader();
+        }, (error) => {
+            console.error("Session Error:", error);
+            hideLoader(); // এরর হলেও লোডার সরাব যাতে ইউজার ইন্টারফেস দেখতে পায়
+        });
+    } catch (e) {
+        hideLoader();
+    }
 }
 displayStaffName();
 
@@ -57,8 +78,8 @@ window.openReview = async (id, sName) => {
             if (docArea) {
                 docArea.innerHTML = `
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
-                        ${docs.academic ? `<a href="${docs.academic}" target="_blank" class="doc-btn">Academic PDF</a>` : ''}
-                        ${docs.passport ? `<a href="${docs.passport}" target="_blank" class="doc-btn">Passport PDF</a>` : ''}
+                        ${docs.academic ? `<a href="${docs.academic}" target="_blank" class="doc-btn" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold;">Academic PDF</a>` : ''}
+                        ${docs.passport ? `<a href="${docs.passport}" target="_blank" class="doc-btn" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold;">Passport PDF</a>` : ''}
                     </div>`;
             }
         }
@@ -85,13 +106,15 @@ onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), 
             </tr>`;
     });
     tbody.innerHTML = html;
+    // টেবিল ডেটা লোড হয়ে গেলেও লোডার সরিয়ে নিশ্চিত করা
+    hideLoader();
 });
 
-// --- ৪. ড্রপডাউন ভ্যালু অনুযায়ী স্ট্যাটাস আপডেট লজিক ---
+// --- ৪. স্ট্যাটাস আপডেট লজিক ---
 const updateBtn = document.getElementById('updateStatusBtn');
 if (updateBtn) {
     updateBtn.onclick = async () => {
-        const newStatus = document.getElementById('statusSelect').value; // নিশ্চিত করুন HTML-এ value গুলো: 'verified', 'student paid to uni', 'visa rejected'
+        const newStatus = document.getElementById('statusSelect').value;
         const appId = window.currentAppId;
         if (!appId) return alert("Select an application!");
 
