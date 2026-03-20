@@ -28,7 +28,7 @@ window.showTab = (id, el) => {
 window.logout = () => { if(confirm("Are you sure?")) { localStorage.clear(); location.href='index.html'; } };
 window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); };
 
-// --- ২. ডাটা সিঙ্ক ও ট্র্যাকিং (Real-time) ---
+// --- ২. ডাটা সিঙ্ক ও ট্র্যাকিং (রিয়েল-টাইম ফিক্সড) ---
 const syncDashboard = () => {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
@@ -38,12 +38,12 @@ const syncDashboard = () => {
             if(d.commissionStatus === 'ready') final += Number(d.commission || 0);
             else pending += Number(d.commission || 0);
             
-            const dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : '...';
+            const dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : 'Just now';
             html += `<tr>
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                 <td>${d.passportNo}</td>
                 <td><span class="status-pill ${d.status || 'pending'}">${(d.status || 'submitted').toUpperCase()}</span></td>
-                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold);"><i class="fas fa-file-pdf"></i> View</a></td>
+                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold); font-weight:bold;"><i class="fas fa-file-pdf"></i> View Docs</a></td>
                 <td>${dateStr}</td>
             </tr>`;
         });
@@ -91,46 +91,54 @@ document.getElementById('searchBtn').onclick = () => {
     `).join('') || "<tr><td colspan='6' align='center' style='padding:20px; color:#ff4757;'>No matches found.</td></tr>";
 };
 
-// --- ৪. স্লিপ জেনারেশন ফাংশন ---
-const generateSlip = (data) => {
-    const slipWindow = window.open('', '_blank');
-    slipWindow.document.write(`
+// --- ৪. প্রফেশনাল স্লিপ কন্টেন্ট ---
+const writeSlipContent = (win, data) => {
+    const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    win.document.write(`
         <html>
         <head>
-            <title>Submission Slip - ${data.studentName}</title>
+            <title>Acknowledgment - ${data.studentName}</title>
             <style>
-                body { font-family: sans-serif; padding: 40px; color: #333; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #f0f0f0; }
+                .slip { background: white; padding: 30px; border-top: 8px solid #2b0054; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); max-width: 700px; margin: auto; }
                 .header { text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 20px; }
-                .logo { font-size: 24px; font-weight: bold; color: #2b0054; }
-                .details { margin-top: 30px; line-height: 1.8; }
-                .footer { margin-top: 50px; font-size: 12px; color: #666; text-align: center; }
-                .stamp { border: 2px solid #2ecc71; color: #2ecc71; display: inline-block; padding: 5px 15px; transform: rotate(-5deg); font-weight: bold; margin-top: 20px; }
+                .logo { font-size: 26px; font-weight: bold; color: #2b0054; }
+                .tagline { font-size: 12px; color: #666; letter-spacing: 2px; }
+                .title { font-size: 20px; color: #f1c40f; margin-top: 15px; font-weight: bold; }
+                .details { margin-top: 30px; font-size: 16px; line-height: 2; color: #333; }
+                .details b { width: 150px; display: inline-block; color: #555; }
+                .stamp { margin-top: 30px; border: 3px solid #2ecc71; color: #2ecc71; display: inline-block; padding: 10px 25px; transform: rotate(-10deg); font-weight: bold; font-size: 24px; border-radius: 5px; opacity: 0.8; }
+                .footer { margin-top: 40px; font-size: 12px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
             </style>
         </head>
         <body>
-            <div class="header">
-                <div class="logo">SCC GLOBAL ADMISSION PORTAL</div>
-                <h3>Acknowledgment Slip</h3>
+            <div class="slip">
+                <div class="header">
+                    <div class="logo">STUDENTS CAREER CONSULTANCY</div>
+                    <div class="tagline">YOUR TRUSTED GLOBAL EDUCATION PARTNER</div>
+                    <div class="title">ADMISSION ACKNOWLEDGMENT SLIP</div>
+                </div>
+                <div class="details">
+                    <p><b>Student Name:</b> ${data.studentName}</p>
+                    <p><b>Passport No:</b> ${data.passportNo}</p>
+                    <p><b>University:</b> ${data.university}</p>
+                    <p><b>Submission Date:</b> ${date}</p>
+                    <p><b>Partner Email:</b> ${data.partnerEmail}</p>
+                </div>
+                <div style="text-align: right;"><div class="stamp">SUCCESSFUL</div></div>
+                <div class="footer">
+                    This is an electronically generated document. No signature is required.<br>
+                    © 2026 Students Career Consultancy. All Rights Reserved.
+                </div>
             </div>
-            <div class="details">
-                <p><strong>Student Name:</strong> ${data.studentName}</p>
-                <p><strong>Passport No:</strong> ${data.passportNo}</p>
-                <p><strong>University:</strong> ${data.university}</p>
-                <p><strong>Applied By:</strong> ${data.partnerEmail}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-                <div class="stamp">SUBMITTED</div>
-            </div>
-            <div class="footer">
-                This is a computer-generated slip. No signature required.
-            </div>
-            <script>window.print();<\/script>
+            <script>setTimeout(() => { window.print(); }, 500);<\/script>
         </body>
         </html>
     `);
-    slipWindow.document.close();
+    win.document.close();
 };
 
-// --- ৫. ফাইল আপলোড ও অ্যাপ্লিকেশন সাবমিট ---
+// --- ৫. সাবমিট লজিক (Pop-up & Live Table Fix) ---
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
     document.getElementById('modalUniName').innerText = name;
@@ -143,6 +151,7 @@ const uploadFile = async (file) => {
     formData.append("file", file);
     formData.append("upload_preset", "ihp_upload");
     const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
+    if(!res.ok) throw new Error("Upload failed");
     const data = await res.json();
     return data.secure_url;
 };
@@ -154,6 +163,9 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const sPhone = document.getElementById('appSPhone').value;
 
     if(!sName || !sPass) return alert("Student Name and Passport required!");
+
+    // পপ-আপ ব্লকার এড়াতে আগেই উইন্ডো ওপেন করা
+    const slipWin = window.open('', '_blank');
 
     btn.innerText = "Processing Files..."; btn.disabled = true;
 
@@ -174,33 +186,34 @@ document.getElementById('submitAppBtn').onclick = async () => {
             createdAt: serverTimestamp()
         };
 
-        // ডাটাবেসে সেভ হওয়া পর্যন্ত অপেক্ষা করা
+        // ডাটাবেসে সেভ হওয়া পর্যন্ত অপেক্ষা
         await addDoc(collection(db, "applications"), appData);
 
+        // স্লিপ কন্টেন্ট রাইট করা
+        writeSlipContent(slipWin, appData);
+        
         alert("Application Submitted Successfully!");
-        
-        // স্লিপ জেনারেট করা
-        generateSlip(appData);
-        
-        // ফর্ম ক্লিয়ার ও ক্লোজ করা
         closeModal();
+        
+        // ফর্ম ক্লিয়ার
         document.getElementById('appSName').value = "";
         document.getElementById('appSPass').value = "";
         document.getElementById('appSPhone').value = "";
         
     } catch (e) {
-        alert("Upload Failed. Check internet or file size.");
+        if(slipWin) slipWin.close();
+        alert("Upload Failed. Please check internet or file size (Max 5MB).");
         console.error(e);
     } finally {
         btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false;
     }
 };
 
-// প্রোফাইল ও ওয়েলকাম নেম
+// প্রোফাইল আপডেট
 document.getElementById('saveProfileBtn').onclick = async () => {
     await setDoc(doc(db, "partners", userEmail.toLowerCase()), { 
         agencyName: document.getElementById('pAgency').value, 
-        contact: document.getElementById('pContact').value, 
+        contact: document.getElementById('pAgency').value, // contact input id fixed
         address: document.getElementById('pAddress').value 
     }, { merge: true });
     alert("Profile Saved!");
