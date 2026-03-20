@@ -50,7 +50,6 @@ document.getElementById('searchBtn').onclick = () => {
     const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
     const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
     const degree = document.getElementById('fDegree').value;
-    const langType = document.getElementById('fLangType').value; // IELTS, PTE, MOI
 
     const filtered = allUnis.filter(u => {
         const dbCountry = (u.uCountry || "").toLowerCase();
@@ -61,7 +60,6 @@ document.getElementById('searchBtn').onclick = () => {
                (degree === "" || u.uDegree === degree) &&
                (gpa >= minGPA) && 
                (langScore >= minLang);
-               // আপনি চাইলে এখানে langType চেক করার লজিক আরও স্পেসিফিক করতে পারেন
     });
     renderSearch(filtered);
 };
@@ -84,7 +82,7 @@ function renderSearch(data) {
         </tr>`).join('');
 }
 
-// --- Application Submission ---
+// --- Application Submission (UPDATED LOGIC) ---
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
     document.getElementById('modalUniName').innerText = name;
@@ -98,7 +96,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
     
     const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING 4 FILES..."; btn.disabled = true;
+    btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
 
     try {
         const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
@@ -109,7 +107,9 @@ document.getElementById('submitAppBtn').onclick = async () => {
         await addDoc(collection(db, "applications"), {
             studentName: sName, studentPhone: sPhone, passportNo: sPass,
             university: window.selectedUni.name, commission: window.selectedUni.comm,
-            partnerEmail: userEmail, status: 'pending', commissionStatus: 'pending',
+            partnerEmail: userEmail, 
+            status: 'submitted', 
+            commissionStatus: 'waiting', // Default is waiting (0 in wallet)
             docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
@@ -148,27 +148,33 @@ function generateSlip(sName, sPass, uni) {
     }, 400);
 }
 
-// --- Tracking & Realtime Data ---
+// --- Tracking & Realtime Wallet Sync (UPDATED) ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; let finalWallet = 0; let trackHtml = "";
     snap.forEach(dSnap => {
         const d = dSnap.data();
         const comm = Number(d.commission) || 0;
+        
+        // Wallet logic: Only show if staff verified or student paid
         if(d.commissionStatus === 'pending') pendingWallet += comm;
         else if(d.commissionStatus === 'ready') finalWallet += comm;
         
         let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
         const ds = d.docs || {};
-        let docLinks = "";
-        if(ds.academic) docLinks += `<a href="${ds.academic}" target="_blank" style="margin-right:5px; color:var(--gold);">[Acad]</a>`;
-        if(ds.language) docLinks += `<a href="${ds.language}" target="_blank" style="margin-right:5px; color:var(--gold);">[Lang]</a>`;
-        if(ds.passport) docLinks += `<a href="${ds.passport}" target="_blank" style="margin-right:5px; color:var(--gold);">[Pass]</a>`;
-        if(ds.others) docLinks += `<a href="${ds.others}" target="_blank" style="color:var(--gold);">[Other]</a>`;
+        let docLinks = ds.academic ? `<a href="${ds.academic}" target="_blank" style="color:var(--gold);">[View Docs]</a>` : "No Docs";
 
-        trackHtml += `<tr><td><b>${d.studentName}</b><br><small>${d.university}</small></td><td>${d.studentPhone || 'N/A'}</td><td>${d.passportNo || 'N/A'}</td><td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'PENDING').toUpperCase()}</span></td><td>${docLinks || 'No Docs'}</td><td>${dateStr}</td></tr>`;
+        trackHtml += `<tr>
+            <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
+            <td>${d.studentPhone || 'N/A'}</td>
+            <td>${d.passportNo || 'N/A'}</td>
+            <td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'SUBMITTED').toUpperCase()}</span></td>
+            <td>${docLinks}</td>
+            <td>${dateStr}</td>
+        </tr>`;
     });
     document.getElementById('homeTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No Data</td></tr>";
     document.getElementById('sidebarTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No Data</td></tr>";
+    
     globalFinalBalance = finalWallet;
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
