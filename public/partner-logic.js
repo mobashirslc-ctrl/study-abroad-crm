@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, getDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ১. ফায়ারবেস সেটআপ ---
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
     authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -15,107 +14,204 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const userEmail = localStorage.getItem('userEmail');
 
-// প্রোটেকশন
 if (!userEmail) { window.location.href = 'index.html'; }
 
-// --- ২. ইউজার প্রোফাইল লোড (বড় লজিক) ---
-async function fetchPartnerInfo() {
-    const userRef = collection(db, "users");
-    onSnapshot(userRef, (snapshot) => {
-        snapshot.forEach((userDoc) => {
-            const userData = userDoc.data();
-            if (userData.email && userData.email.toLowerCase() === userEmail.toLowerCase()) {
-                const nameDisplay = document.getElementById('partnerNameDisplay');
-                if (nameDisplay) nameDisplay.innerText = userData.fullName || "Partner";
+let globalFinalBalance = 0; 
+
+// --- Navigation & Core UI ---
+window.showTab = (id, el) => {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active-section');
+    if(el) el.classList.add('active');
+};
+window.logout = () => { localStorage.clear(); location.href='index.html'; };
+window.closeModal = () => { 
+    document.getElementById('applyModal').style.display='none'; 
+    document.getElementById('withdrawModal').style.display='none';
+};
+
+// --- Cloudinary Upload Logic ---
+const uploadToCloudinary = async (file) => {
+    if (!file) return ""; 
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "ihp_upload");
+    try {
+        const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        return data.secure_url || "";
+    } catch (e) { return ""; }
+};
+
+// --- University Searching with Filters ---
+let allUnis = [];
+onSnapshot(collection(db, "universities"), (snap) => {
+    allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
+});
+
+document.getElementById('searchBtn').onclick = () => {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
+    const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
+    const degree = document.getElementById('fDegree').value;
+
+    const filtered = allUnis.filter(u => {
+        const dbCountry = (u.uCountry || "").toLowerCase();
+        const minGPA = parseFloat(u.minCGPA) || 0;
+        const minLang = parseFloat(u.minIELTS) || 0;
+        
+        return (country === "" || dbCountry.includes(country)) &&
+               (degree === "" || u.uDegree === degree) &&
+               (gpa >= minGPA) && 
+               (langScore >= minLang);
+    });
+    renderSearch(filtered);
+};
+
+function renderSearch(data) {
+    const container = document.getElementById('uniListContainer');
+    document.getElementById('searchResultArea').style.display = 'block';
+    if(data.length === 0) {
+        container.innerHTML = "<tr><td colspan='6' align='center'>No University Found</td></tr>";
+        return;
+    }
+    container.innerHTML = data.map(u => `
+        <tr>
+            <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
+            <td>${u.uDegree}</td>
+            <td>GPA ${u.minCGPA}+ | IELTS ${u.minIELTS}+</td>
+            <td>৳${(Number(u.uSemFee || 0) * 115).toLocaleString()}</td>
+            <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
+            <td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
+        </tr>`).join('');
+}
+
+// --- Application Submission ---
+window.openApply = (name, comm) => {
+    window.selectedUni = { name, comm };
+    document.getElementById('modalUniName').innerText = name;
+    document.getElementById('applyModal').style.display = 'flex';
+};
+
+document.getElementById('submitAppBtn').onclick = async () => {
+    const sName = document.getElementById('appSName').value;
+    const sPhone = document.getElementById('appSPhone').value;
+    const sPass = document.getElementById('appSPass').value;
+    if(!sName || !sPass) return alert("Required fields missing!");
+    
+    const btn = document.getElementById('submitAppBtn');
+    btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
+
+    try {
+        const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
+        const u2 = await uploadToCloudinary(document.getElementById('fileLang').files[0]);
+        const u3 = await uploadToCloudinary(document.getElementById('filePass').files[0]);
+        const u4 = await uploadToCloudinary(document.getElementById('fileOther').files[0]);
+
+        await addDoc(collection(db, "applications"), {
+            studentName: sName, studentPhone: sPhone, passportNo: sPass,
+            university: window.selectedUni.name, commission: Number(window.selectedUni.comm),
+            partnerEmail: userEmail.toLowerCase(), 
+            status: 'submitted', 
+            commissionStatus: 'waiting', 
+            docs: { academic: u1, language: u2, passport: u3, others: u4 },
+            createdAt: serverTimestamp()
+        });
+        
+        alert("Application Submitted Successfully!");
+        location.reload();
+    } catch (e) { 
+        alert("Error!"); 
+        btn.disabled = false; 
+        btn.innerText = "CONFIRM ENROLLMENT"; 
+    }
+};
+
+// --- Tracking & Realtime Wallet Sync ---
+onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase())), (snap) => {
+    let pendingWallet = 0; let finalWallet = 0; let trackHtml = "";
+    
+    // ম্যানুয়ালি সর্ট করা (Indexing Error এড়ানোর জন্য)
+    const sortedApps = snap.docs.sort((a, b) => (b.data().createdAt?.seconds || 0) - (a.data().createdAt?.seconds || 0));
+
+    sortedApps.forEach(dSnap => {
+        const d = dSnap.data();
+        const comm = Number(d.commission) || 0;
+        
+        // ওয়ালেট ক্যালকুলেশন
+        if(d.commissionStatus === 'pending') pendingWallet += comm;
+        else if(d.commissionStatus === 'ready') finalWallet += comm;
+        
+        let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : '...';
+        
+        // ৪টি ফাইলের ভিউ আইকন
+        const docIcons = `
+            <div style="display:flex; gap:8px; justify-content:center;">
+                ${d.docs?.academic ? `<a href="${d.docs.academic}" target="_blank" title="Academic"><i class="fas fa-file-pdf" style="color:#00d2ff;"></i></a>` : ''}
+                ${d.docs?.passport ? `<a href="${d.docs.passport}" target="_blank" title="Passport"><i class="fas fa-file-invoice" style="color:#00d2ff;"></i></a>` : ''}
+                ${d.docs?.language ? `<a href="${d.docs.language}" target="_blank" title="Language"><i class="fas fa-certificate" style="color:#00d2ff;"></i></a>` : ''}
+                ${d.docs?.others ? `<a href="${d.docs.others}" target="_blank" title="Others"><i class="fas fa-folder-plus" style="color:#00d2ff;"></i></a>` : ''}
+            </div>`;
+
+        trackHtml += `<tr>
+            <td><b>${d.studentName}</b><br><small style="color:#888;">${d.university}</small></td>
+            <td>${d.studentPhone || 'N/A'}</td>
+            <td>${d.passportNo || 'N/A'}</td>
+            <td><span class="status-pill ${d.status}">${(d.status || 'SUBMITTED').toUpperCase()}</span></td>
+            <td>${docIcons}</td>
+            <td>${dateStr}</td>
+        </tr>`;
+    });
+
+    document.getElementById('homeTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No Applications Found</td></tr>";
+    
+    globalFinalBalance = finalWallet;
+    document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
+    document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
+    
+    const wdDisplay = document.getElementById('withdrawFinalBalance');
+    if(wdDisplay) wdDisplay.innerText = finalWallet.toLocaleString();
+});
+
+// --- Withdraw Logic ---
+const wdBtn = document.getElementById('wdBtn');
+if(wdBtn) {
+    wdBtn.onclick = () => {
+        document.getElementById('wdAvailableText').innerText = `Available for Withdraw: ৳${globalFinalBalance.toLocaleString()}`;
+        document.getElementById('withdrawModal').style.display = 'flex';
+    };
+}
+
+document.getElementById('confirmWdBtn').onclick = async () => {
+    const amount = Number(document.getElementById('wdReqAmount').value);
+    const method = document.getElementById('wdMethod').value;
+    const details = document.getElementById('wdAccountDetails').value;
+
+    if(amount <= 0 || amount > globalFinalBalance) return alert("Invalid Amount!");
+    if(!details) return alert("Enter account details!");
+
+    await addDoc(collection(db, "withdrawals"), {
+        partnerEmail: userEmail.toLowerCase(), amount, method, details, status: 'pending', createdAt: serverTimestamp()
+    });
+    alert("Withdrawal request sent!");
+    document.getElementById('withdrawModal').style.display = 'none';
+};
+
+// --- Profile & Agency Name Display ---
+(async () => {
+    if(!userEmail) return;
+    onSnapshot(collection(db, "users"), (snap) => {
+        snap.forEach(uDoc => {
+            const u = uDoc.data();
+            if(u.email?.toLowerCase() === userEmail.toLowerCase()) {
+                const welcomeName = document.getElementById('welcomeName');
+                if(welcomeName) welcomeName.innerText = u.fullName || "Partner";
+                
+                // প্রোফাইল ট্যাবে ডাটা বসানো
+                const pAgency = document.getElementById('pAgency');
+                if(pAgency) pAgency.value = u.fullName || "";
             }
         });
     });
-}
-fetchPartnerInfo();
-
-// --- ৩. ওয়ালেট এবং অ্যাপ্লিকেশন ট্র্যাকিং (Full Logic) ---
-function syncPartnerDashboard() {
-    const appRef = collection(db, "applications");
-    // আমরা জাভাস্ক্রিপ্ট দিয়ে সর্ট করছি যাতে ইনডেক্সিং এরর না হয়
-    const q = query(appRef, where("partnerEmail", "==", userEmail.toLowerCase()));
-
-    onSnapshot(q, (snapshot) => {
-        let pendingAmount = 0;
-        let finalAmount = 0;
-        let tableRows = "";
-
-        // ডাটা সর্টিং (নতুনগুলো উপরে)
-        const allApps = [];
-        snapshot.forEach(doc => allApps.push({ id: doc.id, ...doc.data() }));
-        allApps.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-        allApps.forEach((data) => {
-            const commissionValue = Number(data.commission) || 0;
-
-            // ওয়ালেট ক্যালকুলেশন লজিক
-            if (data.commissionStatus === 'pending') {
-                pendingAmount += commissionValue;
-            } else if (data.commissionStatus === 'ready') {
-                finalAmount += commissionValue;
-            }
-
-            // ডেট ফরম্যাটিং
-            let formattedDate = "N/A";
-            if (data.createdAt && data.createdAt.toDate) {
-                const d = data.createdAt.toDate();
-                formattedDate = d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
-            }
-
-            // ৪টি ফাইল ভিউ আইকন লজিক
-            const docIcons = `
-                <div style="display:flex; gap:10px; justify-content:center; align-items:center;">
-                    ${data.docs?.academic ? `<a href="${data.docs.academic}" target="_blank" title="Academic"><i class="fas fa-file-pdf" style="color:#00d2ff; font-size:16px;"></i></a>` : ''}
-                    ${data.docs?.passport ? `<a href="${data.docs.passport}" target="_blank" title="Passport"><i class="fas fa-file-invoice" style="color:#00d2ff; font-size:16px;"></i></a>` : ''}
-                    ${data.docs?.language ? `<a href="${data.docs.language}" target="_blank" title="Language"><i class="fas fa-certificate" style="color:#00d2ff; font-size:16px;"></i></a>` : ''}
-                    ${data.docs?.others ? `<a href="${data.docs.others}" target="_blank" title="Others"><i class="fas fa-folder-plus" style="color:#00d2ff; font-size:16px;"></i></a>` : ''}
-                </div>
-            `;
-
-            // টেবিল রো জেনারেশন
-            tableRows += `
-                <tr>
-                    <td>
-                        <div style="font-weight:600; color:#fff;">${data.studentName}</div>
-                        <div style="font-size:11px; color:#888;">${data.university || 'Not Selected'}</div>
-                    </td>
-                    <td style="color:#eee;">${data.passportNo || 'N/A'}</td>
-                    <td>
-                        <span class="status-pill ${data.status || 'pending'}">
-                            ${(data.status || 'SUBMITTED').toUpperCase()}
-                        </span>
-                    </td>
-                    <td>${docIcons}</td>
-                    <td style="color:#aaa; font-size:12px;">${formattedDate}</td>
-                </tr>
-            `;
-        });
-
-        // UI আপডেট করা
-        const pWallet = document.getElementById('topPending');
-        const fWallet = document.getElementById('topFinal');
-        const trackBody = document.getElementById('homeTrackingBody');
-        const loader = document.getElementById('loader');
-
-        if (pWallet) pWallet.innerText = "৳" + pendingAmount.toLocaleString();
-        if (fWallet) fWallet.innerText = "৳" + finalAmount.toLocaleString();
-        if (trackBody) trackBody.innerHTML = tableRows || "<tr><td colspan='5' align='center' style='padding:30px; color:#666;'>No applications found in your account.</td></tr>";
-        if (loader) loader.style.display = 'none';
-    });
-}
-syncPartnerDashboard();
-
-// --- ৪. লগআউট সিস্টেম ---
-const logoutAction = document.getElementById('logoutBtn');
-if (logoutAction) {
-    logoutAction.addEventListener('click', () => {
-        if (confirm("Are you sure you want to logout?")) {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        }
-    });
-}
+})();
