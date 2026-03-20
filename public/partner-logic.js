@@ -110,7 +110,7 @@ document.getElementById('searchBtn').onclick = () => {
     container.innerHTML = filtered.map(u => `<tr><td><b>${u.uName}</b><br><small>${u.uCountry}</small></td><td>${u.uDegree}</td><td>GPA ${u.minCGPA}+</td><td>৳${(Number(u.uSemFee || 0) * 115).toLocaleString()}</td><td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td><td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td></tr>`).join('') || "<tr><td colspan='6'>No Matches</td></tr>";
 };
 
-// --- ৫. এনরোলমেন্ট ও স্লিপ জেনারেশন ---
+// --- ৫. এনরোলমেন্ট ও স্লিপ জেনারেশন লজিক ---
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
     document.getElementById('modalUniName').innerText = name;
@@ -143,17 +143,21 @@ document.getElementById('submitAppBtn').onclick = async () => {
             createdAt: serverTimestamp()
         });
         
+        // স্লিপ জেনারেট করা
         generateSlip({ sName, sPass, sPhone, uni: window.selectedUni.name, pAgency, pContact, pAddress });
+        
     } catch (e) { alert("Error!"); btn.disabled = false; btn.innerText = "CONFIRM ENROLLMENT"; }
 };
 
 function generateSlip(data) {
     const slipArea = document.getElementById('slipContent');
+    if(!slipArea) return alert("Print Area not found!");
+    
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const trackingLink = `https://study-abroad-crm-nine.vercel.app/track.html?id=${data.sPass}`;
 
     slipArea.innerHTML = `
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; border: 2px solid #d4af37; max-width: 750px; margin: 0 auto; background: #fff; color: #333; line-height: 1.5;">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; border: 2px solid #d4af37; max-width: 750px; margin: 0 auto; background: #fff; color: #333; line-height: 1.5; position: relative; display: block !important;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 15px; margin-bottom: 25px;">
                 <img src="logo.jpeg" style="height: 70px;">
                 <div style="text-align: right;">
@@ -162,6 +166,7 @@ function generateSlip(data) {
                 </div>
             </div>
             <h3 style="text-align: center; text-decoration: underline; margin-bottom: 25px; color: #444;">ADMISSION ACKNOWLEDGMENT SLIP</h3>
+            
             <div style="margin-bottom: 25px;">
                 <h4 style="background: #fdfaf0; padding: 8px; border-left: 4px solid #d4af37; margin-bottom: 10px;">1. STUDENT INFORMATION</h4>
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -170,6 +175,7 @@ function generateSlip(data) {
                     <tr><td style="padding: 6px;">University:</td><td style="padding: 6px; font-weight: bold; color: #d4af37;">${data.uni}</td></tr>
                 </table>
             </div>
+
             <div style="margin-bottom: 25px;">
                 <h4 style="background: #fdfaf0; padding: 8px; border-left: 4px solid #d4af37; margin-bottom: 10px;">2. AUTHORIZED PARTNER DETAILS</h4>
                 <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -178,15 +184,17 @@ function generateSlip(data) {
                     <tr><td style="padding: 6px;">Office Address:</td><td style="padding: 6px;">${data.pAddress}</td></tr>
                 </table>
             </div>
+
             <div style="background: #f9f9f9; padding: 20px; border: 1px dashed #d4af37; display: flex; align-items: center; justify-content: space-between;">
                 <div style="width: 70%;">
                     <h4 style="margin: 0 0 8px 0; color: #d4af37;">3. REAL-TIME TRACKING</h4>
                     <p style="margin: 0; font-size: 12px;">Scan the QR code to track your application status live at:<br>
-                    <span style="color: blue;">study-abroad-crm-nine.vercel.app/track.html</span></p>
-                    <p style="margin-top: 10px; font-size: 11px; color: #d10000; font-style: italic;">* Use your Passport Number to login to the tracking portal.</p>
+                    <span style="color: blue; text-decoration: underline;">study-abroad-crm-nine.vercel.app/track.html</span></p>
+                    <p style="margin-top: 10px; font-size: 11px; color: #d10000; font-style: italic;">* Use your Passport Number to track status.</p>
                 </div>
                 <div id="qrcode_box" style="background: #fff; padding: 8px; border: 1px solid #ddd;"></div>
             </div>
+
             <div style="margin-top: 40px; text-align: center; border-top: 1px solid #eee; padding-top: 15px;">
                 <p style="font-size: 10px; color: #888; margin-bottom: 10px;">This is a computer-generated acknowledgment and does not require a physical signature.</p>
                 <p style="font-size: 12px; font-weight: bold; color: #555;">2026 @ All rights and reserved GORUN Ltd.</p>
@@ -196,7 +204,10 @@ function generateSlip(data) {
 
     setTimeout(() => {
         new QRCode(document.getElementById("qrcode_box"), { text: trackingLink, width: 90, height: 90 });
-        setTimeout(() => { window.print(); location.reload(); }, 1200);
+        setTimeout(() => { 
+            window.print(); 
+            location.reload(); 
+        }, 1200);
     }, 500);
 }
 
