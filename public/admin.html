@@ -8,43 +8,31 @@
     <style>
         :root { --primary: #2b0054; --bg-dark: #070014; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --accent: #f1c40f; --danger: #ff4757; --success: #2ecc71; --blue: #3498db; }
         body { background: linear-gradient(145deg, var(--bg-dark), var(--primary)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar */
         .sidebar { width: 260px; background: rgba(0, 0, 0, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
         .logo-area { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
         .logo-area img { width: 100%; max-height: 50px; background: white; padding: 5px; border-radius: 5px; }
         .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #888; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; text-decoration: none; }
         .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
-        
-        /* Main Area */
         .wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .main { flex-grow: 1; padding: 30px; overflow-y: auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        
-        /* UI Components */
         .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
         .admin-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 15px; }
         .form-group { display: flex; flex-direction: column; gap: 4px; }
         .form-group label { font-size: 0.65rem; color: var(--accent); text-transform: uppercase; }
         input, select, textarea { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; outline: none; font-size: 0.85rem; }
-        
-        /* Tables */
         .table-wrapper { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 0.75rem; background: rgba(0,0,0,0.2); }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        
         .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 11px; }
         .btn-pay { background: var(--accent); color: black; width: 100%; margin-top: 15px; padding: 15px; font-size: 14px; }
-        
         .section { display: none; }
         .active-section { display: block; animation: fadeIn 0.4s ease; }
-        
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .active { background: var(--success); color: white; }
         .pending { background: var(--accent); color: black; }
         .rejected { background: var(--danger); color: white; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -82,10 +70,18 @@
                                 <option value="Diploma">Diploma</option>
                             </select>
                         </div>
-                        <div class="form-group"><label>Semester Fee ($/Unit)</label><input type="number" id="uSemFee"></div>
+                        <div class="form-group"><label>Language Requirement</label>
+                            <select id="uLanguage">
+                                <option value="IELTS">IELTS</option>
+                                <option value="MOI">MOI</option>
+                                <option value="DUOLINGO">Duolingo</option>
+                                <option value="PTE">PTE</option>
+                                <option value="None">No Requirement</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Semester Fee ($)</label><input type="number" id="uSemFee"></div>
                         <div class="form-group"><label>Partner Comm (%)</label><input type="number" id="uPartPercent"></div>
                         <div class="form-group"><label>Min GPA</label><input type="number" step="0.1" id="uMinCGPA"></div>
-                        <div class="form-group"><label>IELTS/MOI</label><input type="text" id="uIelts"></div>
                     </div>
                     <button class="btn btn-pay" id="saveUniBtn">SAVE & SYNC TO PARTNERS</button>
                 </div>
@@ -93,7 +89,7 @@
                 <div class="card">
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>University</th><th>Country</th><th>Degree</th><th>Comm (BDT)</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Country</th><th>Degree</th><th>Language</th><th>Comm (BDT)</th><th>Action</th></tr></thead>
                             <tbody id="uniTableBody"></tbody>
                         </table>
                     </div>
@@ -144,7 +140,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- Navigation ---
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -153,19 +148,13 @@
             document.getElementById('page-title').innerText = el.innerText;
         };
 
-        window.logout = () => { 
-            localStorage.clear();
-            location.href='index.html'; 
-        };
+        window.logout = () => { localStorage.clear(); location.href='index.html'; };
 
-        // --- 1. University Management ---
         const saveUniBtn = document.getElementById('saveUniBtn');
         if (saveUniBtn) {
             saveUniBtn.onclick = async () => {
                 const sFee = Number(document.getElementById('uSemFee').value);
                 const pPercent = Number(document.getElementById('uPartPercent').value);
-                
-                // Calculation: Fee * Percentage * Rate (115)
                 const calculatedComm = (sFee * (pPercent / 100)) * 115;
 
                 const uniData = {
@@ -173,10 +162,11 @@
                     uCountry: document.getElementById('uCountry').value,
                     uCity: document.getElementById('uCity').value,
                     uDegree: document.getElementById('uDegree').value,
+                    uLanguage: document.getElementById('uLanguage').value,
+                    uSemFee: sFee,
                     partnerComm: calculatedComm,
                     uPartPercent: pPercent,
                     minCGPA: document.getElementById('uMinCGPA').value,
-                    ielts: document.getElementById('uIelts').value,
                     createdAt: serverTimestamp()
                 };
 
@@ -185,10 +175,7 @@
                     saveUniBtn.innerText = "Syncing...";
                     await addDoc(collection(db, "universities"), uniData);
                     alert("University Added & Synced!");
-                    // Clear inputs
-                    document.getElementById('uName').value = "";
-                    saveUniBtn.disabled = false;
-                    saveUniBtn.innerText = "SAVE & SYNC TO PARTNERS";
+                    location.reload();
                 } catch (e) {
                     alert("Error: " + e.message);
                     saveUniBtn.disabled = false;
@@ -197,7 +184,6 @@
             };
         }
 
-        // University Table Sync
         onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
             let html = "";
             snap.forEach(d => {
@@ -206,6 +192,7 @@
                     <td><b>${u.uName}</b></td>
                     <td>${u.uCountry}</td>
                     <td>${u.uDegree}</td>
+                    <td><span class="status-pill active">${u.uLanguage || 'IELTS'}</span></td>
                     <td>৳${Number(u.partnerComm || 0).toLocaleString()}</td>
                     <td><button class="btn" style="background:var(--danger); color:white;" onclick="deleteUni('${d.id}')">Delete</button></td>
                 </tr>`;
@@ -213,48 +200,31 @@
             document.getElementById('uniTableBody').innerHTML = html;
         });
 
-        window.deleteUni = async (id) => { 
-            if(confirm("Delete this university?")) await deleteDoc(doc(db, "universities", id)); 
-        };
+        window.deleteUni = async (id) => { if(confirm("Delete?")) await deleteDoc(doc(db, "universities", id)); };
 
-        // --- 2. User Management ---
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const u = docSnap.data();
                 const id = docSnap.id;
                 const statusClass = u.status || 'pending';
-
                 html += `<tr>
                     <td><b>${u.fullName || 'User'}</b><br><small>${u.agencyName || 'No Agency'}</small></td>
-                    <td><span class="status-pill" style="background:var(--glass)">${u.role || 'Partner'}</span></td>
-                    <td>${u.email}<br><small>${u.phone || ''}</small></td>
+                    <td>${u.role || 'Partner'}</td>
+                    <td>${u.email}</td>
                     <td><span class="status-pill ${statusClass}">${statusClass.toUpperCase()}</span></td>
+                    <td><input type="date" value="${u.expiryDate || ''}" onchange="updateExpiry('${id}', this.value)"></td>
                     <td>
-                        <input type="date" value="${u.expiryDate || ''}" 
-                        onchange="updateExpiry('${id}', this.value)" 
-                        style="padding:5px; font-size:10px; background:var(--glass); color:white; border:1px solid var(--border);">
-                    </td>
-                    <td>
-                        <button class="btn" style="background:var(--success); color:white; margin-right:5px;" onclick="updateStatus('${id}', 'active')">Approve</button>
+                        <button class="btn" style="background:var(--success); color:white;" onclick="updateStatus('${id}', 'active')">Approve</button>
                         <button class="btn" style="background:var(--danger); color:white;" onclick="updateStatus('${id}', 'rejected')">Reject</button>
                     </td>
                 </tr>`;
             });
-            document.getElementById('userTableBody').innerHTML = html || '<tr><td colspan="6" align="center">No Users Found</td></tr>';
+            document.getElementById('userTableBody').innerHTML = html;
         });
 
-        window.updateStatus = async (id, status) => {
-            if(confirm(`Set user as ${status}?`)) {
-                await updateDoc(doc(db, "users", id), { status: status });
-                alert("User updated!");
-            }
-        };
-
-        window.updateExpiry = async (id, date) => {
-            await updateDoc(doc(db, "users", id), { expiryDate: date });
-            console.log("Expiry updated");
-        };
+        window.updateStatus = async (id, s) => { await updateDoc(doc(db, "users", id), { status: s }); };
+        window.updateExpiry = async (id, d) => { await updateDoc(doc(db, "users", id), { expiryDate: d }); };
     </script>
 </body>
 </html>
