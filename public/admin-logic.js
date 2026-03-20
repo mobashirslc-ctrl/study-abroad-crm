@@ -1,124 +1,140 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where, getDocs, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+const firebaseConfig = { 
+    apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
+    authDomain: "ihp-portal-v3.firebaseapp.com", 
+    projectId: "ihp-portal-v3", 
+    storageBucket: "ihp-portal-v3.firebasestorage.app", 
+    messagingSenderId: "481157902534", 
+    appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7" 
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
+const staffEmail = localStorage.getItem('userEmail');
 
-// --- ১. ইউনিভার্সিটি ডাটা সেভ করা ---
-const saveBtn = document.getElementById('saveUniBtn');
-if(saveBtn) {
-    saveBtn.onclick = async () => {
-        const data = {
-            universityName: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            courseName: document.getElementById('uCourse').value,
-            degreeType: document.getElementById('uDegree').value,
-            semesterFee: document.getElementById('uSemesterFee').value,
-            partnerComm: document.getElementById('uPartnerComm').value,
-            minGPA: document.getElementById('uMinGPA').value,
-            ieltsO: document.getElementById('uIeltsO').value,
-            gap: document.getElementById('uGap').value,
-            createdAt: serverTimestamp()
-        };
+if (!staffEmail) { window.location.href = 'index.html'; }
 
-        try {
-            await addDoc(collection(db, "universities"), data);
-            alert("University Added!");
-            location.reload();
-        } catch (e) { alert(e.message); }
-    };
+// --- ১. স্টাফের নাম লোড (Realtime) ---
+async function displayStaffName() {
+    const displayElement = document.getElementById('staffDisplay');
+    onSnapshot(collection(db, "users"), (snap) => {
+        snap.forEach(userDoc => {
+            const uData = userDoc.data();
+            if (uData.email && uData.email.toLowerCase() === staffEmail.toLowerCase()) {
+                if (displayElement) displayElement.innerText = uData.fullName || staffEmail;
+            }
+        });
+    });
 }
+displayStaffName();
 
-// --- ২. ইউনিভার্সিটি লিস্ট লোড করা ---
-onSnapshot(query(collection(db, "universities"), orderBy("createdAt", "desc")), (snap) => {
-    const tbody = document.getElementById('uniTableBody');
-    if(!tbody) return;
+// --- ২. স্লাইডার ওপেন (UPDATED FOR 4 FILES) ---
+window.openReview = async (id, sName) => {
+    window.currentAppId = id; 
+    const slider = document.getElementById('reviewSlider');
+    const nameDisplay = document.getElementById('targetStudent');
+    const docArea = document.getElementById('docLinksArea');
+
+    if (nameDisplay) nameDisplay.innerText = sName;
+    if (slider) slider.classList.add('active');
+
+    if (docArea) {
+        docArea.innerHTML = "Fetching Files...";
+        const snap = await getDoc(doc(db, "applications", id));
+        if (snap.exists()) {
+            const d = snap.data().docs || {};
+            docArea.innerHTML = `
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
+                    ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Academic PDF</a>` : ''}
+                    ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Passport PDF</a>` : ''}
+                    ${d.language ? `<a href="${d.language}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Language PDF</a>` : ''}
+                    ${d.others ? `<a href="${d.others}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Other Docs</a>` : ''}
+                </div>`;
+            
+            // যদি কোনো ফাইলই না থাকে
+            if (!d.academic && !d.passport && !d.language && !d.others) {
+                docArea.innerHTML = "<p style='color:#888; text-align:center; font-size:12px;'>No documents found.</p>";
+            }
+        }
+    }
+};
+
+window.closeSlider = () => { document.getElementById('reviewSlider').classList.remove('active'); };
+
+// --- ৩. টেবিল লোড ---
+onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
+    const tbody = document.getElementById('incomingTableBody');
+    if (!tbody) return;
     let html = "";
-    snap.forEach(docSnap => {
-        const u = docSnap.data();
-        html += `<tr>
-            <td>${u.universityName}</td>
-            <td>${u.country}</td>
-            <td>${u.courseName}</td>
-            <td>${u.minGPA}</td>
-            <td><button class="btn" style="background:#ff4757" onclick="deleteUni('${docSnap.id}')">Delete</button></td>
-        </tr>`;
+    snap.forEach(dSnap => {
+        const d = dSnap.data();
+        html += `
+            <tr>
+                <td><b>${d.studentName}</b><br><small style="color:#888;">${d.partnerEmail}</small></td>
+                <td>${d.passportNo || 'N/A'}</td>
+                <td><i class="fas fa-file-pdf" style="color:var(--accent)"></i></td>
+                <td><span class="status-pill">${(d.status || "pending").toUpperCase()}</span></td>
+                <td><small>${d.handledBy || 'Waiting'}</small></td>
+                <td><button class="btn-claim" onclick="openReview('${dSnap.id}', '${d.studentName}')">REVIEW</button></td>
+            </tr>`;
     });
     tbody.innerHTML = html;
+    document.getElementById('loader').style.display = 'none';
 });
 
-window.deleteUni = async (id) => {
-    if(confirm("Delete this university?")) await deleteDoc(doc(db, "universities", id));
-};
+// --- ৪. APPLY STATUS & WALLET SYNC ---
+const updateBtn = document.getElementById('updateStatusBtn');
+if (updateBtn) {
+    updateBtn.onclick = async () => {
+        const newStatus = document.getElementById('statusSelect').value;
+        const appId = window.currentAppId;
 
-// --- ৩. পার্টনার ও স্টাফ ম্যানেজমেন্ট (users কালেকশন থেকে) ---
-// এখানে 'partners' এর বদলে 'users' ব্যবহার করা হয়েছে যাতে রেজিস্ট্রেশন করা ইউজারদের দেখা যায়
-onSnapshot(collection(db, "users"), async (snap) => {
-    const tbody = document.getElementById('partnerTableBody');
-    if(!tbody) return;
-    let html = "";
+        if (!appId) return alert("Please select an application!");
 
-    for (const docSnap of snap.docs) {
-        const p = docSnap.data();
-        const userId = docSnap.id;
+        updateBtn.innerText = "Syncing Wallet...";
+        updateBtn.disabled = true;
 
-        // ফাইল কাউন্ট করা (যদি সে পার্টনার হয়)
-        let fileCount = 0;
-        if(p.role === 'partner') {
-            const q = query(collection(db, "applications"), where("partnerEmail", "==", p.email));
-            const appSnap = await getDocs(q);
-            fileCount = appSnap.size;
+        try {
+            const appRef = doc(db, "applications", appId);
+            const appSnap = await getDoc(appRef);
+            const appData = appSnap.data();
+
+            let cStatus = 'waiting'; 
+            
+            if (newStatus === 'verified') {
+                cStatus = 'pending'; 
+            } else if (newStatus === 'visa_success' || newStatus === 'student_paid') {
+                cStatus = 'ready'; 
+            } else if (newStatus === 'visa_rejected' || newStatus === 'doc_missing') {
+                cStatus = 'failed'; 
+            }
+
+            const currentComm = appData.commission || 0;
+
+            await updateDoc(appRef, {
+                status: newStatus,
+                commissionStatus: cStatus,
+                commission: Number(currentComm),
+                handledBy: staffEmail,
+                updatedAt: serverTimestamp()
+            });
+
+            alert(`Status updated to ${newStatus.toUpperCase()}. Wallet synced.`);
+            closeSlider();
+
+        } catch (e) {
+            alert("Error: " + e.message);
+        } finally {
+            updateBtn.innerText = "APPLY STATUS & SYNC WALLET";
+            updateBtn.disabled = false;
         }
-
-        html += `<tr>
-            <td>${p.fullName || 'N/A'}</td>
-            <td>${p.role ? p.role.toUpperCase() : 'N/A'}</td>
-            <td>${p.email || 'N/A'}</td>
-            <td>
-                <span class="badge" style="background:${p.status === 'active' ? '#2ecc71' : '#f39c12'}">
-                    ${(p.status || 'pending').toUpperCase()}
-                </span>
-            </td>
-            <td><span class="badge" style="background:#3498db">${fileCount} Files</span></td>
-            <td>
-                ${p.status === 'pending' ? 
-                    `<button class="btn" style="background:#2ecc71" onclick="approveUser('${userId}')">Approve</button>` : 
-                    `<button class="btn" style="background:#ff4757" onclick="suspendUser('${userId}')">Suspend</button>`
-                }
-            </td>
-        </tr>`;
-    }
-    tbody.innerHTML = html || '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>';
-});
-
-// --- ৪. ইউজার অ্যাকশন ফাংশনস ---
-window.approveUser = async (id) => {
-    if(confirm("Approve this user?")) {
-        await updateDoc(doc(db, "users", id), { status: 'active' });
-    }
-};
-
-window.suspendUser = async (id) => {
-    if(confirm("Suspend this user?")) {
-        await updateDoc(doc(db, "users", id), { status: 'pending' });
-    }
-};
-
-// --- ৫. লগআউট ---
-const logoutBtn = document.getElementById('logoutAdmin');
-if(logoutBtn) {
-    logoutBtn.onclick = () => {
-        signOut(auth).then(() => location.href = "index.html");
     };
 }
+
+// --- ৫. লগআউট ---
+document.getElementById('logoutBtn').onclick = () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
+};
