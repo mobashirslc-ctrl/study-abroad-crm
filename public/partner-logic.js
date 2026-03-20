@@ -1,4 +1,3 @@
-/* partner-logic.js - Updated with Student Contact & Passport No */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, serverTimestamp, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -14,6 +13,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const userEmail = localStorage.getItem('userEmail');
+
+let globalFinalBalance = 0; // Final balance tracker for withdrawal
 
 // --- Global UI Helpers ---
 window.showTab = (id, el) => {
@@ -124,7 +125,7 @@ function generateSlip(sName, sPass, uni) {
     setTimeout(() => { window.print(); location.reload(); }, 1000);
 }
 
-// --- Live Wallet & Tracking (Update: Added Contact & Passport Column) ---
+// --- Live Wallet & Tracking ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; 
     let finalWallet = 0;   
@@ -144,7 +145,6 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
         if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="text-decoration:none; margin-right:5px;">📄Acad</a>`;
         if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="text-decoration:none; margin-right:5px;">🆔Pass</a>`;
 
-        // Notun Column er Row Content
         trackHtml += `
             <tr>
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
@@ -159,6 +159,7 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     if(homeBody) homeBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
     if(sidebarBody) sidebarBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
 
+    globalFinalBalance = finalWallet; // Update global for withdrawal validation
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     
@@ -168,16 +169,66 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     }
 });
 
-// --- Profile Load/Save ---
+// --- Withdrawal Logic ---
+document.getElementById('wdBtn').onclick = () => {
+    if(globalFinalBalance <= 0) return;
+    document.getElementById('wdAvailableText').innerText = `Your final balance is: ৳ ${globalFinalBalance.toLocaleString()}`;
+    document.getElementById('withdrawModal').style.display = 'flex';
+};
+
+document.getElementById('confirmWdBtn').onclick = async () => {
+    const method = document.getElementById('wdMethod').value;
+    const details = document.getElementById('wdAccountDetails').value;
+    const amount = Number(document.getElementById('wdReqAmount').value);
+
+    if(!details || amount <= 0) return alert("Please enter valid details and amount.");
+    if(amount > globalFinalBalance) return alert("You cannot withdraw more than your balance.");
+
+    const btn = document.getElementById('confirmWdBtn');
+    btn.innerText = "SENDING..."; btn.disabled = true;
+
+    try {
+        await addDoc(collection(db, "withdrawals"), {
+            partnerEmail: userEmail,
+            amount: amount,
+            method: method,
+            accountDetails: details,
+            status: "pending",
+            createdAt: serverTimestamp()
+        });
+        alert("Withdrawal request sent successfully!");
+        document.getElementById('withdrawModal').style.display = 'none';
+        // Reset fields
+        document.getElementById('wdAccountDetails').value = "";
+        document.getElementById('wdReqAmount').value = "";
+    } catch (e) { alert("Error sending request."); }
+    btn.disabled = false; btn.innerText = "SUBMIT REQUEST";
+};
+
+// --- Profile & Subscription Tracking ---
 (async () => {
     if(!userEmail) return;
-    const dSnap = await getDoc(doc(db, "partners", userEmail));
-    if (dSnap.exists()) {
-        const d = dSnap.data();
-        document.getElementById('pAgency').value = d.agencyName || "";
-        document.getElementById('pContact').value = d.contact || "";
-        document.getElementById('pAddress').value = d.address || "";
-    }
+    // Real-time listener for partner profile (Name + Subscription)
+    onSnapshot(doc(db, "partners", userEmail), (dSnap) => {
+        if (dSnap.exists()) {
+            const d = dSnap.data();
+            
+            // Profile fields
+            document.getElementById('pAgency').value = d.agencyName || "";
+            document.getElementById('pContact').value = d.contact || "";
+            document.getElementById('pAddress').value = d.address || "";
+            
+            // Welcome Name
+            document.getElementById('welcomeName').innerText = d.agencyName || "Partner";
+
+            // Subscription Display
+            const status = (d.subscriptionStatus || "Inactive").toUpperCase();
+            const statusEl = document.getElementById('subStatusText');
+            statusEl.innerText = status;
+            statusEl.style.color = status === "ACTIVE" ? "#2ecc71" : "#e74c3c";
+            document.getElementById('subExpiryText').innerText = d.expiryDate || "N/A";
+        }
+    });
 })();
 
 document.getElementById('saveProfileBtn').onclick = async () => {
