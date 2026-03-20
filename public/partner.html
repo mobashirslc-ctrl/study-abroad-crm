@@ -11,10 +11,10 @@
 <body>
     <div class="sidebar">
         <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
-        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home / Refresh</div>
-        <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Smart Assessment</div>
+        <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
+        <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
-        <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Withdraw & Earning</div>
+        <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Earning</div>
         <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</div>
     </div>
     <div class="wrapper">
@@ -24,35 +24,15 @@
         </div>
         <div class="main">
             <div id="home" class="section active-section">
-                <div id="subStatusBox" class="card" style="margin-bottom:20px; border-left: 5px solid var(--gold); background: rgba(212, 175, 55, 0.05);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <p style="font-size:12px; opacity:0.7; margin:0;"><i class="fas fa-id-card"></i> SUBSCRIPTION STATUS</p>
-                            <h3 id="subStatusText" style="margin:5px 0; color: var(--gold);">Checking...</h3>
-                        </div>
-                        <div style="text-align:right;">
-                            <p style="font-size:12px; opacity:0.7; margin:0;"><i class="fas fa-calendar-alt"></i> EXPIRES ON</p>
-                            <p id="subExpiryText" style="font-weight:bold; margin:5px 0;">--/--/--</p>
-                        </div>
-                    </div>
-                </div>
                 <div class="wallet-container">
-                    <div class="wallet-box">
-                        <p style="font-size:12px; opacity:0.7;"><i class="fas fa-clock"></i> PENDING COMMISSION</p>
-                        <h2 id="topPending">৳0</h2>
-                    </div>
-                    <div class="wallet-box">
-                        <p style="font-size:12px; opacity:0.7;"><i class="fas fa-check-circle"></i> FINAL BALANCE</p>
-                        <h2 id="topFinal">৳0</h2>
-                    </div>
+                    <div class="wallet-box"><p>PENDING COMMISSION</p><h2 id="topPending">৳0</h2></div>
+                    <div class="wallet-box"><p>FINAL BALANCE</p><h2 id="topFinal">৳0</h2></div>
                 </div>
                 <div class="card">
-                    <h3 style="margin-bottom:15px; color:var(--gold);">Live Tracking (Recent Files)</h3>
+                    <h3 style="margin-bottom:15px; color:var(--gold);">Recent Applications</h3>
                     <div class="table-wrapper">
                         <table>
-                            <thead>
-                                <tr><th>Student/Uni</th><th>Contact No</th><th>Passport No</th><th>Status</th><th>Documents</th><th>Date</th></tr>
-                            </thead>
+                            <thead><tr><th>Student/Uni</th><th>Contact</th><th>Passport</th><th>Status</th><th>Docs</th><th>Date</th></tr></thead>
                             <tbody id="homeTrackingBody"></tbody>
                         </table>
                     </div>
@@ -60,112 +40,61 @@
             </div>
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
                     <div class="form-grid">
                         <input type="text" id="fCountry" placeholder="Country" class="reg-input">
                         <select id="fDegree" class="reg-input">
-                            <option value="">Degree</option>
-                            <option value="Ug">Bachelor (Ug)</option>
-                            <option value="Pg">Master (Pg)</option>
-                            <option value="Foundation">Foundation</option>
-                            <option value="Diploma">Diploma</option>
-                            <option value="PhD">PhD</option>
+                            <option value="">Degree</option><option value="Ug">Bachelor</option><option value="Pg">Master</option>
                         </select>
-                        <select id="fLangType" class="reg-input">
-                            <option value="">Language</option>
-                            <option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="MOI">MOI</option><option value="Duolingo">Duolingo</option>
-                        </select>
-                        <input type="number" id="fGPA" placeholder="Academic GPA" class="reg-input">
-                        <input type="number" id="fLangScore" placeholder="Score" class="reg-input">
+                        <input type="number" id="fGPA" placeholder="GPA" class="reg-input">
+                        <input type="number" id="fLangScore" placeholder="IELTS Score" class="reg-input">
                         <button id="searchBtn" class="btn-gold">SEARCH</button>
                     </div>
                 </div>
                 <div id="searchResultArea" style="display:none;" class="card">
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>University</th><th>Degree/Intake</th><th>Entry Req</th><th>Fees/BDT</th><th>Commission</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Degree</th><th>Requirement</th><th>Fees</th><th>Commission</th><th>Action</th></tr></thead>
                             <tbody id="uniListContainer"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-            <div id="tracking" class="section">
-                <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Full Application Tracking</h3>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr><th>Student/Uni</th><th>Contact No</th><th>Passport No</th><th>Status</th><th>Documents</th><th>Date</th></tr>
-                            </thead>
-                            <tbody id="sidebarTrackingBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div id="withdraw" class="section">
-                <div class="card">
-                    <h3>Withdrawal Request</h3>
-                    <div style="text-align:center; padding:20px;">
-                        <i class="fas fa-wallet" style="font-size:40px; color:var(--gold); margin-bottom:15px;"></i>
-                        <p style="opacity:0.8;">Request your earned commission to your preferred account.</p>
-                        <button id="wdBtn" class="btn-gold" style="margin-top:20px; padding:10px 40px;" disabled>WITHDRAW NOW</button>
-                        <p id="wdWarning" style="color:var(--danger); font-size:12px; margin-top:10px;">Withdrawal button will be active when final balance > 0.</p>
-                    </div>
-                </div>
-            </div>
+            <div id="tracking" class="section"><div class="card"><table><thead><tr><th>Student/Uni</th><th>Status</th><th>Date</th></tr></thead><tbody id="sidebarTrackingBody"></tbody></table></div></div>
+            <div id="withdraw" class="section"><div class="card"><button id="wdBtn" class="btn-gold">WITHDRAW NOW</button></div></div>
             <div id="profile" class="section">
                 <div class="card">
-                    <h3>Agency Profile</h3>
-                    <div class="form-grid" style="margin-top:20px;">
-                        <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input">
-                        <input type="text" id="pContact" placeholder="Contact No" class="reg-input">
-                        <input type="text" id="pAddress" placeholder="Address" class="reg-input">
-                        <button id="saveProfileBtn" class="btn-gold">SAVE PROFILE</button>
-                    </div>
+                    <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input" style="margin-bottom:10px;">
+                    <input type="text" id="pContact" placeholder="Contact No" class="reg-input" style="margin-bottom:10px;">
+                    <input type="text" id="pAddress" placeholder="Address" class="reg-input" style="margin-bottom:10px;">
+                    <button id="saveProfileBtn" class="btn-gold">SAVE PROFILE</button>
+                    <p style="margin-top:15px;">Status: <span id="subStatusText"></span> | Expires: <span id="subExpiryText"></span></p>
                 </div>
             </div>
-            <footer>2026 @ All rights reserved GORUN LTD.</footer>
+            <footer>2026 @ SCC</footer>
         </div>
     </div>
     <div id="applyModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalUniName" style="color:var(--gold);"></h2>
-            <p style="margin-bottom:20px; opacity:0.8;">Complete student enrollment details</p>
+            <h2 id="modalUniName" style="color:var(--gold); margin-bottom:15px;"></h2>
             <div class="form-grid">
                 <input type="text" id="appSName" placeholder="Student Name" class="reg-input">
-                <input type="text" id="appSPhone" placeholder="Student Phone" class="reg-input">
-                <input type="text" id="appSPass" placeholder="Passport Number" class="reg-input">
+                <input type="text" id="appSPhone" placeholder="Phone" class="reg-input">
+                <input type="text" id="appSPass" placeholder="Passport No" class="reg-input">
             </div>
-            <div class="form-grid" style="margin-top:15px;">
-                <div><label style="font-size:10px;">Academic PDF</label><input type="file" id="fileAcad" class="reg-input"></div>
-                <div><label style="font-size:10px;">Language PDF</label><input type="file" id="fileLang" class="reg-input"></div>
-                <div><label style="font-size:10px;">Passport PDF</label><input type="file" id="filePass" class="reg-input"></div>
-                <div><label style="font-size:10px;">Others PDF</label><input type="file" id="fileOther" class="reg-input"></div>
+            <div class="form-grid" style="margin-top:10px;">
+                <input type="file" id="fileAcad" class="reg-input"><input type="file" id="fileLang" class="reg-input">
+                <input type="file" id="filePass" class="reg-input"><input type="file" id="fileOther" class="reg-input">
             </div>
-            <div style="margin-top:25px; display:flex; gap:15px;">
-                <button id="submitAppBtn" class="btn-gold" style="flex:1;">CONFIRM ENROLLMENT</button>
-                <button onclick="closeModal()" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
-            </div>
+            <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:20px;">CONFIRM ENROLLMENT</button>
+            <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer;">Cancel</button>
         </div>
     </div>
-    <div id="withdrawModal" class="modal">
-        <div class="modal-content" style="max-width:400px;">
-            <h3 style="color:var(--gold); margin-bottom:5px;">Withdraw Request</h3>
-            <p id="wdAvailableText" style="font-size:12px; margin-bottom:20px; opacity:0.7;"></p>
-            <select id="wdMethod" class="reg-input" style="margin-bottom:15px;">
-                <option value="Bkash">Bkash (Personal)</option><option value="Nagad">Nagad (Personal)</option><option value="Rocket">Rocket</option><option value="Bank">Bank Transfer</option>
-            </select>
-            <textarea id="wdAccountDetails" class="reg-input" style="height:70px; margin-bottom:15px;" placeholder="Account Details..."></textarea>
-            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Enter amount">
-            <div style="margin-top:20px; display:flex; gap:10px;">
-                <button id="confirmWdBtn" class="btn-gold" style="flex:1;">SUBMIT REQUEST</button>
-                <button onclick="document.getElementById('withdrawModal').style.display='none'" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
-            </div>
-        </div>
-    </div>
+    <div id="withdrawModal" class="modal"><div class="modal-content"><h3>Withdraw</h3><input type="number" id="wdReqAmount" class="reg-input"><select id="wdMethod" class="reg-input"><option value="Bkash">Bkash</option></select><textarea id="wdAccountDetails" class="reg-input"></textarea><button id="confirmWdBtn" class="btn-gold">Submit</button></div></div>
+
     <div id="printArea">
         <div id="slipContent"></div>
     </div>
+
     <script type="module" src="partner-logic.js"></script>
 </body>
 </html>
