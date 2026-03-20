@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- ⚙️ FIREBASE CONFIGURATION ---
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
     authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -14,6 +15,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const staffEmail = localStorage.getItem('userEmail');
 
+// Session Check
 if (!staffEmail) { window.location.href = 'index.html'; }
 
 const hideLoader = () => {
@@ -21,11 +23,9 @@ const hideLoader = () => {
     if(loader) loader.style.display = 'none';
 };
 
-// --- ১. স্টাফ নাম ও প্রোফাইল ফিক্স ---
+// --- 1. STAFF PROFILE SYNC ---
 async function initStaff() {
     const displayElement = document.getElementById('staffDisplay');
-    
-    // ব্যাকআপ হিসেবে ইমেইল থেকে নাম দেখানো (যদি ডাটাবেস লোড হতে দেরি হয়)
     if (displayElement) displayElement.innerText = staffEmail.split('@')[0].toUpperCase();
 
     try {
@@ -34,7 +34,6 @@ async function initStaff() {
                 const data = d.data();
                 const fullName = data.fullName || staffEmail.split('@')[0].toUpperCase();
                 
-                // ড্যাশবোর্ড ও প্রোফাইল সব জায়গায় নাম সেট করা
                 if (displayElement) displayElement.innerText = fullName;
                 if (document.getElementById('profName')) document.getElementById('profName').value = data.fullName || "";
                 if (document.getElementById('profOrg')) document.getElementById('profOrg').value = data.organization || "";
@@ -48,7 +47,7 @@ async function initStaff() {
     } catch (e) { hideLoader(); }
 }
 
-// --- ২. ইনকামিং টেবিল ও ফাইল লকিং ---
+// --- 2. INCOMING TABLE WITH AGENCY NAME ---
 onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
     const tbody = document.getElementById('incomingTableBody');
     if(!tbody) return;
@@ -59,19 +58,29 @@ onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), 
         const id = dSnap.id;
         const isLocked = d.handledBy && d.handledBy.toLowerCase() !== staffEmail.toLowerCase();
         const handlerName = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'WAITING';
+        
+        // Agency Name Fetch (Merges Partner Name logic)
+        const agencyName = d.partnerName || d.partnerEmail.split('@')[0].toUpperCase();
 
         html += `
-            <tr style="${isLocked ? 'opacity: 0.6;' : ''}">
-                <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
+            <tr style="${isLocked ? 'opacity: 0.7;' : ''}">
+                <td><b>${d.studentName}</b><br><small style="opacity:0.6;">Ref: ${id.slice(-6)}</small></td>
+                
+                <td>
+                    <div style="color:#a29bfe; font-weight:600;">
+                        <i class="fas fa-handshake" style="font-size:12px; margin-right:5px;"></i> 
+                        ${agencyName}
+                    </div>
+                </td>
+
                 <td>${d.passportNo || 'N/A'}</td>
-                <td><button onclick="window.openReview('${id}', '${d.studentName}')" class="btn-claim" style="padding:5px 10px;">VIEW</button></td>
                 <td><span class="status-pill ${d.status}">${(d.status || 'pending').toUpperCase()}</span></td>
                 <td style="color: ${isLocked ? '#e74c3c' : '#2ecc71'}; font-weight: bold;">
                     <i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i> ${handlerName}
                 </td>
                 <td>
                     <button class="btn-claim" onclick="window.openReview('${id}', '${d.studentName}')" 
-                        ${isLocked ? 'disabled style="background:#bdc3c7;"' : ''}>
+                        ${isLocked ? 'disabled style="background:#bdc3c7; cursor:not-allowed;"' : ''}>
                         ${isLocked ? 'LOCKED' : 'ACTION'}
                     </button>
                 </td>
@@ -80,7 +89,7 @@ onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), 
     tbody.innerHTML = html || "<tr><td colspan='6' align='center'>No Applications Found</td></tr>";
 });
 
-// --- ৩. রিভিউ স্লাইডার ও ওনারশিপ ---
+// --- 3. REVIEW SLIDER & OWNERSHIP ---
 window.openReview = async (id, sName) => {
     window.currentAppId = id;
     document.getElementById('targetStudent').innerText = sName;
@@ -91,7 +100,7 @@ window.openReview = async (id, sName) => {
     
     if (snap.exists()) {
         const d = snap.data();
-        // ফাইলটি নিজের নামে লক করা
+        // Lock the file to current staff if it's free
         if (!d.handledBy) await updateDoc(appRef, { handledBy: staffEmail.toLowerCase() });
 
         document.getElementById('docLinksArea').innerHTML = `
@@ -105,7 +114,7 @@ window.openReview = async (id, sName) => {
 
 window.closeSlider = () => document.getElementById('reviewSlider').classList.remove('active');
 
-// --- ৪. স্ট্যাটাস আপডেট ---
+// --- 4. STATUS & PROFILE UPDATES ---
 document.getElementById('updateStatusBtn').onclick = async () => {
     const btn = document.getElementById('updateStatusBtn');
     const newStatus = document.getElementById('statusSelect').value;
@@ -118,13 +127,12 @@ document.getElementById('updateStatusBtn').onclick = async () => {
             updatedAt: serverTimestamp(),
             handledBy: staffEmail.toLowerCase()
         });
-        alert("Status Updated!");
+        alert("Status Synchronized!");
         closeSlider();
     } catch (e) { alert(e.message); }
     finally { btn.innerText = "APPLY STATUS & SYNC WALLET"; btn.disabled = false; }
 };
 
-// --- ৫. প্রোফাইল ও হিস্ট্রি স্ট্যাটস ---
 document.getElementById('saveProfileBtn').onclick = async () => {
     try {
         await updateDoc(doc(db, "users", staffEmail.toLowerCase()), {
@@ -132,10 +140,11 @@ document.getElementById('saveProfileBtn').onclick = async () => {
             organization: document.getElementById('profOrg').value,
             experience: document.getElementById('profExp').value
         });
-        alert("Profile Saved!");
+        alert("Staff Profile Saved!");
     } catch (e) { alert(e.message); }
 };
 
+// Stats Calculation
 onSnapshot(query(collection(db, "applications"), where("handledBy", "==", staffEmail.toLowerCase())), (snap) => {
     if(document.getElementById('hTotal')) document.getElementById('hTotal').innerText = snap.size;
     let success = 0;
