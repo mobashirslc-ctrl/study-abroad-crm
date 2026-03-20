@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
@@ -13,7 +13,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-document.getElementById('trackBtn').addEventListener('click', async () => {
+let unsubscribe = null; // Purono listener bondho korar jonno
+
+document.getElementById('trackBtn').addEventListener('click', () => {
     const inputVal = document.getElementById('passportInput').value.trim();
     const resultDiv = document.getElementById('result');
     const dataContent = document.getElementById('data-content');
@@ -23,64 +25,53 @@ document.getElementById('trackBtn').addEventListener('click', async () => {
         return;
     }
 
-    // Reset UI
-    resultDiv.style.display = "none";
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    if (unsubscribe) unsubscribe(); // Agey kono search thakle bondho hobe
 
-    try {
-        // Dashboard-e 'passportNo' field use kora hoyeche, tai query-te seta-i thakbe
-        const q = query(collection(db, "applications"), where("passportNo", "==", inputVal));
-        const snap = await getDocs(q);
-
+    const q = query(collection(db, "applications"), where("passportNo", "==", inputVal));
+    
+    unsubscribe = onSnapshot(q, (snap) => {
         if (snap.empty) {
-            alert("❌ No Record Found. Please check your Passport Number.");
+            alert("❌ No Record Found.");
+            resultDiv.style.display = "none";
         } else {
             resultDiv.style.display = "block";
             
             snap.forEach(doc => {
                 const d = doc.data();
-                const rawStatus = (d.status || 'pending').toLowerCase();
+                const rawStatus = (d.status || 'submitted').toLowerCase().trim();
+
+                // Reset all steps
+                document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
 
                 // --- SMART MAPPING LOGIC ---
-                // Dashboard-er status-ke Tracking-er 4-ta step-e map kora:
-                let activeStep = 1; // Default: Submitted
-
-                if (rawStatus === 'pending') {
-                    activeStep = 1; // Step 1: Submitted
-                } else if (rawStatus === 'reviewing' || rawStatus === 'compliance') {
-                    activeStep = 2; // Step 2: Compliance
-                } else if (rawStatus === 'processing' || rawStatus === 'university') {
-                    activeStep = 3; // Step 3: Processing
+                let activeStep = 1; 
+                if (rawStatus === 'submitted' || rawStatus === 'pending') {
+                    activeStep = 1;
+                } else if (rawStatus === 'reviewing' || rawStatus === 'compliance' || rawStatus === 'under review') {
+                    activeStep = 2;
+                } else if (rawStatus === 'processing' || rawStatus === 'university' || rawStatus === 'applied') {
+                    activeStep = 3;
                 } else if (rawStatus === 'approved' || rawStatus === 'visa_success' || rawStatus === 'outcome') {
-                    activeStep = 4; // Step 4: Outcome
+                    activeStep = 4;
                 }
 
-                // Stepper update kora
-                updateStepperUI(activeStep);
+                // UI Stepper Update
+                const stepKeys = ['submitted', 'compliance', 'processing', 'outcome'];
+                for (let i = 1; i <= activeStep; i++) {
+                    const el = document.getElementById(`step-${stepKeys[i-1]}`);
+                    if (el) el.classList.add('active');
+                }
 
-                // Data display kora
+                // Student Details Display
                 dataContent.innerHTML = `
                     <div class="info-row"><span class="label">Student:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
-                    <div class="info-row"><span class="label">University:</span> <span class="val">${d.university || 'Under Evaluation'}</span></div>
-                    <div class="info-row"><span class="label">Current Stage:</span> <span class="val" style="color:#2ecc71;">${rawStatus.toUpperCase()}</span></div>
-                    <div style="margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:13px; opacity:0.9;">
-                        <b>Note:</b> ${d.complianceNote || "Your file is being handled by our official processing team. Please wait for the next update."}
+                    <div class="info-row"><span class="label">University:</span> <span class="val">${d.university || 'Processing...'}</span></div>
+                    <div class="info-row"><span class="label">Stage:</span> <span class="val" style="color:#2ecc71;">${rawStatus.toUpperCase()}</span></div>
+                    <div style="margin-top:15px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); font-size:12px; opacity:0.8;">
+                        <b>Note:</b> ${d.complianceNote || "Our team is processing your application. Updates will appear here instantly."}
                     </div>
                 `;
             });
         }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Connection Error. Please try again.");
-    }
+    });
 });
-
-function updateStepperUI(stepNumber) {
-    const steps = ['submitted', 'compliance', 'university', 'outcome'];
-    for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById(`step-${steps[i-1]}`);
-        if (i <= stepNumber) {
-            el.classList.add('active');
-        }
-    }
-}
