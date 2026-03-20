@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, setDoc, query, where, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
@@ -14,179 +14,107 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const staffEmail = localStorage.getItem('userEmail');
 
-// Global mappings
-let staffNames = {};
-
-// --- 1. Loader & Session Check ---
-// যদি ইমেইল না থাকে তবে লগইন পেজে পাঠিয়ে দিবে
+// প্রোটেকশন: ইমেইল না থাকলে লগইন পেজে পাঠিয়ে দিবে
 if (!staffEmail) {
-    location.href = 'index.html';
+    window.location.href = 'index.html';
 }
 
-const hideLoader = () => {
+// --- ১. রিভিউ স্লাইডার ওপেন ফাংশন (Global Scope) ---
+window.openReview = async (id, sName) => {
+    console.log("Reviewing:", sName);
+    window.currentAppId = id; // গ্লোবাল আইডি সেভ রাখা আপডেট করার জন্য
+
+    const slider = document.getElementById('reviewSlider');
+    const nameDisplay = document.getElementById('targetStudent');
+    const docArea = document.getElementById('docLinksArea');
+
+    if (nameDisplay) nameDisplay.innerText = sName;
+
+    // স্লাইডার ওপেন করা (CSS ক্লাসের সাথে মিল রেখে)
+    if (slider) slider.classList.add('active');
+
+    // ডক লিঙ্কগুলো লোড করা
+    if (docArea) {
+        docArea.innerHTML = "Loading Docs...";
+        try {
+            const snap = await getDoc(doc(db, "applications", id));
+            if (snap.exists()) {
+                const d = snap.data().docs || {};
+                docArea.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
+                        ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--glass); color:var(--accent); padding:10px; border:1px solid var(--border); border-radius:6px; text-align:center; text-decoration:none; font-size:12px;">Academic Docs</a>` : ''}
+                        ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--glass); color:var(--accent); padding:10px; border:1px solid var(--border); border-radius:6px; text-align:center; text-decoration:none; font-size:12px;">Passport Copy</a>` : ''}
+                        ${d.language ? `<a href="${d.language}" target="_blank" style="background:var(--glass); color:var(--accent); padding:10px; border:1px solid var(--border); border-radius:6px; text-align:center; text-decoration:none; font-size:12px;">Language Prof.</a>` : ''}
+                    </div>
+                `;
+            }
+        } catch (e) {
+            docArea.innerHTML = "Error loading documents.";
+        }
+    }
+};
+
+// --- ২. স্লাইডার ক্লোজ ফাংশন ---
+window.closeSlider = () => {
+    const slider = document.getElementById('reviewSlider');
+    if (slider) slider.classList.remove('active');
+};
+
+// --- ৩. রিয়েল-টাইম অ্যাপ্লিকেশন লিস্ট লোড ---
+onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
+    const tbody = document.getElementById('incomingTableBody');
+    if (!tbody) return;
+
+    let html = "";
+    snap.forEach(dSnap => {
+        const d = dSnap.data();
+        const id = dSnap.id;
+        const status = (d.status || "pending").toLowerCase();
+
+        html += `
+            <tr>
+                <td><b>${d.studentName}</b><br><small style="color:#888;">${d.partnerEmail}</small></td>
+                <td>${d.passportNo || 'N/A'}</td>
+                <td>${d.universityName || 'Not Set'}</td>
+                <td><span style="padding:4px 10px; border-radius:20px; font-size:10px; background:rgba(255,255,255,0.1); color:var(--accent);">${status.toUpperCase()}</span></td>
+                <td>
+                    <button class="btn-claim" onclick="openReview('${id}', '${d.studentName}')">
+                        REVIEW
+                    </button>
+                </td>
+            </tr>`;
+    });
+    tbody.innerHTML = html || '<tr><td colspan="5" align="center">No Applications Found</td></tr>';
+    
+    // লোডার লুকানো
     const loader = document.getElementById('loader');
     if (loader) loader.style.display = 'none';
-};
-
-// --- 2. Top Bar Staff Name & Profile Logic ---
-onSnapshot(doc(db, "staffs", staffEmail), (dSnap) => {
-    const display = document.getElementById('staffDisplay');
-    if (dSnap.exists()) {
-        const d = dSnap.data();
-        const name = d.name || staffEmail;
-        if (display) display.innerText = name; 
-        
-        if (document.getElementById('profName')) document.getElementById('profName').value = d.name || "";
-        if (document.getElementById('profOrg')) document.getElementById('profOrg').value = d.org || "";
-        if (document.getElementById('profExp')) document.getElementById('profExp').value = d.exp || "";
-        staffNames[staffEmail] = name;
-    } else {
-        if (display) display.innerText = staffEmail;
-    }
-    // প্রোফাইল চেক শেষ হলে লোডার সরিয়ে দিবে (যদি ডেটা আসার পর সরাতে চান)
-    hideLoader(); 
 });
 
-// --- 3. Load Incoming Applications ---
-onSnapshot(collection(db, "applications"), async (snap) => {
+// --- ৪. স্ট্যাটাস আপডেট করা ---
+window.updateStatus = async () => {
+    const newStatus = document.getElementById('statusSelect').value;
+    const note = document.getElementById('adminNote')?.value || "";
+
+    if (!window.currentAppId) return alert("Select an application first!");
+
     try {
-        const staffQuery = await getDocs(collection(db, "staffs"));
-        staffQuery.forEach(sd => staffNames[sd.id] = sd.data().name || sd.id);
-
-        const tbody = document.getElementById('incomingTableBody');
-        if (!tbody) return;
-        tbody.innerHTML = "";
-        
-        let totalServed = 0;
-        let visaSuccess = 0;
-        let partnersSet = new Set();
-
-        snap.forEach(dSnap => {
-            const d = dSnap.data();
-            const id = dSnap.id;
-
-            if(d.handledBy === staffEmail) {
-                totalServed++;
-                if(d.status === 'visa_success') visaSuccess++;
-                partnersSet.add(d.partnerEmail);
-            }
-
-            const ds = d.docs || {};
-            let docLinks = "";
-            if(ds.academic) docLinks += `<a href="${ds.academic}" target="_blank" style="color:var(--accent); margin-right:8px;">[A]</a>`;
-            if(ds.language) docLinks += `<a href="${ds.language}" target="_blank" style="color:var(--accent); margin-right:8px;">[L]</a>`;
-            if(ds.passport) docLinks += `<a href="${ds.passport}" target="_blank" style="color:var(--accent); margin-right:8px;">[P]</a>`;
-            if(ds.others) docLinks += `<a href="${ds.others}" target="_blank" style="color:var(--accent);">[O]</a>`;
-
-            const handlerName = staffNames[d.handledBy] || d.handledBy || 'Unclaimed';
-
-            tbody.innerHTML += `
-                <tr>
-                    <td><b>${d.studentName}</b><br><small>${d.partnerEmail || 'no-email'}</small></td>
-                    <td>${d.passportNo}</td>
-                    <td>${docLinks || 'No Files'}</td>
-                    <td><span class="status-pill ${d.status}">${d.status.toUpperCase()}</span></td>
-                    <td><i class="fas fa-user-check" style="font-size:10px;"></i> ${handlerName}</td>
-                    <td><button class="btn-claim" onclick="openReview('${id}', '${d.studentName}', '${d.commission}')">Review</button></td>
-                </tr>`;
+        const btn = document.querySelector('.btn-claim[style*="background: var(--accent)"]'); // Update Button
+        await updateDoc(doc(db, "applications", window.currentAppId), {
+            status: newStatus,
+            complianceNote: note,
+            lastUpdatedBy: staffEmail,
+            updatedAt: serverTimestamp()
         });
-
-        if (document.getElementById('hTotal')) document.getElementById('hTotal').innerText = totalServed;
-        if (document.getElementById('hSuccess')) document.getElementById('hSuccess').innerText = visaSuccess;
-        if (document.getElementById('hPartners')) document.getElementById('hPartners').innerText = partnersSet.size;
-        
-    } catch (err) {
-        console.error("Snapshot error:", err);
+        alert("Application Status Updated!");
+        closeSlider();
+    } catch (e) {
+        alert("Error: " + e.message);
     }
-    // ইনকামিং ডেটা আসার পরও একবার সেফটি চেক হিসেবে লোডার সরানো
-    hideLoader();
-});
-
-// --- 4. Review Slider Functions (Global Binding) ---
-window.openReview = async (id, sName, comm) => {
-    window.currentAppId = id;
-    document.getElementById('targetStudent').innerText = sName;
-    document.getElementById('targetComm').innerText = `Commission: ৳${Number(comm).toLocaleString()}`;
-    
-    const appSnap = await getDoc(doc(db, "applications", id));
-    if (!appSnap.exists()) return;
-    
-    const d = appSnap.data().docs || {};
-    const area = document.getElementById('docLinksArea');
-    area.innerHTML = `
-        <p style="font-size:12px; margin-bottom:10px; color:#aaa;">Review Documents:</p>
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-            ${d.academic ? `<a href="${d.academic}" target="_blank" class="btn-gold" style="padding:10px; font-size:11px; text-decoration:none; background:var(--accent); color:black; border-radius:5px;">Academic Doc</a>` : ''}
-            ${d.language ? `<a href="${d.language}" target="_blank" class="btn-gold" style="padding:10px; font-size:11px; text-decoration:none; background:var(--accent); color:black; border-radius:5px;">Language Doc</a>` : ''}
-            ${d.passport ? `<a href="${d.passport}" target="_blank" class="btn-gold" style="padding:10px; font-size:11px; text-decoration:none; background:var(--accent); color:black; border-radius:5px;">Passport Copy</a>` : ''}
-            ${d.others ? `<a href="${d.others}" target="_blank" class="btn-gold" style="padding:10px; font-size:11px; text-decoration:none; background:var(--accent); color:black; border-radius:5px;">Other File</a>` : ''}
-        </div>
-    `;
-
-    document.getElementById('reviewSlider').classList.add('open');
 };
 
-window.closeSlider = () => {
-    document.getElementById('reviewSlider').classList.remove('open');
+// --- ৫. লগআউট ---
+window.logout = () => {
+    localStorage.clear();
+    window.location.href = 'index.html';
 };
-
-// --- 5. Update Status Logic ---
-const updateBtn = document.getElementById('updateStatusBtn');
-if (updateBtn) {
-    updateBtn.onclick = async () => {
-        const newStatus = document.getElementById('statusSelect').value;
-        const appRef = doc(db, "applications", window.currentAppId);
-        
-        updateBtn.innerText = "Processing..."; updateBtn.disabled = true;
-
-        try {
-            const appSnap = await getDoc(appRef);
-            const appData = appSnap.data();
-            let commStatus = appData.commissionStatus || "waiting";
-
-            if (newStatus === "verified") commStatus = "pending";
-            else if (newStatus === "student_paid") commStatus = "ready";
-            else if (newStatus === "visa_rejected" || newStatus === "doc_missing") commStatus = "waiting";
-
-            await updateDoc(appRef, {
-                status: newStatus,
-                commissionStatus: commStatus,
-                handledBy: staffEmail,
-                updatedAt: serverTimestamp()
-            });
-
-            alert("Status & Wallet Updated!");
-            closeSlider();
-        } catch (e) {
-            alert("Error: " + e.message);
-        } finally {
-            updateBtn.innerText = "APPLY STATUS & SYNC WALLET"; updateBtn.disabled = false;
-        }
-    };
-}
-
-// --- 6. Profile Save ---
-const saveProfBtn = document.getElementById('saveProfileBtn');
-if (saveProfBtn) {
-    saveProfBtn.onclick = async () => {
-        await setDoc(doc(db, "staffs", staffEmail), {
-            name: document.getElementById('profName').value,
-            org: document.getElementById('profOrg').value,
-            exp: document.getElementById('profExp').value,
-            email: staffEmail
-        }, { merge: true });
-        alert("Profile Updated!");
-    };
-}
-
-// --- 7. Logout ---
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) {
-    logoutBtn.onclick = () => {
-        localStorage.clear();
-        location.href = 'index.html';
-    };
-}
-
-// Fallback: যদি ১ সেকেন্ডের মধ্যে কোনো ডেটা লোড না হয়, লোডার সরিয়ে দাও
-setTimeout(hideLoader, 1500);
