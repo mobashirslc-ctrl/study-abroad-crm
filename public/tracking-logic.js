@@ -27,7 +27,6 @@ document.getElementById('trackBtn').addEventListener('click', () => {
 
     if (unsubscribe) unsubscribe();
 
-    // Passport search filter
     const q = query(collection(db, "applications"), where("passportNo", "==", inputVal));
     
     unsubscribe = onSnapshot(q, (snap) => {
@@ -40,21 +39,18 @@ document.getElementById('trackBtn').addEventListener('click', () => {
             snap.forEach(doc => {
                 const d = doc.data();
                 
-                // Dashboard theke asha exact status text (Capitalized)
+                // Dashboard standard output (e.g., "OFFER LETTER DONE")
                 const rawStatus = (d.status || 'PENDING').toUpperCase();
 
-                // --- DYNAMIC STEPPER LOGIC (Status Onujayi Step Green Hobe) ---
+                // --- SMART MAPPING LOGIC (Still Triggering Steps) ---
                 let activeStep = 1; 
 
-                // Mapping strictly based on your Dashboard screenshots:
                 if (rawStatus.includes("VERIFIED") || rawStatus.includes("REVIEW")) {
                     activeStep = 2;
                 } else if (rawStatus.includes("PAID") || rawStatus.includes("OFFER") || rawStatus.includes("PROCESSING")) {
                     activeStep = 3;
                 } else if (rawStatus.includes("SUCCESS") || rawStatus.includes("DONE") || rawStatus.includes("REJECTED")) {
                     activeStep = 4;
-                } else {
-                    activeStep = 1; // Default Step 1
                 }
 
                 // UI Reset & Update
@@ -65,21 +61,21 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                     if (el) el.classList.add('active');
                 }
 
-                // UI Status Display (Ekhane exact status-ta boro kore dekhabe)
+                // --- ✅ EXACT TEXT DISPLAY section ---
                 dataContent.innerHTML = `
                     <div class="info-row"><span class="label">Student Name:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
                     <div class="info-row"><span class="label">Applying for:</span> <span class="val">${d.university || 'N/A'}</span></div>
                     
                     <div style="margin-top:20px; text-align:center; padding:15px; background:rgba(46, 204, 113, 0.2); border:2px solid #2ecc71; border-radius:15px;">
                         <div style="font-size:11px; text-transform:uppercase; opacity:0.8; margin-bottom:5px;">Current Live Status</div>
-                        <div style="font-size:22px; font-weight:bold; color:#fff; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">
-                            ${rawStatus.replace('_', ' ')}
+                        <div style="font-size:20px; font-weight:bold; color:#fff; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5); letter-spacing: 0.5px;">
+                            ${rawStatus}
                         </div>
                     </div>
                     
                     <div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:13px; border-left:4px solid #f1c40f;">
-                        <b style="color:#f1c40f;">💬 Processing Note:</b><br>
-                        ${d.complianceNote || "Your file is being processed by the IHP Hub. Status updates will be visible here in real-time."}
+                        <b style="color:#f1c40f;">💬 IHP Official Note:</b><br>
+                        ${d.complianceNote || "Our team is working on your application. Status updates will appear here instantly."}
                     </div>
                 `;
             });
