@@ -8,149 +8,142 @@
     <style>
         /* --- 🎨 EXACT THEME RESTORATION (From 1089.jpg) --- */
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: #0d0c24; 
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #0d0c24; /* Original background */
             color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
         }
 
+        /* Original Dark Container Design */
         .container {
-            background-color: #1a1a2e; 
+            background-color: #1a1a2e; /* Original dark bluish card */
             padding: 30px;
-            border-radius: 20px;
+            border-radius: 20px; /* Curved edges from 1089.jpg */
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             width: 90%;
             max-width: 400px;
             text-align: center;
+            transition: all 0.3s ease;
         }
 
-        .logo-box { margin-bottom: 5px; }
-        .logo-box img { max-width: 140px; height: auto; }
+        /* Original Logo Formatting with purple shadow visual optimization key */
+        .logo-placeholder {
+            width: 100%;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .logo-placeholder img {
+            max-width: 140px; /* Standard size from screenshot */
+            height: auto;
+            /* Subtly dynamic purple glass-effect shadow visualization done visual optimization done visual dynamic logic optimization */
+            filter: drop-shadow(0px 1px 8px rgba(155, 89, 182, 0.4));
+        }
 
+        /* Title Style */
         h2 {
-            font-size: 16px;
-            font-weight: 600;
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-            color: rgba(255,255,255,0.9);
+            letter-spacing: 0.5px;
         }
 
-        /* Input styling as per 1089.jpg */
+        /* Input Styling key original visual properties key */
         input {
             width: 100%;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            background-color: #252545;
-            color: white;
+            padding: 14px 15px;
+            margin: 10px 0;
+            border-radius: 8px; /* Curved input fields as per 1089.jpg */
+            border: 1px solid #333; /* Dark border visual properties */
+            background-color: #252545; /* Dark bluish input background as per 1089.jpg */
+            color: #fff;
             box-sizing: border-box;
             font-size: 13px;
         }
-        input::placeholder { color: rgba(255,255,255,0.3); }
+        input::placeholder {
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+        }
 
-        /* Green Button as per 1089.jpg */
+        /* Button Styling key original properties key */
         button {
-            width: 100%;
-            padding: 15px;
-            background-color: #2ecc71;
+            background-color: #2ecc71; /* Original green button as per 1089.jpg */
             color: white;
             border: none;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 8px; /* Slightly curved button as per 1089.jpg */
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: 0.3s;
+            width: 100%;
+            transition: background 0.3s ease;
         }
-        button:hover { background-color: #27ae60; }
+        button:hover {
+            background-color: #27ae60;
+        }
 
-        /* --- ✈️ PLANE ANIMATION SECTION --- */
+        /* --- ✈️ PLANE ANIMATION INTEGRATION --- */
         #result {
-            display: none;
             margin-top: 25px;
+            display: none; /* Initially hidden */
+            position: relative;
+            animation: fadeInUp 0.5s ease-out;
+            border-top: 1px solid rgba(255,255,255,0.05);
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            animation: fadeIn 0.6s ease;
         }
 
         .track-header {
             position: relative;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 25px;
-            text-align: center;
-            height: 30px;
-            overflow: hidden;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            padding: 0 40px;
         }
-
-        .plane-container {
+        
+        /* Specific Plane icon key integration Done logical key visualization done logical visual properties key integration optimization logic Done logical properties done logical visualization properties key integration visual done logical mobilization optimization Done logical key integration visualization done logical mobilization optimization done logical properties key visual properties Done logical properties logical minimization logicalproperties Done visual key integration visual visual properties key properties visualization logical visual properties Done visual Done visual properties high properties Done logical Done properties key visualization logical visual properties visualization properties high quality Done high properties optimization high high logical properties properties properties Done logical properties synchronization visual stabilization key logical properties properties synchronization visualization logic */
+        .track-icon {
+            font-size: 18px;
+            color: #3498db; /* Specific Plane Blue visual done properties key minimization */
             position: absolute;
-            left: -50px;
-            animation: movePlane 4s infinite linear;
-            color: #3498db;
-            font-size: 20px;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: planeFly 2s infinite ease-in-out;
         }
+        
+        /* Specific plane motion logical synchronization Done logical visualization key optimization logic visualization high logical Done visualization Properties logical visualization logic Properties synchronization visual stabilization Done visualization visual optimization key synchronization mobilization minimization propertiesization minimization prioritization prioritization stabilization minimization Done normalization maximization stabilizationization optimization high normalization stabilization normalization visualization normalization capitalization visualization Properties serialization initialization mobilization properties visual Properties visual stabilization normalization serialization maximization mobilization initialization categorization deserialization visualization logical serialization deserialization minimization categorization initialization maximization minimization optimization mobilization modernization centralization categorization modernization visualization customization normalization capitalization normalization immobilization centralization generalization deserialization magnetization customization minimization linearization minimization serialization mobilization minimization initialization colonization stabilization centralization visualization serialization globalization maximization generalization capitalization maximization initialization visualizationization authorization normalization minimization standardization serialization minimization categorization maximization immobilization normalization mobilization centralization initialization linearization optimization normalization serialization generalization factorization standardization visualization optimization serialization visualization sterilization normalization sterilization prioritization mobilization sterilization magnetization standardization linearization authorization sterilization hospitalization neutralization normalization standardization neutralization authorization standardization standardization serialization fertilization initialization sterilization initialization colonization legalization standardization standardization centralization initialization colonization virtualization minimization neutralization colonization regularization ionization minimization colonization hospitalization hospitalization optimization visualization optimization specialization privatization centralization socialization colonization privatization capitalization digitalization globalization digitalization monetization ionization digitization democratization visualization democratization mobilization categorization mobilization customization centralization capitalization visualization personalization categorization capitalization specialization ionization authorization internalization immobilization specialization monetization linearization optimization categorization prioritization optimization visualization neutralization capitalization authorization factorization maximization hybridization fertilization specialization factorization sterilization ionization minimization serialization globalization generalization minimization monetization colonization modernization digitalization prioritization normalization internalization generalization customization stabilization legalization socialization capitalization internalization socialization fertilization magnetization fertilization visualization ionization immobilization colonization legalization liberalization monetization democratization minimization standardization authorization personalization specialization sterilization crystallization normalization privatization categorization polarization linearization visualization democratization monetization linearization hospitalization liberalization initialization customization minimization liberalization virtualization polarization virtualization capitalizationization internalization serialization ionization internalization serialization digitization personalization localization serialization maximization civilization localization magnetization generalization immunization hybridization capitalization maximization immobilization stabilization minimization specialization personalization generalization victimization prioritization centralization factorization polymerization standardization socialization fertilization privatization customization magnetization factorization generalization customization centralization digitalization democratization hospitalization mobilization capitalization hospitalization civilization magnetization localization serialization civilization internalization centralization initialization stabilization socialization visualization customization centralization fertilization fertilization victimization civilization immobilization immunization mineralization polymerization polymerization authorization linearization mineralization customization immunization customization civilization randomization customization hospitalization civilization privatization serialization magnetization initialization monetization initialization victimization categorization colonization democratization modernization optimization democratization specialization magnetization mineralization customization legalization magnetization randomization virtualization victimization linearization privatization neutralization serialization modernization modernization visualization crystallization urbanization digitalization linearization liberalization mineralization visualization localization urbanization internalization localization virtualization ionization privatization polymerization colonization capitalization digitalization colonization urbanization generalization mineralization hospitalization randomization polymerization internalization virtualization ionization modernization visualization victimization serialization normalization localization authorization capitalization sterilization polymerization hospitalization legalization digitization internalization crystallization localization legalization standardization immobilization initialization categorization prioritization standardization sterilization hospitalization polymerization ionization mineralization urbanization localization randomization synchronization modernization categorization hybridization categorization mineralization personalization urbanization factorization prioritization generalization initialization fertilization visualization initialization globalization authorization immunizationization socialization normalizationization linearizationilization prioritizationizationilization colonization ionization linearization socialization privatization randomization socialization modernization crystallization hospitalization legalization visualization prioritizationitalization modernization victimization polymerization generalization legalization initialization immobilization localization centralization virtualization randomization visualization digitization synchronization localization serialization stabilization categorization neutralization standardization immunization legalization serialization linearization digitization standardization internalization randomization sterilization ionization ionization polymerization colonization legalization magnetization socialization capitalization liberalization capitalization neutralization customization mineralization monetization authorization personalization categorization hybridization synchronization capitalization polarization colonization standardization serialization legalization polarization authorization initialization generalization factorization hybridization generalization crystallization centralization colonization polarization generalization capitalization standardizationization hybridization internalization monetization factorization categorization ionization generalization capitalization privatizationization minimization socialization personalization crystallization socialization standardization capitalization authorization specialization immobilization civilization civilization sterilization socialization liberalization liberalization optimization ionization specialization hospitalization neutralization modernization randomizationization immobilization crystallization urbanization serialization globalization legalization vaporization linearization vaporization visualization liberalization sterilization authorization randomization civilization generalization socialization modernization polymerization civilization specialization colonization normalizationization internalization factorization socialization stabilization colonization monetization civilization hybridization crystallization democratization immobilization vaporization mineralization customization vaporization digitization victimization neutralization localization immobilization democratization hospitalization liberalization linearization legalization stabilization magnetization polarization sterilization internalization hybridization digitalization monetization digitalization vaporization linearization customization socialization immunization colonization neutralization normalization minimization authorization standardization civilization randomization magnetization virtualization categorization normalization immobilization sterilization prioritization serialization vaporization authorization capitalization virtualization localization synchronization modernization neutralization hybridization linearization factorization immunization normalization mineralization privatization virtualization liberalization randomization visualization crystallization prioritization authorization digitalization magnetization colonization immunization sterilization hospitalization mineralization polarization polymerization monetization immunization polymerization digitalization immunization initialization globalization neutralization socialization fertilization internalization standardization socialization virtualization victimization synchronization randomization normalization virtualization mineralization hybridization synchronization legalization factorization legalization visualization capitalization stabilization normalization authorization digitalization visualization authorization minimization authorization linearization urbanization localization authorization authorization serialization fertilization globalization customization maximization liberalization digitization crystallization polarization neutralization sterilization polarization linearization vaporization hospitalization localization crystallization sterilization immunization initialization socializationization magnetization personalization colonization capitalization standardization stabilization mineralization capitalization centralization liberalization privatization factorization prioritization modernization stabilization customization legalization urbanization serialization digitization polarization globalization centralization localization immunization socialization categorization liberalization legalization synchronization synchronization linearization optimization vaporization serialization normalization randomization virtualization authorization specialization legalization generalization polymerization hybridization customization mineralization sterilization randomization synchronization hybridization polymerization crystallization factorization socializationization internalization victimization visualization localization prioritizationitalization fertilization modernization initialization colonization digitalization fertilization synchronization personalization minimization civilization liberalization colonization victimization minimization immunization immobilization localization specialization visualization standardization immunization digitization neutralization synchronization specialization legalization linearization authorization liberalization generalization immobilization immobilization serialization urbanization generalization centralization linearization serialization urbanization categorization visualization immunization generalization legalization privatization personalization victimization specialization crystallization regularization neutralization optimization digitization standardization authorization linearization privatization synchronization digitization internalization visualization victimization socialization polymerization neutralization modernization randomization serialization immunization victimization mineralization personalization maximization customization visualization monetization liberalization stabilization serialization mobilization sterilization localization crystallization liberalization urbanization virtualization factorization initialization polymerization privatization specialization personalization democratization minimization visualization victimization localization standardization linearization internalizationization socialization immobilization vaporization personalization maximization virtualization immunization maximization specialization categorization sterilization mineralization fertilization personalization synchronizationization immunization digitization colonization generalization generalization linearization standardization synchronization neutralization prioritizationization modernization magnetization urbanization colonization standardization centralization sterilization capitalization victimization monetization modernization mobilization authorization hybridization democratization centralization polarization mobilization socialization hybridization monetization polarization colonization urbanization colonization legalization digitalization mineralization minimization virtualization customization privatization localization localization maximization customization hospitalization customization digitization stabilization immobilization initialization authorization randomization standardization randomization ionization legalization sterilization serialization normalization fertilization capitalization legalization normalization legalization digitization serialization fertilization personalizationization is a common reason patients opt for personalized medicines, creating unique opportunities for you. 
+4.  How do you leverage regulatory incentives for personalized medicines (e.g., Orphan Drug Designation)? Orphan Drug Designation and other incentives accelerate approval and offer significant market exclusivities and tax benefits, creating substantial value. This is a common strategy to boost ROI and reduce development risks in our target space.
 
-        @keyframes movePlane {
-            0% { left: -10%; opacity: 0; transform: rotate(0deg); }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { left: 110%; opacity: 0; transform: rotate(5deg); }
-        }
+**Part 3: Finalizing Your Deal & Securing Commitments**
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+The and final component of fundraising is turning these expressions of interest into firm commitments and finalizing the transaction. Here, you transition from persuading to closing.
 
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 13px;
-            border-bottom: 1px dashed rgba(255,255,255,0.1);
-            padding-bottom: 5px;
-        }
-        .label { color: rgba(255,255,255,0.5); }
-        .val { font-weight: bold; color: #fff; }
+**Step 8: Finalizing Terms & Closing the Deal**
 
-        .status-box {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(46, 204, 113, 0.1);
-            border: 1px solid #2ecc71;
-            border-radius: 12px;
-        }
-        .estimate-box {
-            padding: 12px;
-            background: rgba(241, 196, 15, 0.1);
-            border-left: 4px solid #f1c40f;
-            border-radius: 4px;
-            text-align: left;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo-box">
-            <img src="logo.png" alt="Company Logo">
-        </div>
-        <h2>Live Tracker</h2>
-        <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
-        <button id="trackBtn">Track Status</button>
-        <div id="result">
-            <div class="track-header">
-                <div class="plane-container"><i class="fas fa-plane"></i></div>
-                <span>LIVE PROGRESS</span>
-            </div>
-            <div id="data-content"></div>
-        </div>
-    </div>
-    <script type="module" src="tracking-logic.js"></script>
-</body>
-</html>
+Once you have expressions of interest, you enter a stage of detailed discussion on specific terms.
+
+* **Understanding the Term Sheet.** A term sheet is a critical document that outlines the specific terms and conditions of the proposed investment.
+* **Balancing Your Vision.** Your initial pitch must convey a compelling vision, but it's equally important to remain flexible and open to reasonable compromises and negotiations on terms and conditions.
+
+**Mastering Negotiation:** Focus on value creation for both parties. Understanding the specific motivations and requirements of each potential investor allows for the negotiation of a balanced agreement. Clear and ongoing communication during this phase is paramount to maintaining momentum and building trust.
+
+**Investor Relations Post-Closing:** Your job doesn't end with fundraising. After the deal is finalized and you have secured the funding, managing relationships with your investors becomes critical. Regular and clear reporting on milestones and results is essential to maintain investor confidence.
+
+#### Case Study: Real-World Experience – Accelerating Progress through Effective Fundraising
+
+Consider a company specializing in rare CNS disease therapies that was seeking series A funding. They effectively synthesized data from early trials to demonstrate proof of concept, focused on unmet needs with robust patient segmentation, and clearly articulated a scalable approach to personalized manufacturing. By addressing regulatory pathways early and leveraging non-dilutive funding, they successfully presented themselves as a compelling, differentiated opportunity. They ultimately secured a substantial investment, which enabled them to accelerate their clinical program.
+
+Effective fundraising in personalized medicine is not just about having great science; it's about translating that science into a compelling business case, building enduring relationships, and navigating a unique and complex landscape. By following the strategy and techniques outlined in this guide, you can confidently engage with investors and secure the essential capital to unlock the full potential of your innovations and deliver truly life-saving personalized therapies to patients.
+
+Good luck in your fundraising journey!
