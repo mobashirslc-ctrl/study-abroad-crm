@@ -14,55 +14,40 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const staffEmail = localStorage.getItem('userEmail');
 
-// --- লোডার এবং ওভারলে সরানোর ফাংশন ---
+// --- ০. ইউটিলিটি ফাংশন (লোডার সরানোর জন্য) ---
 const hideLoader = () => {
-    const loader = document.getElementById('loader'); 
     const overlay = document.querySelector('.securing-session-overlay'); 
-    if(loader) loader.style.display = 'none';
+    const loader = document.getElementById('loader');
     if(overlay) overlay.style.display = 'none';
+    if(loader) loader.style.display = 'none';
 };
 
-if (!staffEmail) { 
-    window.location.href = 'index.html'; 
-}
+if (!staffEmail) { window.location.href = 'index.html'; }
 
-// --- ১. স্টাফের নাম লোড ও সেশন চেক (Fixed: Name Fetching) ---
+// --- ১. স্টাফের নাম ও প্রোফাইল ডাটা লোড ---
 async function displayStaffName() {
     const displayElement = document.getElementById('staffDisplay');
+    const pName = document.getElementById('profName');
+    const pEmail = document.getElementById('profEmail');
+
     if (!staffEmail) return;
 
-    try {
-        // লজিক ১: সরাসরি ইমেইল আইডি দিয়ে ডকুমেন্ট চেক করা
-        onSnapshot(doc(db, "users", staffEmail.toLowerCase()), (d) => {
-            if (d.exists()) {
-                const userData = d.data();
-                if (displayElement) displayElement.innerText = userData.fullName || userData.name || staffEmail;
-                hideLoader();
-            } else {
-                // লজিক ২: যদি ইমেইল আইডি না হয়ে ডকুমেন্টের ভেতরে ফিল্ড থাকে
-                const q = query(collection(db, "users"), where("email", "==", staffEmail.toLowerCase()));
-                onSnapshot(q, (snap) => {
-                    if (!snap.empty) {
-                        const userData = snap.docs[0].data();
-                        if (displayElement) displayElement.innerText = userData.fullName || userData.name || staffEmail;
-                    } else {
-                        // যদি কোনোভাবেই নাম না পাওয়া যায়, তবে ইমেইল থেকে নাম বানানো
-                        if (displayElement) displayElement.innerText = staffEmail.split('@')[0].toUpperCase();
-                    }
-                    hideLoader();
-                });
-            }
-        }, (error) => {
-            console.error("Name Fetch Error:", error);
-            hideLoader();
-        });
-    } catch (e) {
+    onSnapshot(doc(db, "users", staffEmail.toLowerCase()), (d) => {
+        if (d.exists()) {
+            const userData = d.data();
+            const fullName = userData.fullName || staffEmail;
+            if (displayElement) displayElement.innerText = fullName;
+            if (pName) pName.innerText = fullName;
+            if (pEmail) pEmail.innerText = staffEmail;
+        } else {
+            if (displayElement) displayElement.innerText = staffEmail.split('@')[0].toUpperCase();
+        }
         hideLoader();
-    }
+    }, (err) => { hideLoader(); });
 }
 displayStaffName();
 
-// --- ২. স্লাইডার ও ফাইল লকিং লজিক ---
+// --- ২. স্লাইডার ও ফাইল লকিং (Review System) ---
 window.openReview = async (id, sName) => {
     window.currentAppId = id; 
     const slider = document.getElementById('reviewSlider');
@@ -80,7 +65,7 @@ window.openReview = async (id, sName) => {
             const d = snap.data();
             const docs = d.docs || {};
 
-            // লকিং চেক
+            // লকিং লজিক
             if (d.handledBy && d.handledBy !== staffEmail) {
                 updateBtn.disabled = true;
                 updateBtn.innerText = `LOCKED BY: ${d.handledBy.split('@')[0].toUpperCase()}`;
@@ -89,65 +74,78 @@ window.openReview = async (id, sName) => {
                 updateBtn.disabled = false;
                 updateBtn.innerText = "UPDATE STATUS & SYNC";
                 updateBtn.style.background = ""; 
-                // প্রথমবার ফাইল ওপেন করলে নিজের নামে লক করা
                 if (!d.handledBy) await updateDoc(appRef, { handledBy: staffEmail });
             }
 
-            // ডকুমেন্ট লিঙ্ক দেখানো
+            // ডকুমেন্ট বাটন তৈরি
             if (docArea) {
                 docArea.innerHTML = `
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
-                        ${docs.academic ? `<a href="${docs.academic}" target="_blank" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold; font-size:12px;">Academic PDF</a>` : ''}
-                        ${docs.passport ? `<a href="${docs.passport}" target="_blank" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold; font-size:12px;">Passport PDF</a>` : ''}
-                        ${docs.others ? `<a href="${docs.others}" target="_blank" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold; font-size:12px;">Other Docs</a>` : ''}
+                        ${docs.academic ? `<a href="${docs.academic}" target="_blank" class="doc-btn" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold; font-size:12px;">Academic PDF</a>` : ''}
+                        ${docs.passport ? `<a href="${docs.passport}" target="_blank" class="doc-btn" style="background:#f1c40f; color:#000; padding:10px; text-align:center; text-decoration:none; border-radius:5px; font-weight:bold; font-size:12px;">Passport PDF</a>` : ''}
                     </div>`;
-                if (!docs.academic && !docs.passport) {
-                    docArea.innerHTML = "<p style='color:#888; text-align:center;'>No documents found.</p>";
-                }
+                if(!docs.academic && !docs.passport) docArea.innerHTML = "<p>No documents available.</p>";
             }
         }
-    } catch (e) { console.error("Slider Error:", e); }
+    } catch (e) { console.error(e); }
 };
 
 window.closeSlider = () => { document.getElementById('reviewSlider').classList.remove('active'); };
 
-// --- ৩. টেবিল লোড (Realtime) ---
-onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
-    const tbody = document.getElementById('incomingTableBody');
-    if (!tbody) return;
-    let html = "";
-    snap.forEach(dSnap => {
-        const d = dSnap.data();
-        const isLocked = d.handledBy && d.handledBy !== staffEmail;
-        
-        html += `
-            <tr style="${isLocked ? 'opacity: 0.7;' : ''}">
-                <td><b>${d.studentName}</b><br><small style="color:#888;">${d.partnerEmail}</small></td>
-                <td>${d.passportNo || 'N/A'}</td>
-                <td><span class="status-pill ${d.status}">${(d.status || "pending").toUpperCase()}</span></td>
-                <td><small style="font-weight:bold; color:${isLocked ? '#e74c3c' : '#2ecc71'};">
-                    ${d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'WAITING'}
-                </small></td>
-                <td>
-                    <button class="btn-claim" onclick="openReview('${dSnap.id}', '${d.studentName}')" 
-                        style="${isLocked ? 'background:#bdc3c7;' : ''}" ${isLocked ? 'disabled' : ''}>
-                        ${isLocked ? 'LOCKED' : 'REVIEW'}
-                    </button>
-                </td>
-            </tr>`;
+// --- ৩. ইনকামিং অ্যাপ্লিকেশন টেবিল লোড ---
+const loadIncomingTable = () => {
+    onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
+        const tbody = document.getElementById('incomingTableBody');
+        if (!tbody) return;
+        let html = "";
+        snap.forEach(dSnap => {
+            const d = dSnap.data();
+            const isLocked = d.handledBy && d.handledBy !== staffEmail;
+            html += `
+                <tr style="${isLocked ? 'opacity: 0.7;' : ''}">
+                    <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
+                    <td>${d.passportNo || 'N/A'}</td>
+                    <td><span class="status-pill ${d.status}">${(d.status || "pending").toUpperCase()}</span></td>
+                    <td><small>${d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'WAITING'}</small></td>
+                    <td><button class="btn-claim" onclick="openReview('${dSnap.id}', '${d.studentName}')" ${isLocked ? 'disabled' : ''}>REVIEW</button></td>
+                </tr>`;
+        });
+        tbody.innerHTML = html || "<tr><td colspan='5' align='center'>No Data Found</td></tr>";
+        hideLoader();
     });
-    tbody.innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Found</td></tr>";
-    hideLoader(); // টেবিল লোড হয়ে গেলে লোডার রিমুভ নিশ্চিত করা
-});
+};
+loadIncomingTable();
 
-// --- ৪. স্ট্যাটাস আপডেট লজিক (Sync with Partner Wallet) ---
+// --- ৪. স্টাফ প্রসেসিং হিস্ট্রি লোড ---
+const loadStaffHistory = () => {
+    const historyBody = document.getElementById('historyTableBody');
+    if (!historyBody) return;
+
+    const q = query(collection(db, "applications"), where("handledBy", "==", staffEmail.toLowerCase()), orderBy("updatedAt", "desc"));
+
+    onSnapshot(q, (snap) => {
+        let html = "";
+        snap.forEach(dSnap => {
+            const d = dSnap.data();
+            const date = d.updatedAt?.toDate() ? d.updatedAt.toDate().toLocaleDateString('en-GB') : 'Recently';
+            html += `<tr>
+                <td><b>${d.studentName}</b></td>
+                <td>${d.university}</td>
+                <td><span class="status-pill ${d.status}">${d.status.toUpperCase()}</span></td>
+                <td>${date}</td>
+            </tr>`;
+        });
+        historyBody.innerHTML = html || "<tr><td colspan='4' align='center'>No history found.</td></tr>";
+    });
+};
+
+// --- ৫. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক লজিক ---
 const updateBtn = document.getElementById('updateStatusBtn');
 if (updateBtn) {
     updateBtn.onclick = async () => {
         const newStatus = document.getElementById('statusSelect').value;
         const appId = window.currentAppId;
-
-        if (!appId) return alert("Select an application first!");
+        if (!appId) return alert("Select an application!");
 
         updateBtn.innerText = "Syncing...";
         updateBtn.disabled = true;
@@ -156,26 +154,25 @@ if (updateBtn) {
             await updateDoc(doc(db, "applications", appId), {
                 status: newStatus,
                 updatedAt: serverTimestamp(),
-                handledBy: staffEmail 
+                handledBy: staffEmail
             });
-            alert(`Application updated to ${newStatus.toUpperCase()}`);
+            alert("Status Updated Successfully!");
             closeSlider();
-        } catch (e) {
-            alert("Update Error: " + e.message);
-        } finally {
-            updateBtn.innerText = "UPDATE STATUS & SYNC";
-            updateBtn.disabled = false;
-        }
+        } catch (e) { alert(e.message); }
+        finally { updateBtn.innerText = "UPDATE STATUS & SYNC"; updateBtn.disabled = false; }
     };
 }
 
-// --- ৫. লগআউট ---
-const logoutBtn = document.getElementById('logoutBtn');
-if(logoutBtn) {
-    logoutBtn.onclick = () => {
-        if(confirm("Logout from Staff Session?")) {
-            localStorage.clear();
-            window.location.href = 'index.html';
-        }
-    };
-}
+// --- ৬. ট্যাব চেঞ্জিং লজিক ---
+window.showTab = (id, el) => {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active-section');
+    if(el) el.classList.add('active');
+
+    if(id === 'historySection') loadStaffHistory();
+};
+
+window.logout = () => { if(confirm("Logout?")) { localStorage.clear(); location.href='index.html'; } };
