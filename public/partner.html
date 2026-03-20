@@ -27,6 +27,19 @@
 
         <div class="main">
             <div id="home" class="section active-section">
+                <div id="subStatusBox" class="card" style="margin-bottom:20px; border-left: 5px solid var(--gold); background: rgba(212, 175, 55, 0.05);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <p style="font-size:12px; opacity:0.7; margin:0;"><i class="fas fa-id-card"></i> SUBSCRIPTION STATUS</p>
+                            <h3 id="subStatusText" style="margin:5px 0; color: var(--gold);">Checking...</h3>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="font-size:12px; opacity:0.7; margin:0;"><i class="fas fa-calendar-alt"></i> EXPIRES ON</p>
+                            <p id="subExpiryText" style="font-weight:bold; margin:5px 0;">--/--/--</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="wallet-container">
                     <div class="wallet-box">
                         <p style="font-size:12px; opacity:0.7;"><i class="fas fa-clock"></i> PENDING COMMISSION</p>
@@ -111,13 +124,12 @@
             <div id="withdraw" class="section">
                 <div class="card">
                     <h3>Withdrawal Request</h3>
-                    <div class="form-grid" style="margin-top:20px;">
-                        <input type="text" id="payMethod" placeholder="Payment Method (e.g. Bkash/Bank)" class="reg-input">
-                        <input type="text" id="payAccount" placeholder="Account No" class="reg-input">
-                        <input type="number" id="wdAmount" placeholder="Amount" class="reg-input">
-                        <button id="wdBtn" class="btn-gold" disabled>WITHDRAW NOW</button>
+                    <div style="text-align:center; padding:20px;">
+                        <i class="fas fa-wallet" style="font-size:40px; color:var(--gold); margin-bottom:15px;"></i>
+                        <p style="opacity:0.8;">Request your earned commission to your preferred account.</p>
+                        <button id="wdBtn" class="btn-gold" style="margin-top:20px; padding:10px 40px;" disabled>WITHDRAW NOW</button>
+                        <p id="wdWarning" style="color:var(--danger); font-size:12px; margin-top:10px;">Withdrawal button will be active when final balance > 0.</p>
                     </div>
-                    <p id="wdWarning" style="color:var(--danger); font-size:12px; margin-top:10px;">Withdrawal button will be active when final balance > 0.</p>
                 </div>
             </div>
 
@@ -155,6 +167,32 @@
             <div style="margin-top:25px; display:flex; gap:15px;">
                 <button id="submitAppBtn" class="btn-gold" style="flex:1;">CONFIRM ENROLLMENT</button>
                 <button onclick="closeModal()" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <h3 style="color:var(--gold); margin-bottom:5px;">Withdraw Request</h3>
+            <p id="wdAvailableText" style="font-size:12px; margin-bottom:20px; opacity:0.7;"></p>
+            
+            <label style="font-size:11px; display:block; margin-bottom:5px;">Select Method</label>
+            <select id="wdMethod" class="reg-input" style="margin-bottom:15px;">
+                <option value="Bkash">Bkash (Personal)</option>
+                <option value="Nagad">Nagad (Personal)</option>
+                <option value="Rocket">Rocket</option>
+                <option value="Bank">Bank Transfer</option>
+            </select>
+            
+            <label style="font-size:11px; display:block; margin-bottom:5px;">Account Details</label>
+            <textarea id="wdAccountDetails" class="reg-input" style="height:70px; margin-bottom:15px; padding-top:10px;" placeholder="Phone number or Bank Name, A/C No, Branch..."></textarea>
+            
+            <label style="font-size:11px; display:block; margin-bottom:5px;">Amount (৳)</label>
+            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Enter amount">
+            
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button id="confirmWdBtn" class="btn-gold" style="flex:1;">SUBMIT REQUEST</button>
+                <button onclick="document.getElementById('withdrawModal').style.display='none'" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
             </div>
         </div>
     </div>
