@@ -16,7 +16,7 @@ const userEmail = localStorage.getItem('userEmail');
 
 let globalFinalBalance = 0; 
 
-// --- Global UI Helpers ---
+// --- UI Helpers ---
 window.showTab = (id, el) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -32,10 +32,7 @@ const uploadToCloudinary = async (file) => {
     formData.append("file", file);
     formData.append("upload_preset", "ihp_upload");
     try {
-        const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", {
-            method: "POST", 
-            body: formData
-        });
+        const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
         const data = await res.json();
         return data.secure_url || "";
     } catch (e) { return ""; }
@@ -66,16 +63,15 @@ document.getElementById('searchBtn').onclick = () => {
 function renderSearch(data) {
     const container = document.getElementById('uniListContainer');
     document.getElementById('searchResultArea').style.display = 'block';
-    container.innerHTML = data.map(u => {
-        return `<tr>
+    container.innerHTML = data.map(u => `
+        <tr>
             <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
             <td>${u.uDegree}<br>${u.uIntake}</td>
             <td>GPA ${u.minCGPA}+ | IELTS ${u.minIELTS}+</td>
             <td>৳${(u.uSemFee * 115).toLocaleString()}</td>
             <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
             <td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
-        </tr>`;
-    }).join('');
+        </tr>`).join('');
 }
 
 window.openApply = (name, comm) => {
@@ -97,51 +93,34 @@ document.getElementById('submitAppBtn').onclick = async () => {
         const u3 = await uploadToCloudinary(document.getElementById('filePass').files[0]);
         const u4 = await uploadToCloudinary(document.getElementById('fileOther').files[0]);
         await addDoc(collection(db, "applications"), {
-            studentName: sName,
-            studentPhone: sPhone,
-            passportNo: sPass,
-            university: window.selectedUni.name,
-            commission: window.selectedUni.comm,
-            partnerEmail: userEmail,
-            status: 'pending', 
-            commissionStatus: 'waiting',
+            studentName: sName, studentPhone: sPhone, passportNo: sPass,
+            university: window.selectedUni.name, commission: window.selectedUni.comm,
+            partnerEmail: userEmail, status: 'pending', commissionStatus: 'waiting',
             docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
         generateSlip(sName, sPass, window.selectedUni.name);
-    } catch (e) { 
-        alert("Failed to submit!"); 
-        btn.disabled = false;
-        btn.innerText = "CONFIRM ENROLLMENT";
-    }
+    } catch (e) { alert("Failed to submit!"); btn.disabled = false; btn.innerText = "CONFIRM ENROLLMENT"; }
 };
 
-// --- PREMIMUM SLIP GENERATOR ---
+// --- PREMIMUM SLIP GENERATOR (Optimized) ---
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const pName = document.getElementById('pAgency').value || "Authorized Partner";
     const pContact = document.getElementById('pContact').value || "N/A";
-    const studentPhone = document.getElementById('appSPhone').value || "N/A";
     const trackingLink = `https://study-abroad-crm-nine.vercel.app/track.html?id=${sPass}`;
 
     slip.innerHTML = `
-        <div id="printBody" style="font-family: Arial, sans-serif; padding: 30px; border: 2px solid #d4af37; max-width: 650px; margin: 30px auto; background: #fff; color: #333;">
+        <div style="font-family: Arial, sans-serif; padding: 35px; border: 3px solid #d4af37; max-width: 650px; margin: 0 auto; background: #fff; color: #333;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 15px; margin-bottom: 20px;">
-                <div>
-                    <img src="logo.jpeg" style="width: 110px; display: block;">
-                    <p style="font-size: 9px; color: #d4af37; margin: 5px 0 0 0; font-weight: bold;">STUDENT CAREER CONSULTANT</p>
-                </div>
-                <div style="text-align: right;">
-                    <h2 style="color: #d4af37; margin: 0; font-size: 18px; text-transform: uppercase;">Acknowledgment Slip</h2>
-                    <p style="font-size: 11px; margin: 3px 0; color: #666;">Date: ${today}</p>
-                </div>
+                <div><img src="logo.jpeg" style="width: 110px; display: block;"><p style="font-size: 9px; color: #d4af37; margin: 5px 0 0 0; font-weight: bold;">STUDENT CAREER CONSULTANT</p></div>
+                <div style="text-align: right;"><h2 style="color: #d4af37; margin: 0; font-size: 18px;">ACKNOWLEDGMENT SLIP</h2><p style="font-size: 11px; margin: 3px 0; color: #666;">Date: ${today}</p></div>
             </div>
             <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">STUDENT INFORMATION</p>
             <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa; width: 35%;">Name:</td><td style="padding: 8px; font-weight: bold;">${sName}</td></tr>
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Passport:</td><td style="padding: 8px; font-weight: bold;">${sPass}</td></tr>
-                <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Phone:</td><td style="padding: 8px; font-weight: bold;">${studentPhone}</td></tr>
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">University:</td><td style="padding: 8px; font-weight: bold; color:#d4af37;">${uni}</td></tr>
             </table>
             <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">PROCESSING PARTNER</p>
@@ -150,42 +129,31 @@ function generateSlip(sName, sPass, uni) {
                 <tr style="border: 1px solid #eee;"><td style="padding: 8px; background: #fafafa;">Contact:</td><td style="padding: 8px; font-weight: bold;">${pContact}</td></tr>
             </table>
             <div style="display: flex; align-items: center; background: #fdfaf0; border: 1px solid #f3ebd1; padding: 15px;">
-                <div id="qrcode" style="background: #fff; padding: 5px; border: 1px solid #ddd;"></div>
-                <div style="margin-left: 20px;">
-                    <p style="margin: 0; font-size: 13px; font-weight: bold;">Scan to Track Status</p>
-                    <p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Track your file status using your Passport Number.</p>
-                </div>
+                <div id="qrcode_box" style="background: #fff; padding: 5px; border: 1px solid #ddd;"></div>
+                <div style="margin-left: 20px;"><p style="margin: 0; font-size: 13px; font-weight: bold;">Scan to Track Status</p><p style="margin: 5px 0 0 0; font-size: 11px; color: #666;">Verify your application online using Passport Number.</p></div>
             </div>
-            <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #999; border-top: 1px dashed #ccc; padding-top: 15px;">
-                <p>This is a system-generated document. SCC | 2026</p>
-            </div>
+            <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #999; border-top: 1px dashed #ccc; padding-top: 15px;"><p>This is a system-generated document. SCC | 2026</p></div>
         </div>
     `;
 
     setTimeout(() => {
-        if (document.getElementById("qrcode") && window.QRCode) {
-            new QRCode(document.getElementById("qrcode"), { text: trackingLink, width: 75, height: 75 });
-        }
-    }, 100);
+        new QRCode(document.getElementById("qrcode_box"), { text: trackingLink, width: 75, height: 75 });
+        setTimeout(() => { window.print(); location.reload(); }, 1200);
+    }, 300);
 
     document.getElementById('applyModal').style.display = 'none';
-    setTimeout(() => { window.print(); location.reload(); }, 1500);
 }
 
+// --- Snapshot Listeners ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; let finalWallet = 0; let trackHtml = "";
     snap.forEach(dSnap => {
         const d = dSnap.data();
         const comm = Number(d.commission) || 0;
-        const commStatus = d.commissionStatus || 'waiting';
-        if(commStatus === 'pending') pendingWallet += comm;
-        else if(commStatus === 'ready') finalWallet += comm;
+        if(d.commissionStatus === 'pending') pendingWallet += comm;
+        else if(d.commissionStatus === 'ready') finalWallet += comm;
         let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
-        const docs = d.docs || {};
-        let docLinks = "";
-        if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="margin-right:5px;">📄Acad</a>`;
-        if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank">🆔Pass</a>`;
-        trackHtml += `<tr><td><b>${d.studentName}</b><br><small>${d.university}</small></td><td>${d.studentPhone || 'N/A'}</td><td>${d.passportNo || 'N/A'}</td><td><span style="color:var(--gold);">${(d.status || 'PENDING').toUpperCase()}</span></td><td>${docLinks}</td><td>${dateStr}</td></tr>`;
+        trackHtml += `<tr><td><b>${d.studentName}</b><br><small>${d.university}</small></td><td>${d.studentPhone || 'N/A'}</td><td>${d.passportNo || 'N/A'}</td><td><span style="color:var(--gold);">${(d.status || 'PENDING').toUpperCase()}</span></td><td><a href="${d.docs?.academic}" target="_blank">📄Docs</a></td><td>${dateStr}</td></tr>`;
     });
     document.getElementById('homeTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
     document.getElementById('sidebarTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
@@ -196,7 +164,6 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
 });
 
 document.getElementById('wdBtn').onclick = () => {
-    if(globalFinalBalance <= 0) return;
     document.getElementById('wdAvailableText').innerText = `Balance: ৳ ${globalFinalBalance.toLocaleString()}`;
     document.getElementById('withdrawModal').style.display = 'flex';
 };
@@ -204,15 +171,11 @@ document.getElementById('wdBtn').onclick = () => {
 document.getElementById('confirmWdBtn').onclick = async () => {
     const details = document.getElementById('wdAccountDetails').value;
     const amount = Number(document.getElementById('wdReqAmount').value);
-    if(!details || amount <= 0 || amount > globalFinalBalance) return alert("Invalid amount or details.");
-    const btn = document.getElementById('confirmWdBtn');
-    btn.innerText = "SENDING..."; btn.disabled = true;
+    if(!details || amount <= 0 || amount > globalFinalBalance) return alert("Invalid amount.");
     try {
         await addDoc(collection(db, "withdrawals"), { partnerEmail: userEmail, amount, method: document.getElementById('wdMethod').value, accountDetails: details, status: "pending", createdAt: serverTimestamp() });
-        alert("Request sent!");
-        document.getElementById('withdrawModal').style.display = 'none';
+        alert("Request sent!"); document.getElementById('withdrawModal').style.display = 'none';
     } catch (e) { alert("Error!"); }
-    btn.disabled = false; btn.innerText = "SUBMIT REQUEST";
 };
 
 (async () => {
@@ -224,17 +187,13 @@ document.getElementById('confirmWdBtn').onclick = async () => {
             document.getElementById('pContact').value = d.contact || "";
             document.getElementById('pAddress').value = d.address || "";
             document.getElementById('welcomeName').innerText = d.agencyName || "Partner";
-            const status = (d.subscriptionStatus || "Inactive").toUpperCase();
-            document.getElementById('subStatusText').innerText = status;
-            document.getElementById('subStatusText').style.color = status === "ACTIVE" ? "#2ecc71" : "#e74c3c";
+            document.getElementById('subStatusText').innerText = (d.subscriptionStatus || "Inactive").toUpperCase();
             document.getElementById('subExpiryText').innerText = d.expiryDate || "N/A";
         }
     });
 })();
 
 document.getElementById('saveProfileBtn').onclick = async () => {
-    try {
-        await setDoc(doc(db, "partners", userEmail), { agencyName: document.getElementById('pAgency').value, contact: document.getElementById('pContact').value, address: document.getElementById('pAddress').value, email: userEmail }, { merge: true });
-        alert("Saved!");
-    } catch (e) { alert("Error!"); }
+    await setDoc(doc(db, "partners", userEmail), { agencyName: document.getElementById('pAgency').value, contact: document.getElementById('pContact').value, address: document.getElementById('pAddress').value, email: userEmail }, { merge: true });
+    alert("Saved!");
 };
