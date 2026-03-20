@@ -118,11 +118,91 @@ document.getElementById('submitAppBtn').onclick = async () => {
     }
 };
 
+// --- Modern Acknowledgment Slip with QR ---
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
-    slip.innerHTML = `<div style="text-align:center;"><img src="logo.jpeg" style="width:100px;"><h2>Confirmation Slip</h2><p>Student: ${sName}</p><p>Passport: ${sPass}</p><p>Uni: ${uni}</p></div>`;
+    const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    
+    const pName = document.getElementById('pAgency').value || "Authorized Partner";
+    const pContact = document.getElementById('pContact').value || "N/A";
+    const studentPhone = document.getElementById('appSPhone').value || "N/A";
+
+    // Tracking Link via Passport Number
+    const trackingLink = `https://study-abroad-crm-nine.vercel.app/track.html?id=${sPass}`;
+
+    slip.innerHTML = `
+        <div id="printBody" style="font-family: Arial, sans-serif; padding: 30px; border: 1px solid #d4af37; max-width: 600px; margin: 30px auto; background: #fff; color: #333;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 15px; margin-bottom: 20px;">
+                <div>
+                    <img src="logo.jpeg" style="width: 100px; display: block;">
+                    <p style="font-size: 9px; color: #d4af37; margin: 5px 0 0 0; font-weight: bold; text-transform: uppercase;">Student Career Consultant</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="color: #d4af37; margin: 0; font-size: 18px; text-transform: uppercase;">Acknowledgment Slip</h2>
+                    <p style="font-size: 11px; margin: 3px 0; color: #666;">Date: ${today}</p>
+                </div>
+            </div>
+
+            <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">STUDENT INFORMATION</p>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa; width: 35%;">Student Name:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold;">${sName}</td>
+                </tr>
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa;">Passport Number:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold;">${sPass}</td>
+                </tr>
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa;">Phone Number:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold;">${studentPhone}</td>
+                </tr>
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa;">Applied University:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold; color: #d4af37;">${uni}</td>
+                </tr>
+            </table>
+
+            <p style="font-size: 12px; font-weight: bold; color: #d4af37; margin-bottom: 5px;">PROCESSING PARTNER</p>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 20px;">
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa; width: 35%;">Agency Name:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold;">${pName}</td>
+                </tr>
+                <tr style="border: 1px solid #eee;">
+                    <td style="padding: 8px; background: #fafafa;">Agency Contact:</td>
+                    <td style="padding: 8px; border: 1px solid #eee; font-weight: bold;">${pContact}</td>
+                </tr>
+            </table>
+
+            <div style="display: flex; align-items: center; background: #fdfaf0; border: 1px solid #f3ebd1; padding: 15px; border-radius: 5px;">
+                <div id="qrcode" style="background: #fff; padding: 5px; border: 1px solid #ddd;"></div>
+                <div style="margin-left: 20px;">
+                    <p style="margin: 0; font-size: 13px; font-weight: bold;">Scan to Track Application</p>
+                    <p style="margin: 5px 0 0 0; font-size: 11px; color: #666; line-height: 1.4;">Use your <b>Passport Number</b> on our website to track your file status in real-time.</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #999; border-top: 1px dashed #ccc; padding-top: 15px;">
+                <p>This is a computer-generated confirmation. No signature is required.</p>
+                <p style="color: #d4af37; font-weight: bold; margin-top: 5px;">STUDENT CAREER CONSULTANT | Empowering Future Leaders</p>
+            </div>
+        </div>
+    `;
+
+    // QR Code Generation
+    setTimeout(() => {
+        if (document.getElementById("qrcode") && window.QRCode) {
+            new QRCode(document.getElementById("qrcode"), {
+                text: trackingLink,
+                width: 70,
+                height: 70
+            });
+        }
+    }, 50);
+
     document.getElementById('applyModal').style.display = 'none';
-    setTimeout(() => { window.print(); location.reload(); }, 1000);
+    setTimeout(() => { window.print(); location.reload(); }, 1200);
 }
 
 // --- Live Wallet & Tracking ---
@@ -159,7 +239,7 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
     if(homeBody) homeBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
     if(sidebarBody) sidebarBody.innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
 
-    globalFinalBalance = finalWallet; // Update global for withdrawal validation
+    globalFinalBalance = finalWallet; 
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
     
@@ -198,7 +278,6 @@ document.getElementById('confirmWdBtn').onclick = async () => {
         });
         alert("Withdrawal request sent successfully!");
         document.getElementById('withdrawModal').style.display = 'none';
-        // Reset fields
         document.getElementById('wdAccountDetails').value = "";
         document.getElementById('wdReqAmount').value = "";
     } catch (e) { alert("Error sending request."); }
@@ -208,20 +287,13 @@ document.getElementById('confirmWdBtn').onclick = async () => {
 // --- Profile & Subscription Tracking ---
 (async () => {
     if(!userEmail) return;
-    // Real-time listener for partner profile (Name + Subscription)
     onSnapshot(doc(db, "partners", userEmail), (dSnap) => {
         if (dSnap.exists()) {
             const d = dSnap.data();
-            
-            // Profile fields
             document.getElementById('pAgency').value = d.agencyName || "";
             document.getElementById('pContact').value = d.contact || "";
             document.getElementById('pAddress').value = d.address || "";
-            
-            // Welcome Name
             document.getElementById('welcomeName').innerText = d.agencyName || "Partner";
-
-            // Subscription Display
             const status = (d.subscriptionStatus || "Inactive").toUpperCase();
             const statusEl = document.getElementById('subStatusText');
             statusEl.innerText = status;
