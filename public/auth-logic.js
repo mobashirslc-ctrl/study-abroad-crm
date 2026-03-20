@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
@@ -28,11 +28,10 @@ async function uploadToCloudinary(file) {
             body: formData 
         });
         const data = await res.json();
-        if (data.secure_url) return data.secure_url;
-        throw new Error(data.error?.message || "Cloudinary upload failed");
+        return data.secure_url || "";
     } catch (e) {
         console.error("Cloudinary Error:", e);
-        return ""; // ফাইল আপলোড না হলে খালি স্ট্রিং পাঠাবে
+        return "";
     }
 }
 
@@ -45,14 +44,11 @@ async function handleRegister() {
     if (!role || !email || !pass) return alert("Email, Password and Role are required!");
 
     const regBtn = document.getElementById('regBtn');
-    regBtn.innerText = "Processing... Please Wait";
-    regBtn.disabled = true;
+    regBtn.innerText = "Processing..."; regBtn.disabled = true;
 
     try {
-        let tradeUrl = ""; 
-        let nidUrl = "";
+        let tradeUrl = "", nidUrl = "";
         
-        // ফাইল আপলোড অংশ
         if (role === 'Partner') {
             const tradeFile = document.getElementById('pTrade')?.files[0];
             const nidFile = document.getElementById('pNid')?.files[0];
@@ -60,17 +56,14 @@ async function handleRegister() {
             if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
         }
 
-        // Firebase Auth User Creation
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // Firestore Data Mapping (Safe Access using Optional Chaining)
         const userData = {
             uid: user.uid,
             email: email,
             role: role.toLowerCase(),
-            status: 'pending',
-            isApproved: false,
+            status: 'pending', // অ্যাডমিন এখান থেকে 'active' করবে
             fullName: document.getElementById('pPerson')?.value || document.getElementById('cName')?.value || "N/A",
             phone: document.getElementById('pContact')?.value || document.getElementById('cContact')?.value || "N/A",
             agencyName: document.getElementById('pAgency')?.value || document.getElementById('cOrg')?.value || "N/A",
@@ -80,14 +73,12 @@ async function handleRegister() {
         };
 
         await setDoc(doc(db, "users", user.uid), userData);
-
-        alert("Registration Successful! Please wait for Admin approval.");
+        alert("Success! Please wait for Admin approval.");
         location.reload();
 
     } catch (error) {
-        alert("Registration Error: " + error.message);
-        regBtn.innerText = "SUBMIT REQUEST";
-        regBtn.disabled = false;
+        alert("Error: " + error.message);
+        regBtn.innerText = "SUBMIT REQUEST"; regBtn.disabled = false;
     }
 }
 
@@ -97,11 +88,10 @@ async function handleLogin() {
     const pass = document.getElementById('loginPass').value;
     const loginBtn = document.getElementById('loginBtn');
 
-    if (!email || !pass) return alert("Enter email and password!");
+    if (!email || !pass) return alert("Enter credentials!");
 
     try {
-        loginBtn.innerText = "Accessing...";
-        loginBtn.disabled = true;
+        loginBtn.innerText = "Verifying..."; loginBtn.disabled = true;
 
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
@@ -110,30 +100,35 @@ async function handleLogin() {
         
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            const currentStatus = (userData.status || "").toLowerCase();
+            const status = (userData.status || "").toLowerCase();
 
-            if (currentStatus !== 'approved') {
-                alert("Account not approved. Status: " + userData.status);
-                await auth.signOut();
+            // গুরুত্বপূর্ণ: স্ট্যাটাস চেক (অ্যাডমিন প্যানেলে আমরা 'active' ব্যবহার করেছি)
+            if (status !== 'active' && userData.role !== 'admin') {
+                alert("Account is " + status.toUpperCase() + ". Access Denied.");
+                await signOut(auth);
                 location.reload();
                 return;
             }
 
-            const role = (userData.role || "").toLowerCase();
+            // সেশন ডাটা সেভ করা
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userRole', userData.role);
+
+            // রিডাইরেক্ট লজিক
+            const role = userData.role.toLowerCase();
             if (role === 'admin') window.location.href = "admin.html";
             else if (role === 'compliance') window.location.href = "compliance.html";
             else window.location.href = "partner.html";
 
         } else {
-            alert("Profile not found in database!");
-            loginBtn.innerText = "ACCESS PORTAL";
-            loginBtn.disabled = false;
+            alert("No database record found!");
+            await signOut(auth);
+            location.reload();
         }
 
     } catch (error) {
         alert("Login Failed: " + error.message);
-        loginBtn.innerText = "ACCESS PORTAL";
-        loginBtn.disabled = false;
+        loginBtn.innerText = "ACCESS PORTAL"; loginBtn.disabled = false;
     }
 }
 
