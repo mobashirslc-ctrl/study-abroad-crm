@@ -27,6 +27,7 @@ document.getElementById('trackBtn').addEventListener('click', () => {
 
     if (unsubscribe) unsubscribe();
 
+    // Passport search filter
     const q = query(collection(db, "applications"), where("passportNo", "==", inputVal));
     
     unsubscribe = onSnapshot(q, (snap) => {
@@ -38,32 +39,25 @@ document.getElementById('trackBtn').addEventListener('click', () => {
             
             snap.forEach(doc => {
                 const d = doc.data();
+                
+                // Dashboard theke asha exact status text (Capitalized)
                 const rawStatus = (d.status || 'PENDING').toUpperCase();
 
-                // --- 🚀 COMPLIANCE MATCHING LOGIC ---
+                // --- DYNAMIC STEPPER LOGIC (Status Onujayi Step Green Hobe) ---
                 let activeStep = 1; 
 
-                // Step 1: SUBMITTED (Default for PENDING or SUBMITTED)
-                if (rawStatus === 'PENDING' || rawStatus === 'SUBMITTED') {
-                    activeStep = 1;
-                }
-
-                // Step 2: COMPLIANCE (Jokhon staff VERIFIED kore)
-                if (rawStatus.includes("VERIFIED") || rawStatus.includes("REVIEWING")) {
+                // Mapping strictly based on your Dashboard screenshots:
+                if (rawStatus.includes("VERIFIED") || rawStatus.includes("REVIEW")) {
                     activeStep = 2;
-                }
-                
-                // Step 3: PROCESSING (Jokhon Student Pay kore ba processing-e thake)
-                if (rawStatus.includes("STUDENT_PAID") || rawStatus.includes("PROCESSING") || rawStatus.includes("OFFER_DONE")) {
+                } else if (rawStatus.includes("PAID") || rawStatus.includes("OFFER") || rawStatus.includes("PROCESSING")) {
                     activeStep = 3;
-                }
-
-                // Step 4: OUTCOME (Visa status or final outcome)
-                if (rawStatus.includes("VISA_SUCCESS") || rawStatus.includes("DONE") || rawStatus.includes("VISA_REJECTED")) {
+                } else if (rawStatus.includes("SUCCESS") || rawStatus.includes("DONE") || rawStatus.includes("REJECTED")) {
                     activeStep = 4;
+                } else {
+                    activeStep = 1; // Default Step 1
                 }
 
-                // --- UI UPDATES ---
+                // UI Reset & Update
                 document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
                 const stepKeys = ['submitted', 'compliance', 'processing', 'outcome'];
                 for (let i = 1; i <= activeStep; i++) {
@@ -71,20 +65,21 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                     if (el) el.classList.add('active');
                 }
 
-                // Display exact text from Compliance Dashboard
+                // UI Status Display (Ekhane exact status-ta boro kore dekhabe)
                 dataContent.innerHTML = `
-                    <div class="info-row"><span class="label">Student:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
-                    <div class="info-row"><span class="label">University:</span> <span class="val">${d.university || 'Processing...'}</span></div>
-                    <div class="info-row" style="margin-top:10px;">
-                        <span class="label">System Status:</span> 
-                        <span class="val" style="background:#2ecc71; color:#fff; padding:4px 12px; border-radius:6px; font-weight:bold; font-size:13px; display:inline-block;">
+                    <div class="info-row"><span class="label">Student Name:</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                    <div class="info-row"><span class="label">Applying for:</span> <span class="val">${d.university || 'N/A'}</span></div>
+                    
+                    <div style="margin-top:20px; text-align:center; padding:15px; background:rgba(46, 204, 113, 0.2); border:2px solid #2ecc71; border-radius:15px;">
+                        <div style="font-size:11px; text-transform:uppercase; opacity:0.8; margin-bottom:5px;">Current Live Status</div>
+                        <div style="font-size:22px; font-weight:bold; color:#fff; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">
                             ${rawStatus.replace('_', ' ')}
-                        </span>
+                        </div>
                     </div>
                     
-                    <div style="margin-top:15px; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:13px; border-left:4px solid #f1c40f; color:#ecf0f1;">
-                        <b style="color:#f1c40f;">💬 IHP Official Note:</b><br>
-                        ${d.complianceNote || "Our team is working on your file. Updates will be visible here in real-time."}
+                    <div style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:13px; border-left:4px solid #f1c40f;">
+                        <b style="color:#f1c40f;">💬 Processing Note:</b><br>
+                        ${d.complianceNote || "Your file is being processed by the IHP Hub. Status updates will be visible here in real-time."}
                     </div>
                 `;
             });
