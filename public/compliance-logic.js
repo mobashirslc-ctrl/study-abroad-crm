@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, setDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, setDoc, query, where, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
@@ -14,13 +14,27 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const staffEmail = localStorage.getItem('userEmail');
 
+// Global staff mapping to show NAMES instead of emails
+let staffNames = {};
+
 // --- Loader Logic ---
 window.addEventListener('load', () => {
     setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 1000);
 });
 
-// --- 1. Load Incoming Applications & History Stats ---
-onSnapshot(collection(db, "applications"), (snap) => {
+// --- 1. Fetch all staff names for display ---
+const loadStaffNames = async () => {
+    const q = query(collection(db, "staffs"));
+    const snap = await getDocs(q);
+    snap.forEach(d => {
+        staffNames[d.id] = d.data().name || d.id;
+    });
+};
+
+// --- 2. Load Incoming Applications ---
+onSnapshot(collection(db, "applications"), async (snap) => {
+    await loadStaffNames(); // Refresh names list
+    
     const tbody = document.getElementById('incomingTableBody');
     tbody.innerHTML = "";
     
@@ -32,47 +46,65 @@ onSnapshot(collection(db, "applications"), (snap) => {
         const d = dSnap.data();
         const id = dSnap.id;
 
-        // Statistics Calculation (Only for this staff)
         if(d.handledBy === staffEmail) {
             totalServed++;
             if(d.status === 'visa_success') visaSuccess++;
             partnersSet.add(d.partnerEmail);
         }
 
-        // Table Rendering
+        // 4 Documents logic
         const ds = d.docs || {};
-        let docBtn = "";
-        if(ds.academic) docBtn += `<a href="${ds.academic}" target="_blank" style="color:var(--accent); margin-right:5px;">[Acad]</a>`;
-        if(ds.passport) docBtn += `<a href="${ds.passport}" target="_blank" style="color:var(--accent);">[Pass]</a>`;
+        let docLinks = "";
+        if(ds.academic) docLinks += `<a href="${ds.academic}" target="_blank" style="color:var(--accent); margin-right:5px;" title="Academic">[A]</a>`;
+        if(ds.language) docLinks += `<a href="${ds.language}" target="_blank" style="color:var(--accent); margin-right:5px;" title="Language">[L]</a>`;
+        if(ds.passport) docLinks += `<a href="${ds.passport}" target="_blank" style="color:var(--accent); margin-right:5px;" title="Passport">[P]</a>`;
+        if(ds.others) docLinks += `<a href="${ds.others}" target="_blank" style="color:var(--accent);" title="Others">[O]</a>`;
+
+        // Handle staff name display
+        const handlerDisplay = staffNames[d.handledBy] || d.handledBy || '<span style="color:#666;">Unclaimed</span>';
 
         tbody.innerHTML += `
             <tr>
                 <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
                 <td>${d.passportNo}</td>
-                <td>${docBtn || 'No Files'}</td>
+                <td>${docLinks || 'No Files'}</td>
                 <td><span class="status-pill ${d.status}">${d.status.toUpperCase()}</span></td>
-                <td>${d.handledBy || '<span style="color:#888;">Unclaimed</span>'}</td>
+                <td><i class="fas fa-user-check" style="font-size:10px; color:var(--accent);"></i> ${handlerDisplay}</td>
                 <td><button class="btn-claim" onclick="openReview('${id}', '${d.studentName}', '${d.commission}')">Review</button></td>
             </tr>`;
     });
 
-    // Update Stats UI
     document.getElementById('hTotal').innerText = totalServed;
     document.getElementById('hSuccess').innerText = visaSuccess;
     document.getElementById('hPartners').innerText = partnersSet.size;
 });
 
-// --- 2. Review Slider Logic ---
+// --- 3. Review Slider Logic (Global Binding) ---
 window.openReview = (id, sName, comm) => {
     window.currentAppId = id;
     document.getElementById('targetStudent').innerText = sName;
-    document.getElementById('targetComm').innerText = `Partner Commission: ৳${Number(comm).toLocaleString()}`;
+    document.getElementById('targetComm').innerText = `Commission: ৳${Number(comm).toLocaleString()}`;
+    
+    // Fetch docs for current review
+    const appRef = doc(db, "applications", id);
+    getDoc(appRef).then(s => {
+        const d = s.data().docs || {};
+        const area = document.getElementById('docLinksArea');
+        area.innerHTML = `
+            <p style="font-size:12px; margin-bottom:10px; color:#aaa;">Verify Documents:</p>
+            ${d.academic ? `<a href="${d.academic}" target="_blank" class="btn-gold" style="display:inline-block; margin:5px; padding:5px 10px; font-size:11px;">Academic PDF</a>` : ''}
+            ${d.language ? `<a href="${d.language}" target="_blank" class="btn-gold" style="display:inline-block; margin:5px; padding:5px 10px; font-size:11px;">Language PDF</a>` : ''}
+            ${d.passport ? `<a href="${d.passport}" target="_blank" class="btn-gold" style="display:inline-block; margin:5px; padding:5px 10px; font-size:11px;">Passport PDF</a>` : ''}
+            ${d.others ? `<a href="${d.others}" target="_blank" class="btn-gold" style="display:inline-block; margin:5px; padding:5px 10px; font-size:11px;">Other File</a>` : ''}
+        `;
+    });
+
     document.getElementById('reviewSlider').classList.add('open');
 };
 
 window.closeSlider = () => document.getElementById('reviewSlider').classList.remove('open');
 
-// --- 3. Status Update & Wallet Sync (CRITICAL) ---
+// --- 4. Status Update Logic ---
 document.getElementById('updateStatusBtn').onclick = async () => {
     const btn = document.getElementById('updateStatusBtn');
     const newStatus = document.getElementById('statusSelect').value;
@@ -85,32 +117,27 @@ document.getElementById('updateStatusBtn').onclick = async () => {
         const appData = appSnap.data();
         let commStatus = appData.commissionStatus || "waiting";
 
-        // Logic based on status selection
-        if (newStatus === "verified") {
-            commStatus = "pending"; // Adds to partner's pending wallet
-        } else if (newStatus === "student_paid") {
-            commStatus = "ready"; // Moves to partner's final balance
-        } else if (newStatus === "visa_rejected" || newStatus === "doc_missing") {
-            commStatus = "waiting"; // Removes from wallet
-        }
+        if (newStatus === "verified") commStatus = "pending";
+        else if (newStatus === "student_paid") commStatus = "ready";
+        else if (newStatus === "visa_rejected") commStatus = "waiting";
 
         await updateDoc(appRef, {
             status: newStatus,
             commissionStatus: commStatus,
-            handledBy: staffEmail,
+            handledBy: staffEmail, // This saves the staff email as ID
             updatedAt: serverTimestamp()
         });
 
-        alert("Application Status & Wallet Updated!");
+        alert("Sync Complete!");
         closeSlider();
     } catch (e) {
-        alert("Sync Error!");
+        alert("Update Failed!");
     } finally {
         btn.innerText = "APPLY STATUS & SYNC WALLET"; btn.disabled = false;
     }
 };
 
-// --- 4. Staff Profile Management ---
+// --- 5. Staff Profile Setup ---
 onSnapshot(doc(db, "staffs", staffEmail), (dSnap) => {
     if (dSnap.exists()) {
         const d = dSnap.data();
@@ -118,8 +145,6 @@ onSnapshot(doc(db, "staffs", staffEmail), (dSnap) => {
         document.getElementById('profName').value = d.name || "";
         document.getElementById('profOrg').value = d.org || "";
         document.getElementById('profExp').value = d.exp || "";
-    } else {
-        document.getElementById('staffDisplay').innerText = staffEmail;
     }
 });
 
@@ -129,13 +154,12 @@ document.getElementById('saveProfileBtn').onclick = async () => {
     const exp = document.getElementById('profExp').value;
 
     await setDoc(doc(db, "staffs", staffEmail), {
-        name, org, exp, email: staffEmail, role: 'compliance'
+        name, org, exp, email: staffEmail
     }, { merge: true });
 
-    alert("Staff Profile Updated!");
+    alert("Profile Saved!");
 };
 
-// --- Logout ---
 document.getElementById('logoutBtn').onclick = () => {
     localStorage.clear();
     location.href = 'index.html';
