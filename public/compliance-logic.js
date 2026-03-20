@@ -30,7 +30,7 @@ async function displayStaffName() {
 }
 displayStaffName();
 
-// --- ২. স্লাইডার ওপেন ---
+// --- ২. স্লাইডার ওপেন (UPDATED FOR 4 FILES) ---
 window.openReview = async (id, sName) => {
     window.currentAppId = id; 
     const slider = document.getElementById('reviewSlider');
@@ -49,7 +49,14 @@ window.openReview = async (id, sName) => {
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
                     ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Academic PDF</a>` : ''}
                     ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Passport PDF</a>` : ''}
+                    ${d.language ? `<a href="${d.language}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Language PDF</a>` : ''}
+                    ${d.others ? `<a href="${d.others}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Other Docs</a>` : ''}
                 </div>`;
+            
+            // যদি কোনো ফাইলই না থাকে
+            if (!d.academic && !d.passport && !d.language && !d.others) {
+                docArea.innerHTML = "<p style='color:#888; text-align:center; font-size:12px;'>No documents found.</p>";
+            }
         }
     }
 };
@@ -94,15 +101,14 @@ if (updateBtn) {
             const appSnap = await getDoc(appRef);
             const appData = appSnap.data();
 
-            // পার্টনার ড্যাশবোর্ডের লজিক অনুযায়ী commissionStatus হ্যান্ডেল করা
-            let cStatus = 'waiting'; // ডিফল্ট বা রিজেক্ট হলে টাকা জিরো হয়ে যাবে
+            let cStatus = 'waiting'; 
             
             if (newStatus === 'verified') {
-                cStatus = 'pending'; // পেন্ডিং ওয়ালেটে যোগ হবে
+                cStatus = 'pending'; 
             } else if (newStatus === 'visa_success' || newStatus === 'student_paid') {
-                cStatus = 'ready'; // ফাইনাল ব্যালেন্সে যোগ হবে
+                cStatus = 'ready'; 
             } else if (newStatus === 'visa_rejected' || newStatus === 'doc_missing') {
-                cStatus = 'failed'; // এটি দিলে পার্টনার ড্যাশবোর্ডের ক্যালকুলেশন থেকে এই টাকা বাদ পড়ে যাবে
+                cStatus = 'failed'; 
             }
 
             const currentComm = appData.commission || 0;
