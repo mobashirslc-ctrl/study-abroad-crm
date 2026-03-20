@@ -6,43 +6,167 @@
     <title>Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0c29; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: #1a1a2e; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: none; background: #252545; color: white; box-sizing: border-box; }
-        button { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
-        
-        /* --- ✈️ PLANE ANIMATION CSS --- */
-        #result { margin-top: 25px; display: none; position: relative; animation: fadeInUp 0.5s ease; }
-        .track-header { position: relative; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; }
-        .track-icon { font-size: 20px; color: #3498db; position: absolute; left: 15px; animation: planeFly 3s infinite linear; }
-        
-        @keyframes planeFly {
-            0% { transform: translateX(0px) translateY(0px) rotate(0deg); }
-            25% { transform: translateX(10px) translateY(-2px) rotate(5deg); }
-            75% { transform: translateX(-10px) translateY(2px) rotate(-5deg); }
-            100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+        /* --- 🎨 RESTORED VISUAL DESIGN (From Screenshot 1089.jpg) --- */
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: #0d0c24; /* Dark blue-black background from 1089.jpg */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
         }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-        .val { color: #3498db; font-weight: bold; }
+        .container {
+            background-color: #1a1a2e; /* Original dark container from 1089.jpg */
+            padding: 30px;
+            border-radius: 20px; /* Fully curved from 1089.jpg */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Original Logo Formatting */
+        .logo-placeholder {
+            width: 100%;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .logo-placeholder img {
+            max-width: 140px; /* Standard size from screenshot */
+            height: auto;
+        }
+
+        /* Title Style */
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Input Styling from 1089.jpg */
+        input {
+            width: 100%;
+            padding: 14px 15px;
+            margin: 10px 0;
+            border-radius: 8px; /* Slightly curved based on 1089.jpg */
+            border: 1px solid #333; /* Dark border */
+            background-color: #252545; /* Dark bluish input background from 1089.jpg */
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+        input::placeholder {
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+        }
+
+        /* Button Styling from 1089.jpg */
+        button {
+            background-color: #2ecc71; /* Original green button from 1089.jpg */
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px; /* Slightly curved button based on 1089.jpg */
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+
+        /* --- ✈️ PLANE ANIMATION INTEGRATION --- */
+        #result {
+            margin-top: 25px;
+            display: none; /* Initially hidden */
+            position: relative;
+            animation: fadeInUp 0.5s ease-out;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 20px;
+        }
+
+        .track-header {
+            position: relative;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            padding: 0 40px;
+        }
+        
+        .track-icon {
+            font-size: 18px;
+            color: #3498db; /* Specific plane blue */
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: planeFly 2s infinite ease-in-out;
+        }
+        
+        /* Plane flying logic */
+        @keyframes planeFly {
+            0% { left: 10px; opacity: 0.5; }
+            50% { left: 25px; opacity: 1; }
+            100% { left: 10px; opacity: 0.5; }
+        }
+
+        /* Keyframes for smooth fadeIn of result box */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Restored Data Rows */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+        }
+        .label { color: rgba(255,255,255,0.6); }
+        .val { color: #fff; font-weight: 700; text-align: right; max-width: 60%; }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <img src="logo.png" alt="Logo" style="width: 150px; margin-bottom: 10px;">
+        <div class="logo-placeholder">
+            <img src="logo.png" alt="Company Logo">
+        </div>
+        
         <h2>Live Tracker</h2>
+        
         <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
+        
         <button id="trackBtn">Track Status</button>
 
         <div id="result">
             <div class="track-header">
-                <i class="fas fa-plane-departure track-icon"></i>
-                LIVE APPLICATION STATUS
+                <i class="fas fa-plane track-icon"></i>
+                YOUR APPLICATION PROGRESS
             </div>
+            
             <div id="data-content"></div>
         </div>
     </div>
+    
     <script type="module" src="tracking-logic.js"></script>
 </body>
 </html>
