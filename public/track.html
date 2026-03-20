@@ -3,94 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tracking - IHP CRM</title>
+    <title>Live Application Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
     <style>
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #4b0082 0%, #6a0dad 100%);
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: #fff;
-        }
-        .glass-box {
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 40px; width: 90%; max-width: 500px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-        img { width: 110px; margin-bottom: 15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.3)); }
-        h2 { margin-bottom: 5px; font-weight: 600; }
-        .live-tag { font-size: 10px; background: #2ecc71; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: inline-block; animation: blink 1.5s infinite; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f0c29; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: #1a1a2e; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 450px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: none; background: #252545; color: white; box-sizing: border-box; }
+        button { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; }
         
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        .search-group { display: flex; gap: 10px; margin-bottom: 25px; }
-        input {
-            flex: 1; padding: 15px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1); color: white; font-size: 16px; outline: none;
-        }
-        button {
-            padding: 15px 25px; border-radius: 10px; border: none;
-            background: #2ecc71; color: white; font-weight: bold; cursor: pointer;
-        }
-
-        /* Stepper UI */
-        .stepper { display: flex; justify-content: space-between; margin: 30px 0; position: relative; }
-        .line { position: absolute; top: 17px; left: 10%; right: 10%; height: 2px; background: rgba(255,255,255,0.1); z-index: 1; }
-        .step { position: relative; z-index: 2; text-align: center; flex: 1; }
-        .circle { width: 35px; height: 35px; background: rgba(255,255,255,0.2); border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: 0.4s; }
-        .step-label { font-size: 10px; text-transform: uppercase; opacity: 0.6; }
-        .step.active .circle { background: #2ecc71; box-shadow: 0 0 15px #2ecc71; }
-        .step.active .step-label { opacity: 1; font-weight: bold; }
-
-        #result { margin-top: 20px; background: rgba(0, 0, 0, 0.3); border-radius: 12px; display: none; text-align: left; }
-        .info-card { padding: 20px; border-top: 3px solid #2ecc71; }
-        .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .label { color: #2ecc71; font-weight: 600; }
+        /* --- ✈️ PLANE ANIMATION CSS --- */
+        #result { margin-top: 25px; display: none; position: relative; animation: fadeInUp 0.5s ease; }
+        .track-header { position: relative; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 15px; font-weight: bold; }
+        .track-icon { font-size: 20px; color: #3498db; position: absolute; left: 15px; animation: planeFly 3s infinite linear; }
         
-        footer { margin-top: 20px; font-size: 12px; opacity: 0.6; }
+        @keyframes planeFly {
+            0% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+            25% { transform: translateX(10px) translateY(-2px) rotate(5deg); }
+            75% { transform: translateX(-10px) translateY(2px) rotate(-5deg); }
+            100% { transform: translateX(0px) translateY(0px) rotate(0deg); }
+        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .val { color: #3498db; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="glass-box">
-        <img src="logo.jpeg" alt="IHP Logo">
+    <div class="container">
+        <img src="logo.png" alt="Logo" style="width: 150px; margin-bottom: 10px;">
         <h2>Live Tracker</h2>
-        <div class="live-tag">● Live System</div>
-        
-        <div class="search-group">
-            <input type="text" id="passportInput" placeholder="Enter Passport Number">
-            <button id="trackBtn">Track</button>
-        </div>
+        <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
+        <button id="trackBtn">Track Status</button>
 
         <div id="result">
-            <div class="stepper">
-                <div class="line"></div>
-                <div class="step" id="step-submitted">
-                    <div class="circle">1</div>
-                    <div class="step-label">Submitted</div>
-                </div>
-                <div class="step" id="step-compliance">
-                    <div class="circle">2</div>
-                    <div class="step-label">Compliance</div>
-                </div>
-                <div class="step" id="step-processing">
-                    <div class="circle">3</div>
-                    <div class="step-label">Processing</div>
-                </div>
-                <div class="step" id="step-outcome">
-                    <div class="circle">4</div>
-                    <div class="step-label">Outcome</div>
-                </div>
+            <div class="track-header">
+                <i class="fas fa-plane-departure track-icon"></i>
+                LIVE APPLICATION STATUS
             </div>
-            <div id="data-content" class="info-card"></div>
+            <div id="data-content"></div>
         </div>
     </div>
-    <footer>&copy; 2026 GORUN LTD | IHP Processing Hub</footer>
     <script type="module" src="tracking-logic.js"></script>
 </body>
 </html>
