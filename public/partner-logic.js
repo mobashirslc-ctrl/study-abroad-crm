@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- ১. ফায়ারবেস কনফিগারেশন (ihp-portal-v3) ---
 const firebaseConfig = { 
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
     authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -13,15 +12,13 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// সেশন থেকে পার্টনারের ইমেইল নেওয়া
 const userEmail = localStorage.getItem('userEmail');
 
 if (!userEmail) {
-    window.location.href = 'index.html'; // লগইন না থাকলে রিডাইরেক্ট
+    window.location.href = 'index.html';
 }
 
-// --- ২. রিয়েল-টাইম ওয়ালেট এবং অ্যাপ্লিকেশন ট্র্যাকিং (The Core Engine) ---
+// --- ১. ওয়ালেট ও অ্যাপ্লিকেশন লিস্ট (Realtime) ---
 const q = query(
     collection(db, "applications"), 
     where("partnerEmail", "==", userEmail.toLowerCase()),
@@ -35,78 +32,61 @@ onSnapshot(q, (snap) => {
 
     snap.forEach((docSnap) => {
         const d = docSnap.data();
-        const commission = Number(d.commission) || 0;
-        const status = d.status || "submitted";
-        const cStatus = d.commissionStatus || "waiting";
-
-        // --- ওয়ালেট ক্যালকুলেশন লজিক (Compliance এর সাথে সিঙ্কড) ---
-        if (cStatus === 'pending') {
-            pendingWallet += commission; // Verified ফাইল এখানে যোগ হবে
-        } else if (cStatus === 'ready') {
-            finalWallet += commission;   // Student Paid/Visa Success হলে এখানে আসবে
-        }
-
-        // --- অ্যাপ্লিকেশন লিস্ট জেনারেশন ---
-        const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : 'Processing...';
+        const comm = Number(d.commission) || 0;
         
+        // ওয়ালেট লজিক
+        if (d.commissionStatus === 'pending') pendingWallet += comm;
+        if (d.commissionStatus === 'ready') finalWallet += comm;
+
+        // ডেট ফরম্যাট
+        const date = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : '...';
+        
+        // টেবিল রো (আপনার অরিজিনাল ডিজাইনের সাথে মিল রেখে)
         tableHtml += `
             <tr>
-                <td>
-                    <div style="font-weight: bold; color: #fff;">${d.studentName}</div>
-                    <small style="color: #888;">${d.university || 'N/A'}</small>
-                </td>
+                <td><b>${d.studentName}</b><br><small style="color:#888;">${d.university || 'N/A'}</small></td>
                 <td>${d.passportNo || 'N/A'}</td>
+                <td><span class="status-pill ${d.status}">${(d.status || 'SUBMITTED').toUpperCase()}</span></td>
                 <td>
-                    <span class="status-pill ${status.toLowerCase()}">
-                        ${status.toUpperCase()}
-                    </span>
-                </td>
-                <td>
-                    <div style="display: flex; gap: 5px;">
-                        ${d.docs?.academic ? `<i class="fas fa-file-pdf" title="Academic Docs" style="color: #00d2ff;"></i>` : ''}
-                        ${d.docs?.passport ? `<i class="fas fa-file-contract" title="Passport" style="color: #00d2ff;"></i>` : ''}
+                    <div style="display:flex; gap:8px; justify-content:center;">
+                        ${d.docs?.academic ? `<a href="${d.docs.academic}" target="_blank" title="Academic"><i class="fas fa-file-pdf" style="color:#00d2ff;"></i></a>` : ''}
+                        ${d.docs?.passport ? `<a href="${d.docs.passport}" target="_blank" title="Passport"><i class="fas fa-file-invoice" style="color:#00d2ff;"></i></a>` : ''}
+                        ${d.docs?.language ? `<a href="${d.docs.language}" target="_blank" title="Language"><i class="fas fa-certificate" style="color:#00d2ff;"></i></a>` : ''}
+                        ${d.docs?.others ? `<a href="${d.docs.others}" target="_blank" title="Others"><i class="fas fa-folder-plus" style="color:#00d2ff;"></i></a>` : ''}
                     </div>
                 </td>
-                <td><small style="color: #aaa;">${date}</small></td>
+                <td>${date}</td>
             </tr>
         `;
     });
 
-    // --- UI আপডেট ---
-    // ওয়ালেট সেকশন
-    const pendingEl = document.getElementById('topPending');
-    const finalEl = document.getElementById('topFinal');
-    if (pendingEl) pendingEl.innerText = `৳${pendingWallet.toLocaleString()}`;
-    if (finalEl) finalEl.innerText = `৳${finalWallet.toLocaleString()}`;
-
-    // টেবিল সেকশন
+    // UI আপডেট (ID গুলো আপনার HTML এর সাথে মিলিয়ে নিবেন)
+    const pEl = document.getElementById('topPending');
+    const fEl = document.getElementById('topFinal');
     const tbody = document.getElementById('homeTrackingBody');
-    if (tbody) {
-        tbody.innerHTML = tableHtml || `<tr><td colspan="5" align="center" style="padding: 20px; color: #888;">No applications submitted yet.</td></tr>`;
-    }
 
-    // লোডার লুকানো
-    const loader = document.getElementById('loader');
-    if (loader) loader.style.display = 'none';
+    if (pEl) pEl.innerText = `৳${pendingWallet.toLocaleString()}`;
+    if (fEl) fEl.innerText = `৳${finalWallet.toLocaleString()}`;
+    if (tbody) tbody.innerHTML = tableHtml || "<tr><td colspan='5' align='center'>No Applications Found</td></tr>";
+
+    // লোডার অফ করা
+    if (document.getElementById('loader')) {
+        document.getElementById('loader').style.display = 'none';
+    }
 });
 
-// --- ৩. পার্টনার প্রোফাইল ইনফো ---
-async function loadPartnerProfile() {
-    const profileName = document.getElementById('partnerNameDisplay');
-    if (!profileName) return;
-
-    onSnapshot(collection(db, "users"), (snap) => {
-        snap.forEach(uDoc => {
-            const u = uDoc.data();
-            if (u.email && u.email.toLowerCase() === userEmail.toLowerCase()) {
-                profileName.innerText = u.fullName || "Partner";
-            }
-        });
+// --- ২. নাম ও প্রোফাইল ডিসপ্লে ---
+onSnapshot(collection(db, "users"), (snap) => {
+    snap.forEach(uDoc => {
+        const u = uDoc.data();
+        if (u.email && u.email.toLowerCase() === userEmail.toLowerCase()) {
+            const display = document.getElementById('partnerNameDisplay');
+            if (display) display.innerText = u.fullName || "Partner";
+        }
     });
-}
-loadPartnerProfile();
+});
 
-// --- ৪. লগআউট ফাংশন ---
+// --- ৩. লগআউট ---
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.onclick = () => {
