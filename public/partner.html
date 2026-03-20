@@ -9,7 +9,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
-
     <div class="sidebar">
         <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
         <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home / Refresh</div>
@@ -18,13 +17,11 @@
         <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Withdraw & Earning</div>
         <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</div>
     </div>
-
     <div class="wrapper">
         <div class="top-bar">
             <div>Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
             <button onclick="logout()" class="btn-gold" style="background:var(--danger); color:white; padding:5px 15px;">Logout</button>
         </div>
-
         <div class="main">
             <div id="home" class="section active-section">
                 <div id="subStatusBox" class="card" style="margin-bottom:20px; border-left: 5px solid var(--gold); background: rgba(212, 175, 55, 0.05);">
@@ -39,7 +36,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="wallet-container">
                     <div class="wallet-box">
                         <p style="font-size:12px; opacity:0.7;"><i class="fas fa-clock"></i> PENDING COMMISSION</p>
@@ -55,19 +51,13 @@
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Student/Uni</th>
-                                    <th>Contact No</th> <th>Passport No</th> <th>Status</th>
-                                    <th>Documents</th>
-                                    <th>Date</th>
-                                </tr>
+                                <tr><th>Student/Uni</th><th>Contact No</th><th>Passport No</th><th>Status</th><th>Documents</th><th>Date</th></tr>
                             </thead>
                             <tbody id="homeTrackingBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
             <div id="assessment" class="section">
                 <div class="card">
                     <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
@@ -83,10 +73,7 @@
                         </select>
                         <select id="fLangType" class="reg-input">
                             <option value="">Language</option>
-                            <option value="IELTS">IELTS</option>
-                            <option value="PTE">PTE</option>
-                            <option value="MOI">MOI</option>
-                            <option value="Duolingo">Duolingo</option>
+                            <option value="IELTS">IELTS</option><option value="PTE">PTE</option><option value="MOI">MOI</option><option value="Duolingo">Duolingo</option>
                         </select>
                         <input type="number" id="fGPA" placeholder="Academic GPA" class="reg-input">
                         <input type="number" id="fLangScore" placeholder="Score" class="reg-input">
@@ -102,25 +89,19 @@
                     </div>
                 </div>
             </div>
-
             <div id="tracking" class="section">
                 <div class="card">
                     <h3 style="color:var(--gold); margin-bottom:15px;">Full Application Tracking</h3>
                     <div class="table-wrapper">
                         <table>
                             <thead>
-                                <tr>
-                                    <th>Student/Uni</th>
-                                    <th>Contact No</th> <th>Passport No</th> <th>Status</th>
-                                    <th>Documents</th>
-                                    <th>Date</th>
-                                </tr>
+                                <tr><th>Student/Uni</th><th>Contact No</th><th>Passport No</th><th>Status</th><th>Documents</th><th>Date</th></tr>
                             </thead>
-                            <tbody id="sidebarTrackingBody"></tbody> </table>
+                            <tbody id="sidebarTrackingBody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
             <div id="withdraw" class="section">
                 <div class="card">
                     <h3>Withdrawal Request</h3>
@@ -132,7 +113,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="profile" class="section">
                 <div class="card">
                     <h3>Agency Profile</h3>
@@ -144,11 +124,9 @@
                     </div>
                 </div>
             </div>
-
             <footer>2026 @ All rights reserved GORUN LTD.</footer>
         </div>
     </div>
-
     <div id="applyModal" class="modal">
         <div class="modal-content">
             <h2 id="modalUniName" style="color:var(--gold);"></h2>
@@ -170,16 +148,12 @@
             </div>
         </div>
     </div>
-
     <div id="withdrawModal" class="modal">
         <div class="modal-content" style="max-width:400px;">
             <h3 style="color:var(--gold); margin-bottom:5px;">Withdraw Request</h3>
             <p id="wdAvailableText" style="font-size:12px; margin-bottom:20px; opacity:0.7;"></p>
             <select id="wdMethod" class="reg-input" style="margin-bottom:15px;">
-                <option value="Bkash">Bkash (Personal)</option>
-                <option value="Nagad">Nagad (Personal)</option>
-                <option value="Rocket">Rocket</option>
-                <option value="Bank">Bank Transfer</option>
+                <option value="Bkash">Bkash (Personal)</option><option value="Nagad">Nagad (Personal)</option><option value="Rocket">Rocket</option><option value="Bank">Bank Transfer</option>
             </select>
             <textarea id="wdAccountDetails" class="reg-input" style="height:70px; margin-bottom:15px;" placeholder="Account Details..."></textarea>
             <input type="number" id="wdReqAmount" class="reg-input" placeholder="Enter amount">
@@ -189,11 +163,9 @@
             </div>
         </div>
     </div>
-
     <div id="printArea">
         <div id="slipContent"></div>
     </div>
-
     <script type="module" src="partner-logic.js"></script>
 </body>
 </html>
