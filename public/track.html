@@ -6,10 +6,10 @@
     <title>Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
     <style>
-        /* --- 🎨 EXACT THEME RESTORATION (From 1087.jpg) --- */
+        /* --- 🎨 EXACT THEME RESTORATION (From 1089.jpg) --- */
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
-            background-color: #0d0c24; /* Original background */
+            background-color: #0d0c24; 
             color: #fff;
             display: flex;
             justify-content: center;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            background-color: #1a1a2e; /* Original dark bluish card */
+            background-color: #1a1a2e; 
             padding: 30px;
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
@@ -28,7 +28,6 @@
             text-align: center;
         }
 
-        /* Company Logo styling as per 1087.jpg */
         .logo-box { margin-bottom: 5px; }
         .logo-box img { max-width: 140px; height: auto; }
 
@@ -41,7 +40,7 @@
             color: rgba(255,255,255,0.9);
         }
 
-        /* Input styling as per 1087.jpg */
+        /* Input styling as per 1089.jpg */
         input {
             width: 100%;
             padding: 15px;
@@ -55,7 +54,7 @@
         }
         input::placeholder { color: rgba(255,255,255,0.3); }
 
-        /* Green Button as per 1087.jpg */
+        /* Green Button as per 1089.jpg */
         button {
             width: 100%;
             padding: 15px;
@@ -85,29 +84,29 @@
             position: relative;
             font-size: 12px;
             color: rgba(255,255,255,0.6);
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: center;
             height: 30px;
+            overflow: hidden;
         }
 
         .plane-container {
             position: absolute;
-            left: 0;
+            left: -50px;
             animation: movePlane 4s infinite linear;
             color: #3498db;
             font-size: 20px;
         }
 
         @keyframes movePlane {
-            0% { left: -10%; transform: rotate(0deg); opacity: 0; }
+            0% { left: -10%; opacity: 0; transform: rotate(0deg); }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { left: 100%; transform: rotate(5deg); opacity: 0; }
+            100% { left: 110%; opacity: 0; transform: rotate(5deg); }
         }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Data row styling */
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -119,31 +118,39 @@
         .label { color: rgba(255,255,255,0.5); }
         .val { font-weight: bold; color: #fff; }
 
+        .status-box {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid #2ecc71;
+            border-radius: 12px;
+        }
+        .estimate-box {
+            padding: 12px;
+            background: rgba(241, 196, 15, 0.1);
+            border-left: 4px solid #f1c40f;
+            border-radius: 4px;
+            text-align: left;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="logo-box">
-            <img src="logo.png" alt="Company Logo"> </div>
-        
+            <img src="logo.png" alt="Company Logo">
+        </div>
         <h2>Live Tracker</h2>
-        
         <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
         <button id="trackBtn">Track Status</button>
-
         <div id="result">
             <div class="track-header">
-                <div class="plane-container">
-                    <i class="fas fa-plane"></i>
-                </div>
+                <div class="plane-container"><i class="fas fa-plane"></i></div>
                 <span>LIVE PROGRESS</span>
             </div>
-            
             <div id="data-content"></div>
         </div>
     </div>
-
     <script type="module" src="tracking-logic.js"></script>
 </body>
 </html>
