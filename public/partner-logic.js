@@ -16,6 +16,7 @@ const userEmail = localStorage.getItem('userEmail');
 
 let globalFinalBalance = 0; 
 
+// --- Navigation & Core UI ---
 window.showTab = (id, el) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -25,6 +26,7 @@ window.showTab = (id, el) => {
 window.logout = () => { localStorage.clear(); location.href='index.html'; };
 window.closeModal = () => { document.getElementById('applyModal').style.display='none'; };
 
+// --- Cloudinary Upload Logic ---
 const uploadToCloudinary = async (file) => {
     if (!file) return ""; 
     const formData = new FormData();
@@ -37,6 +39,7 @@ const uploadToCloudinary = async (file) => {
     } catch (e) { return ""; }
 };
 
+// --- University Searching with Filters ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -47,14 +50,18 @@ document.getElementById('searchBtn').onclick = () => {
     const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
     const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
     const degree = document.getElementById('fDegree').value;
+    const langType = document.getElementById('fLangType').value; // IELTS, PTE, MOI
 
     const filtered = allUnis.filter(u => {
         const dbCountry = (u.uCountry || "").toLowerCase();
         const minGPA = parseFloat(u.minCGPA) || 0;
         const minLang = parseFloat(u.minIELTS) || 0;
+        
         return (country === "" || dbCountry.includes(country)) &&
                (degree === "" || u.uDegree === degree) &&
-               (gpa >= minGPA) && (langScore >= minLang);
+               (gpa >= minGPA) && 
+               (langScore >= minLang);
+               // আপনি চাইলে এখানে langType চেক করার লজিক আরও স্পেসিফিক করতে পারেন
     });
     renderSearch(filtered);
 };
@@ -62,17 +69,22 @@ document.getElementById('searchBtn').onclick = () => {
 function renderSearch(data) {
     const container = document.getElementById('uniListContainer');
     document.getElementById('searchResultArea').style.display = 'block';
+    if(data.length === 0) {
+        container.innerHTML = "<tr><td colspan='6' align='center'>No University Found</td></tr>";
+        return;
+    }
     container.innerHTML = data.map(u => `
         <tr>
             <td><b>${u.uName}</b><br><small>${u.uCountry}</small></td>
             <td>${u.uDegree}<br>${u.uIntake}</td>
             <td>GPA ${u.minCGPA}+ | IELTS ${u.minIELTS}+</td>
-            <td>৳${(u.uSemFee * 115).toLocaleString()}</td>
+            <td>৳${(Number(u.uSemFee || 0) * 115).toLocaleString()}</td>
             <td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td>
             <td><button class="btn-gold" onclick="openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td>
         </tr>`).join('');
 }
 
+// --- Application Submission ---
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
     document.getElementById('modalUniName').innerText = name;
@@ -86,7 +98,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     if(!sName || !sPass) return alert("Required fields missing!");
     
     const btn = document.getElementById('submitAppBtn');
-    btn.innerText = "UPLOADING FILES..."; btn.disabled = true;
+    btn.innerText = "UPLOADING 4 FILES..."; btn.disabled = true;
 
     try {
         const u1 = await uploadToCloudinary(document.getElementById('fileAcad').files[0]);
@@ -97,7 +109,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
         await addDoc(collection(db, "applications"), {
             studentName: sName, studentPhone: sPhone, passportNo: sPass,
             university: window.selectedUni.name, commission: window.selectedUni.comm,
-            partnerEmail: userEmail, status: 'pending', commissionStatus: 'waiting',
+            partnerEmail: userEmail, status: 'pending', commissionStatus: 'pending',
             docs: { academic: u1, language: u2, passport: u3, others: u4 },
             createdAt: serverTimestamp()
         });
@@ -105,6 +117,7 @@ document.getElementById('submitAppBtn').onclick = async () => {
     } catch (e) { alert("Error!"); btn.disabled = false; btn.innerText = "CONFIRM ENROLLMENT"; }
 };
 
+// --- Slip Generation ---
 function generateSlip(sName, sPass, uni) {
     const slip = document.getElementById('slipContent');
     const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -131,11 +144,11 @@ function generateSlip(sName, sPass, uni) {
 
     setTimeout(() => {
         new QRCode(document.getElementById("qrcode_box"), { text: trackingLink, width: 70, height: 70 });
-        setTimeout(() => { window.print(); location.reload(); }, 1000);
-    }, 300);
-    document.getElementById('applyModal').style.display = 'none';
+        setTimeout(() => { window.print(); location.reload(); }, 1200);
+    }, 400);
 }
 
+// --- Tracking & Realtime Data ---
 onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", userEmail)), (snap) => {
     let pendingWallet = 0; let finalWallet = 0; let trackHtml = "";
     snap.forEach(dSnap => {
@@ -145,21 +158,45 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
         else if(d.commissionStatus === 'ready') finalWallet += comm;
         
         let dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString() : '...';
-        const docs = d.docs || {};
+        const ds = d.docs || {};
         let docLinks = "";
-        if(docs.academic) docLinks += `<a href="${docs.academic}" target="_blank" style="margin-right:5px; color:var(--gold);">[Acad]</a>`;
-        if(docs.passport) docLinks += `<a href="${docs.passport}" target="_blank" style="color:var(--gold);">[Pass]</a>`;
-        if(!docs.academic && !docs.passport) docLinks = "No Docs";
+        if(ds.academic) docLinks += `<a href="${ds.academic}" target="_blank" style="margin-right:5px; color:var(--gold);">[Acad]</a>`;
+        if(ds.language) docLinks += `<a href="${ds.language}" target="_blank" style="margin-right:5px; color:var(--gold);">[Lang]</a>`;
+        if(ds.passport) docLinks += `<a href="${ds.passport}" target="_blank" style="margin-right:5px; color:var(--gold);">[Pass]</a>`;
+        if(ds.others) docLinks += `<a href="${ds.others}" target="_blank" style="color:var(--gold);">[Other]</a>`;
 
-        trackHtml += `<tr><td><b>${d.studentName}</b><br><small>${d.university}</small></td><td>${d.studentPhone || 'N/A'}</td><td>${d.passportNo || 'N/A'}</td><td><span style="color:var(--gold);">${(d.status || 'PENDING').toUpperCase()}</span></td><td>${docLinks}</td><td>${dateStr}</td></tr>`;
+        trackHtml += `<tr><td><b>${d.studentName}</b><br><small>${d.university}</small></td><td>${d.studentPhone || 'N/A'}</td><td>${d.passportNo || 'N/A'}</td><td><span style="color:var(--gold); font-weight:bold;">${(d.status || 'PENDING').toUpperCase()}</span></td><td>${docLinks || 'No Docs'}</td><td>${dateStr}</td></tr>`;
     });
-    document.getElementById('homeTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
-    document.getElementById('sidebarTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No records</td></tr>";
+    document.getElementById('homeTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No Data</td></tr>";
+    document.getElementById('sidebarTrackingBody').innerHTML = trackHtml || "<tr><td colspan='6' align='center'>No Data</td></tr>";
     globalFinalBalance = finalWallet;
     document.getElementById('topPending').innerText = `৳${pendingWallet.toLocaleString()}`;
     document.getElementById('topFinal').innerText = `৳${finalWallet.toLocaleString()}`;
+    document.getElementById('withdrawFinalBalance').innerText = finalWallet.toLocaleString();
 });
 
+// --- Withdraw Logic ---
+document.getElementById('wdBtn').onclick = () => {
+    document.getElementById('wdAvailableText').innerText = `Available for Withdraw: ৳${globalFinalBalance}`;
+    document.getElementById('withdrawModal').style.display = 'flex';
+};
+
+document.getElementById('confirmWdBtn').onclick = async () => {
+    const amount = Number(document.getElementById('wdReqAmount').value);
+    const method = document.getElementById('wdMethod').value;
+    const details = document.getElementById('wdAccountDetails').value;
+
+    if(amount <= 0 || amount > globalFinalBalance) return alert("Invalid Amount!");
+    if(!details) return alert("Enter account details!");
+
+    await addDoc(collection(db, "withdrawals"), {
+        partnerEmail: userEmail, amount, method, details, status: 'pending', createdAt: serverTimestamp()
+    });
+    alert("Withdrawal request sent!");
+    document.getElementById('withdrawModal').style.display = 'none';
+};
+
+// --- Profile Management ---
 (async () => {
     if(!userEmail) return;
     onSnapshot(doc(db, "partners", userEmail), (dSnap) => {
@@ -169,13 +206,18 @@ onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", use
             document.getElementById('pContact').value = d.contact || "";
             document.getElementById('pAddress').value = d.address || "";
             document.getElementById('welcomeName').innerText = d.agencyName || "Partner";
-            document.getElementById('subStatusText').innerText = (d.subscriptionStatus || "Inactive").toUpperCase();
-            document.getElementById('subExpiryText').innerText = d.expiryDate || "N/A";
+            document.getElementById('subStatusText').innerText = (d.subscriptionStatus || "Active").toUpperCase();
+            document.getElementById('subExpiryText').innerText = d.expiryDate || "31 Dec 2026";
         }
     });
 })();
 
 document.getElementById('saveProfileBtn').onclick = async () => {
-    await setDoc(doc(db, "partners", userEmail), { agencyName: document.getElementById('pAgency').value, contact: document.getElementById('pContact').value, address: document.getElementById('pAddress').value, email: userEmail }, { merge: true });
-    alert("Profile Saved!");
+    await setDoc(doc(db, "partners", userEmail), { 
+        agencyName: document.getElementById('pAgency').value, 
+        contact: document.getElementById('pContact').value, 
+        address: document.getElementById('pAddress').value, 
+        email: userEmail 
+    }, { merge: true });
+    alert("Profile Updated Successfully!");
 };
