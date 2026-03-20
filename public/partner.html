@@ -17,11 +17,13 @@
         <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Earning</div>
         <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</div>
     </div>
+
     <div class="wrapper">
         <div class="top-bar">
             <div>Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
             <button onclick="logout()" class="btn-gold" style="background:var(--danger); color:white; padding:5px 15px;">Logout</button>
         </div>
+
         <div class="main">
             <div id="home" class="section active-section">
                 <div class="wallet-container">
@@ -38,6 +40,7 @@
                     </div>
                 </div>
             </div>
+
             <div id="assessment" class="section">
                 <div class="card">
                     <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
@@ -45,17 +48,14 @@
                         <input type="text" id="fCountry" placeholder="Country" class="reg-input">
                         <select id="fDegree" class="reg-input">
                             <option value="">Degree</option>
-                            <option value="Ug">Bachelor (Ug)</option>
-                            <option value="Pg">Master (Pg)</option>
-                            <option value="Foundation">Foundation</option>
-                            <option value="Diploma">Diploma</option>
+                            <option value="Ug">Bachelor</option>
+                            <option value="Pg">Master</option>
                         </select>
                         <select id="fLangType" class="reg-input">
                             <option value="">Language</option>
                             <option value="IELTS">IELTS</option>
                             <option value="PTE">PTE</option>
                             <option value="MOI">MOI</option>
-                            <option value="Duolingo">Duolingo</option>
                         </select>
                         <input type="number" id="fGPA" placeholder="GPA" class="reg-input">
                         <input type="number" id="fLangScore" placeholder="Score" class="reg-input">
@@ -71,8 +71,10 @@
                     </div>
                 </div>
             </div>
+
             <div id="tracking" class="section">
                 <div class="card">
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Detailed Application Status</h3>
                     <div class="table-wrapper">
                         <table>
                             <thead><tr><th>Student/Uni</th><th>Contact</th><th>Passport</th><th>Status</th><th>Docs</th><th>Date</th></tr></thead>
@@ -81,22 +83,30 @@
                     </div>
                 </div>
             </div>
+
             <div id="withdraw" class="section">
-                <div class="card" style="text-align:center;">
-                    <i class="fas fa-wallet" style="font-size:40px; color:var(--gold); margin-bottom:15px;"></i>
-                    <button id="wdBtn" class="btn-gold">WITHDRAW NOW</button>
+                <div class="card" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-wallet" style="font-size: 50px; color: var(--gold); margin-bottom: 20px;"></i>
+                    <h2>Wallet Balance</h2>
+                    <h1 style="color:var(--gold); margin: 10px 0;">৳ <span id="withdrawFinalBalance">0</span></h1>
+                    <button id="wdBtn" class="btn-gold" style="width: 250px;">WITHDRAW NOW</button>
                 </div>
             </div>
+
             <div id="profile" class="section">
                 <div class="card">
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Agency Profile</h3>
                     <input type="text" id="pAgency" placeholder="Agency Name" class="reg-input" style="margin-bottom:10px;">
                     <input type="text" id="pContact" placeholder="Contact No" class="reg-input" style="margin-bottom:10px;">
                     <input type="text" id="pAddress" placeholder="Address" class="reg-input" style="margin-bottom:10px;">
                     <button id="saveProfileBtn" class="btn-gold">SAVE PROFILE</button>
-                    <p style="margin-top:15px;">Status: <span id="subStatusText"></span> | Expires: <span id="subExpiryText"></span></p>
+                    <hr style="margin: 20px 0; border: 0.5px solid var(--border);">
+                    <p>Subscription: <span id="subStatusText" style="color:var(--gold);">Active</span></p>
+                    <p>Expiry Date: <span id="subExpiryText">31 Dec 2026</span></p>
                 </div>
             </div>
-            <footer>2026 @ SCC</footer>
+
+            <footer>2026 @ Alrights and reserved GORUN Ltd.</footer>
         </div>
     </div>
 
@@ -105,28 +115,33 @@
             <h2 id="modalUniName" style="color:var(--gold); margin-bottom:15px;"></h2>
             <div class="form-grid">
                 <input type="text" id="appSName" placeholder="Student Name" class="reg-input">
-                <input type="text" id="appSPhone" placeholder="Phone" class="reg-input">
-                <input type="text" id="appSPass" placeholder="Passport No" class="reg-input">
+                <input type="text" id="appSPhone" placeholder="Phone Number" class="reg-input">
+                <input type="text" id="appSPass" placeholder="Passport Number" class="reg-input">
             </div>
-            <div class="form-grid" style="margin-top:10px;">
-                <div><label style="font-size:10px;">Academic PDF</label><input type="file" id="fileAcad" class="reg-input"></div>
-                <div><label style="font-size:10px;">Language PDF</label><input type="file" id="fileLang" class="reg-input"></div>
-                <div><label style="font-size:10px;">Passport PDF</label><input type="file" id="filePass" class="reg-input"></div>
-                <div><label style="font-size:10px;">Others PDF</label><input type="file" id="fileOther" class="reg-input"></div>
+            <div class="form-grid" style="margin-top:20px;">
+                <div><label style="font-size:11px; color:#aaa;">Academic Docs (PDF)</label><input type="file" id="fileAcad" class="reg-input"></div>
+                <div><label style="font-size:11px; color:#aaa;">Language Cert (PDF)</label><input type="file" id="fileLang" class="reg-input"></div>
+                <div><label style="font-size:11px; color:#aaa;">Passport Copy (PDF)</label><input type="file" id="filePass" class="reg-input"></div>
+                <div><label style="font-size:11px; color:#aaa;">Other Files (PDF)</label><input type="file" id="fileOther" class="reg-input"></div>
             </div>
-            <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:20px;">CONFIRM ENROLLMENT</button>
-            <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer;">Cancel</button>
+            <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:25px;">CONFIRM ENROLLMENT</button>
+            <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer; width:100%;">Close</button>
         </div>
     </div>
 
     <div id="withdrawModal" class="modal">
-        <div class="modal-content" style="max-width:400px;">
-            <h3>Withdraw</h3>
-            <p id="wdAvailableText" style="font-size:12px; margin-bottom:10px;"></p>
-            <select id="wdMethod" class="reg-input" style="margin-bottom:10px;"><option value="Bkash">Bkash</option><option value="Bank">Bank</option></select>
-            <textarea id="wdAccountDetails" class="reg-input" placeholder="Account Details" style="margin-bottom:10px;"></textarea>
-            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Amount">
-            <button id="confirmWdBtn" class="btn-gold" style="width:100%; margin-top:10px;">Submit Request</button>
+        <div class="modal-content" style="max-width: 450px;">
+            <h3 style="color:var(--gold); margin-bottom:15px;">Withdraw Request</h3>
+            <p id="wdAvailableText" style="font-size:12px; margin-bottom:15px;"></p>
+            <select id="wdMethod" class="reg-input" style="margin-bottom:10px;">
+                <option value="Bkash">Bkash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Bank">Bank Transfer</option>
+            </select>
+            <textarea id="wdAccountDetails" class="reg-input" placeholder="Account Number & Details" style="margin-bottom:10px; height: 80px;"></textarea>
+            <input type="number" id="wdReqAmount" class="reg-input" placeholder="Amount to Withdraw" style="margin-bottom:15px;">
+            <button id="confirmWdBtn" class="btn-gold" style="width:100%;">SUBMIT REQUEST</button>
+            <button onclick="document.getElementById('withdrawModal').style.display='none'" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer; width:100%;">Cancel</button>
         </div>
     </div>
 
