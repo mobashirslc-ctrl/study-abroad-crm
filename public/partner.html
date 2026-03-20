@@ -175,21 +175,14 @@
         <div class="modal-content" style="max-width:400px;">
             <h3 style="color:var(--gold); margin-bottom:5px;">Withdraw Request</h3>
             <p id="wdAvailableText" style="font-size:12px; margin-bottom:20px; opacity:0.7;"></p>
-            
-            <label style="font-size:11px; display:block; margin-bottom:5px;">Select Method</label>
             <select id="wdMethod" class="reg-input" style="margin-bottom:15px;">
                 <option value="Bkash">Bkash (Personal)</option>
                 <option value="Nagad">Nagad (Personal)</option>
                 <option value="Rocket">Rocket</option>
                 <option value="Bank">Bank Transfer</option>
             </select>
-            
-            <label style="font-size:11px; display:block; margin-bottom:5px;">Account Details</label>
-            <textarea id="wdAccountDetails" class="reg-input" style="height:70px; margin-bottom:15px; padding-top:10px;" placeholder="Phone number or Bank Name, A/C No, Branch..."></textarea>
-            
-            <label style="font-size:11px; display:block; margin-bottom:5px;">Amount (৳)</label>
+            <textarea id="wdAccountDetails" class="reg-input" style="height:70px; margin-bottom:15px;" placeholder="Account Details..."></textarea>
             <input type="number" id="wdReqAmount" class="reg-input" placeholder="Enter amount">
-            
             <div style="margin-top:20px; display:flex; gap:10px;">
                 <button id="confirmWdBtn" class="btn-gold" style="flex:1;">SUBMIT REQUEST</button>
                 <button onclick="document.getElementById('withdrawModal').style.display='none'" style="color:white; background:none; border:none; cursor:pointer;">Cancel</button>
@@ -197,7 +190,7 @@
         </div>
     </div>
 
-    <div id="printArea" style="display:none;">
+    <div id="printArea">
         <div id="slipContent"></div>
     </div>
 
