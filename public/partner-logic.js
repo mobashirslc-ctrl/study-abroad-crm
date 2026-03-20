@@ -24,17 +24,26 @@ window.showTab = (id, el) => {
     if(target) target.classList.add('active-section');
     if(el) el.classList.add('active');
 };
-
 window.logout = () => { if(confirm("Are you sure?")) { localStorage.clear(); location.href='index.html'; } };
 window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); };
 
-// --- ২. ডাটা সিঙ্ক ও ট্র্যাকিং (রিয়েল-টাইম ফিক্সড) ---
+// --- ২. ট্র্যাকিং টেবিল (লাইভ আপডেট ফিক্সড - ইনডেক্স ছাড়াই চলবে) ---
 const syncDashboard = () => {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()), orderBy("createdAt", "desc"));
+    // এখানে orderBy সরিয়ে ফেলা হয়েছে যাতে ইনডেক্স এরর না আসে
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()));
+    
     onSnapshot(q, (snap) => {
         let pending = 0; let final = 0; let html = "";
+        let allDocs = [];
+
         snap.forEach(dSnap => {
-            const d = dSnap.data();
+            allDocs.push(dSnap.data());
+        });
+
+        // জাভাস্ক্রিপ্ট দিয়ে নতুন ডাটা উপরে দেখানোর ব্যবস্থা (Manual Sort)
+        allDocs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+        allDocs.forEach(d => {
             if(d.commissionStatus === 'ready') final += Number(d.commission || 0);
             else pending += Number(d.commission || 0);
             
@@ -47,6 +56,7 @@ const syncDashboard = () => {
                 <td>${dateStr}</td>
             </tr>`;
         });
+
         document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Yet</td></tr>";
         document.getElementById('sidebarTrackingBody').innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Yet</td></tr>";
         document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
@@ -91,24 +101,23 @@ document.getElementById('searchBtn').onclick = () => {
     `).join('') || "<tr><td colspan='6' align='center' style='padding:20px; color:#ff4757;'>No matches found.</td></tr>";
 };
 
-// --- ৪. প্রফেশনাল স্লিপ কন্টেন্ট ---
+// --- ৪. প্রফেশনাল স্লিপ (Students Career Consultancy Logo) ---
 const writeSlipContent = (win, data) => {
     const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
     win.document.write(`
         <html>
         <head>
-            <title>Acknowledgment - ${data.studentName}</title>
+            <title>Slip - ${data.studentName}</title>
             <style>
-                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #f0f0f0; }
-                .slip { background: white; padding: 30px; border-top: 8px solid #2b0054; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); max-width: 700px; margin: auto; }
-                .header { text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 20px; }
-                .logo { font-size: 26px; font-weight: bold; color: #2b0054; }
-                .tagline { font-size: 12px; color: #666; letter-spacing: 2px; }
-                .title { font-size: 20px; color: #f1c40f; margin-top: 15px; font-weight: bold; }
-                .details { margin-top: 30px; font-size: 16px; line-height: 2; color: #333; }
-                .details b { width: 150px; display: inline-block; color: #555; }
-                .stamp { margin-top: 30px; border: 3px solid #2ecc71; color: #2ecc71; display: inline-block; padding: 10px 25px; transform: rotate(-10deg); font-weight: bold; font-size: 24px; border-radius: 5px; opacity: 0.8; }
-                .footer { margin-top: 40px; font-size: 12px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: #fff; }
+                .slip { border: 2px solid #2b0054; padding: 30px; border-radius: 10px; max-width: 600px; margin: auto; position: relative; }
+                .header { text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 15px; margin-bottom: 20px; }
+                .logo { font-size: 24px; font-weight: bold; color: #2b0054; }
+                .tagline { font-size: 11px; color: #666; letter-spacing: 1px; }
+                .details { font-size: 16px; line-height: 1.8; color: #333; }
+                .details b { width: 140px; display: inline-block; color: #555; }
+                .stamp { position: absolute; bottom: 40px; right: 40px; border: 3px solid #2ecc71; color: #2ecc71; padding: 5px 15px; transform: rotate(-10deg); font-weight: bold; opacity: 0.7; }
+                .footer { margin-top: 30px; font-size: 11px; text-align: center; color: #999; }
             </style>
         </head>
         <body>
@@ -116,42 +125,31 @@ const writeSlipContent = (win, data) => {
                 <div class="header">
                     <div class="logo">STUDENTS CAREER CONSULTANCY</div>
                     <div class="tagline">YOUR TRUSTED GLOBAL EDUCATION PARTNER</div>
-                    <div class="title">ADMISSION ACKNOWLEDGMENT SLIP</div>
                 </div>
                 <div class="details">
                     <p><b>Student Name:</b> ${data.studentName}</p>
                     <p><b>Passport No:</b> ${data.passportNo}</p>
                     <p><b>University:</b> ${data.university}</p>
-                    <p><b>Submission Date:</b> ${date}</p>
-                    <p><b>Partner Email:</b> ${data.partnerEmail}</p>
+                    <p><b>Applied Date:</b> ${date}</p>
                 </div>
-                <div style="text-align: right;"><div class="stamp">SUCCESSFUL</div></div>
-                <div class="footer">
-                    This is an electronically generated document. No signature is required.<br>
-                    © 2026 Students Career Consultancy. All Rights Reserved.
-                </div>
+                <div class="stamp">SUBMITTED</div>
+                <div class="footer">Computer generated copy. No signature required.</div>
             </div>
-            <script>setTimeout(() => { window.print(); }, 500);<\/script>
+            <script>window.print();<\/script>
         </body>
         </html>
     `);
     win.document.close();
 };
 
-// --- ৫. সাবমিট লজিক (Pop-up & Live Table Fix) ---
-window.openApply = (name, comm) => {
-    window.selectedUni = { name, comm };
-    document.getElementById('modalUniName').innerText = name;
-    document.getElementById('applyModal').style.display = 'flex';
-};
-
+// --- ৫. ফাইল আপলোড ও সাবমিট ---
 const uploadFile = async (file) => {
     if (!file) return "";
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "ihp_upload");
     const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
-    if(!res.ok) throw new Error("Upload failed");
+    if(!res.ok) throw new Error("File Upload Failed");
     const data = await res.json();
     return data.secure_url;
 };
@@ -162,12 +160,12 @@ document.getElementById('submitAppBtn').onclick = async () => {
     const sPass = document.getElementById('appSPass').value;
     const sPhone = document.getElementById('appSPhone').value;
 
-    if(!sName || !sPass) return alert("Student Name and Passport required!");
+    if(!sName || !sPass) return alert("Fill Name and Passport!");
 
     // পপ-আপ ব্লকার এড়াতে আগেই উইন্ডো ওপেন করা
     const slipWin = window.open('', '_blank');
 
-    btn.innerText = "Processing Files..."; btn.disabled = true;
+    btn.innerText = "Uploading Documents..."; btn.disabled = true;
 
     try {
         const acadUrl = await uploadFile(document.getElementById('fileAcad').files[0]);
@@ -186,34 +184,25 @@ document.getElementById('submitAppBtn').onclick = async () => {
             createdAt: serverTimestamp()
         };
 
-        // ডাটাবেসে সেভ হওয়া পর্যন্ত অপেক্ষা
         await addDoc(collection(db, "applications"), appData);
-
-        // স্লিপ কন্টেন্ট রাইট করা
+        
         writeSlipContent(slipWin, appData);
-        
-        alert("Application Submitted Successfully!");
+        alert("Success! Check the new tab for your slip.");
         closeModal();
-        
-        // ফর্ম ক্লিয়ার
-        document.getElementById('appSName').value = "";
-        document.getElementById('appSPass').value = "";
-        document.getElementById('appSPhone').value = "";
         
     } catch (e) {
         if(slipWin) slipWin.close();
-        alert("Upload Failed. Please check internet or file size (Max 5MB).");
-        console.error(e);
+        alert("Failed: " + e.message);
     } finally {
         btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false;
     }
 };
 
-// প্রোফাইল আপডেট
+// প্রোফাইল সেভ
 document.getElementById('saveProfileBtn').onclick = async () => {
     await setDoc(doc(db, "partners", userEmail.toLowerCase()), { 
         agencyName: document.getElementById('pAgency').value, 
-        contact: document.getElementById('pAgency').value, // contact input id fixed
+        contact: document.getElementById('pContact').value, 
         address: document.getElementById('pAddress').value 
     }, { merge: true });
     alert("Profile Saved!");
