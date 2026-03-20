@@ -19,7 +19,6 @@ const passportInput = document.getElementById('passportInput');
 const resultDiv = document.getElementById('result');
 const dataContent = document.getElementById('data-content');
 
-// --- ✨ AUTO-REFRESH/CLEAR LOGIC ---
 passportInput.addEventListener('input', () => {
     if (passportInput.value.trim() === "") {
         if (unsubscribe) unsubscribe(); 
@@ -30,15 +29,10 @@ passportInput.addEventListener('input', () => {
 
 document.getElementById('trackBtn').addEventListener('click', () => {
     const inputVal = passportInput.value.trim();
-
-    if (!inputVal) {
-        alert("Please enter a Passport Number!");
-        return;
-    }
+    if (!inputVal) { alert("Please enter a Passport Number!"); return; }
 
     if (unsubscribe) unsubscribe();
 
-    // --- 🚀 REALTIME QUERY ---
     const q = query(
         collection(db, "applications"), 
         where("passportNo", "==", inputVal),
@@ -57,44 +51,45 @@ document.getElementById('trackBtn').addEventListener('click', () => {
                 const d = doc.data();
                 const rawStatus = (d.status || 'PENDING').toUpperCase();
 
-                // --- ⏱ LAST UPDATED LOGIC ---
-                let timeAgo = "Just Now";
-                if (d.createdAt) {
-                    const updateTime = d.createdAt.toDate();
-                    const diffMs = new Date() - updateTime;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    if (diffMins >= 1) timeAgo = `${diffMins} mins ago`;
-                    if (diffMins >= 60) timeAgo = `${Math.floor(diffMins/60)} hours ago`;
+                // --- ⏱ TIME DURATION & ESTIMATE LOGIC ---
+                let estimateText = "Processing your documents...";
+                let duration = "2-3 Days"; // Default
+
+                if (rawStatus.includes("PENDING")) {
+                    estimateText = "Initial screening and document verification.";
+                    duration = "24-48 Hours";
+                } else if (rawStatus.includes("APPLIED") || rawStatus.includes("OFFER")) {
+                    estimateText = "University is reviewing your application.";
+                    duration = "7-14 Working Days";
+                } else if (rawStatus.includes("VISA") || rawStatus.includes("EMBASSY")) {
+                    estimateText = "Visa file is under embassy processing.";
+                    duration = "15-21 Days";
+                } else if (rawStatus.includes("SUCCESS")) {
+                    estimateText = "Process completed. Best of luck!";
+                    duration = "Done";
                 }
 
-                // --- 📅 ESTIMATED NEXT STEP ---
-                let estimateText = "Our team is processing your file.";
-                if (rawStatus.includes("PENDING")) estimateText = "Initial screening: Expect update in 24-48 hours.";
-                else if (rawStatus.includes("APPLIED")) estimateText = "University review: Offer letter takes 7-14 working days.";
-                else if (rawStatus.includes("VISA")) estimateText = "Embassy processing: Results usually in 15-21 days.";
-
-                // --- 🖥️ UI RENDERING (LARGE & PURPLE THEME) ---
+                // --- 🖥️ UI RENDERING (LARGE & PURPLE) ---
                 dataContent.innerHTML = `
-                    <div style="text-align: left; margin-top: 10px;">
-                        <div class="info-row">
-                            <span class="label">STUDENT NAME</span>
-                            <span class="val">${d.studentName || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">PASSPORT NO</span>
-                            <span class="val">${d.passportNo || 'N/A'}</span>
-                        </div>
+                    <div style="text-align: left;">
+                        <div class="info-row"><span class="label">STUDENT</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                        <div class="info-row"><span class="label">PASSPORT</span> <span class="val">${d.passportNo || 'N/A'}</span></div>
                     </div>
                     
-                    <div style="margin-top:25px; text-align:center; padding:20px; background:rgba(162, 155, 254, 0.1); border:1px solid rgba(162, 155, 254, 0.4); border-radius:18px; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
-                        <div style="font-size:11px; opacity:0.7; letter-spacing:2px; color:#a29bfe; margin-bottom:8px; font-weight:bold;">CURRENT STATUS</div>
-                        <div style="font-size:24px; font-weight:900; color:#2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.3);">${rawStatus}</div>
-                        <div style="font-size:12px; margin-top:10px; color:rgba(255,255,255,0.6);">⏱ Last Sync: ${timeAgo}</div>
+                    <div style="margin-top:25px; text-align:center; padding:20px; background:rgba(162, 155, 254, 0.1); border:1px solid rgba(162, 155, 254, 0.4); border-radius:20px;">
+                        <div style="font-size:11px; opacity:0.7; color:#a29bfe; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
+                        <div style="font-size:24px; font-weight:900; color:#2ecc71; margin-top:5px;">${rawStatus}</div>
                     </div>
 
-                    <div style="margin-top:20px; padding:18px; background:rgba(241, 196, 15, 0.05); border-left:5px solid #f1c40f; border-radius:12px; text-align: left;">
-                        <div style="font-size:12px; font-weight:bold; color:#f1c40f; margin-bottom:5px; letter-spacing:1px;">📅 WHAT'S NEXT?</div>
-                        <div style="font-size:14px; color:rgba(255,255,255,0.9); line-height:1.5;">${estimateText}</div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <div style="flex: 1; padding: 15px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 10px; color: #3498db; font-weight: bold;">TIME PERIOD</div>
+                            <div style="font-size: 15px; font-weight: bold; color: #fff; margin-top: 5px;">${duration}</div>
+                        </div>
+                        <div style="flex: 2; padding: 15px; background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 12px;">
+                            <div style="font-size: 10px; color: #f1c40f; font-weight: bold;">NEXT STEP IDEA</div>
+                            <div style="font-size: 12px; color: #fff; margin-top: 5px;">${estimateText}</div>
+                        </div>
                     </div>
                 `;
             });
