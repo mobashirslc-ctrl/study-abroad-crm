@@ -6,167 +6,144 @@
     <title>Live Application Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
     <style>
-        /* --- 🎨 RESTORED VISUAL DESIGN (From Screenshot 1089.jpg) --- */
+        /* --- 🎨 EXACT THEME RESTORATION (From 1087.jpg) --- */
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background-color: #0d0c24; /* Dark blue-black background from 1089.jpg */
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #0d0c24; /* Original background */
             color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 15px;
-            box-sizing: border-box;
         }
 
         .container {
-            background-color: #1a1a2e; /* Original dark container from 1089.jpg */
+            background-color: #1a1a2e; /* Original dark bluish card */
             padding: 30px;
-            border-radius: 20px; /* Fully curved from 1089.jpg */
+            border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             width: 90%;
             max-width: 400px;
             text-align: center;
-            transition: all 0.3s ease;
         }
 
-        /* Original Logo Formatting */
-        .logo-placeholder {
-            width: 100%;
-            margin-bottom: 5px;
-            text-align: center;
-        }
-        .logo-placeholder img {
-            max-width: 140px; /* Standard size from screenshot */
-            height: auto;
-        }
+        /* Company Logo styling as per 1087.jpg */
+        .logo-box { margin-bottom: 5px; }
+        .logo-box img { max-width: 140px; height: auto; }
 
-        /* Title Style */
         h2 {
-            margin: 0 0 15px 0;
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            color: rgba(255,255,255,0.9);
         }
 
-        /* Input Styling from 1089.jpg */
+        /* Input styling as per 1087.jpg */
         input {
             width: 100%;
-            padding: 14px 15px;
-            margin: 10px 0;
-            border-radius: 8px; /* Slightly curved based on 1089.jpg */
-            border: 1px solid #333; /* Dark border */
-            background-color: #252545; /* Dark bluish input background from 1089.jpg */
-            color: #fff;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background-color: #252545;
+            color: white;
             box-sizing: border-box;
             font-size: 13px;
         }
-        input::placeholder {
-            color: rgba(255,255,255,0.4);
-            font-size: 12px;
-        }
+        input::placeholder { color: rgba(255,255,255,0.3); }
 
-        /* Button Styling from 1089.jpg */
+        /* Green Button as per 1087.jpg */
         button {
-            background-color: #2ecc71; /* Original green button from 1089.jpg */
+            width: 100%;
+            padding: 15px;
+            background-color: #2ecc71;
             color: white;
             border: none;
-            padding: 14px;
-            border-radius: 8px; /* Slightly curved button based on 1089.jpg */
+            border-radius: 10px;
             cursor: pointer;
-            font-weight: 700;
+            font-weight: bold;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            width: 100%;
-            transition: background 0.3s ease;
+            transition: 0.3s;
         }
-        button:hover {
-            background-color: #27ae60;
-        }
+        button:hover { background-color: #27ae60; }
 
-        /* --- ✈️ PLANE ANIMATION INTEGRATION --- */
+        /* --- ✈️ PLANE ANIMATION SECTION --- */
         #result {
+            display: none;
             margin-top: 25px;
-            display: none; /* Initially hidden */
-            position: relative;
-            animation: fadeInUp 0.5s ease-out;
-            border-top: 1px solid rgba(255,255,255,0.05);
             padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 0.6s ease;
         }
 
         .track-header {
             position: relative;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
             margin-bottom: 20px;
-            padding: 0 40px;
+            text-align: center;
+            height: 30px;
         }
-        
-        .track-icon {
-            font-size: 18px;
-            color: #3498db; /* Specific plane blue */
+
+        .plane-container {
             position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            animation: planeFly 2s infinite ease-in-out;
-        }
-        
-        /* Plane flying logic */
-        @keyframes planeFly {
-            0% { left: 10px; opacity: 0.5; }
-            50% { left: 25px; opacity: 1; }
-            100% { left: 10px; opacity: 0.5; }
+            left: 0;
+            animation: movePlane 4s infinite linear;
+            color: #3498db;
+            font-size: 20px;
         }
 
-        /* Keyframes for smooth fadeIn of result box */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes movePlane {
+            0% { left: -10%; transform: rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; transform: rotate(5deg); opacity: 0; }
         }
 
-        /* Restored Data Rows */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Data row styling */
         .info-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 12px;
             font-size: 13px;
-            padding-bottom: 5px;
             border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding-bottom: 5px;
         }
-        .label { color: rgba(255,255,255,0.6); }
-        .val { color: #fff; font-weight: 700; text-align: right; max-width: 60%; }
+        .label { color: rgba(255,255,255,0.5); }
+        .val { font-weight: bold; color: #fff; }
 
     </style>
 </head>
 <body>
+
     <div class="container">
-        <div class="logo-placeholder">
-            <img src="logo.png" alt="Company Logo">
-        </div>
+        <div class="logo-box">
+            <img src="logo.png" alt="Company Logo"> </div>
         
         <h2>Live Tracker</h2>
         
         <input type="text" id="passportInput" placeholder="Enter Passport Number (e.g. A690234)">
-        
         <button id="trackBtn">Track Status</button>
 
         <div id="result">
             <div class="track-header">
-                <i class="fas fa-plane track-icon"></i>
-                YOUR APPLICATION PROGRESS
+                <div class="plane-container">
+                    <i class="fas fa-plane"></i>
+                </div>
+                <span>LIVE PROGRESS</span>
             </div>
             
             <div id="data-content"></div>
         </div>
     </div>
-    
+
     <script type="module" src="tracking-logic.js"></script>
 </body>
 </html>
