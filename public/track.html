@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SSC Live Tracker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/releases/v6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* --- 🎨 PURPLE GLASSMORPHISM DESIGN (Restored 1089.jpg) --- */
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: radial-gradient(circle at top right, #1e1b4b, #0d0c24); 
+            background: #0d0c24; 
             color: #fff;
             display: flex;
             justify-content: center;
@@ -18,94 +17,81 @@
             margin: 0;
         }
 
+        /* --- 🎨 PURPLE GLASSMORPHISM --- */
         .container {
-            background: rgba(26, 26, 46, 0.8); /* Glass effect */
+            background: rgba(26, 26, 46, 0.9);
             backdrop-filter: blur(10px);
             padding: 30px;
-            border-radius: 24px;
-            border: 1px solid rgba(155, 89, 182, 0.3); /* Purple border */
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
-            width: 90%;
-            max-width: 400px;
+            border-radius: 20px;
+            border: 1px solid rgba(162, 155, 254, 0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            width: 380px;
             text-align: center;
         }
 
-        /* Fixed Logo as per your requirement */
-        .logo-box { margin-bottom: 15px; }
         .logo-box img { 
-            max-width: 130px; 
-            height: auto;
-            filter: drop-shadow(0 0 10px rgba(155, 89, 182, 0.5));
+            max-width: 140px; 
+            margin-bottom: 10px;
+            filter: drop-shadow(0 0 8px rgba(162, 155, 254, 0.5));
         }
 
-        h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #a29bfe; margin-bottom: 20px; }
+        h2 { font-size: 14px; letter-spacing: 2px; color: #a29bfe; margin-bottom: 20px; }
 
-        /* Purple Tinted Inputs */
         input {
             width: 100%;
             padding: 14px;
             margin-bottom: 12px;
-            border-radius: 12px;
-            border: 1px solid #444;
-            background: rgba(37, 37, 69, 0.7);
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #252545;
             color: white;
             box-sizing: border-box;
-            outline: none;
         }
-        input:focus { border-color: #a29bfe; box-shadow: 0 0 10px rgba(162, 155, 254, 0.2); }
 
         button {
             width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            padding: 14px;
+            background: #2ecc71;
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             text-transform: uppercase;
-            transition: 0.3s;
         }
 
-        /* --- ✈️ FLYING PLANE ANIMATION (From 1069.jpg) --- */
+        /* --- ✈️ PLANE ANIMATION --- */
         #result {
             display: none;
             margin-top: 25px;
-            position: relative;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
         }
 
         .track-header {
             position: relative;
-            height: 30px;
-            overflow: hidden; /* Plane hide korbe side e gele */
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(162, 155, 254, 0.2);
+            height: 35px;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
 
         .plane-anim {
             position: absolute;
             left: -50px;
             color: #3498db;
-            font-size: 20px;
-            animation: flyLeftRight 4s infinite linear;
+            font-size: 22px;
+            animation: flyAcross 4s infinite linear;
         }
 
-        @keyframes flyLeftRight {
-            0% { left: -10%; transform: translateY(0) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            50% { transform: translateY(-5px) rotate(2deg); }
-            90% { opacity: 1; }
-            100% { left: 110%; transform: translateY(0) rotate(0deg); opacity: 0; }
+        @keyframes flyAcross {
+            0% { left: -10%; opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { left: 110%; opacity: 0; }
         }
 
-        /* Data Styling */
-        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin: 8px 0; }
+        .info-row { display: flex; justify-content: space-between; font-size: 13px; margin: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;}
         .label { color: #a29bfe; }
-        .val { font-weight: bold; }
-
     </style>
 </head>
 <body>
@@ -114,29 +100,20 @@
         <div class="logo-box">
             <img src="logo.png" alt="SSC Logo">
         </div>
-        
-        <h2>Live Tracker</h2>
-        
+        <h2>LIVE TRACKER</h2>
         <input type="text" id="passportInput" placeholder="Enter Passport Number...">
-        <button id="trackBtn" onclick="handleTrack()">Track Status</button>
+        <button id="trackBtn">Track Status</button>
 
         <div id="result">
             <div class="track-header">
                 <div class="plane-anim"><i class="fas fa-plane"></i></div>
+                <div style="font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 10px;">TRACKING PROGRESS</div>
             </div>
             <div id="data-content"></div>
         </div>
     </div>
 
     <script type="module" src="tracking-logic.js"></script>
-
-    <script>
-        // Smooth show logic
-        function handleTrack() {
-            const res = document.getElementById('result');
-            res.style.display = 'block';
-        }
-    </script>
 
 </body>
 </html>
