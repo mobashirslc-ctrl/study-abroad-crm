@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
@@ -15,7 +15,74 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// --- Login Logic ---
+// --- Cloudinary Upload Function ---
+async function uploadToCloudinary(file) {
+    if (!file) return "";
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ihp_upload'); 
+
+    try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/ddziennkh/auto/upload', { 
+            method: 'POST', 
+            body: formData 
+        });
+        const data = await res.json();
+        return data.secure_url || "";
+    } catch (e) {
+        console.error("Cloudinary Error:", e);
+        return "";
+    }
+}
+
+// --- Registration Logic ---
+async function handleRegister() {
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    const pass = document.getElementById('regPass').value;
+    const role = document.getElementById('userRole').value;
+
+    if (!role || !email || !pass) return alert("Email, Password and Role are required!");
+
+    const regBtn = document.getElementById('regBtn');
+    regBtn.innerText = "Processing..."; regBtn.disabled = true;
+
+    try {
+        let tradeUrl = "", nidUrl = "";
+        
+        if (role === 'Partner') {
+            const tradeFile = document.getElementById('pTrade')?.files[0];
+            const nidFile = document.getElementById('pNid')?.files[0];
+            if (tradeFile) tradeUrl = await uploadToCloudinary(tradeFile);
+            if (nidFile) nidUrl = await uploadToCloudinary(nidFile);
+        }
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        const user = userCredential.user;
+
+        const userData = {
+            uid: user.uid,
+            email: email,
+            role: role.toLowerCase(),
+            status: 'pending', // Default status
+            fullName: document.getElementById('pPerson')?.value || document.getElementById('cName')?.value || "N/A",
+            phone: document.getElementById('pContact')?.value || document.getElementById('cContact')?.value || "N/A",
+            agencyName: document.getElementById('pAgency')?.value || document.getElementById('cOrg')?.value || "N/A",
+            tradeLicense: tradeUrl,
+            nidPdf: nidUrl,
+            createdAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, "users", user.uid), userData);
+        alert("Registration Successful! Please wait for Admin approval.");
+        location.reload();
+
+    } catch (error) {
+        alert("Registration Error: " + error.message);
+        regBtn.innerText = "SUBMIT REQUEST"; regBtn.disabled = false;
+    }
+}
+
+// --- Login Logic (Fixed Back-Loop Problem) ---
 async function handleLogin() {
     const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const pass = document.getElementById('loginPass').value;
@@ -24,39 +91,44 @@ async function handleLogin() {
     if (!email || !pass) return alert("Enter credentials!");
 
     try {
-        loginBtn.innerText = "Verifying..."; loginBtn.disabled = true;
+        loginBtn.innerText = "Accessing Portal..."; loginBtn.disabled = true;
 
-        // ১. ফায়ারবেস অথেন্টিকেশন
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
         const user = userCredential.user;
 
-        // ২. ডাটাবেস থেকে ইউজার চেক (UID দিয়ে)
+        // Firestore থেকে ইউজার ডেটা আনা
         const userDoc = await getDoc(doc(db, "users", user.uid));
         
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            const status = (userData.status || "pending").toLowerCase();
-            const role = (userData.role || "partner").toLowerCase();
+            
+            // স্ট্যাটাস এবং রোল ছোট হাতের অক্ষরে কনভার্ট করে চেক করা (Safe Check)
+            const status = (userData.status || "").toLowerCase();
+            const role = (userData.role || "").toLowerCase();
 
-            // ৩. স্ট্যাটাস চেক (অ্যাডমিন ছাড়া সবার জন্য 'active' বাধ্যতামূলক)
-            if (role !== 'admin' && status !== 'active') {
+            // স্ট্যাটাস APPROVED বা ACTIVE যেকোনোটি থাকলেই হবে
+            if (role !== 'admin' && status !== 'approved' && status !== 'active') {
                 alert("Access Denied! Your status is: " + status.toUpperCase());
-                await signOut(auth);
+                await signOut(auth); // সাইন আউট করে সেশন ক্লিয়ার করা
                 location.reload();
                 return;
             }
 
-            // ৪. সেশন স্টোরেজ সেভ (এটি ড্যাশবোর্ড চেক করবে)
+            // সেশন ডাটা সেভ করা যাতে ড্যাশবোর্ড চিনতে পারে
             localStorage.setItem('userEmail', email);
             localStorage.setItem('userRole', role);
 
-            // ৫. রিডাইরেক্ট
-            if (role === 'admin') window.location.href = "admin.html";
-            else if (role === 'compliance') window.location.href = "compliance.html";
-            else window.location.href = "partner.html";
+            // রোল অনুযায়ী সঠিক ড্যাশবোর্ডে পাঠানো
+            if (role === 'admin') {
+                window.location.href = "admin.html";
+            } else if (role === 'compliance') {
+                window.location.href = "compliance.html";
+            } else {
+                window.location.href = "partner.html";
+            }
 
         } else {
-            alert("No Firestore record found for this User UID!");
+            alert("No user profile found in Database!");
             await signOut(auth);
             location.reload();
         }
@@ -67,4 +139,6 @@ async function handleLogin() {
     }
 }
 
+// Button Listeners
 document.getElementById('loginBtn')?.addEventListener('click', handleLogin);
+document.getElementById('regBtn')?.addEventListener('click', handleRegister);
