@@ -13,22 +13,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// সেশন থেকে ডাটা নেওয়া
+// সেশন থেকে ইমেইল নেওয়া
 const staffEmail = localStorage.getItem('userEmail');
 
-// প্রোটেকশন
+// প্রোটেকশন: ইমেইল না থাকলে লগইন পেজে পাঠিয়ে দিবে
 if (!staffEmail) {
     window.location.href = 'index.html';
 }
 
-// --- ১. স্টাফের নাম লোড করা (FIXED) ---
+// --- ১. স্টাফের নাম লোড করা ---
 async function displayStaffName() {
     const displayElement = document.getElementById('staffDisplay');
     if (displayElement) {
-        displayElement.innerText = staffEmail.split('@')[0].toUpperCase(); // Default
+        displayElement.innerText = staffEmail.split('@')[0].toUpperCase(); // Default Email Name
     }
 
     try {
+        // ইউজার লিস্ট থেকে নাম খোঁজা
         onSnapshot(collection(db, "users"), (snap) => {
             snap.forEach(userDoc => {
                 const uData = userDoc.data();
@@ -41,60 +42,78 @@ async function displayStaffName() {
 }
 displayStaffName();
 
-// --- ২. রিভিউ স্লাইডার ওপেন (Global Scope) ---
+// --- ২. রিভিউ স্লাইডার ওপেন ফাংশন (Global Scope) ---
 window.openReview = async (id, sName) => {
-    window.currentAppId = id;
+    window.currentAppId = id; 
     const slider = document.getElementById('reviewSlider');
     const nameDisplay = document.getElementById('targetStudent');
     const docArea = document.getElementById('docLinksArea');
 
     if (nameDisplay) nameDisplay.innerText = sName;
+
+    // স্লাইডার ওপেন করা (CSS ক্লাসের সাথে মিল রেখে)
     if (slider) slider.classList.add('active');
 
+    // ডক লিঙ্কগুলো লোড করা
     if (docArea) {
-        docArea.innerHTML = "Fetching Documents...";
+        docArea.innerHTML = "Fetching Files...";
         try {
             const snap = await getDoc(doc(db, "applications", id));
             if (snap.exists()) {
                 const d = snap.data().docs || {};
                 docArea.innerHTML = `
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px;">
                         ${d.academic ? `<a href="${d.academic}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Academic PDF</a>` : ''}
                         ${d.passport ? `<a href="${d.passport}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">Passport PDF</a>` : ''}
-                    </div>`;
-            } else { docArea.innerHTML = "No documents found."; }
-        } catch (e) { docArea.innerHTML = "Error loading docs."; }
+                        ${d.language ? `<a href="${d.language}" target="_blank" style="background:var(--accent); color:#000; padding:10px; border-radius:5px; text-decoration:none; text-align:center; font-weight:bold; font-size:11px;">IELTS/Lang PDF</a>` : ''}
+                    </div>
+                `;
+            }
+        } catch (e) {
+            docArea.innerHTML = "Error loading documents.";
+        }
     }
 };
 
+// --- ৩. স্লাইডার ক্লোজ ফাংশন ---
 window.closeSlider = () => {
     const slider = document.getElementById('reviewSlider');
     if (slider) slider.classList.remove('active');
 };
 
-// --- ৩. রিয়েল-টাইম অ্যাপ্লিকেশন লিস্ট ---
+// --- ৪. রিয়েল-টাইম অ্যাপ্লিকেশন লিস্ট লোড ---
 onSnapshot(query(collection(db, "applications"), orderBy("createdAt", "desc")), (snap) => {
     const tbody = document.getElementById('incomingTableBody');
     if (!tbody) return;
+
     let html = "";
     snap.forEach(dSnap => {
         const d = dSnap.data();
+        const id = dSnap.id;
+        const status = (d.status || "pending").toUpperCase();
+
         html += `
             <tr>
-                <td><b>${d.studentName}</b><br><small>${d.partnerEmail}</small></td>
+                <td><b>${d.studentName}</b><br><small style="color:#888;">${d.partnerEmail}</small></td>
                 <td>${d.passportNo || 'N/A'}</td>
                 <td><i class="fas fa-file-pdf" style="color:var(--accent)"></i></td>
-                <td><span class="status-pill">${(d.status || 'PENDING').toUpperCase()}</span></td>
-                <td><small>${d.handledBy || 'Unclaimed'}</small></td>
-                <td><button class="btn-claim" onclick="openReview('${dSnap.id}', '${d.studentName}')">Review</button></td>
+                <td><span class="status-pill">${status}</span></td>
+                <td><small>${d.handledBy || 'Waiting'}</small></td>
+                <td>
+                    <button class="btn-claim" onclick="openReview('${id}', '${d.studentName}')">
+                        REVIEW
+                    </button>
+                </td>
             </tr>`;
     });
-    tbody.innerHTML = html || '<tr><td colspan="6" align="center">No files in queue.</td></tr>';
+    tbody.innerHTML = html || '<tr><td colspan="6" align="center">No Files Found</td></tr>';
+    
+    // লোডার লুকানো
     const loader = document.getElementById('loader');
     if (loader) loader.style.display = 'none';
 });
 
-// --- ৪. APPLY STATUS & WALLET SYNC (Safe & Error-Proof Version) ---
+// --- ৫. APPLY STATUS & WALLET SYNC (Crucial Fix) ---
 const updateBtn = document.getElementById('updateStatusBtn');
 if (updateBtn) {
     updateBtn.onclick = async () => {
@@ -103,52 +122,31 @@ if (updateBtn) {
 
         if (!appId) return alert("Please select an application first!");
 
-        updateBtn.innerText = "Syncing...";
+        updateBtn.innerText = "Syncing with Partner...";
         updateBtn.disabled = true;
 
         try {
             const appRef = doc(db, "applications", appId);
-            const appSnap = await getDoc(appRef);
             
-            if (!appSnap.exists()) throw new Error("Application records missing!");
-            const appData = appSnap.data();
+            // পার্টনার ড্যাশবোর্ডের লজিক অনুযায়ী commissionStatus সেট করা
+            let cStatus = 'waiting'; // ডিফল্ট
+            if (newStatus === 'verified') cStatus = 'pending'; // পেন্ডিং ওয়ালেটে পাঠাবে
+            if (newStatus === 'visa_success' || newStatus === 'student_paid') cStatus = 'ready'; // ফাইনাল ওয়ালেটে পাঠাবে
 
-            // ১. মেইন স্ট্যাটাস আপডেট
+            // অ্যাপ্লিকেশন আপডেট
             await updateDoc(appRef, {
                 status: newStatus,
+                commissionStatus: cStatus, // এই ফিল্ডটি পার্টনার ড্যাশবোর্ডে টাকা দেখাবে
                 handledBy: staffEmail,
                 updatedAt: serverTimestamp()
             });
 
-            // ২. ওয়ালেট সিঙ্ক লজিক
-            const successTriggers = ['verified', 'visa_success', 'student_paid'];
-            if (successTriggers.includes(newStatus.toLowerCase())) {
-                
-                // আইডি না থাকলে অল্টারনেট ইমেইল ব্যবহারের চেষ্টা
-                const partnerKey = appData.partnerUid || appData.partnerEmail;
-
-                if (partnerKey) {
-                    const commission = Number(appData.commission || 0);
-                    const pRef = doc(db, "users", partnerKey);
-                    const pSnap = await getDoc(pRef);
-
-                    if (pSnap.exists()) {
-                        const currentBal = Number(pSnap.data().walletBalance || 0);
-                        await updateDoc(pRef, {
-                            walletBalance: currentBal + commission
-                        });
-                        console.log("Wallet synced!");
-                    }
-                }
-            }
-
-            alert("Update Successful!");
+            alert("Update Successful! Partner wallet has been synced.");
             closeSlider();
 
         } catch (e) {
-            console.error("Sync Error:", e);
-            alert("Updated with sync note: " + e.message);
-            closeSlider();
+            console.error("Critical Sync Error:", e);
+            alert("Error: " + e.message);
         } finally {
             updateBtn.innerText = "APPLY STATUS & SYNC WALLET";
             updateBtn.disabled = false;
@@ -156,7 +154,7 @@ if (updateBtn) {
     };
 }
 
-// --- ৫. লগআউট ---
+// --- ৬. লগআউট ---
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.onclick = () => {
