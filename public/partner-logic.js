@@ -50,12 +50,13 @@ const syncDashboard = () => {
         docsArray.forEach(d => {
             const status = (d.status || "submitted").toLowerCase();
             const dateStr = d.createdAt?.toDate ? d.createdAt.toDate().toLocaleDateString('en-GB') : '...';
+            // স্লিপ বাটনে সব ডাটা পাঠানো হয়েছে যাতে স্লিপ জেনারেট হতে পারে
             html += `<tr>
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                 <td>${d.passportNo}</td>
                 <td><span class="status-pill ${status.replace(/\s+/g, '-')}">${status.toUpperCase()}</span></td>
                 <td>
-                    <button class="btn-gold" style="padding:2px 8px; font-size:10px;" 
+                    <button class="btn-gold" style="padding:2px 8px; font-size:10px; cursor:pointer;" 
                         onclick="window.printSlip('${d.studentName}', '${d.passportNo}', '${d.university}')">
                         PRINT SLIP
                     </button>
@@ -75,7 +76,7 @@ const syncDashboard = () => {
 };
 syncDashboard(); 
 
-// --- 3. File Upload Logic (Fixed Undefined Error) ---
+// --- 3. File Upload Logic ---
 const uploadFile = async (file) => {
     if (!file) return "No File";
     const formData = new FormData();
@@ -88,7 +89,7 @@ const uploadFile = async (file) => {
     } catch (e) { return "No File"; }
 }; 
 
-// --- 4. Submission & Print Logic (No Popup Error) ---
+// --- 4. Submission & Redirection Logic ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('appSName').value;
@@ -113,8 +114,12 @@ document.getElementById('submitAppBtn').onclick = async () => {
         }; 
 
         await addDoc(collection(db, "applications"), appData);
-        alert("Success! Check tracking table to print slip.");
-        window.closeModal();
+        
+        alert("Submission Success! Taking you to Tracking Table to print slip.");
+        closeModal();
+        // সরাসরি ট্র্যাকিং সেকশনে নিয়ে যাবে যাতে ইউজার স্লিপ প্রিন্ট করতে পারে
+        window.showTab('tracking', document.querySelector('[onclick*="tracking"]'));
+        
     } catch (e) {
         alert("Error: " + e.message);
     } finally {
@@ -122,34 +127,53 @@ document.getElementById('submitAppBtn').onclick = async () => {
     }
 };
 
+// --- 5. Professional Slip Design (Based on 1101.png) ---
 window.printSlip = (name, passport, uni) => {
     const slipWin = window.open('', '_blank');
-    if (!slipWin) return alert("Please allow pop-ups to print.");
+    if (!slipWin) return alert("Please allow pop-ups from browser settings to print slip.");
 
     slipWin.document.write(`
-        <html><head><title>Slip - ${name}</title>
+        <html><head><title>SCC Slip - ${name}</title>
         <style>
-            body { font-family: sans-serif; padding: 40px; text-align: center; color: #333; }
-            .card { border: 4px solid #2b0054; padding: 30px; border-radius: 20px; max-width: 550px; margin: auto; }
-            .header { border-bottom: 3px solid #00a651; padding-bottom: 10px; margin-bottom: 25px; color: #2b0054; }
-            .info { font-size: 18px; margin: 12px 0; text-align: left; }
-            .status-box { background: #00a651; color: white; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 25px; display: inline-block; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
+            .slip-card { border: 4px solid #2b0054; padding: 30px; border-radius: 15px; max-width: 600px; margin: auto; position: relative; background: #fff; }
+            .header-top { border-bottom: 3px solid #00a651; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+            .logo-text { color: #2b0054; font-size: 24px; font-weight: bold; margin: 0; }
+            .sub-text { color: #00a651; font-size: 14px; font-weight: bold; margin-top: 5px; }
+            .info-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; text-align: left; }
+            .info-item { font-size: 16px; border-bottom: 1px dashed #ccc; padding: 5px 0; }
+            .label { font-weight: bold; color: #555; width: 120px; display: inline-block; }
+            .status-badge { background: #00a651; color: white; padding: 12px 25px; border-radius: 50px; font-weight: bold; margin-top: 30px; display: inline-block; font-size: 14px; }
+            .footer-note { margin-top: 25px; font-size: 11px; color: #777; font-style: italic; }
+            @media print { .no-print { display: none; } }
         </style></head><body>
-            <div class="card">
-                <div class="header"><h2>STUDENT CAREER CONSULTANCY</h2><p>Official Admission Slip</p></div>
-                <div class="info">Full Name: <b>${name.toUpperCase()}</b></div>
-                <div class="info">Passport No: <b>${passport.toUpperCase()}</b></div>
-                <div class="info">University: <b>${uni}</b></div>
-                <div class="status-box">✓ VERIFIED & IN-HOUSE PROCESSING</div>
-                <div style="margin-top:20px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${passport}"></div>
+            <div class="slip-card">
+                <div class="header-top">
+                    <p class="logo-text">STUDENT CAREER CONSULTANCY</p>
+                    <p class="sub-text">OFFICIAL ACKNOWLEDGEMENT & ADMISSION SLIP</p>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item"><span class="label">Full Name:</span> <b>${name.toUpperCase()}</b></div>
+                    <div class="info-item"><span class="label">Passport No:</span> <b>${passport.toUpperCase()}</b></div>
+                    <div class="info-item"><span class="label">University:</span> <b>${uni}</b></div>
+                    <div class="info-item"><span class="label">Issue Date:</span> <b>${new Date().toLocaleDateString('en-GB')}</b></div>
+                </div>
+                <div style="text-align:center;">
+                    <div class="status-badge">✓ VERIFIED & IN-HOUSE PROCESSING</div>
+                    <div style="margin-top:20px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=TRACK-${passport}" alt="QR">
+                        <p style="font-size:10px; margin-top:5px;">Scan to Track Application</p>
+                    </div>
+                </div>
+                <div class="footer-note">This is a system-generated document for IHP Network.</div>
             </div>
-            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+            <script>window.onload = function() { window.print(); }<\/script>
         </body></html>
     `);
     slipWin.document.close();
 };
 
-// --- 5. University Search ---
+// --- University & User Sync ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
