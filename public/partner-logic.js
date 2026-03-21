@@ -16,17 +16,21 @@ const userEmail = localStorage.getItem('userEmail');
 
 if (!userEmail) { window.location.href = 'index.html'; }
 
-// --- Global Functions ---
+// --- 1. CORE NAVIGATION (Locked & Safe) ---
 window.showTab = (id, el) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if(document.getElementById(id)) document.getElementById(id).classList.add('active-section');
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active-section');
     if(el) el.classList.add('active');
 };
-window.logout = () => { if(confirm("Logout?")) { localStorage.clear(); location.href='index.html'; } };
-window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); };
+window.logout = () => { if(confirm("Are you sure?")) { localStorage.clear(); location.href='index.html'; } };
+window.closeModal = () => { 
+    document.getElementById('applyModal').style.display = 'none'; 
+    document.getElementById('receiptModal').style.display = 'none'; 
+};
 
-// --- Sync Logic ---
+// --- 2. WALLET & RECENT TRACKING (Locked & Safe) ---
 const syncDashboard = () => {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()));
     onSnapshot(q, (snap) => {
@@ -52,9 +56,11 @@ const syncDashboard = () => {
 };
 syncDashboard();
 
-// --- Search & Apply ---
+// --- 3. UNIVERSITY SEARCH (Locked & Safe) ---
 let allUnis = [];
-onSnapshot(collection(db, "universities"), (snap) => { allUnis = snap.docs.map(d => ({id: d.id, ...d.data()})); });
+onSnapshot(collection(db, "universities"), (snap) => { 
+    allUnis = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+});
 
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
@@ -71,6 +77,7 @@ document.getElementById('searchBtn').onclick = () => {
     `).join('');
 };
 
+// --- 4. FILE UPLOAD ENGINE (Locked & Safe) ---
 const uploadFile = async (file) => {
     if (!file) return "";
     const fd = new FormData(); fd.append("file", file); fd.append("upload_preset", "ihp_upload");
@@ -78,32 +85,56 @@ const uploadFile = async (file) => {
     const data = await res.json(); return data.secure_url;
 };
 
-// --- Submit & Premium Slip Logic ---
+// --- 5. SUBMIT & AUTO-SLIP GENERATION (Premium Update) ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('appSName').value;
     const sPass = document.getElementById('appSPass').value;
-    if(!sName || !sPass) return alert("Required!");
-    btn.innerText = "Uploading..."; btn.disabled = true;
+    
+    if(!sName || !sPass) return alert("Student Name and Passport are Required!");
+    
+    btn.innerText = "Processing Enrollment..."; btn.disabled = true;
 
     try {
+        // Uploading Files
         const acadUrl = await uploadFile(document.getElementById('fileAcad').files[0]);
         const passUrl = await uploadFile(document.getElementById('filePass').files[0]);
-        const appData = { studentName: sName, passportNo: sPass, university: window.selectedUni.name, commission: Number(window.selectedUni.comm), partnerEmail: userEmail.toLowerCase(), status: 'submitted', docs: { academic: acadUrl, passport: passUrl }, createdAt: serverTimestamp() };
+
+        // Saving to Firestore
+        const appData = { 
+            studentName: sName, 
+            passportNo: sPass, 
+            university: window.selectedUni.name, 
+            commission: Number(window.selectedUni.comm), 
+            partnerEmail: userEmail.toLowerCase(), 
+            status: 'submitted', 
+            docs: { academic: acadUrl, passport: passUrl }, 
+            createdAt: serverTimestamp() 
+        };
         await addDoc(collection(db, "applications"), appData);
 
-        // UI Update for Slip
+        // --- UPDATING SLIP MODAL UI ---
         document.getElementById('rName').innerText = sName.toUpperCase();
         document.getElementById('rPass').innerText = sPass.toUpperCase();
         document.getElementById('rUni').innerText = window.selectedUni.name;
         document.getElementById('rDate').innerText = "DATE: " + new Date().toLocaleDateString('en-GB');
-        const link = `https://crm-nine.vercel.app/track.html?passport=${sPass}`;
-        document.getElementById('rQR').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(link)}" />`;
 
-        closeModal();
+        // Generating QR for Track.html
+        const trackLink = `https://crm-nine.vercel.app/track.html?passport=${sPass}`;
+        document.getElementById('rQR').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(trackLink)}" />`;
+
+        // Switching Modals
+        document.getElementById('applyModal').style.display = 'none';
         document.getElementById('receiptModal').style.display = 'flex';
-    } catch (e) { alert(e.message); } 
-    finally { btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false; }
+
+    } catch (e) { 
+        alert("Critical Error: " + e.message); 
+    } finally { 
+        btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false; 
+    }
 };
 
-onSnapshot(doc(db, "users", userEmail.toLowerCase()), (d) => { if(d.exists()) document.getElementById('welcomeName').innerText = d.data().fullName || 'Partner'; });
+// --- 6. USER PROFILE SYNC (Locked & Safe) ---
+onSnapshot(doc(db, "users", userEmail.toLowerCase()), (d) => { 
+    if(d.exists()) document.getElementById('welcomeName').innerText = d.data().fullName || 'Partner'; 
+});
