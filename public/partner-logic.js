@@ -16,7 +16,7 @@ const userEmail = localStorage.getItem('userEmail');
 
 if (!userEmail) { window.location.href = 'index.html'; } 
 
-// --- ১. গ্লোবাল মেনু ও সাইডবার লজিক (নিশ্চিতভাবে উইন্ডো স্কোপে রাখা হয়েছে) ---
+// --- 1. Global Functions (Sidebar Unlock) ---
 window.showTab = (id, el) => {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -24,18 +24,16 @@ window.showTab = (id, el) => {
     if(target) target.classList.add('active-section');
     if(el) el.classList.add('active');
 };
-
 window.logout = () => { if(confirm("Are you sure?")) { localStorage.clear(); location.href='index.html'; } };
 window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }; 
 
-// --- ২. লাইভ ড্যাশবোর্ড ও ট্র্যাকিং ---
+// --- 2. Dashboard & Tracking Logic ---
 const syncDashboard = () => {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail.toLowerCase()));
     
     onSnapshot(q, (snap) => {
         let pending = 0; let final = 0; let html = "";
         let docsArray = [];
-
         snap.forEach(dSnap => {
             const d = dSnap.data();
             docsArray.push(d);
@@ -56,15 +54,20 @@ const syncDashboard = () => {
                 <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                 <td>${d.passportNo}</td>
                 <td><span class="status-pill ${status.replace(/\s+/g, '-')}">${status.toUpperCase()}</span></td>
-                <td><a href="${d.docs?.academic || '#'}" target="_blank" style="color:var(--gold); font-weight:bold;">View</a></td>
+                <td>
+                    <button class="btn-gold" style="padding:2px 8px; font-size:10px;" 
+                        onclick="window.printSlip('${d.studentName}', '${d.passportNo}', '${d.university}')">
+                        PRINT SLIP
+                    </button>
+                </td>
                 <td>${dateStr}</td>
             </tr>`;
         }); 
 
         const homeT = document.getElementById('homeTrackingBody');
         const trackT = document.getElementById('trackingTableBody'); 
-        if(homeT) homeT.innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Found</td></tr>";
-        if(trackT) trackT.innerHTML = html || "<tr><td colspan='5' align='center'>No Applications Found</td></tr>";
+        if(homeT) homeT.innerHTML = html || "<tr><td colspan='5'>No Data</td></tr>";
+        if(trackT) trackT.innerHTML = html || "<tr><td colspan='5'>No Data</td></tr>";
         
         document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
@@ -72,7 +75,7 @@ const syncDashboard = () => {
 };
 syncDashboard(); 
 
-// --- ৩. ফাইল আপলোড লজিক (Safe String Return) ---
+// --- 3. File Upload Logic (Fixed Undefined Error) ---
 const uploadFile = async (file) => {
     if (!file) return "No File";
     const formData = new FormData();
@@ -82,26 +85,21 @@ const uploadFile = async (file) => {
         const res = await fetch("https://api.cloudinary.com/v1_1/ddziennkh/auto/upload", { method: "POST", body: formData });
         const data = await res.json();
         return data.secure_url || "No File";
-    } catch (err) { return "No File"; }
+    } catch (e) { return "No File"; }
 }; 
 
-// --- ৪. এরর-ফ্রি সাবমিশন ও স্লিপ জেনারেশন ---
+// --- 4. Submission & Print Logic (No Popup Error) ---
 document.getElementById('submitAppBtn').onclick = async () => {
     const btn = document.getElementById('submitAppBtn');
     const sName = document.getElementById('appSName').value;
     const sPass = document.getElementById('appSPass').value; 
-    
+
     if(!sName || !sPass) return alert("Fill Name and Passport!");
-    
     btn.innerText = "Processing..."; btn.disabled = true; 
 
     try {
-        const acadInput = document.getElementById('fileAcad');
-        const passInput = document.getElementById('filePass');
-
-        // ফাইল আপলোড (Undefined/Null Check সহ)
-        const acadUrl = (acadInput && acadInput.files.length > 0) ? await uploadFile(acadInput.files[0]) : "No File";
-        const passUrl = (passInput && passInput.files.length > 0) ? await uploadFile(passInput.files[0]) : "No File"; 
+        const acadUrl = await uploadFile(document.getElementById('fileAcad').files[0]);
+        const passUrl = await uploadFile(document.getElementById('filePass').files[0]); 
 
         const appData = {
             studentName: sName,
@@ -114,47 +112,44 @@ document.getElementById('submitAppBtn').onclick = async () => {
             createdAt: serverTimestamp()
         }; 
 
-        // ডাটাবেসে সেভ
         await addDoc(collection(db, "applications"), appData);
-        
-        // স্লিপ উইন্ডো (Null Document Error Fix)
-        const slipWin = window.open('', '_blank');
-        if (!slipWin) {
-            alert("Success! Please allow pop-ups to see your slip.");
-        } else {
-            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://crm-nine.vercel.app/track.html?passport=${sPass}`;
-            slipWin.document.write(`
-                <html><head><title>Slip - ${sName}</title>
-                <style>
-                    body { font-family: sans-serif; text-align: center; padding: 40px; }
-                    .card { border: 3px solid #2b0054; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; }
-                    .header { color: #2b0054; margin-bottom: 20px; }
-                    .status { background: #00a651; color: white; padding: 10px; border-radius: 5px; font-weight: bold; }
-                </style></head><body>
-                    <div class="card">
-                        <div class="header"><h1>SCC ADMISSION SLIP</h1></div>
-                        <p>Student: <b>${sName.toUpperCase()}</b></p>
-                        <p>Passport: <b>${sPass.toUpperCase()}</b></p>
-                        <p>University: <b>${appData.university}</b></p>
-                        <br><img src="${qrImg}" width="100"><br>
-                        <p class="status">✓ VERIFIED & IN-HOUSE PROCESSING</p>
-                    </div>
-                    <script>window.onload = function() { window.print(); }<\/script>
-                </body></html>
-            `);
-            slipWin.document.close();
-        }
-
-        alert("Application Submitted Successfully!");
+        alert("Success! Check tracking table to print slip.");
         window.closeModal();
     } catch (e) {
-        alert("Critical Error: " + e.message);
+        alert("Error: " + e.message);
     } finally {
         btn.innerText = "CONFIRM ENROLLMENT"; btn.disabled = false;
     }
 };
 
-// --- ৫. ইউনিভার্সিটি ও প্রোফাইল আপডেট ---
+window.printSlip = (name, passport, uni) => {
+    const slipWin = window.open('', '_blank');
+    if (!slipWin) return alert("Please allow pop-ups to print.");
+
+    slipWin.document.write(`
+        <html><head><title>Slip - ${name}</title>
+        <style>
+            body { font-family: sans-serif; padding: 40px; text-align: center; color: #333; }
+            .card { border: 4px solid #2b0054; padding: 30px; border-radius: 20px; max-width: 550px; margin: auto; }
+            .header { border-bottom: 3px solid #00a651; padding-bottom: 10px; margin-bottom: 25px; color: #2b0054; }
+            .info { font-size: 18px; margin: 12px 0; text-align: left; }
+            .status-box { background: #00a651; color: white; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 25px; display: inline-block; }
+        </style></head><body>
+            <div class="card">
+                <div class="header"><h2>STUDENT CAREER CONSULTANCY</h2><p>Official Admission Slip</p></div>
+                <div class="info">Full Name: <b>${name.toUpperCase()}</b></div>
+                <div class="info">Passport No: <b>${passport.toUpperCase()}</b></div>
+                <div class="info">University: <b>${uni}</b></div>
+                <div class="status-box">✓ VERIFIED & IN-HOUSE PROCESSING</div>
+                <div style="margin-top:20px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${passport}"></div>
+            </div>
+            <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body></html>
+    `);
+    slipWin.document.close();
+};
+
+// --- 5. University Search ---
 let allUnis = [];
 onSnapshot(collection(db, "universities"), (snap) => {
     allUnis = snap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -163,17 +158,19 @@ onSnapshot(collection(db, "universities"), (snap) => {
 window.openApply = (name, comm) => {
     window.selectedUni = { name, comm };
     const modal = document.getElementById('applyModal');
-    const uniLabel = document.getElementById('modalUniName');
-    if(modal && uniLabel) { uniLabel.innerText = name; modal.style.display = 'flex'; }
+    if(modal) {
+        document.getElementById('modalUniName').innerText = name;
+        modal.style.display = 'flex';
+    }
 }; 
 
 document.getElementById('searchBtn').onclick = () => {
     const country = document.getElementById('fCountry').value.toLowerCase().trim();
-    const filtered = allUnis.filter(u => country === "" || (u.uCountry && u.uCountry.toLowerCase().includes(country))); 
+    const filtered = allUnis.filter(u => !country || u.uCountry.toLowerCase().includes(country)); 
     document.getElementById('searchResultArea').style.display = 'block';
     document.getElementById('uniListContainer').innerHTML = filtered.map(u => `
         <tr><td><b>${u.uName}</b></td><td>${u.uDegree}</td><td>${u.uLanguage}</td><td>৳${(Number(u.uSemFee || 0) * 115).toLocaleString()}</td><td style="color:var(--gold); font-weight:bold;">৳${Number(u.partnerComm || 0).toLocaleString()}</td><td><button class="btn-gold" onclick="window.openApply('${u.uName}', '${u.partnerComm}')">APPLY</button></td></tr>
-    `).join('') || "<tr><td colspan='6' align='center'>No matches found.</td></tr>";
+    `).join('') || "<tr><td colspan='6'>No results</td></tr>";
 };
 
 onSnapshot(doc(db, "users", userEmail.toLowerCase()), (d) => {
