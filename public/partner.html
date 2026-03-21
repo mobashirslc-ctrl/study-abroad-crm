@@ -17,10 +17,18 @@
         .pending { background: #f1c40f; color: black; }
         .rejected { background: #ff4757; color: white; }
         
-        /* সার্চ বক্স ফিক্স: ৫টি বক্স এক সারিতে আনার জন্য */
         .assessment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: flex-end; }
         .reg-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 5px; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+
+        /* Print Logic - Pure Isolation */
+        @media print {
+            body * { visibility: hidden; }
+            #receiptModal, #receiptModal * { visibility: visible; }
+            #receiptModal { position: fixed; left: 0; top: 0; width: 100%; height: 100%; display: flex !important; background: white !important; justify-content: center; align-items: flex-start; padding-top: 20px; }
+            .no-print { display: none !important; }
+            .receipt-container { box-shadow: none !important; border: 1px solid #eee !important; width: 100% !important; max-width: 800px !important; }
+        }
     </style>
 </head>
 <body>
@@ -144,6 +152,45 @@
             </div>
             <button id="submitAppBtn" class="btn-gold" style="width:100%; margin-top:25px;">CONFIRM ENROLLMENT</button>
             <button onclick="closeModal()" style="margin-top:10px; background:none; color:white; border:none; cursor:pointer; width:100%;">Close</button>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="modal" style="display: none; z-index: 3000;">
+        <div class="receipt-container" style="background: white; color: #2d3436; padding: 40px; border-radius: 15px; width: 95%; max-width: 700px; position: relative; border-top: 10px solid #6c5ce7; box-shadow: 0 25px 50px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px;">
+                <img src="logo.jpeg" style="height: 50px;">
+                <div style="text-align: right;">
+                    <h2 style="margin: 0; color: #6c5ce7; letter-spacing: 1px;">ADMISSION SLIP</h2>
+                    <p id="rDate" style="margin: 5px 0 0; font-size: 12px; font-weight: bold; color: #636e72;"></p>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                <div>
+                    <p style="font-size: 10px; color: #6c5ce7; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Applicant Information</p>
+                    <p style="margin: 4px 0; font-size: 14px;"><b>Name:</b> <span id="rName"></span></p>
+                    <p style="margin: 4px 0; font-size: 14px;"><b>Passport:</b> <span id="rPass"></span></p>
+                    <p style="margin: 4px 0; font-size: 14px;"><b>University:</b> <span id="rUni"></span></p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-size: 10px; color: #6c5ce7; font-weight: 800; text-transform: uppercase; margin-bottom: 8px;">Processing Status</p>
+                    <div style="background: #2ecc71; color: white; padding: 5px 15px; border-radius: 50px; display: inline-block; font-size: 11px; font-weight: 800;">✓ RECEIVED BY SCC HUB</div>
+                    <div id="rQR" style="margin-top: 15px; display: flex; justify-content: flex-end;"></div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #eee; padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 10px; color: #636e72;">
+                <div>
+                    <p style="font-weight: bold; color: #6c5ce7; margin-bottom: 3px;">Your Dream Route to Global Education</p>
+                    <p>Student Career Consultancy | B2B Processing Hub</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="width: 100px; border-top: 1px solid #2d3436; margin-bottom: 4px;"></div>
+                    <p style="font-weight: 800; font-size: 9px;">AUTHORIZED SEAL</p>
+                </div>
+            </div>
+            <div class="no-print" style="margin-top: 30px; display: flex; gap: 10px;">
+                <button onclick="window.print()" style="flex: 1; background: #6c5ce7; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">🖨️ PRINT SLIP / PDF</button>
+                <button onclick="location.reload()" style="flex: 1; background: #f1f2f6; color: #2d3436; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">CLOSE & REFRESH</button>
+            </div>
         </div>
     </div>
 
