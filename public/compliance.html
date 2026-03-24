@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Compliance & Doc Viewer</title>
+    <title>SCC | Compliance & Functional Doc Viewer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); --error: #ff4757; }
@@ -16,18 +16,18 @@
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
 
-        /* Status & Buttons */
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); text-transform: uppercase; }
         .btn-action { background: var(--gold); color: black; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px; }
         .btn-view { background: #3498db; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; }
         .locked-row { opacity: 0.6; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
 
-        /* Modals */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 450px; position: relative; }
         .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 10px; }
-        .doc-link { display: block; padding: 10px; background: var(--glass); margin-bottom: 8px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); }
-        .doc-link:hover { background: rgba(255,255,255,0.1); }
+        
+        .doc-link { display: flex; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); transition: 0.3s; }
+        .doc-link:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .doc-link i { margin-right: 15px; font-size: 20px; color: #ff4757; }
     </style>
 </head>
 <body>
@@ -61,8 +61,11 @@
             <p id="reviewStudentName" style="font-size:13px; color:#ccc;"></p>
             <select id="statusSelect" class="reg-input">
                 <option value="under_review">Under Review</option>
+                <option value="document_pending">Document Pending</option>
                 <option value="conditional_offer">Conditional Offer</option>
                 <option value="unconditional_offer">Unconditional Offer</option>
+                <option value="tuition_fee_paid">Tuition Fee Paid</option>
+                <option value="visa_applied">Visa Applied</option>
                 <option value="visa_granted">Visa Granted</option>
                 <option value="visa_refused">Visa Refused</option>
                 <option value="verified">Verified (Add to Wallet)</option>
@@ -82,7 +85,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
@@ -106,7 +109,6 @@
                 const d = dSnap.data();
                 const id = dSnap.id;
                 
-                // LOCKING LOGIC: যদি অন্য কেউ হ্যান্ডেল করে তবে লক হবে
                 const isLocked = d.handledBy && d.handledBy.toLowerCase() !== staffEmail.toLowerCase();
                 const handlerDisplay = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'FREE';
 
@@ -114,7 +116,7 @@
                     <tr class="${isLocked ? 'locked-row' : ''}">
                         <td><b>${d.studentName}</b><br><small>${d.passportNo}</small></td>
                         <td style="color:#a29bfe;">${d.partnerEmail ? d.partnerEmail.split('@')[0].toUpperCase() : 'N/A'}</td>
-                        <td><span class="status-pill">${(d.status || 'Pending').toUpperCase()}</span></td>
+                        <td><span class="status-pill">${(d.status || 'Pending').replace('_', ' ')}</span></td>
                         <td><i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i> ${handlerDisplay}</td>
                         <td>
                             <button class="btn-view" onclick="viewDocs('${id}')"><i class="fas fa-eye"></i></button>
@@ -125,17 +127,44 @@
             tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
 
-        // ডক ভিউ লজিক
-        window.viewDocs = (id) => {
-            // ধরে নিচ্ছি পার্টনার ফাইল সাবমিটের সময় docURL1, docURL2 ইত্যাদি সেভ করেছে
+        // --- ডাইনামিক ডক ভিউ লজিক (Functional) ---
+        window.viewDocs = async (id) => {
             const list = document.getElementById('docList');
-            list.innerHTML = `
-                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Passport Copy (View)</a>
-                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Certificate (View)</a>
-                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Language Proficiency (View)</a>
-                <p style="font-size:10px; color:gray;">Note: Document links are retrieved from Firebase Storage.</p>
-            `;
+            list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Fetching Links...</p>";
             document.getElementById('docModal').style.display = "flex";
+
+            try {
+                const docSnap = await getDoc(doc(db, "applications", id));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // আপনার পার্টনার প্যানেল থেকে পাঠানো ফিল্ড নাম অনুযায়ী ম্যাপিং
+                    const docItems = [
+                        { label: "Passport Copy", url: data.pdf1 || data.docURL1 },
+                        { label: "Academic Docs", url: data.pdf2 || data.docURL2 },
+                        { label: "Language Test", url: data.pdf3 || data.docURL3 },
+                        { label: "Other Papers", url: data.pdf4 || data.docURL4 }
+                    ];
+
+                    let html = "";
+                    docItems.forEach(item => {
+                        if (item.url) {
+                            html += `
+                                <a href="${item.url}" target="_blank" class="doc-link">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <div>
+                                        <div style="font-weight:bold;">${item.label}</div>
+                                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">Click to open in new tab</div>
+                                    </div>
+                                </a>`;
+                        }
+                    });
+
+                    list.innerHTML = html || "<p style='text-align:center; color:red;'>No PDF links found for this student.</p>";
+                }
+            } catch (e) {
+                list.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>";
+            }
         };
 
         window.openReview = (id, name) => {
@@ -155,7 +184,7 @@
             try {
                 await updateDoc(docRef, {
                     status: newStatus,
-                    handledBy: staffEmail, // ফাইলটি এখন আপনার নামে লক হয়ে যাবে
+                    handledBy: staffEmail.toLowerCase(), 
                     isVerified: newStatus === "verified",
                     updatedAt: serverTimestamp()
                 });
