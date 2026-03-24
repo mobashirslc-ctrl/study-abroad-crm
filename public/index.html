@@ -75,7 +75,9 @@
                         return;
                     }
 
-                    // Role Based Redirection
+                    // গুরুত্বপূর্ণ: ইমেইল localStorage এ সেভ করা হচ্ছে ড্যাশবোর্ডের জন্য
+                    localStorage.setItem('partnerEmail', email.trim().toLowerCase());
+
                     if (userData.role === "partner") {
                         window.location.replace("partner.html");
                     } else if (userData.role === "compliance") {
@@ -84,7 +86,6 @@
                         alert("Role not defined. Contact Admin.");
                     }
                 }
-
             } catch (err) {
                 alert("Login Failed: " + err.message);
                 btn.disabled = false;
