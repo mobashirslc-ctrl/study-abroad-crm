@@ -33,14 +33,10 @@
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(241,196,15,0.4); }
 
-        /* Assessment Grid */
-        .assessment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: flex-end; }
-        .assessment-grid label { font-size: 11px; color: #aaa; margin-bottom: 5px; display: block; }
-
         /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .submitted { background: #3498db; } .student_paid { background: var(--success); } .pending { background: var(--gold); color: black; }
+        .submitted { background: #3498db; } .verified { background: var(--success); } .pending { background: var(--gold); color: black; }
     </style>
 </head>
 <body>
@@ -69,7 +65,7 @@
                 <div class="card">
                     <h3 style="color:var(--gold);">Live Tracking (Recent)</h3>
                     <table style="font-size: 12px;">
-                        <thead><tr><th>Student/University</th><th>Passport</th><th>Status</th><th>Docs</th></tr></thead>
+                        <thead><tr><th>Student/University</th><th>Passport</th><th>Status</th><th>Updated</th></tr></thead>
                         <tbody id="homeTrackingBody"></tbody>
                     </table>
                 </div>
@@ -77,50 +73,23 @@
 
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:20px;">Smart Search Filter (5 Filters)</h3>
-                    <div class="assessment-grid">
-                        <div><label>Country</label><input type="text" id="fCountry" placeholder="Any" class="reg-input"></div>
-                        <div><label>Degree</label>
-                            <select id="fDegree" class="reg-input">
-                                <option value="">Any</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option>
-                            </select>
-                        </div>
-                        <div><label>Language Test</label>
-                            <select id="fLanguage" class="reg-input">
-                                <option value="">Any</option><option value="IELTS">IELTS</option><option value="MOI">MOI</option><option value="PTE">PTE</option>
-                            </select>
-                        </div>
-                        <div><label>Min GPA</label><input type="number" step="0.01" id="fGPA" placeholder="0.00" class="reg-input"></div>
-                        <div><label>Test Score</label><input type="number" step="0.1" id="fLangScore" placeholder="0.0" class="reg-input"></div>
-                        <button onclick="searchUniversity()" class="btn-gold">SEARCH</button>
-                    </div>
+                    <h3 style="color:var(--gold); margin-bottom:20px;">Search University</h3>
+                    <button onclick="searchUniversity()" class="btn-gold">REFRESH LIST</button>
                 </div>
-                <div id="searchResultArea" class="card" style="display:none; overflow-x:auto;">
+                <div id="searchResultArea" class="card" style="overflow-x:auto;">
                     <table>
                         <thead>
-                            <tr>
-                                <th>University</th><th>Country</th><th>Degree</th><th>Subject</th><th>Intake</th>
-                                <th>GPA Req</th><th>English Req</th><th>Fees</th><th>Scholarship</th><th>Commission</th><th>Action</th>
-                            </tr>
+                            <tr><th>University</th><th>Country</th><th>Degree</th><th>Subject</th><th>Intake</th><th>Commission</th><th>Action</th></tr>
                         </thead>
                         <tbody id="uniListContainer"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div id="withdraw" class="section">
-                <div class="card" style="text-align: center; padding: 80px 20px;">
-                    <i class="fas fa-wallet" style="font-size: 60px; color: var(--gold); margin-bottom: 20px;"></i>
-                    <h2>Withdrawal Balance</h2>
-                    <h1 style="color:var(--gold); font-size: 56px; margin: 15px 0;">৳ <span id="withdrawFinalBalance">0</span></h1>
-                    <button class="btn-gold" style="width: 300px; padding: 20px;">REQUEST WITHDRAWAL</button>
-                </div>
-            </div>
-
             <div id="tracking" class="section">
                 <div class="card">
                     <h3 style="color:var(--gold);">Full Application History</h3>
-                    <table id="fullTrackingTable">
+                    <table>
                         <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Updated</th></tr></thead>
                         <tbody id="sidebarTrackingBody"></tbody>
                     </table>
@@ -137,12 +106,12 @@
                     <input type="text" id="sName" placeholder="Student Full Name" class="reg-input" required>
                     <input type="text" id="sPassport" placeholder="Passport Number" class="reg-input" required>
                 </div>
-                <p style="font-size: 11px; color: #aaa; margin: 10px 0;">Upload Documents (PDF Only, Max 2MB)</p>
+                <p style="font-size: 11px; color: #aaa; margin: 10px 0;">Upload Documents (PDF Links only for now)</p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size: 10px;">Passport Copy</label><input type="file" id="pdf1" accept=".pdf" class="reg-input" required></div>
-                    <div><label style="font-size: 10px;">Academic Docs</label><input type="file" id="pdf2" accept=".pdf" class="reg-input" required></div>
-                    <div><label style="font-size: 10px;">Language Certificate</label><input type="file" id="pdf3" accept=".pdf" class="reg-input"></div>
-                    <div><label style="font-size: 10px;">Other Docs</label><input type="file" id="pdf4" accept=".pdf" class="reg-input"></div>
+                    <div><label style="font-size: 10px;">Passport Copy URL</label><input type="text" id="pdfLink1" placeholder="http://..." class="reg-input" required></div>
+                    <div><label style="font-size: 10px;">Academic Docs URL</label><input type="text" id="pdfLink2" placeholder="http://..." class="reg-input" required></div>
+                    <div><label style="font-size: 10px;">Language Cert URL</label><input type="text" id="pdfLink3" placeholder="Optional" class="reg-input"></div>
+                    <div><label style="font-size: 10px;">Other Docs URL</label><input type="text" id="pdfLink4" placeholder="Optional" class="reg-input"></div>
                 </div>
                 <div style="margin-top: 20px; display: flex; gap: 10px;">
                     <button type="submit" id="submitBtn" class="btn-gold" style="flex: 2;">CONFIRM SUBMISSION</button>
@@ -167,41 +136,38 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const partnerEmail = "gorunbangladesh@gmail.com"; // আপনার ডাটাবেস অনুযায়ী ডাইনামিক হবে
+        const partnerEmail = localStorage.getItem('userEmail') || "gorunbangladesh@gmail.com"; 
 
-        // ১. লাইভ ওয়ালেট ও ট্র্যাকিং ডাটা
+        // ১. লাইভ আপডেট লজিক
         function initLiveUpdates() {
             const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
             onSnapshot(q, (snapshot) => {
-                let pending = 0, final = 0, homeRows = "", trackRows = "";
+                let pending = 0, final = 0, rows = "";
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     const comm = Number(d.partnerComm || 0);
-                    if (d.isVerified && d.walletStatus === "pending") pending += comm;
+                    // ব্যালেন্স ক্যালকুলেশন
+                    if (d.status === "verified" && d.walletStatus === "pending") pending += comm;
                     if (d.walletStatus === "paid") final += comm;
 
-                    const row = `<tr>
+                    rows += `<tr>
                         <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
                         <td>${d.passportNo}</td>
                         <td><span class="status-pill ${d.status}">${d.status}</span></td>
-                        <td>${d.updatedAt ? new Date(d.updatedAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
+                        <td>${d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
                     </tr>`;
-                    homeRows += row; trackRows += row;
                 });
                 document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
                 document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
-                document.getElementById('withdrawFinalBalance').innerText = final.toLocaleString();
-                document.getElementById('homeTrackingBody').innerHTML = homeRows;
-                document.getElementById('sidebarTrackingBody').innerHTML = trackRows;
+                document.getElementById('homeTrackingBody').innerHTML = rows || "<tr><td colspan='4'>No records found</td></tr>";
+                document.getElementById('sidebarTrackingBody').innerHTML = rows;
             });
         }
 
-        // ২. ইউনিভার্সিটি সার্চ (১১ ফিল্ড রেজাল্ট)
+        // ২. ইউনিভার্সিটি সার্চ
         window.searchUniversity = async () => {
             const container = document.getElementById('uniListContainer');
-            document.getElementById('searchResultArea').style.display = "block";
-            container.innerHTML = "<tr><td colspan='11'>Searching...</td></tr>";
-
+            container.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
             const q = query(collection(db, "universities"));
             const snap = await getDocs(q);
             let html = "";
@@ -209,15 +175,14 @@
                 const u = doc.data();
                 html += `<tr>
                     <td>${u.name}</td><td>${u.country}</td><td>${u.degree}</td><td>${u.subject}</td><td>${u.intake}</td>
-                    <td>${u.gpaReq}</td><td>${u.ieltsReq}</td><td>${u.fees}</td><td>${u.scholarship}</td>
-                    <td style="color:var(--gold); font-weight:bold;">৳${u.partnerComm}</td>
+                    <td style="color:var(--gold);">৳${u.partnerComm}</td>
                     <td><button onclick="openApplyModal('${u.name}', '${u.partnerComm}')" class="btn-gold" style="padding:5px 10px; font-size:10px;">APPLY</button></td>
                 </tr>`;
             });
-            container.innerHTML = html || "<tr><td colspan='11'>No results found</td></tr>";
+            container.innerHTML = html;
         };
 
-        // ৩. অ্যাপ্লিকেশন সাবমিট ও স্লিপ
+        // ৩. মডাল লজিক
         window.openApplyModal = (uni, comm) => {
             document.getElementById('targetUni').innerText = uni;
             document.getElementById('applyModal').style.display = "flex";
@@ -225,39 +190,33 @@
         };
         window.closeModal = () => document.getElementById('applyModal').style.display = "none";
 
+        // ৪. ডাটা সাবমিশন (ফাইল ম্যাপিং ফিক্সড)
         document.getElementById('applyForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "Processing..."; btn.disabled = true;
-
-            const name = document.getElementById('sName').value;
-            const pass = document.getElementById('sPassport').value;
+            btn.innerText = "SAVING..."; btn.disabled = true;
 
             try {
                 await addDoc(collection(db, "applications"), {
-                    studentName: name, passportNo: pass, university: window.selectedUni,
-                    partnerComm: Number(window.selectedComm), partnerEmail,
-                    status: "submitted", isVerified: false, walletStatus: "pending",
-                    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+                    studentName: document.getElementById('sName').value,
+                    passportNo: document.getElementById('sPassport').value,
+                    university: window.selectedUni,
+                    partnerComm: Number(window.selectedComm),
+                    partnerEmail: partnerEmail,
+                    status: "submitted",
+                    // Compliance Dashboard-এর জন্য সঠিক ম্যাপিং
+                    pdf1: document.getElementById('pdfLink1').value,
+                    pdf2: document.getElementById('pdfLink2').value,
+                    pdf3: document.getElementById('pdfLink3').value || "",
+                    pdf4: document.getElementById('pdfLink4').value || "",
+                    walletStatus: "pending",
+                    createdAt: serverTimestamp()
                 });
-                generateSlip(name, window.selectedUni, pass);
+                alert("Application Submitted!");
                 closeModal();
-                alert("Submission Successful!");
-            } catch (err) { alert("Error: " + err.message); }
+            } catch (err) { alert(err.message); }
             btn.innerText = "CONFIRM SUBMISSION"; btn.disabled = false;
         };
-
-        function generateSlip(name, uni, pass) {
-            const win = window.open('', '_blank');
-            win.document.write(`<html><body style="font-family:sans-serif; text-align:center; padding:50px; border:10px solid var(--gold);">
-                <img src="logo.jpeg" width="100">
-                <h1>APPLICATION ACKNOWLEDGEMENT</h1>
-                <hr><p>Student: <b>${name}</b></p><p>Passport: <b>${pass}</b></p>
-                <p>University: <b>${uni}</b></p><p>Date: ${new Date().toLocaleString()}</p>
-                <h3 style="color:green;">STATUS: RECEIVED BY SCC HUB</h3>
-            </body></html>`);
-            win.print();
-        }
 
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
@@ -266,7 +225,7 @@
             el.classList.add('active');
         };
 
-        window.onload = initLiveUpdates;
+        window.onload = () => { initLiveUpdates(); searchUniversity(); };
     </script>
 </body>
 </html>
