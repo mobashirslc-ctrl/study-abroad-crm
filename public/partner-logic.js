@@ -14,14 +14,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ২. সেকিউরিটি গার্ড ও ইমেইল রিড
+// ২. সেকিউরিটি গার্ড ও ইমেইল রিড (LocalStorage থেকে)
 const partnerEmail = (localStorage.getItem('partnerEmail') || '').trim().toLowerCase();
 
 if (!partnerEmail) {
-    console.error("DEBUG: No partner email found in localStorage. Redirecting...");
+    console.warn("No partner email found, redirecting to login...");
     window.location.replace("index.html");
-} else {
-    console.log("DEBUG: Logged in as:", partnerEmail);
 }
 
 // ৩. প্রোফাইল ও ব্যালেন্স লোড করা
@@ -30,11 +28,8 @@ export function initRealtimeData() {
 
     const q = query(collection(db, "users"), where("email", "==", partnerEmail));
     onSnapshot(q, (snap) => {
-        if (snap.empty) console.warn("DEBUG: No user profile found for email:", partnerEmail);
-        
         snap.forEach(docSnap => {
             const data = docSnap.data();
-            console.log("DEBUG: Profile Data Loaded:", data.fullName);
             localStorage.setItem('userDocId', docSnap.id);
             
             if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = data.fullName || 'Partner';
@@ -47,7 +42,7 @@ export function initRealtimeData() {
     });
 }
 
-// ৪. ট্র্যাকিং লজিক (সংশোধিত ও ডিবাগ লগ সহ)
+// ৪. ট্র্যাকিং লজিক (আপনার ডাটাবেস স্ক্রিনশট অনুযায়ী ফিক্সড)
 export function initTracking() {
     if (!partnerEmail) return;
 
@@ -58,41 +53,46 @@ export function initTracking() {
         let homeHtml = "";
         let count = 0;
 
-        console.log("DEBUG: Total apps in DB:", snap.size);
+        console.log("DEBUG: System looking for email:", partnerEmail);
 
         snap.forEach(docSnap => {
             const a = docSnap.data();
             
-            // ডাটাবেসের ইমেইল ফিল্ডটি ছোট হাতের করে চেক করা হচ্ছে
+            // ডাটাবেস থেকে partnerEmail ফিল্ডটি রিড করা হচ্ছে (বড় হাতের E থাকলেও কাজ করবে)
             const dbEmail = (a.partnerEmail || a.email || '').trim().toLowerCase();
             
             if (dbEmail === partnerEmail) {
                 count++;
+                
+                // টাইমস্ট্যাম্প ফরম্যাট (March 23, 2026 -> 23/03/2026)
                 let lastUpdate = 'N/A';
                 if (a.updatedAt && a.updatedAt.seconds) {
                     lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleDateString('en-GB');
                 }
+
+                // স্ট্যাটাস টেক্সট ক্লিনআপ (যেমন: student_paid -> STUDENT PAID)
+                const statusText = (a.status || 'Processing').replace(/_/g, ' ').toUpperCase();
 
                 fullHtml += `
                     <tr>
                         <td><b>${a.studentName || 'N/A'}</b><br><small>${a.university || 'N/A'}</small></td>
                         <td>${a.handledBy || 'Admin'}</td> 
                         <td>${a.passportNo || 'N/A'}</td>
-                        <td style="color:#f1c40f; font-weight:bold;">${a.status || 'Processing'}</td>
+                        <td style="color:#f1c40f; font-weight:bold;">${statusText}</td>
                         <td><span style="color:#2ecc71"><i class="fas fa-check-circle"></i> Verified</span></td>
                         <td style="font-size:11px;">${lastUpdate}</td>
                     </tr>`;
 
-                homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passportNo || 'N/A'}</td><td>${a.status}</td><td>${lastUpdate}</td></tr>`;
+                homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passportNo || 'N/A'}</td><td>${statusText}</td><td>${lastUpdate}</td></tr>`;
             }
         });
         
-        console.log("DEBUG: Matches found for this partner:", count);
+        console.log("DEBUG: Total Matches Found:", count);
 
         const fullBody = document.getElementById('fullTrackingBody');
         const homeBody = document.getElementById('homeTrackingBody');
         
-        if(fullBody) fullBody.innerHTML = fullHtml || "<tr><td colspan='6' style='text-align:center'>No Data Found for " + partnerEmail + "</td></tr>";
+        if(fullBody) fullBody.innerHTML = fullHtml || `<tr><td colspan='6' style='text-align:center'>No Data Found for ${partnerEmail}</td></tr>`;
         if(homeBody) homeBody.innerHTML = homeHtml || "<tr><td colspan='4' style='text-align:center'>No Activity</td></tr>";
     });
 }
@@ -125,10 +125,9 @@ export async function searchUni() {
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='6' style='text-align:center'>No universities found</td></tr>";
+        container.innerHTML = html || "<tr><td colspan='6' style='text-align:center'>No universities found matching your criteria.</td></tr>";
     } catch (err) { 
-        console.error("DEBUG: Search Error:", err);
-        container.innerHTML = "<tr><td colspan='6'>Error loading data!</td></tr>"; 
+        container.innerHTML = "<tr><td colspan='6' style='text-align:center'>Error loading data!</td></tr>"; 
     }
 }
 
@@ -147,10 +146,7 @@ export async function requestWithdraw() {
         });
         alert("Withdrawal Request Submitted!");
         document.getElementById('wdAmount').value = "";
-    } catch (err) {
-        console.error("DEBUG: Withdraw Error:", err);
-        alert("Request failed!");
-    }
+    } catch (err) { alert("Request failed!"); }
 }
 
 // ৭. প্রোফাইল আপডেট
@@ -160,9 +156,6 @@ export async function updateProfile() {
     
     try {
         await updateDoc(doc(db, "users", docId), { phone: document.getElementById('pContact').value });
-        alert("Profile Updated!");
-    } catch (err) {
-        console.error("DEBUG: Update Error:", err);
-        alert("Update failed!");
-    }
+        alert("Profile Updated Successfully!");
+    } catch (err) { alert("Update failed!"); }
 }
