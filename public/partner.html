@@ -3,120 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Partner Dashboard 2026</title>
+    <title>SCC | Partner Dashboard 2026 (Fixed)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { 
-            --primary: #2b0054; --bg-dark: #070014; --gold: #f1c40f; 
-            --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); 
-            --success: #2ecc71; --error: #ff4757;
-        }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; display: flex; overflow-x: hidden; }
-        
-        /* Sidebar & Layout */
-        .sidebar { width: 260px; height: 100vh; background: #0d001a; border-right: 1px solid var(--border); position: fixed; padding: 20px; z-index: 100; }
-        .wrapper { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; }
-        .logo img { width: 120px; margin-bottom: 30px; background: white; padding: 5px; border-radius: 8px; }
-        .nav-item { padding: 15px; margin-bottom: 8px; cursor: pointer; border-radius: 10px; transition: 0.3s; color: #ccc; display: flex; align-items: center; gap: 10px; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
-
-        .main { padding: 30px; }
-        .section { display: none; }
-        .active-section { display: block !important; }
-        .card { background: var(--glass); border: 1px solid var(--border); padding: 25px; border-radius: 20px; margin-bottom: 25px; backdrop-filter: blur(10px); }
-
-        /* Tables & Inputs */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; }
-        th { text-align: left; padding: 15px; background: rgba(255,255,255,0.05); color: var(--gold); font-size: 12px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .reg-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(241,196,15,0.4); }
-
-        /* Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .submitted { background: #3498db; } .verified { background: var(--success); } .pending { background: var(--gold); color: black; }
+        :root { --primary: #2b0054; --bg-dark: #070014; --gold: #f1c40f; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --success: #2ecc71; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; display: flex; }
+        .sidebar { width: 260px; height: 100vh; background: #0d001a; border-right: 1px solid var(--border); position: fixed; padding: 20px; }
+        .wrapper { margin-left: 260px; width: calc(100% - 260px); padding: 30px; }
+        .nav-item { padding: 15px; cursor: pointer; border-radius: 10px; color: #ccc; margin-bottom: 5px; }
+        .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
+        .card { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .reg-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .section { display: none; } .active-section { display: block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 12px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; }
+        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo"><img src="logo.jpeg" alt="SCC"></div>
         <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
-        <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Assessment</div>
-        <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
-        <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Earning</div>
+        <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-search"></i> Assessment</div>
+        <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-tasks"></i> Tracking</div>
     </div>
 
     <div class="wrapper">
-        <div class="main">
-            <div id="home" class="section active-section">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
-                    <div class="card" style="border-left: 5px solid var(--gold);">
-                        <p style="font-size: 12px; color: #aaa;">PENDING COMMISSION</p>
-                        <h2 id="topPending" style="color: var(--gold); font-size: 32px; margin: 5px 0;">৳0</h2>
-                    </div>
-                    <div class="card" style="border-left: 5px solid var(--success);">
-                        <p style="font-size: 12px; color: #aaa;">FINAL BALANCE</p>
-                        <h2 id="topFinal" style="color: var(--success); font-size: 32px; margin: 5px 0;">৳0</h2>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3 style="color:var(--gold);">Live Tracking (Recent)</h3>
-                    <table style="font-size: 12px;">
-                        <thead><tr><th>Student/University</th><th>Passport</th><th>Status</th><th>Updated</th></tr></thead>
-                        <tbody id="homeTrackingBody"></tbody>
-                    </table>
-                </div>
+        <div id="home" class="section active-section">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="card"><h4>PENDING</h4><h2 id="topPending">৳0</h2></div>
+                <div class="card"><h4>FINAL</h4><h2 id="topFinal">৳0</h2></div>
             </div>
+            <div class="card">
+                <h3>Recent Applications</h3>
+                <table>
+                    <thead><tr><th>Student</th><th>Passport</th><th>Status</th></tr></thead>
+                    <tbody id="homeTrackingBody"></tbody>
+                </table>
+            </div>
+        </div>
 
-            <div id="assessment" class="section">
-                <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:20px;">Search University</h3>
-                    <button onclick="searchUniversity()" class="btn-gold">REFRESH LIST</button>
-                </div>
-                <div id="searchResultArea" class="card" style="overflow-x:auto;">
-                    <table>
-                        <thead>
-                            <tr><th>University</th><th>Country</th><th>Degree</th><th>Subject</th><th>Intake</th><th>Commission</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="uniListContainer"></tbody>
-                    </table>
+        <div id="assessment" class="section">
+            <div class="card">
+                <h3>Search University</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                    <input type="text" id="fCountry" placeholder="Country" class="reg-input">
+                    <select id="fDegree" class="reg-input"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Master">Master</option></select>
+                    <button onclick="searchUniversity()" class="btn-gold">FILTER</button>
                 </div>
             </div>
+            <div class="card" style="overflow-x:auto;">
+                <table id="uniTable">
+                    <thead><tr><th>Uni Name</th><th>Country</th><th>Degree</th><th>Commission</th><th>Action</th></tr></thead>
+                    <tbody id="uniListContainer"></tbody>
+                </table>
+            </div>
+        </div>
 
-            <div id="tracking" class="section">
-                <div class="card">
-                    <h3 style="color:var(--gold);">Full Application History</h3>
-                    <table>
-                        <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Updated</th></tr></thead>
-                        <tbody id="sidebarTrackingBody"></tbody>
-                    </table>
-                </div>
-            </div>
+        <div id="tracking" class="section">
+            <div class="card"><h3>All Applications</h3><table id="fullTrackingBody"></table></div>
         </div>
     </div>
 
     <div id="applyModal" class="modal">
-        <div class="card" style="width: 550px; border: 1px solid var(--gold);">
-            <h2 style="color:var(--gold); margin-top: 0;">Apply for <span id="targetUni"></span></h2>
+        <div class="card" style="width: 500px;">
+            <h3 id="targetUni">Apply</h3>
             <form id="applyForm">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <input type="text" id="sName" placeholder="Student Full Name" class="reg-input" required>
-                    <input type="text" id="sPassport" placeholder="Passport Number" class="reg-input" required>
-                </div>
-                <p style="font-size: 11px; color: #aaa; margin: 10px 0;">Upload Documents (PDF Links only for now)</p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label style="font-size: 10px;">Passport Copy URL</label><input type="text" id="pdfLink1" placeholder="http://..." class="reg-input" required></div>
-                    <div><label style="font-size: 10px;">Academic Docs URL</label><input type="text" id="pdfLink2" placeholder="http://..." class="reg-input" required></div>
-                    <div><label style="font-size: 10px;">Language Cert URL</label><input type="text" id="pdfLink3" placeholder="Optional" class="reg-input"></div>
-                    <div><label style="font-size: 10px;">Other Docs URL</label><input type="text" id="pdfLink4" placeholder="Optional" class="reg-input"></div>
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button type="submit" id="submitBtn" class="btn-gold" style="flex: 2;">CONFIRM SUBMISSION</button>
-                    <button type="button" onclick="closeModal()" style="flex: 1; background: #333; color: white; border: none; border-radius: 8px; cursor: pointer;">Cancel</button>
-                </div>
+                <input type="text" id="sName" placeholder="Student Name" class="reg-input" required>
+                <input type="text" id="sPassport" placeholder="Passport Number" class="reg-input" required>
+                <label>Passport PDF:</label><input type="file" id="file1" accept=".pdf" class="reg-input" required>
+                <label>Academic PDF:</label><input type="file" id="file2" accept=".pdf" class="reg-input" required>
+                <button type="submit" id="submitBtn" class="btn-gold">CONFIRM & UPLOAD PDF</button>
+                <button type="button" onclick="closeModal()" style="background:none; color:red; border:none; margin-top:10px; cursor:pointer; width:100%;">Cancel</button>
             </form>
         </div>
     </div>
@@ -125,78 +86,69 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
-            authDomain: "ihp-portal-v3.firebaseapp.com",
-            projectId: "ihp-portal-v3",
-            storageBucket: "ihp-portal-v3.firebasestorage.app",
-            messagingSenderId: "481157902534",
-            appId: "1:481157902534:web:2d9784032fbf0f2f7fe7c7"
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
+            authDomain: "ihp-portal-v3.firebaseapp.com", 
+            projectId: "ihp-portal-v3", 
+            storageBucket: "ihp-portal-v3.firebasestorage.app", 
+            messagingSenderId: "481157902534", 
+            appId: "1:481157902534:web:2d9784032fbf0f2f7fe7c7" 
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const partnerEmail = localStorage.getItem('userEmail') || "gorunbangladesh@gmail.com"; 
+        const partnerEmail = localStorage.getItem('userEmail') || "gorunbangladesh@gmail.com";
 
-        // ১. লাইভ আপডেট লজিক
-        function initLiveUpdates() {
-            const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
-            onSnapshot(q, (snapshot) => {
-                let pending = 0, final = 0, rows = "";
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    const comm = Number(d.partnerComm || 0);
-                    // ব্যালেন্স ক্যালকুলেশন
-                    if (d.status === "verified" && d.walletStatus === "pending") pending += comm;
-                    if (d.walletStatus === "paid") final += comm;
-
-                    rows += `<tr>
-                        <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
-                        <td>${d.passportNo}</td>
-                        <td><span class="status-pill ${d.status}">${d.status}</span></td>
-                        <td>${d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString() : 'Just Now'}</td>
-                    </tr>`;
-                });
-                document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
-                document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
-                document.getElementById('homeTrackingBody').innerHTML = rows || "<tr><td colspan='4'>No records found</td></tr>";
-                document.getElementById('sidebarTrackingBody').innerHTML = rows;
-            });
+        // ১. PDF আপলোড লজিক (Cloudinary API)
+        async function uploadFile(file) {
+            if(!file) return "";
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'scc_docs'); // আপনার Cloudinary preset নাম দিন
+            const res = await fetch('https://api.cloudinary.com/v1_1/demo/image/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+            return data.secure_url;
         }
 
-        // ২. ইউনিভার্সিটি সার্চ
+        // ২. লাইভ ডাটা রিট্রিভাল (Fix: Data vanished issue)
+        onSnapshot(query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail)), (snap) => {
+            let html = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<tr><td>${d.studentName}</td><td>${d.passportNo}</td><td><span class="status-pill">${d.status}</span></td></tr>`;
+            });
+            document.getElementById('homeTrackingBody').innerHTML = html;
+        });
+
+        // ৩. সার্চ ফিল্টার (Fix: Search filter working again)
         window.searchUniversity = async () => {
+            const country = document.getElementById('fCountry').value.toLowerCase();
+            const degree = document.getElementById('fDegree').value;
             const container = document.getElementById('uniListContainer');
-            container.innerHTML = "<tr><td colspan='7'>Loading...</td></tr>";
-            const q = query(collection(db, "universities"));
-            const snap = await getDocs(q);
+            container.innerHTML = "Searching...";
+
+            const snap = await getDocs(collection(db, "universities"));
             let html = "";
             snap.forEach(doc => {
                 const u = doc.data();
-                html += `<tr>
-                    <td>${u.name}</td><td>${u.country}</td><td>${u.degree}</td><td>${u.subject}</td><td>${u.intake}</td>
-                    <td style="color:var(--gold);">৳${u.partnerComm}</td>
-                    <td><button onclick="openApplyModal('${u.name}', '${u.partnerComm}')" class="btn-gold" style="padding:5px 10px; font-size:10px;">APPLY</button></td>
-                </tr>`;
+                if ((!country || u.country.toLowerCase().includes(country)) && (!degree || u.degree === degree)) {
+                    html += `<tr><td>${u.name}</td><td>${u.country}</td><td>${u.degree}</td><td>৳${u.partnerComm}</td>
+                    <td><button onclick="openApplyModal('${u.name}', '${u.partnerComm}')" class="btn-gold" style="padding:5px;">APPLY</button></td></tr>`;
+                }
             });
-            container.innerHTML = html;
+            container.innerHTML = html || "No Universities Found";
         };
 
-        // ৩. মডাল লজিক
-        window.openApplyModal = (uni, comm) => {
-            document.getElementById('targetUni').innerText = uni;
-            document.getElementById('applyModal').style.display = "flex";
-            window.selectedUni = uni; window.selectedComm = comm;
-        };
-        window.closeModal = () => document.getElementById('applyModal').style.display = "none";
-
-        // ৪. ডাটা সাবমিশন (ফাইল ম্যাপিং ফিক্সড)
+        // ৪. অ্যাপ্লিকেশন সাবমিশন (PDF Upload Fix)
         document.getElementById('applyForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerText = "SAVING..."; btn.disabled = true;
+            btn.innerText = "UPLOADING PDF..."; btn.disabled = true;
 
             try {
+                const url1 = await uploadFile(document.getElementById('file1').files[0]);
+                const url2 = await uploadFile(document.getElementById('file2').files[0]);
+
                 await addDoc(collection(db, "applications"), {
                     studentName: document.getElementById('sName').value,
                     passportNo: document.getElementById('sPassport').value,
@@ -204,28 +156,26 @@
                     partnerComm: Number(window.selectedComm),
                     partnerEmail: partnerEmail,
                     status: "submitted",
-                    // Compliance Dashboard-এর জন্য সঠিক ম্যাপিং
-                    pdf1: document.getElementById('pdfLink1').value,
-                    pdf2: document.getElementById('pdfLink2').value,
-                    pdf3: document.getElementById('pdfLink3').value || "",
-                    pdf4: document.getElementById('pdfLink4').value || "",
-                    walletStatus: "pending",
+                    pdf1: url1, pdf2: url2,
                     createdAt: serverTimestamp()
                 });
-                alert("Application Submitted!");
+                alert("Application Success with PDF!");
                 closeModal();
-            } catch (err) { alert(err.message); }
-            btn.innerText = "CONFIRM SUBMISSION"; btn.disabled = false;
+            } catch (err) { alert("Error: " + err.message); }
+            btn.innerText = "CONFIRM & UPLOAD PDF"; btn.disabled = false;
         };
 
+        window.openApplyModal = (uni, comm) => {
+            document.getElementById('targetUni').innerText = "Apply for " + uni;
+            document.getElementById('applyModal').style.display = "flex";
+            window.selectedUni = uni; window.selectedComm = comm;
+        };
+        window.closeModal = () => document.getElementById('applyModal').style.display = "none";
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
         };
-
-        window.onload = () => { initLiveUpdates(); searchUniversity(); };
+        window.onload = searchUniversity;
     </script>
 </body>
 </html>
