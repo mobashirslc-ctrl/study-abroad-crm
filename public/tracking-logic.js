@@ -11,11 +11,9 @@ const firebaseConfig = {
   appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// window object-e function-ti attach kora jate HTML button theke call kora jay
 window.checkStatus = async () => {
     const p = document.getElementById('passportNumber').value;
     const res = document.getElementById('resultArea');
@@ -26,12 +24,11 @@ window.checkStatus = async () => {
     }
     
     res.style.display = "block";
-    res.innerHTML = "<span style='color: white;'>Searching Database...</span>";
+    res.innerHTML = "Searching Database...";
     
     try {
-        const q = query(collection(db, "applications"), where("passportNumber", "==", p)); 
-        // Note: niche check korun apnar Firestore-e field-er nam "passport" naki "passportNumber"
-        
+        // Apnar Firestore e field er nam "passport", tai ekhane "passport" use kora hoyeche
+        const q = query(collection(db, "applications"), where("passport", "==", p));
         const snap = await getDocs(q);
         
         if(snap.empty) {
@@ -41,9 +38,10 @@ window.checkStatus = async () => {
             snap.forEach(doc => {
                 const d = doc.data();
                 output += `
-                    <div style="border: 1px solid #444; padding: 10px; border-radius: 5px; background: #222;">
-                        <p style="margin: 5px 0;">Student: <b>${d.studentName}</b></p>
-                        <p style="margin: 5px 0;">Status: <b style="color:#00ff00">${d.status}</b></p>
+                    <div style="border: 1px solid #444; padding: 15px; border-radius: 8px; background: #1a1a1a; margin-top: 10px;">
+                        <p style="margin: 5px 0; color: #ddd;">Student Name: <b style="color: #fff;">${d.studentName}</b></p>
+                        <p style="margin: 5px 0; color: #ddd;">Current Status: <b style="color: ${d.status === 'REJECTED' ? '#ff4d4d' : '#00ff00'}">${d.status}</b></p>
+                        <p style="margin: 5px 0; color: #ddd;">University: <b>${d.university || 'N/A'}</b></p>
                     </div>
                 `;
             });
@@ -51,6 +49,6 @@ window.checkStatus = async () => {
         }
     } catch (error) {
         console.error("Firebase Error:", error);
-        res.innerHTML = "<span style='color: red;'>Error fetching data. Check Console.</span>";
+        res.innerHTML = "Error fetching data. Please try again.";
     }
 };
