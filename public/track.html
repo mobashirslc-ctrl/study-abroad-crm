@@ -1,41 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking - Student Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        input { width: 80%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #2563eb; }
+        button { margin-top: 15px; padding: 12px 30px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
+        #resultArea { margin-top: 25px; text-align: left; display: none; }
+        .result-item { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 10px; border-left: 5px solid #2563eb; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Live Student Tracking</h2>
+    <input type="text" id="passportNumber" placeholder="Enter Passport Number (e.g. vfd)">
+    <br>
+    <button onclick="checkStatus()">Track Status</button>
+
+    <div id="resultArea"></div>
+</div>
+
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+        authDomain: "scc-partner-portal.firebaseapp.com",
+        databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
+        projectId: "scc-partner-portal",
+        storageBucket: "scc-partner-portal.firebasestorage.app",
+        messagingSenderId: "13013457431",
+        appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  window.checkStatus = async () => {
-      const p = document.getElementById('passportNumber').value;
-      const res = document.getElementById('resultArea');
-      if(!p) return alert("Enter Passport!");
-      res.style.display = "block";
-      res.innerHTML = "Searching...";
-      try {
-          const q = query(collection(db, "applications"), where("passport", "==", p));
-          const snap = await getDocs(q);
-          if(snap.empty) {
-              res.innerHTML = "No Record Found.";
-          } else {
-              let output = "";
-              snap.forEach(doc => {
-                  const d = doc.data();
-                  output += `<div style="background:#222; padding:10px; margin-top:10px; border-radius:5px;">
-                      Student: ${d.studentName}<br>Status: <b style="color:#00ff00">${d.status}</b>
-                  </div>`;
-              });
-              res.innerHTML = output;
-          }
-      } catch (e) { res.innerHTML = "Error: " + e.message; }
-  };
+    window.checkStatus = async () => {
+        const passport = document.getElementById('passportNumber').value.trim();
+        const res = document.getElementById('resultArea');
+        
+        if(!passport) return alert("Please enter passport number!");
+
+        res.style.display = "block";
+        res.innerHTML = "<p style='color: #666;'>Searching database...</p>";
+
+        try {
+            // Firestore Query using "passport" field (from your screenshot)
+            const q = query(collection(db, "applications"), where("passport", "==", passport));
+            const snap = await getDocs(q);
+
+            if(snap.empty) {
+                res.innerHTML = "<p style='color: red;'>❌ No record found for this passport.</p>";
+            } else {
+                let output = "";
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    let color = d.status === "REJECTED" ? "#dc2626" : "#059669";
+                    output += `
+                        <div class="result-item">
+                            <p style="margin: 0; font-size: 13px; color: #666;">STUDENT NAME</p>
+                            <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 18px;">${d.studentName}</p>
+                            <p style="margin: 0;">Status: <span class="status-badge" style="background: ${color}15; color: ${color};">${d.status}</span></p>
+                            <p style="margin: 10px 0 0 0; font-size: 14px;">University: <b>${d.university || 'N/A'}</b></p>
+                        </div>`;
+                });
+                res.innerHTML = output;
+            }
+        } catch (e) {
+            res.innerHTML = "<p style='color: red;'>Error: " + e.message + "</p>";
+        }
+    };
 </script>
+
+</body>
+</html>
