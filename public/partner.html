@@ -115,121 +115,18 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { initRealtimeData, initTracking, searchUni, requestWithdraw, updateProfile } from './partner-logic.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-        };
+        // পেজ লোড হলে ডাটা ফেচ শুরু করা
+        initRealtimeData();
+        initTracking();
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // লগইন করা ইমেইল রিড করা
-        const partnerEmail = localStorage.getItem('partnerEmail') || 'demo@scc.com';
+        // বাটন ক্লিকের জন্য ফাংশনগুলো গ্লোবাল স্কোপে রাখা
+        window.searchUni = searchUni;
+        window.requestWithdraw = requestWithdraw;
+        window.updateProfile = updateProfile;
 
-        // ১. রিয়েল-টাইম প্রোফাইল ডাটা
-        function initRealtimeData() {
-            const q = query(collection(db, "users"), where("email", "==", partnerEmail));
-            onSnapshot(q, (snap) => {
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    localStorage.setItem('userDocId', docSnap.id);
-                    document.getElementById('welcomeName').innerText = data.fullName || 'Partner';
-                    document.getElementById('pAgency').value = data.fullName || '';
-                    document.getElementById('pContact').value = data.phone || '';
-                    document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
-                    document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
-                    document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
-                });
-            });
-        }
-
-        // ২. ইউনিভার্সিটি সার্চ ফিল্টার
-        window.searchUni = async () => {
-            const country = document.getElementById('fCountry').value.toLowerCase();
-            const degree = document.getElementById('fDegree').value;
-            const container = document.getElementById('uniListContainer');
-            document.getElementById('searchResultArea').style.display = "block";
-            container.innerHTML = "Searching...";
-
-            const BDT_RATE = 120;
-            const snap = await getDocs(collection(db, "universities"));
-            let html = "";
-            snap.forEach(docSnap => {
-                const u = docSnap.data();
-                if ((!country || u.country.toLowerCase().includes(country)) && (!degree || u.degree === degree)) {
-                    const feesBDT = (u.semesterFee || 0) * BDT_RATE;
-                    const commBDT = (feesBDT * (u.partnerComm || 0)) / 100;
-                    html += `<tr><td><b>${u.universityName}</b><br><small>${u.country}</small></td><td>${u.degree}</td><td>GPA: ${u.minGPA}</td><td>৳${feesBDT.toLocaleString()}</td><td style="color:var(--gold)">৳${commBDT.toLocaleString()}</td><td><button class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td></tr>`;
-                }
-            });
-            container.innerHTML = html || "<tr><td colspan='6'>No Matches Found</td></tr>";
-        };
-
-        // ৩. ফিক্সড ট্র্যাকিং ফাংশন (আপনার ডাটাবেস অনুযায়ী)
-        function initTracking() {
-            const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
-            
-            onSnapshot(q, (snap) => {
-                let fullHtml = ""; 
-                let homeHtml = "";
-                
-                console.log("Found apps:", snap.size); // ব্রাউজার কনসোলে ডাটা সংখ্যা দেখাবে
-
-                snap.forEach(docSnap => {
-                    const a = docSnap.data();
-                    
-                    // টাইমস্ট্যাম্প হ্যান্ডলিং
-                    let lastUpdate = 'N/A';
-                    if (a.updatedAt && a.updatedAt.seconds) {
-                        lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleString('en-GB');
-                    } else if (a.date) {
-                        lastUpdate = a.date;
-                    }
-
-                    // ফুল ট্র্যাকিং টেবিল (আপনার DB এর passportNo এবং handledBy ব্যবহার করা হয়েছে)
-                    fullHtml += `
-                        <tr>
-                            <td><b>${a.studentName || 'N/A'}</b><br><small>${a.university || ''}</small></td>
-                            <td>${a.handledBy || 'Admin'}</td> 
-                            <td>${a.passportNo || 'N/A'}</td>
-                            <td style="color:var(--gold); font-weight:bold;">${a.status || 'Pending'}</td>
-                            <td>Verified</td>
-                            <td style="font-size:11px;">${lastUpdate}</td>
-                        </tr>`;
-
-                    // হোম পেজ টেবিল
-                    homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passportNo || 'N/A'}</td><td>${a.status}</td><td>${lastUpdate}</td></tr>`;
-                });
-                
-                document.getElementById('fullTrackingBody').innerHTML = fullHtml || "<tr><td colspan='6' style='text-align:center'>No Applications Found</td></tr>";
-                document.getElementById('homeTrackingBody').innerHTML = homeHtml || "<tr><td colspan='4' style='text-align:center'>No Recent Activity</td></tr>";
-            });
-        }
-
-        // ৪. উইথড্র এবং প্রোফাইল আপডেট
-        window.requestWithdraw = async () => {
-            const amt = document.getElementById('wdAmount').value;
-            if(!amt || amt <= 0) return alert("Enter valid amount");
-            await addDoc(collection(db, "withdrawals"), { email: partnerEmail, amount: Number(amt), method: document.getElementById('wdMethod').value, status: "Pending", timestamp: serverTimestamp() });
-            alert("Withdrawal Request Submitted!");
-            document.getElementById('wdAmount').value = "";
-        };
-
-        window.updateProfile = async () => {
-            const docId = localStorage.getItem('userDocId');
-            if(!docId) return alert("Error updating profile");
-            await updateDoc(doc(db, "users", docId), { phone: document.getElementById('pContact').value });
-            alert("Profile Updated Successfully!");
-        };
-
-        // ট্যাব কন্ট্রোল
+        // ট্যাব সুইচিং লজিক
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
@@ -237,11 +134,10 @@
             el.classList.add('active');
         };
 
-        window.logout = () => { localStorage.clear(); location.href = "index.html"; };
-
-        // শুরু করা
-        initRealtimeData(); 
-        initTracking();
+        window.logout = () => { 
+            localStorage.clear(); 
+            location.href = "index.html"; 
+        };
     </script>
 </body>
 </html>

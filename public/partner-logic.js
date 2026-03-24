@@ -1,171 +1,127 @@
-import { db, auth, storage } from "./firebase-config.js";
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const BDT_RATE = 155; // কারেন্সি রেট
+const firebaseConfig = {
+    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+    authDomain: "scc-partner-portal.firebaseapp.com",
+    projectId: "scc-partner-portal",
+    storageBucket: "scc-partner-portal.firebasestorage.app",
+    messagingSenderId: "13013457431",
+    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+};
 
-// ১. রিয়েল-টাইম ডাটা ও কমিশন ফিক্স
-document.getElementById('runSearchBtn').onclick = () => {
-    const country = document.getElementById('fCountry').value.trim();
-    const resultsBody = document.getElementById('uniResultsBody');
-    if(!country) return alert("পছন্দের দেশের নাম লিখুন!");
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    document.getElementById('resArea').style.display = 'block';
-    resultsBody.innerHTML = "<tr><td colspan='7'>Syncing with Admin Records...</td></tr>";
+// লগইন করা ইমেইল (স্পেস থাকলে ট্রিম করে নিবে)
+const partnerEmail = (localStorage.getItem('partnerEmail') || 'gorunbangladesh@gmail.com').trim();
 
-    const q = query(collection(db, "universities"), where("country", "==", country));
+// ১. রিয়েল-টাইম প্রোফাইল এবং ব্যালেন্স ডাটা
+export function initRealtimeData() {
+    const q = query(collection(db, "users"), where("email", "==", partnerEmail));
     onSnapshot(q, (snap) => {
-        resultsBody.innerHTML = "";
-        if(snap.empty) {
-            resultsBody.innerHTML = "<tr><td colspan='7'>অ্যাডমিন রেকর্ডে কোনো ইউনিভার্সিটি পাওয়া যায়নি।</td></tr>";
-            return;
-        }
-        snap.forEach(d => {
-            const uni = d.data();
-            
-            // ডাটাবেস থেকে ভ্যালু নেওয়ার সময় নামগুলো চেক করুন (অ্যাডমিনের সাথে মিল থাকতে হবে)
-            const fee = parseFloat(uni.tuitionFeeAmount || uni.tuitionFee || 0);
-            const commPercentage = parseFloat(uni.partnerCommPercentage || uni.commission || 0);
-            
-            // কমিশন ক্যালকুলেশন (৳)
-            const calcComm = (fee * BDT_RATE * commPercentage) / 100;
-
-            resultsBody.innerHTML += `
-                <tr>
-                    <td><b>${uni.universityName || uni.name}</b></td>
-                    <td>${uni.country}</td>
-                    <td>${uni.degree || 'Various'}</td>
-                    <td>${uni.intake || 'N/A'}</td>
-                    <td>${uni.currency || '£'}${fee}</td>
-                    <td style="color:var(--gold); font-weight:bold;">৳ ${calcComm.toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="window.openApply('${uni.universityName || uni.name}')">APPLY</button></td>
-                </tr>`;
-        });
-    });
-};
-
-// ২. ফাইল সাবমিশন ও সাকসেস হ্যান্ডলিং (Fixed Processing Issue)
-window.openApply = (uni) => { 
-    window.selectedUni = uni; 
-    document.getElementById('appModal').style.display = 'flex'; 
-    document.getElementById('formStep').style.display = 'block';
-    document.getElementById('successStep').style.display = 'none';
-};
-
-document.getElementById('finalSubmitBtn').onclick = async () => {
-    const btn = document.getElementById('finalSubmitBtn');
-    const sName = document.getElementById('sName').value;
-    const sContact = document.getElementById('sContact').value;
-    const sPass = document.getElementById('sPass').value;
-    
-    // ফাইল সিলেকশন চেক
-    const f1 = document.getElementById('pdfPass').files[0];
-    const f2 = document.getElementById('pdfAcad').files[0];
-    const f3 = document.getElementById('pdfLang').files[0];
-
-    if(!sName || !sPass || !f1) return alert("স্টুডেন্টের নাম, পাসপোর্ট নম্বর এবং অন্তত পাসপোর্ট কপি আপলোড করুন!");
-    
-    // বাটন লক ও টেক্সট পরিবর্তন
-    btn.disabled = true; 
-    btn.innerText = "Processing Real-time Upload...";
-
-    try {
-        // ফাইল আপলোড ফাংশন
-        const uploadTask = async (file, type) => {
-            if(!file) return "";
-            const storagePath = `applications/${sPass}/${type}_${Date.now()}_${file.name}`;
-            const sRef = ref(storage, storagePath);
-            const snapshot = await uploadBytes(sRef, file);
-            return await getDownloadURL(snapshot.ref);
-        };
-
-        // ফাইলগুলো আপলোড শুরু
-        const passportURL = await uploadTask(f1, "Passport");
-        const academicURL = await uploadTask(f2, "Academic");
-        const languageURL = await uploadTask(f3, "Language");
-
-        // ডাটাবেসে অ্যাপ্লিকেশন সেভ
-        const docRef = await addDoc(collection(db, "applications"), {
-            studentName: sName,
-            studentContact: sContact,
-            passportNo: sPass,
-            university: window.selectedUni,
-            partnerEmail: auth.currentUser.email,
-            status: "Pending",
-            complianceMember: "Assigning...",
-            docs: { 
-                passport: passportURL, 
-                academic: academicURL, 
-                language: languageURL 
-            },
-            submittedAt: serverTimestamp()
-        });
-
-        // সাকসেস স্টেপ দেখানো
-        document.getElementById('formStep').style.display = 'none';
-        document.getElementById('successStep').style.display = 'block';
-        document.getElementById('appIdText').innerText = "Application ID: " + docRef.id;
-        
-        // কিউআর কোড (যদি লাইব্রেরি থাকে)
-        if(window.QRCode) {
-            document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), docRef.id);
-        }
-
-    } catch (error) {
-        console.error("Submission Error:", error);
-        alert("সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন। এরর: " + error.message);
-        btn.disabled = false;
-        btn.innerText = "Submit Application";
-    }
-};
-
-// ৩. ট্র্যাকিং টেবিল ফিক্স
-function startTracking(email) {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", email));
-    onSnapshot(q, (snap) => {
-        const bodies = ['fullTrackingBody', 'fullTrackingBodyDeep'];
-        let html = "";
-        
-        if(snap.empty) {
-            html = "<tr><td colspan='8' style='text-align:center;'>No records found</td></tr>";
-        } else {
-            snap.forEach(d => {
-                const a = d.data();
-                const date = a.submittedAt ? a.submittedAt.toDate().toLocaleDateString() : "Syncing...";
-                html += `<tr>
-                    <td>${a.studentName}</td>
-                    <td>${a.studentContact}</td>
-                    <td>${a.passportNo}</td>
-                    <td>${a.university}</td>
-                    <td><b style="color:var(--gold)">${a.status}</b></td>
-                    <td>${a.complianceMember}</td>
-                    <td><a href="${a.docs?.passport}" target="_blank" style="color:var(--gold)">VIEW PDF</a></td>
-                    <td>${date}</td>
-                </tr>`;
-            });
-        }
-        
-        bodies.forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.innerHTML = html;
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            localStorage.setItem('userDocId', docSnap.id);
+            if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = data.fullName || 'Partner';
+            if(document.getElementById('topPending')) document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
+            if(document.getElementById('topFinal')) document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
+            if(document.getElementById('withdrawFinalBalance')) document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
+            if(document.getElementById('pAgency')) document.getElementById('pAgency').value = data.fullName || '';
+            if(document.getElementById('pContact')) document.getElementById('pContact').value = data.phone || '';
         });
     });
 }
 
-// ৪. অথেনটিকেশন চেক
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('loader').style.display = 'none';
-        document.body.classList.add('auth-ready');
-        startTracking(user.email);
+// ২. ট্র্যাকিং লজিক (আপনার ডাটাবেস স্ক্রিনশট অনুযায়ী ফিক্সড)
+export function initTracking() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+    
+    onSnapshot(q, (snap) => {
+        let fullHtml = ""; 
+        let homeHtml = "";
         
-        // প্রোফাইল ডাটা লোড (Name Sync)
-        getDoc(doc(db, "partners", user.uid)).then(snap => {
-            if(snap.exists()) document.getElementById('pNameText').innerText = snap.data().fullName;
+        console.log("Apps Found:", snap.size); 
+
+        snap.forEach(docSnap => {
+            const a = docSnap.data();
+            
+            let lastUpdate = 'N/A';
+            if (a.updatedAt && a.updatedAt.seconds) {
+                lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleDateString('en-GB');
+            }
+
+            fullHtml += `
+                <tr>
+                    <td><b>${a.studentName || 'N/A'}</b><br><small>${a.university || ''}</small></td>
+                    <td>${a.handledBy || 'Admin'}</td> 
+                    <td>${a.passportNo || 'N/A'}</td>
+                    <td style="color:#f1c40f; font-weight:bold;">${a.status || 'Pending'}</td>
+                    <td>Verified</td>
+                    <td style="font-size:11px;">${lastUpdate}</td>
+                </tr>`;
+
+            homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passportNo || 'N/A'}</td><td>${a.status}</td><td>${lastUpdate}</td></tr>`;
         });
-    } else {
-        window.location.replace("index.html");
-    }
-});
+        
+        const fullBody = document.getElementById('fullTrackingBody');
+        const homeBody = document.getElementById('homeTrackingBody');
+        
+        if(fullBody) fullBody.innerHTML = fullHtml || "<tr><td colspan='6' style='text-align:center'>No Data Found</td></tr>";
+        if(homeBody) homeBody.innerHTML = homeHtml || "<tr><td colspan='4' style='text-align:center'>No Activity</td></tr>";
+    });
+}
+
+// ৩. অ্যাসেসমেন্ট বা ইউনিভার্সিটি সার্চ লজিক
+export async function searchUni() {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const degree = document.getElementById('fDegree').value;
+    const container = document.getElementById('uniListContainer');
+    
+    document.getElementById('searchResultArea').style.display = "block";
+    container.innerHTML = "Searching...";
+
+    const BDT_RATE = 120;
+    const snap = await getDocs(collection(db, "universities"));
+    let html = "";
+    
+    snap.forEach(docSnap => {
+        const u = docSnap.data();
+        if ((!country || u.country.toLowerCase().includes(country)) && (!degree || u.degree === degree)) {
+            const feesBDT = (u.semesterFee || 0) * BDT_RATE;
+            const commBDT = (feesBDT * (u.partnerComm || 0)) / 100;
+            html += `<tr>
+                <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
+                <td>${u.degree}</td>
+                <td>GPA: ${u.minGPA}</td>
+                <td>৳${feesBDT.toLocaleString()}</td>
+                <td style="color:#f1c40f">৳${commBDT.toLocaleString()}</td>
+                <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td>
+            </tr>`;
+        }
+    });
+    container.innerHTML = html || "<tr><td colspan='6'>No Matches Found</td></tr>";
+}
+
+// ৪. উইথড্রয়াল রিকোয়েস্ট
+export async function requestWithdraw() {
+    const amt = document.getElementById('wdAmount').value;
+    if(!amt || amt <= 0) return alert("Enter valid amount");
+    await addDoc(collection(db, "withdrawals"), { 
+        email: partnerEmail, 
+        amount: Number(amt), 
+        method: document.getElementById('wdMethod').value, 
+        status: "Pending", 
+        timestamp: serverTimestamp() 
+    });
+    alert("Withdrawal Request Submitted!");
+}
+
+// ৫. প্রোফাইল আপডেট
+export async function updateProfile() {
+    const docId = localStorage.getItem('userDocId');
+    const newPhone = document.getElementById('pContact').value;
+    if(!docId) return alert("Error updating profile");
+    await updateDoc(doc(db, "users", docId), { phone: newPhone });
+    alert("Profile Updated!");
+}
