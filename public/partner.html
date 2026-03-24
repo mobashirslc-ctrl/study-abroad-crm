@@ -9,36 +9,35 @@
         :root { --gold: #f1c40f; --dark: #1a1a2e; --light: #ffffff; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f0f1b; color: white; display: flex; }
         
-        /* সাইডবার ও লোগো স্টাইল */
-        .sidebar { width: 250px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
-        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 20px; }
-        .logo-container img { max-width: 150px; height: auto; }
+        /* সাইডবার ও লোগো */
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; height: auto; border-radius: 5px; }
         
         .sidebar ul { list-style: none; padding: 0; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
         .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
-        .sidebar ul li i { margin-right: 10px; width: 20px; }
+        .sidebar ul li i { margin-right: 12px; width: 20px; }
         
-        .main-content { margin-left: 250px; flex: 1; padding: 30px; min-height: 100vh; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease-in; }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; box-sizing: border-box; }
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* কার্ড ও টেবিল স্টাইল */
+        /* ড্যাশবোর্ড কার্ড */
         .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; text-align: center; transition: 0.3s; }
-        .card:hover { border-color: var(--gold); transform: translateY(-5px); }
-        .card h3 { margin: 0; color: #aaa; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .card h3 { margin: 0; color: #aaa; font-size: 13px; text-transform: uppercase; }
         .card p { font-size: 28px; font-weight: bold; margin: 15px 0; color: var(--gold); }
 
-        table { width: 100%; border-collapse: collapse; background: var(--dark); border-radius: 10px; overflow: hidden; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
-        th { background: #252545; color: var(--gold); font-weight: 600; text-transform: uppercase; }
-        tr:hover { background: rgba(255,255,255,0.02); }
+        /* সার্চ বক্স (৫টি ফিল্ড) */
+        .search-box-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; background: var(--dark); padding: 20px; border-radius: 10px; border: 1px solid #333; margin-bottom: 25px; }
 
-        .status-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 11px; }
-        input, select { background: #252545; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; margin-bottom: 15px; box-sizing: border-box; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
-        .btn-gold:hover { background: #d4ac0d; }
+        table { width: 100%; border-collapse: collapse; background: var(--dark); border-radius: 10px; overflow: hidden; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
+        th { background: #252545; color: var(--gold); }
+
+        input, select { background: #252545; border: 1px solid #444; color: white; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: var(--dark); padding: 15px 25px; border-radius: 10px; border: 1px solid #333; }
     </style>
 </head>
@@ -46,13 +45,13 @@
 
     <div class="sidebar">
         <div class="logo-container">
-            <img src="logo.png" alt="SCC LOGO" onerror="this.src='https://via.placeholder.com/150x50?text=SCC+LOGO'">
+            <img src="logo.jpeg" alt="SCC Logo" onerror="this.src='https://via.placeholder.com/180x60?text=SCC+Group'">
         </div>
         <ul>
             <li class="active" onclick="showTab('dashboard')"><i class="fas fa-th-large"></i> Dashboard</li>
-            <li onclick="showTab('tracking')"><i class="fas fa-user-graduate"></i> Student Tracking</li>
-            <li onclick="showTab('universities')"><i class="fas fa-university"></i> Find Universities</li>
-            <li onclick="showTab('withdraw')"><i class="fas fa-wallet"></i> Wallet & Payout</li>
+            <li onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
+            <li onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+            <li onclick="showTab('withdraw')"><i class="fas fa-wallet"></i> Wallet</li>
             <li onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Agency Profile</li>
             <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
         </ul>
@@ -60,108 +59,114 @@
 
     <div class="main-content">
         <div class="top-bar">
-            <h2 style="margin:0; font-size: 18px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
+            <h2 style="margin:0; font-size: 18px;">Partner: <span id="welcomeName" style="color:var(--gold);">Loading...</span></h2>
             <button onclick="logout()" style="background:none; border:1px solid #e74c3c; color:#e74c3c; padding:5px 15px; border-radius:5px; cursor:pointer;">Logout</button>
         </div>
 
         <div id="dashboard" class="tab-content" style="display: block;">
             <div class="card-grid">
-                <div class="card"><h3>Pending Commission</h3><p id="topPending">৳0</p></div>
+                <div class="card"><h3>Pending Comm.</h3><p id="topPending">৳0</p></div>
                 <div class="card"><h3>Final Balance</h3><p id="topFinal">৳0</p></div>
             </div>
-            <h3 style="color:var(--gold);"><i class="fas fa-clock"></i> Recent Activity</h3>
+            <h3 style="color:var(--gold);">Recent Activity</h3>
             <table>
-                <thead><tr><th>Student Name</th><th>Passport</th><th>Current Status</th><th>Update Date</th></tr></thead>
-                <tbody id="homeTrackingBody"><tr><td colspan="4">Loading data...</td></tr></tbody>
+                <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Last Update</th></tr></thead>
+                <tbody id="homeTrackingBody"></tbody>
             </table>
         </div>
 
         <div id="tracking" class="tab-content">
-            <h3 style="color:var(--gold);"><i class="fas fa-list"></i> Full Student Tracking</h3>
+            <h3 style="color:var(--gold);">Live Student Tracking</h3>
             <table>
-                <thead><tr><th>Student & University</th><th>Handled By</th><th>Passport</th><th>Assessment Status</th><th>Update Date</th></tr></thead>
-                <tbody id="fullTrackingBody"><tr><td colspan="5">Searching for student files...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>Student & University</th>
+                        <th>Handled By</th>
+                        <th>Passport</th>
+                        <th>Current Assessment</th>
+                        <th>Verification</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody id="fullTrackingBody"></tbody>
             </table>
         </div>
 
         <div id="universities" class="tab-content">
-            <h3 style="color:var(--gold);"><i class="fas fa-search"></i> University Search</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <input type="text" id="fCountry" placeholder="Search by Country (e.g. Malaysia, Dubai)">
-                <button class="btn-gold" style="width: 150px;" onclick="searchUni()">Search</button>
+            <h3 style="color:var(--gold);">Find & Search Assessment</h3>
+            <div class="search-box-5">
+                <input type="text" id="fCountry" placeholder="Country">
+                <input type="text" id="fDegree" placeholder="Degree (e.g. Bachelor)">
+                <input type="text" id="fUni" placeholder="University Name">
+                <input type="text" id="fSubject" placeholder="Subject">
+                <input type="text" id="fIntake" placeholder="Intake">
+                <button class="btn-gold" onclick="searchUni()">Search Now</button>
             </div>
             <table>
-                <thead><tr><th>University Name</th><th>Degree</th><th>GPA</th><th>Semester Fee</th><th>Your Comm.</th><th>Action</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>University</th>
+                        <th>Degree/Subject</th>
+                        <th>GPA</th>
+                        <th>Fee</th>
+                        <th>Commission</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
                 <tbody id="uniListContainer"></tbody>
             </table>
         </div>
 
         <div id="withdraw" class="tab-content">
-            <h3>Withdraw Funds</h3>
+            <h3>Withdraw & Wallet</h3>
             <div class="card" style="max-width: 300px; margin-bottom: 20px; text-align: left;">
-                <h3>Available Balance</h3>
+                <h3>Balance Available</h3>
                 <p>৳<span id="withdrawFinalBalance">0</span></p>
             </div>
-            <div style="max-width: 450px; background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333;">
-                <label>Withdrawal Amount</label>
-                <input type="number" id="wdAmount" placeholder="Min. ৳500">
-                <label>Payment Method</label>
+            <div style="max-width: 450px; background: var(--dark); padding: 25px; border-radius: 12px;">
+                <input type="number" id="wdAmount" placeholder="Amount">
                 <select id="wdMethod">
                     <option value="Bkash">Bkash</option>
                     <option value="Nagad">Nagad</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Bank">Bank Transfer</option>
                 </select>
-                <button class="btn-gold" onclick="requestWithdraw()">Request Payout</button>
+                <button class="btn-gold" onclick="requestWithdraw()">Submit Request</button>
             </div>
         </div>
 
         <div id="profile" class="tab-content">
-            <h3>My Agency Profile</h3>
-            <div style="max-width: 500px; background: var(--dark); padding: 30px; border-radius: 12px; border: 1px solid #333;">
+            <h3>Agency Profile</h3>
+            <div style="max-width: 500px; background: var(--dark); padding: 25px; border-radius: 12px;">
                 <label>Agency Name</label>
-                <input type="text" id="pAgency" readonly style="opacity: 0.7;">
-                <label>Update Mobile Number</label>
-                <input type="text" id="pContact" placeholder="Your WhatsApp/Mobile">
+                <input type="text" id="pAgency" readonly style="opacity:0.6">
+                <label>Mobile Number</label>
+                <input type="text" id="pContact">
                 <button class="btn-gold" onclick="updateProfile()">Update Profile</button>
             </div>
         </div>
     </div>
 
     <script type="module">
-        import { 
-            initRealtimeData, 
-            initTracking, 
-            requestWithdraw, 
-            updateProfile, 
-            searchUni 
-        } from './partner-logic.js';
+        import { initRealtimeData, initTracking, requestWithdraw, updateProfile, searchUni } from './partner-logic.js';
 
-        // গ্লোবাল ফাংশন ম্যাপিং
         window.requestWithdraw = requestWithdraw;
         window.updateProfile = updateProfile;
         window.searchUni = searchUni;
         window.logout = () => { localStorage.clear(); location.href='index.html'; };
 
-        // ট্যাব লজিক (Fix for Menu not working)
         window.showTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
-            
             const target = document.getElementById(tabId);
             if(target) target.style.display = 'block';
-
-            if(event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
+            if(event && event.currentTarget) event.currentTarget.classList.add('active');
         };
 
-        // লোড হওয়ার সময় কল
-        window.addEventListener('DOMContentLoaded', () => {
+        window.onload = () => {
             initRealtimeData();
             initTracking();
-            // ডাটা লোড হওয়ার পর ড্যাশবোর্ড দেখাবে
-            setTimeout(() => { showTab('dashboard'); }, 100);
-        });
+            setTimeout(() => { showTab('dashboard'); }, 200);
+        };
     </script>
 </body>
 </html>
