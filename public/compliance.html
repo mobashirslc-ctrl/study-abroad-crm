@@ -57,7 +57,7 @@
 
     <div id="reviewModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Update Status</h3>
+            <h3 style="color:var(--gold); margin-top:0;">Update Application Status</h3>
             <p id="reviewStudentName" style="font-size:13px; color:#ccc;"></p>
             <select id="statusSelect" class="reg-input">
                 <option value="under_review">Under Review</option>
@@ -102,6 +102,7 @@
 
         document.getElementById('staffDisplay').innerText = staffEmail.toUpperCase();
 
+        // ১. রিয়েল-টাইম ডাটা লিসেনার
         onSnapshot(collection(db, "applications"), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
             let html = "";
@@ -126,7 +127,7 @@
             tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
 
-        // 1. View Docs Logic (Universal Fallback)
+        // ২. ডকুমেন্ট দেখার লজিক
         window.viewDocs = async (id) => {
             const list = document.getElementById('docList');
             list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Searching for files...</p>";
@@ -137,62 +138,58 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const docItems = [
-                        { label: "Passport", url: data.pdf1 || data.passportPDF || data.docURL1 || data.passportUrl || data.passport },
-                        { label: "Academic", url: data.pdf2 || data.academicPDF || data.docURL2 || data.academicUrl || data.academic },
-                        { label: "Language", url: data.pdf3 || data.languagePDF || data.docURL3 || data.languageUrl || data.language },
-                        { label: "Other", url: data.pdf4 || data.otherPDF || data.docURL4 || data.otherUrl || data.other }
+                        { label: "Passport", url: data.pdf1 || data.passportPDF || data.docURL1 || data.passportUrl },
+                        { label: "Academic", url: data.pdf2 || data.academicPDF || data.docURL2 || data.academicUrl },
+                        { label: "Language", url: data.pdf3 || data.languagePDF || data.docURL3 || data.languageUrl },
+                        { label: "Other", url: data.pdf4 || data.otherPDF || data.docURL4 || data.otherUrl }
                     ];
 
                     let html = "";
                     let found = false;
                     docItems.forEach(item => {
-                        if (item.url && item.url !== "" && item.url !== "undefined" && item.url !== null) {
+                        if (item.url && item.url !== "" && item.url !== "undefined") {
                             found = true;
-                            html += `
-                                <a href="${item.url}" target="_blank" class="doc-link">
-                                    <i class="fas fa-file-pdf"></i>
-                                    <div>
-                                        <div style="font-weight:bold;">${item.label}</div>
-                                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">Click to View/Download</div>
-                                    </div>
-                                </a>`;
+                            html += `<a href="${item.url}" target="_blank" class="doc-link">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <div><b>${item.label}</b><br><small>Click to view</small></div>
+                                     </a>`;
                         }
                     });
-
-                    list.innerHTML = found ? html : `<p style="text-align:center; padding:20px; color:red;">No documents found.</p>`;
+                    list.innerHTML = found ? html : "<p style='text-align:center; color:red;'>No documents found.</p>";
                 }
-            } catch (e) {
-                list.innerHTML = `<p style='color:red;'>Error: ${e.message}</p>`;
-            }
+            } catch (e) { list.innerHTML = "Error: " + e.message; }
         };
 
-        // 2. Open Review Function (MISSING IN YOUR CODE)
+        // ৩. রিভিউ মডাল খোলার ফাংশন (অবশ্যই উইন্ডো অবজেক্টে দিতে হবে)
         window.openReview = (id, name) => {
-            window.currentAppId = id;
+            window.currentAppId = id; // গ্লোবাল ভেরিয়েবলে আইডি সেভ করা
             document.getElementById('reviewStudentName').innerText = "Reviewing: " + name;
             document.getElementById('reviewModal').style.display = "flex";
         };
 
-        // 3. Close Modal Function (MISSING IN YOUR CODE)
+        // ৪. মডাল বন্ধ করার ফাংশন
         window.closeModal = () => {
             document.getElementById('reviewModal').style.display = "none";
             document.getElementById('docModal').style.display = "none";
         };
 
-        // 4. Update Status Function (MISSING IN YOUR CODE)
+        // ৫. স্ট্যাটাস আপডেট করার ফাংশন
         window.updateStatusNow = async () => {
             if(!window.currentAppId) return;
             const newStatus = document.getElementById('statusSelect').value;
             const docRef = doc(db, "applications", window.currentAppId);
+
             try {
                 await updateDoc(docRef, {
                     status: newStatus,
                     handledBy: staffEmail.toLowerCase(),
                     updatedAt: serverTimestamp()
                 });
-                alert("Status updated!");
+                alert("Status updated successfully!");
                 closeModal();
-            } catch (e) { alert("Error: " + e.message); }
+            } catch (e) {
+                alert("Update failed: " + e.message);
+            }
         };
 
     </script>
