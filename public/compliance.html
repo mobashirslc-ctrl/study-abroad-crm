@@ -3,45 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Compliance Hub 2026</title>
+    <title>SCC | Compliance & Doc Viewer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); }
+        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); --error: #ff4757; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; }
-        .top-bar { padding: 20px 40px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); }
-        .container { padding: 40px; }
-        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 25px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .top-bar { padding: 15px 40px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .container { padding: 30px; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; overflow-x: auto; }
         
-        /* Modal Style */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); width: 400px; }
-        
-        .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 15px; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        /* Status & Buttons */
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); }
+        .btn-action { background: var(--gold); color: black; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .btn-view { background: #3498db; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; }
+        .locked-row { opacity: 0.6; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
+
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 450px; position: relative; }
+        .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 10px; }
+        .doc-link { display: block; padding: 10px; background: var(--glass); margin-bottom: 8px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); }
+        .doc-link:hover { background: rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div><img src="logo.jpeg" alt="SCC" width="80"></div>
-        <div>Staff: <span id="staffDisplay" style="color:var(--gold);">Loading...</span></div>
+        <img src="logo.jpeg" alt="SCC" width="70">
+        <div>Logged in as: <span id="staffDisplay" style="color:var(--gold); font-weight:bold;">...</span></div>
     </div>
 
     <div class="container">
         <div class="card">
-            <h3>Incoming Applications & Status Update</h3>
+            <h3><i class="fas fa-tasks"></i> Compliance Queue</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Student Name</th>
-                        <th>Passport</th>
-                        <th>Current Status</th>
+                        <th>Student / Passport</th>
+                        <th>Agency</th>
+                        <th>Status</th>
                         <th>Handled By</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="incomingTableBody"></tbody>
@@ -51,33 +57,32 @@
 
     <div id="reviewModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold);">Update Student Status</h3>
-            <p id="reviewStudentName" style="font-size:14px;"></p>
-            
-            <label style="font-size:12px; color:#aaa;">Select New Status:</label>
+            <h3 style="color:var(--gold); margin-top:0;">Update Status</h3>
+            <p id="reviewStudentName" style="font-size:13px; color:#ccc;"></p>
             <select id="statusSelect" class="reg-input">
-                <option value="submitted">Submitted</option>
-                <option value="document_pending">Document Pending</option>
                 <option value="under_review">Under Review</option>
                 <option value="conditional_offer">Conditional Offer</option>
                 <option value="unconditional_offer">Unconditional Offer</option>
-                <option value="tuition_fee_paid">Tuition Fee Paid</option>
-                <option value="cas_issued">CAS / COE Issued</option>
-                <option value="visa_applied">Visa Applied</option>
                 <option value="visa_granted">Visa Granted</option>
                 <option value="visa_refused">Visa Refused</option>
-                <option value="refund_process">Refund Process</option>
                 <option value="verified">Verified (Add to Wallet)</option>
             </select>
+            <button onclick="updateStatusNow()" class="btn-action" style="width:100%; margin-top:20px;">SAVE CHANGES</button>
+            <button onclick="closeModal()" style="width:100%; background:transparent; color:red; border:none; margin-top:10px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
 
-            <button onclick="updateStatusNow()" class="btn-action" style="width:100%;">UPDATE STATUS</button>
-            <button onclick="closeModal()" style="background:transparent; color:red; border:none; margin-top:10px; cursor:pointer; width:100%;">Close</button>
+    <div id="docModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--gold); margin-top:0;">Student Documents</h3>
+            <div id="docList"></div>
+            <button onclick="closeModal()" style="width:100%; background:var(--gold); color:black; border:none; padding:10px; border-radius:8px; margin-top:15px; cursor:pointer; font-weight:bold;">CLOSE</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
@@ -90,9 +95,9 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const staffEmail = localStorage.getItem('userEmail') || "staff@scc.com";
+        const staffEmail = localStorage.getItem('userEmail') || "compliance@scc.com";
 
-        document.getElementById('staffDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
+        document.getElementById('staffDisplay').innerText = staffEmail.toUpperCase();
 
         onSnapshot(collection(db, "applications"), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
@@ -100,41 +105,61 @@
             snap.forEach(dSnap => {
                 const d = dSnap.data();
                 const id = dSnap.id;
+                
+                // LOCKING LOGIC: যদি অন্য কেউ হ্যান্ডেল করে তবে লক হবে
+                const isLocked = d.handledBy && d.handledBy.toLowerCase() !== staffEmail.toLowerCase();
+                const handlerDisplay = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'FREE';
+
                 html += `
-                    <tr>
-                        <td><b>${d.studentName}</b></td>
-                        <td>${d.passportNo}</td>
-                        <td><span class="status-pill">${d.status.replace('_', ' ')}</span></td>
-                        <td>${d.handledBy ? d.handledBy.split('@')[0] : 'Waiting'}</td>
-                        <td><button class="btn-action" onclick="openReview('${id}', '${d.studentName}')">REVIEW</button></td>
+                    <tr class="${isLocked ? 'locked-row' : ''}">
+                        <td><b>${d.studentName}</b><br><small>${d.passportNo}</small></td>
+                        <td style="color:#a29bfe;">${d.partnerEmail ? d.partnerEmail.split('@')[0].toUpperCase() : 'N/A'}</td>
+                        <td><span class="status-pill">${(d.status || 'Pending').toUpperCase()}</span></td>
+                        <td><i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i> ${handlerDisplay}</td>
+                        <td>
+                            <button class="btn-view" onclick="viewDocs('${id}')"><i class="fas fa-eye"></i></button>
+                            <button class="btn-action" onclick="openReview('${id}', '${d.studentName}')">REVIEW</button>
+                        </td>
                     </tr>`;
             });
-            tbody.innerHTML = html;
+            tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
+
+        // ডক ভিউ লজিক
+        window.viewDocs = (id) => {
+            // ধরে নিচ্ছি পার্টনার ফাইল সাবমিটের সময় docURL1, docURL2 ইত্যাদি সেভ করেছে
+            const list = document.getElementById('docList');
+            list.innerHTML = `
+                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Passport Copy (View)</a>
+                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Certificate (View)</a>
+                <a href="#" class="doc-link"><i class="fas fa-file-pdf"></i> Language Proficiency (View)</a>
+                <p style="font-size:10px; color:gray;">Note: Document links are retrieved from Firebase Storage.</p>
+            `;
+            document.getElementById('docModal').style.display = "flex";
+        };
 
         window.openReview = (id, name) => {
             window.currentAppId = id;
-            document.getElementById('reviewStudentName').innerText = "Student: " + name;
+            document.getElementById('reviewStudentName').innerText = "Reviewing: " + name;
             document.getElementById('reviewModal').style.display = "flex";
         };
 
-        window.closeModal = () => document.getElementById('reviewModal').style.display = "none";
+        window.closeModal = () => {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = "none");
+        };
 
         window.updateStatusNow = async () => {
             const newStatus = document.getElementById('statusSelect').value;
             const docRef = doc(db, "applications", window.currentAppId);
             
-            // "verified" status dilei kebol wallet-e taka add hobe
-            const isVerified = (newStatus === "verified");
-
             try {
                 await updateDoc(docRef, {
                     status: newStatus,
-                    isVerified: isVerified,
-                    handledBy: staffEmail,
+                    handledBy: staffEmail, // ফাইলটি এখন আপনার নামে লক হয়ে যাবে
+                    isVerified: newStatus === "verified",
                     updatedAt: serverTimestamp()
                 });
-                alert("Status Updated Successfully!");
+                alert("Updated & Locked to you!");
                 closeModal();
             } catch (e) { alert(e.message); }
         };
