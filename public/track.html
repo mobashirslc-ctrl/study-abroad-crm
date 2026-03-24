@@ -3,84 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tracking - Student Portal</title>
+    <title>SSC Live Application Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
-        h2 { color: #333; margin-bottom: 20px; }
-        input { width: 80%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: 0.3s; }
-        input:focus { border-color: #2563eb; }
-        button { margin-top: 15px; padding: 12px 30px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        button:hover { background: #1d4ed8; }
-        #resultArea { margin-top: 25px; text-align: left; display: none; }
-        .result-item { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 10px; border-left: 5px solid #2563eb; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        /* --- 🎨 DEEP PURPLE PREMIUM THEME --- */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #090919;
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090919 70%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(25, 25, 50, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 60px 50px;
+            border-radius: 40px;
+            border: 2px solid rgba(162, 155, 254, 0.5);
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.9);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .logo-box { margin-bottom: 30px; }
+        .logo-box img { 
+            width: 220px; 
+            height: auto; 
+            display: block; 
+            margin: 0 auto;
+            background: white; 
+            padding: 10px; 
+            border-radius: 15px;
+            filter: drop-shadow(0 0 15px rgba(162, 155, 254, 0.6));
+        }
+
+        h2 { 
+            font-size: 18px; 
+            text-transform: uppercase; 
+            letter-spacing: 5px; 
+            color: #a29bfe; 
+            margin-bottom: 40px;
+            font-weight: 800;
+        }
+
+        input {
+            width: 100%;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(162, 155, 254, 0.4);
+            background: rgba(15, 15, 35, 0.9);
+            color: white;
+            box-sizing: border-box;
+            font-size: 20px;
+            transition: 0.3s;
+            text-align: center;
+        }
+        input:focus {
+            border-color: #a29bfe;
+            box-shadow: 0 0 30px rgba(162, 155, 254, 0.3);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 22px;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 900;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.4);
+            transition: 0.3s;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(46, 204, 113, 0.5);
+        }
+
+        #result {
+            display: none;
+            margin-top: 50px;
+            padding: 35px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 30px;
+            border: 1px solid rgba(162, 155, 254, 0.2);
+        }
+
+        .track-header {
+            position: relative;
+            height: 70px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(162, 155, 254, 0.2);
+        }
+
+        .plane-anim {
+            position: absolute;
+            left: -100px;
+            color: #3498db; 
+            font-size: 40px;
+            animation: flyAcross 4s infinite linear;
+        }
+
+        @keyframes flyAcross {
+            0% { left: -25%; opacity: 0; transform: translateY(0); }
+            15% { opacity: 1; }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            85% { opacity: 1; }
+            100% { left: 125%; opacity: 0; }
+        }
+
+        .info-row { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 18px; 
+            margin: 20px 0; 
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .label { color: #a29bfe; font-weight: 600; }
+        .val { font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Live Student Tracking</h2>
-    <input type="text" id="passportNumber" placeholder="Enter Passport Number (e.g. vfd)">
-    <br>
-    <button onclick="checkStatus()">Track Status</button>
-
-    <div id="resultArea"></div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-        authDomain: "scc-partner-portal.firebaseapp.com",
-        databaseURL: "https://scc-partner-portal-default-rtdb.firebaseio.com",
-        projectId: "scc-partner-portal",
-        storageBucket: "scc-partner-portal.firebasestorage.app",
-        messagingSenderId: "13013457431",
-        appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.checkStatus = async () => {
-        const passport = document.getElementById('passportNumber').value.trim();
-        const res = document.getElementById('resultArea');
+    <div class="container">
+        <div class="logo-box">
+            <img src="logo.jpeg" alt="Student Career Consultancy">
+        </div>
         
-        if(!passport) return alert("Please enter passport number!");
+        <h2>Live Tracker</h2>
+        
+        <input type="text" id="passportInput" placeholder="Enter Passport Number...">
+        <button id="trackBtn">Track Status Now</button>
 
-        res.style.display = "block";
-        res.innerHTML = "<p style='color: #666;'>Searching database...</p>";
+        <div id="result">
+            <div class="track-header">
+                <div class="plane-anim"><i class="fas fa-plane"></i></div>
+            </div>
+            <div id="data-content"></div>
+        </div>
+    </div>
 
-        try {
-            // Firestore Query using "passport" field (from your screenshot)
-            const q = query(collection(db, "applications"), where("passport", "==", passport));
-            const snap = await getDocs(q);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-            if(snap.empty) {
-                res.innerHTML = "<p style='color: red;'>❌ No record found for this passport.</p>";
-            } else {
-                let output = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    let color = d.status === "REJECTED" ? "#dc2626" : "#059669";
-                    output += `
-                        <div class="result-item">
-                            <p style="margin: 0; font-size: 13px; color: #666;">STUDENT NAME</p>
-                            <p style="margin: 0 0 10px 0; font-weight: bold; font-size: 18px;">${d.studentName}</p>
-                            <p style="margin: 0;">Status: <span class="status-badge" style="background: ${color}15; color: ${color};">${d.status}</span></p>
-                            <p style="margin: 10px 0 0 0; font-size: 14px;">University: <b>${d.university || 'N/A'}</b></p>
-                        </div>`;
-                });
-                res.innerHTML = output;
+        const firebaseConfig = {
+            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
+            authDomain: "ihp-portal-v3.firebaseapp.com", 
+            projectId: "ihp-portal-v3", 
+            storageBucket: "ihp-portal-v3.firebasestorage.app", 
+            messagingSenderId: "481157902534", 
+            appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let unsubscribe = null;
+        const passportInput = document.getElementById('passportInput');
+        const resultDiv = document.getElementById('result');
+        const dataContent = document.getElementById('data-content');
+
+        passportInput.addEventListener('input', () => {
+            if (passportInput.value.trim() === "") {
+                if (unsubscribe) unsubscribe(); 
+                resultDiv.style.display = "none"; 
+                dataContent.innerHTML = ""; 
             }
-        } catch (e) {
-            res.innerHTML = "<p style='color: red;'>Error: " + e.message + "</p>";
-        }
-    };
-</script>
+        });
 
+        document.getElementById('trackBtn').addEventListener('click', () => {
+            const inputVal = passportInput.value.trim();
+            if (!inputVal) { alert("Please enter a Passport Number!"); return; }
+
+            if (unsubscribe) unsubscribe();
+
+            // Field checking: Use "passportNo" as per your latest logic
+            const q = query(
+                collection(db, "applications"), 
+                where("passportNo", "==", inputVal),
+                limit(1)
+            );
+            
+            unsubscribe = onSnapshot(q, (snap) => {
+                if (snap.empty) {
+                    alert("❌ No Record Found.");
+                    resultDiv.style.display = "none";
+                } else {
+                    resultDiv.style.display = "block";
+                    
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        const rawStatus = (d.status || 'PENDING').toUpperCase();
+
+                        let estimateText = "Processing your documents...";
+                        let duration = "2-3 Days";
+
+                        if (rawStatus.includes("PENDING")) {
+                            estimateText = "Initial screening and document verification.";
+                            duration = "24-48 Hours";
+                        } else if (rawStatus.includes("APPLIED") || rawStatus.includes("OFFER")) {
+                            estimateText = "University is reviewing your application.";
+                            duration = "7-14 Working Days";
+                        } else if (rawStatus.includes("VISA") || rawStatus.includes("EMBASSY")) {
+                            estimateText = "Visa file is under embassy processing.";
+                            duration = "15-21 Days";
+                        }
+
+                        dataContent.innerHTML = `
+                            <div style="text-align: left;">
+                                <div class="info-row"><span class="label">STUDENT</span> <span class="val">${d.studentName || 'N/A'}</span></div>
+                                <div class="info-row"><span class="label">PASSPORT</span> <span class="val">${d.passportNo || 'N/A'}</span></div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding: 15px; background: rgba(162, 155, 254, 0.05); border-radius: 15px; border: 1px dashed rgba(162, 155, 254, 0.3);">
+                                <div style="font-size: 10px; color: #a29bfe; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px;">OFFICIAL PARTNER</div>
+                                <div style="font-size: 14px; font-weight: bold; color: #fff;">${d.partnerName || 'Authorized SSC Partner'}</div>
+                                <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px;">📞 ${d.partnerPhone || 'Contact Agency'}</div>
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px;">📍 ${d.partnerAddress || 'Bangladesh Office'}</div>
+                            </div>
+                            
+                            <div style="margin-top:20px; text-align:center; padding:20px; background:rgba(46, 204, 113, 0.1); border:1px solid #2ecc71; border-radius:20px;">
+                                <div style="font-size:11px; color:#2ecc71; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
+                                <div style="font-size:24px; font-weight:900; color:#2ecc71; margin-top:5px;">${rawStatus}</div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <div style="flex: 1; padding: 12px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
+                                    <div style="font-size: 9px; color: #3498db; font-weight: bold;">TIME PERIOD</div>
+                                    <div style="font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px;">${duration}</div>
+                                </div>
+                                <div style="flex: 1.5; padding: 12px; background: rgba(241, 196, 15, 0.1); border: 1px solid #f1c40f; border-radius: 12px;">
+                                    <div style="font-size: 9px; color: #f1c40f; font-weight: bold;">NEXT STEP IDEA</div>
+                                    <div style="font-size: 11px; color: #fff; margin-top: 4px;">${estimateText}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
