@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "index.js"
+    },
+    {
+      "src": "/register",
+      "dest": "index.js"
+    },
+    {
+      "src": "/login",
+      "dest": "index.js"
+    },
+    {
+      "src": "/partner-access",
+      "dest": "index.js"
+    },
+    {
+      "src": "/partner",
+      "dest": "index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ]
+}
