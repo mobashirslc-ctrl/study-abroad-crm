@@ -48,7 +48,7 @@
                 </div>
                 <div class="card">
                     <h3 style="color:var(--gold);">Recent Tracking</h3>
-                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
+                    <div style="overflow-x:auto;"><table><thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>Last Update</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
                 </div>
             </div>
 
@@ -77,10 +77,10 @@
                             <thead>
                                 <tr>
                                     <th>Student Name</th>
-                                    <th>Contact No</th>
+                                    <th>Staff Handler</th>
                                     <th>Passport No</th>
                                     <th>Status</th>
-                                    <th>Compliance Staff</th>
+                                    <th>Compliance</th>
                                     <th>Last Update</th>
                                 </tr>
                             </thead>
@@ -129,16 +129,19 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
+        // লগইন করা ইমেইল রিড করা
         const partnerEmail = localStorage.getItem('partnerEmail') || 'demo@scc.com';
 
+        // ১. রিয়েল-টাইম প্রোফাইল ডাটা
         function initRealtimeData() {
             const q = query(collection(db, "users"), where("email", "==", partnerEmail));
             onSnapshot(q, (snap) => {
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
                     localStorage.setItem('userDocId', docSnap.id);
-                    document.getElementById('welcomeName').innerText = data.fullName;
-                    document.getElementById('pAgency').value = data.fullName;
+                    document.getElementById('welcomeName').innerText = data.fullName || 'Partner';
+                    document.getElementById('pAgency').value = data.fullName || '';
                     document.getElementById('pContact').value = data.phone || '';
                     document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
                     document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
@@ -147,6 +150,7 @@
             });
         }
 
+        // ২. ইউনিভার্সিটি সার্চ ফিল্টার
         window.searchUni = async () => {
             const country = document.getElementById('fCountry').value.toLowerCase();
             const degree = document.getElementById('fDegree').value;
@@ -168,28 +172,64 @@
             container.innerHTML = html || "<tr><td colspan='6'>No Matches Found</td></tr>";
         };
 
+        // ৩. ফিক্সড ট্র্যাকিং ফাংশন (আপনার ডাটাবেস অনুযায়ী)
         function initTracking() {
             const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+            
             onSnapshot(q, (snap) => {
-                let fullHtml = ""; let homeHtml = "";
+                let fullHtml = ""; 
+                let homeHtml = "";
+                
+                console.log("Found apps:", snap.size); // ব্রাউজার কনসোলে ডাটা সংখ্যা দেখাবে
+
                 snap.forEach(docSnap => {
                     const a = docSnap.data();
-                    const lastUpdate = a.updatedAt ? new Date(a.updatedAt.seconds * 1000).toLocaleString() : (a.date || 'N/A');
-                    fullHtml += `<tr><td><b>${a.studentName}</b><br><small>${a.university}</small></td><td>${a.studentContact || 'N/A'}</td><td>${a.passport}</td><td>${a.status}</td><td>${a.complianceStaff || 'N/A'}</td><td>${lastUpdate}</td></tr>`;
-                    homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passport}</td><td>${a.status}</td><td>${a.date}</td></tr>`;
+                    
+                    // টাইমস্ট্যাম্প হ্যান্ডলিং
+                    let lastUpdate = 'N/A';
+                    if (a.updatedAt && a.updatedAt.seconds) {
+                        lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleString('en-GB');
+                    } else if (a.date) {
+                        lastUpdate = a.date;
+                    }
+
+                    // ফুল ট্র্যাকিং টেবিল (আপনার DB এর passportNo এবং handledBy ব্যবহার করা হয়েছে)
+                    fullHtml += `
+                        <tr>
+                            <td><b>${a.studentName || 'N/A'}</b><br><small>${a.university || ''}</small></td>
+                            <td>${a.handledBy || 'Admin'}</td> 
+                            <td>${a.passportNo || 'N/A'}</td>
+                            <td style="color:var(--gold); font-weight:bold;">${a.status || 'Pending'}</td>
+                            <td>Verified</td>
+                            <td style="font-size:11px;">${lastUpdate}</td>
+                        </tr>`;
+
+                    // হোম পেজ টেবিল
+                    homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passportNo || 'N/A'}</td><td>${a.status}</td><td>${lastUpdate}</td></tr>`;
                 });
-                document.getElementById('fullTrackingBody').innerHTML = fullHtml;
-                document.getElementById('homeTrackingBody').innerHTML = homeHtml;
+                
+                document.getElementById('fullTrackingBody').innerHTML = fullHtml || "<tr><td colspan='6' style='text-align:center'>No Applications Found</td></tr>";
+                document.getElementById('homeTrackingBody').innerHTML = homeHtml || "<tr><td colspan='4' style='text-align:center'>No Recent Activity</td></tr>";
             });
         }
 
+        // ৪. উইথড্র এবং প্রোফাইল আপডেট
         window.requestWithdraw = async () => {
             const amt = document.getElementById('wdAmount').value;
-            if(!amt) return alert("Enter amount");
+            if(!amt || amt <= 0) return alert("Enter valid amount");
             await addDoc(collection(db, "withdrawals"), { email: partnerEmail, amount: Number(amt), method: document.getElementById('wdMethod').value, status: "Pending", timestamp: serverTimestamp() });
-            alert("Requested!");
+            alert("Withdrawal Request Submitted!");
+            document.getElementById('wdAmount').value = "";
         };
 
+        window.updateProfile = async () => {
+            const docId = localStorage.getItem('userDocId');
+            if(!docId) return alert("Error updating profile");
+            await updateDoc(doc(db, "users", docId), { phone: document.getElementById('pContact').value });
+            alert("Profile Updated Successfully!");
+        };
+
+        // ট্যাব কন্ট্রোল
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
@@ -198,7 +238,10 @@
         };
 
         window.logout = () => { localStorage.clear(); location.href = "index.html"; };
-        initRealtimeData(); initTracking();
+
+        // শুরু করা
+        initRealtimeData(); 
+        initTracking();
     </script>
 </body>
 </html>
