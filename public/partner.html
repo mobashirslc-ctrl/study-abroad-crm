@@ -9,35 +9,24 @@
     <style>
         :root { --primary: #2b0054; --bg-dark: #070014; --gold: #f1c40f; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; display: flex; }
-        
-        /* Sidebar & Layout */
         .sidebar { width: 260px; height: 100vh; background: #0d001a; border-right: 1px solid var(--border); position: fixed; padding: 20px; box-sizing: border-box; }
         .wrapper { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; }
-        .section { display: none; padding: 30px; animation: fadeIn 0.4s ease; }
+        .section { display: none; padding: 30px; }
         .active-section { display: block !important; }
-        
-        /* Nav & Cards */
         .nav-item { padding: 12px 15px; margin-bottom: 8px; cursor: pointer; border-radius: 10px; color: #ccc; display: flex; align-items: center; gap: 12px; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
-        .card { background: var(--glass); border: 1px solid var(--border); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px); margin-bottom: 20px; }
-        
-        /* Inputs & Tables */
-        .assessment-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; align-items: flex-end; }
-        .reg-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 5px; box-sizing: border-box; margin-bottom: 5px; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(241,196,15,0.4); }
-        
-        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
+        .card { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .reg-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+        th { color: var(--gold); text-transform: uppercase; font-size: 11px; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo"><img src="logo.jpeg" alt="SCC" style="width:100%; max-width:140px; background:white; padding:10px; border-radius:8px;"></div>
+        <div class="logo"><img src="logo.jpeg" alt="SCC" style="width:100%; max-width:140px; background:white; padding:8px; border-radius:8px; margin-bottom:20px;"></div>
         <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
         <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
@@ -46,9 +35,9 @@
     </div>
 
     <div class="wrapper">
-        <div class="top-bar" style="display: flex; justify-content: space-between; padding: 15px 30px; background: var(--glass); border-bottom: 1px solid var(--border); align-items: center;">
+        <div class="top-bar" style="display: flex; justify-content: space-between; padding: 15px 30px; background: var(--glass); border-bottom: 1px solid var(--border);">
             <div>Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
-            <button onclick="logout()" style="background:#ff4757; color:white; padding:8px 20px; border:none; border-radius:5px; cursor:pointer;">Logout</button>
+            <button onclick="logout()" style="background:#ff4757; color:white; padding:5px 15px; border:none; border-radius:5px; cursor:pointer;">Logout</button>
         </div>
 
         <div class="main">
@@ -58,9 +47,9 @@
                     <div class="card"><p style="font-size:12px; color:#aaa;">FINAL BALANCE</p><h2 id="topFinal">৳0</h2></div>
                 </div>
                 <div class="card">
-                    <h3 style="margin-bottom:15px; color:var(--gold);">Recent Applications</h3>
+                    <h3 style="color:var(--gold);">Recent Applications</h3>
                     <div style="overflow-x:auto;">
-                        <table id="homeTrackingTable">
+                        <table>
                             <thead><tr><th>Student/Uni</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead>
                             <tbody id="homeTrackingBody"></tbody>
                         </table>
@@ -70,35 +59,24 @@
 
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
-                    <div class="assessment-grid">
-                        <div><label style="font-size:10px;color:#aaa">Country</label><input type="text" id="fCountry" placeholder="UK, USA, etc" class="reg-input"></div>
+                    <h3 style="color:var(--gold);">Smart Search Filter</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: flex-end;">
+                        <div><label style="font-size:10px;color:#aaa">Country</label><input type="text" id="fCountry" placeholder="UK, USA" class="reg-input"></div>
                         <div><label style="font-size:10px;color:#aaa">Degree</label>
                             <select id="fDegree" class="reg-input">
                                 <option value="">Any Degree</option>
                                 <option value="Bachelor">Bachelor</option>
                                 <option value="Master">Master</option>
-                                <option value="Foundation">Foundation</option>
                             </select>
                         </div>
-                        <div><label style="font-size:10px;color:#aaa">Language Test</label>
-                            <select id="fLanguage" class="reg-input">
-                                <option value="">Any Test</option>
-                                <option value="IELTS">IELTS</option>
-                                <option value="Duolingo">Duolingo</option>
-                                <option value="PTE">PTE</option>
-                                <option value="MOI">MOI</option>
-                            </select>
-                        </div>
-                        <div><label style="font-size:10px;color:#aaa">Your GPA</label><input type="number" step="0.01" id="fGPA" placeholder="GPA" class="reg-input"></div>
-                        <div><label style="font-size:10px;color:#aaa">Test Score</label><input type="number" step="0.1" id="fLangScore" placeholder="Score" class="reg-input"></div>
-                        <button onclick="searchUniversity()" class="btn-gold" style="height:40px;">SEARCH</button>
+                        <div><label style="font-size:10px;color:#aaa">GPA</label><input type="number" step="0.01" id="fGPA" placeholder="GPA" class="reg-input"></div>
+                        <button onclick="searchUniversity()" class="btn-gold" style="height:40px; margin-bottom:10px;">SEARCH</button>
                     </div>
                 </div>
                 <div id="searchResultArea" style="display:none;" class="card">
                     <div style="overflow-x:auto;">
                         <table>
-                            <thead><tr><th>University</th><th>Degree</th><th>Requirement</th><th>Fees (৳)</th><th>Comm (৳)</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Degree</th><th>Min GPA</th><th>Fees (৳)</th><th>Comm (৳)</th><th>Action</th></tr></thead>
                             <tbody id="uniListContainer"></tbody>
                         </table>
                     </div>
@@ -107,7 +85,7 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Detailed Application Status</h3>
+                    <h3 style="color:var(--gold);">Detailed Application Status</h3>
                     <div style="overflow-x:auto;">
                         <table>
                             <thead><tr><th>Student/Uni</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead>
@@ -118,16 +96,14 @@
             </div>
 
             <div id="withdraw" class="section">
-                <div class="card" style="text-align: center; padding: 50px;">
-                    <i class="fas fa-wallet" style="font-size: 50px; color: var(--gold); margin-bottom: 20px;"></i>
-                    <h2>Wallet Balance</h2>
-                    <h1 style="color:var(--gold); margin: 10px 0;">৳ <span id="withdrawFinalBalance">0</span></h1>
-                    <div style="max-width:300px; margin: 20px auto;">
+                <div class="card" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-wallet" style="font-size: 40px; color: var(--gold);"></i>
+                    <h2>৳ <span id="withdrawFinalBalance">0</span></h2>
+                    <div style="max-width:300px; margin:auto;">
                         <input type="number" id="wdAmount" placeholder="Amount" class="reg-input">
                         <select id="wdMethod" class="reg-input">
                             <option value="bKash">bKash</option>
                             <option value="Nagad">Nagad</option>
-                            <option value="Bank">Bank Transfer</option>
                         </select>
                         <button onclick="requestWithdraw()" class="btn-gold">WITHDRAW NOW</button>
                     </div>
@@ -136,18 +112,11 @@
 
             <div id="profile" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold); margin-bottom:15px;">Agency Profile</h3>
-                    <div style="max-width:500px;">
-                        <label style="font-size:11px; color:#aaa;">Agency Name</label>
-                        <input type="text" id="pAgency" class="reg-input" readonly>
-                        <label style="font-size:11px; color:#aaa;">Contact Email</label>
-                        <input type="text" id="pEmail" class="reg-input" readonly>
-                        <label style="font-size:11px; color:#aaa;">Contact No</label>
-                        <input type="text" id="pContact" placeholder="Update Phone No" class="reg-input">
-                        <label style="font-size:11px; color:#aaa;">Address</label>
-                        <textarea id="pAddress" placeholder="Agency Address" class="reg-input" style="height:80px;"></textarea>
-                        <button onclick="updateProfile()" class="btn-gold" style="margin-top:10px;">SAVE PROFILE</button>
-                    </div>
+                    <h3 style="color:var(--gold);">Agency Profile</h3>
+                    <label>Agency Name</label><input type="text" id="pAgency" class="reg-input" readonly>
+                    <label>Email</label><input type="text" id="pEmail" class="reg-input" readonly>
+                    <label>Contact No</label><input type="text" id="pContact" class="reg-input">
+                    <button onclick="updateProfile()" class="btn-gold">SAVE CHANGES</button>
                 </div>
             </div>
         </div>
@@ -155,7 +124,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, doc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
@@ -168,73 +137,89 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const pEmail = localStorage.getItem('partnerEmail') || 'guest';
+        const userEmail = localStorage.getItem('partnerEmail');
 
-        // 1. Search Logic with BDT Conversion
+        // ১. রিয়েল-টাইম প্রোফাইল এবং ব্যালেন্স লোড
+        function loadPartnerData() {
+            if (!userEmail) return;
+            const q = query(collection(db, "partners"), where("email", "==", userEmail));
+            
+            onSnapshot(q, (snap) => {
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    document.getElementById('welcomeName').innerText = data.agencyName || "Partner";
+                    document.getElementById('pAgency').value = data.agencyName || "";
+                    document.getElementById('pEmail').value = data.email || "";
+                    document.getElementById('pContact').value = data.phone || "";
+                    document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
+                    document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
+                    document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
+                });
+            });
+        }
+
+        // ২. ট্র্যাকিং ডাটা লোড (রিয়েল-টাইম)
+        function loadTracking() {
+            const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail));
+            onSnapshot(q, (snap) => {
+                let html = "";
+                snap.forEach(doc => {
+                    const a = doc.data();
+                    html += `<tr><td><b>${a.studentName}</b><br><small>${a.university}</small></td><td>${a.passport}</td><td>${a.status || 'Pending'}</td><td>${a.date || 'N/A'}</td></tr>`;
+                });
+                document.getElementById('homeTrackingBody').innerHTML = html;
+                document.getElementById('sidebarTrackingBody').innerHTML = html;
+            });
+        }
+
+        // ৩. স্মার্ট সার্চ লজিক
         window.searchUniversity = async () => {
             const country = document.getElementById('fCountry').value.trim().toLowerCase();
-            const userGPA = parseFloat(document.getElementById('fGPA').value) || 0;
+            const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
             const container = document.getElementById('uniListContainer');
             document.getElementById('searchResultArea').style.display = "block";
             container.innerHTML = "Searching...";
 
             const BDT_RATES = { "uk": 155, "usa": 120, "canada": 88, "australia": 78, "default": 120 };
-
-            try {
-                const snap = await getDocs(collection(db, "universities"));
-                let html = "";
-                snap.forEach(doc => {
-                    const u = doc.data();
-                    const matchCountry = !country || u.country.toLowerCase().includes(country);
-                    const matchGPA = userGPA >= (parseFloat(u.minGPA) || 0);
-
-                    if (matchCountry && matchGPA) {
-                        const rate = BDT_RATES[u.country.toLowerCase()] || BDT_RATES.default;
-                        const comm = Math.round(((u.totalComm || 0) * (u.partnerShare || 50) / 100) * rate);
-                        const fee = Math.round((u.tuitionFee || 0) * rate);
-
-                        html += `<tr>
-                            <td><b>${u.name}</b></td>
-                            <td>${u.degree}</td>
-                            <td>GPA ${u.minGPA}+</td>
-                            <td>৳${fee.toLocaleString()}</td>
-                            <td style="color:var(--gold); font-weight:bold;">৳${comm.toLocaleString()}</td>
-                            <td><button class="btn-gold" style="padding:5px; font-size:11px;">APPLY</button></td>
-                        </tr>`;
-                    }
-                });
-                container.innerHTML = html || "<tr><td colspan='6' style='color:red'>No profile match.</td></tr>";
-            } catch (e) { container.innerHTML = "Error loading data."; }
+            const snap = await getDocs(collection(db, "universities"));
+            let html = "";
+            
+            snap.forEach(doc => {
+                const u = doc.data();
+                if ((!country || u.country.toLowerCase().includes(country)) && gpa >= (u.minGPA || 0)) {
+                    const rate = BDT_RATES[u.country.toLowerCase()] || BDT_RATES.default;
+                    const comm = Math.round(((u.totalComm || 0) * (u.partnerShare || 50) / 100) * rate);
+                    html += `<tr><td>${u.name}</td><td>${u.degree}</td><td>${u.minGPA}</td><td>৳${((u.tuitionFee || 0) * rate).toLocaleString()}</td><td style="color:var(--gold)">৳${comm.toLocaleString()}</td><td><button class="btn-gold" style="padding:5px">Apply</button></td></tr>`;
+                }
+            });
+            container.innerHTML = html || "<tr><td colspan='6'>No results found</td></tr>";
         };
 
-        // 2. Tab Switcher
+        // ৪. উইথড্র রিকোয়েস্ট
+        window.requestWithdraw = async () => {
+            const amt = document.getElementById('wdAmount').value;
+            if(!amt) return alert("Enter amount");
+            await addDoc(collection(db, "withdrawals"), {
+                email: userEmail,
+                amount: amt,
+                method: document.getElementById('wdMethod').value,
+                status: "Pending",
+                date: new Date().toLocaleDateString()
+            });
+            alert("Request Sent!");
+        };
+
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
-            if(id === 'tracking' || id === 'home') loadTracking();
         };
 
-        // 3. Application Tracking
-        async function loadTracking() {
-            const q = query(collection(db, "applications"), where("partnerEmail", "==", pEmail));
-            const snap = await getDocs(q);
-            let html = "";
-            snap.forEach(doc => {
-                const a = doc.data();
-                html += `<tr><td>${a.studentName}<br><small>${a.university}</small></td><td>${a.passport}</td><td>${a.status || 'Submitted'}</td><td>${a.date || 'N/A'}</td></tr>`;
-            });
-            document.getElementById('homeTrackingBody').innerHTML = html;
-            document.getElementById('sidebarTrackingBody').innerHTML = html;
-        }
+        window.logout = () => { localStorage.clear(); location.href = "index.html"; };
 
-        // 4. Initial Load
-        document.getElementById('pAgency').value = localStorage.getItem('partnerName') || 'Agency';
-        document.getElementById('pEmail').value = pEmail;
+        loadPartnerData();
         loadTracking();
-
-        window.logout = () => { localStorage.clear(); location.href = 'index.html'; };
     </script>
 </body>
 </html>
