@@ -14,7 +14,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ২. সেকিউরিটি গার্ড ও ইমেইল রিড (LocalStorage)
+// ২. সেকিউরিটি গার্ড ও ইমেইল রিড (LocalStorage থেকে)
 const partnerEmail = (localStorage.getItem('partnerEmail') || '').toString().trim().toLowerCase();
 
 if (!partnerEmail) {
@@ -42,7 +42,7 @@ export function initRealtimeData() {
     });
 }
 
-// ৪. ট্র্যাকিং লজিক (Strong Matching Logic)
+// ৪. ট্র্যাকিং লজিক (Strong/Universal Matching)
 export function initTracking() {
     if (!partnerEmail) return;
 
@@ -53,24 +53,26 @@ export function initTracking() {
         let homeHtml = "";
         let count = 0;
 
-        console.log("DEBUG: Looking for partner:", partnerEmail);
+        // আপনার লগইন করা ইমেইলটি ক্লিন করে নেওয়া হচ্ছে
+        const currentPartner = partnerEmail.toString().trim().toLowerCase();
+        console.log("DEBUG: System looking for cleaned email:", currentPartner);
 
         snap.forEach(docSnap => {
             const a = docSnap.data();
             
-            // ডাটাবেস থেকে ইমেইল নিয়ে সব ধরণের স্পেস এবং কেস ফিক্স করা হচ্ছে
+            // ডাটাবেস থেকে আসা ইমেইলটিও ক্লিন করে মেলাচ্ছি (যাতে স্পেস থাকলেও ম্যাচ করে)
             const dbEmail = (a.partnerEmail || a.email || '').toString().trim().toLowerCase();
-            const currentPartner = partnerEmail.toString().trim().toLowerCase();
             
-            // ম্যাচিং চেক
             if (dbEmail === currentPartner) {
                 count++;
                 
+                // টাইমস্ট্যাম্প ফরম্যাট (DD/MM/YYYY)
                 let lastUpdate = 'N/A';
                 if (a.updatedAt && a.updatedAt.seconds) {
                     lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleDateString('en-GB');
                 }
 
+                // স্ট্যাটাস টেক্সট ক্লিনআপ (student_paid -> STUDENT PAID)
                 const statusText = (a.status || 'Processing').replace(/_/g, ' ').toUpperCase();
 
                 fullHtml += `
@@ -87,17 +89,17 @@ export function initTracking() {
             }
         });
         
-        console.log("DEBUG: Strong Matches Found:", count);
+        console.log("FINAL DEBUG - Matches Found:", count);
 
         const fullBody = document.getElementById('fullTrackingBody');
         const homeBody = document.getElementById('homeTrackingBody');
         
-        if(fullBody) fullBody.innerHTML = fullHtml || `<tr><td colspan='6' style='text-align:center'>No Data Found for ${partnerEmail}</td></tr>`;
+        if(fullBody) fullBody.innerHTML = fullHtml || `<tr><td colspan='6' style='text-align:center'>No Data Found for ${currentPartner}</td></tr>`;
         if(homeBody) homeBody.innerHTML = homeHtml || "<tr><td colspan='4' style='text-align:center'>No Activity</td></tr>";
     });
 }
 
-// ৫. ইউনিভার্সিটি সার্চ
+// ৫. ইউনিভার্সিটি সার্চ লজিক
 export async function searchUni() {
     const country = document.getElementById('fCountry').value.trim().toLowerCase();
     const degree = document.getElementById('fDegree').value;
@@ -125,32 +127,44 @@ export async function searchUni() {
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='6' style='text-align:center'>No results</td></tr>";
+        container.innerHTML = html || "<tr><td colspan='6' style='text-align:center'>No universities found.</td></tr>";
     } catch (err) { 
-        container.innerHTML = "<tr><td colspan='6'>Error loading data!</td></tr>"; 
+        console.error("Search Error:", err);
+        container.innerHTML = "<tr><td colspan='6' style='text-align:center'>Error loading data!</td></tr>"; 
     }
 }
 
 // ৬. উইথড্রয়াল রিকোয়েস্ট
 export async function requestWithdraw() {
     const amt = document.getElementById('wdAmount').value;
-    if(!amt || amt <= 0) return alert("Please enter amount");
+    if(!amt || amt <= 0) return alert("Please enter a valid amount");
+    
     try {
         await addDoc(collection(db, "withdrawals"), { 
-            email: partnerEmail, amount: Number(amt), 
+            email: partnerEmail, 
+            amount: Number(amt), 
             method: document.getElementById('wdMethod').value, 
-            status: "Pending", timestamp: serverTimestamp() 
+            status: "Pending", 
+            timestamp: serverTimestamp() 
         });
-        alert("Request Submitted!");
-    } catch (err) { alert("Failed!"); }
+        alert("Withdrawal Request Submitted!");
+        document.getElementById('wdAmount').value = "";
+    } catch (err) { 
+        console.error("Withdraw Error:", err);
+        alert("Request failed!"); 
+    }
 }
 
 // ৭. প্রোফাইল আপডেট
 export async function updateProfile() {
     const docId = localStorage.getItem('userDocId');
-    if(!docId) return alert("Login again");
+    if(!docId) return alert("Session expired, please login again.");
+    
     try {
         await updateDoc(doc(db, "users", docId), { phone: document.getElementById('pContact').value });
-        alert("Profile Updated!");
-    } catch (err) { alert("Update failed!"); }
+        alert("Profile Updated Successfully!");
+    } catch (err) { 
+        console.error("Update Error:", err);
+        alert("Update failed!"); 
+    }
 }
