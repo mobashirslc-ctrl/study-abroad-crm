@@ -8,36 +8,48 @@
     <link rel="stylesheet" href="style.css">
     <style>
         :root { --primary: #2b0054; --bg-dark: #070014; --gold: #f1c40f; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; display: flex; }
-        .sidebar { width: 260px; height: 100vh; background: #0d001a; border-right: 1px solid var(--border); position: fixed; padding: 20px; box-sizing: border-box; }
-        .wrapper { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; }
-        .section { display: none; padding: 30px; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; display: flex; overflow-x: hidden; }
+        
+        .sidebar { width: 260px; height: 100vh; background: #0d001a; border-right: 1px solid var(--border); position: fixed; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .wrapper { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; display: flex; flex-direction: column; }
+        .main { padding: 30px; flex-grow: 1; }
+        
+        .section { display: none; animation: fadeIn 0.4s ease; }
         .active-section { display: block !important; }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; cursor: pointer; border-radius: 10px; color: #ccc; display: flex; align-items: center; gap: 12px; }
-        .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
-        .card { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        .reg-input { width: 100%; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 5px; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
-        table { width: 100%; border-collapse: collapse; min-width: 900px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
-        th { color: var(--gold); text-transform: uppercase; font-size: 11px; }
+        
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; cursor: pointer; border-radius: 10px; color: #ccc; display: flex; align-items: center; gap: 12px; transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--gold); border: 1px solid var(--border); }
+        
+        .card { background: var(--glass); border: 1px solid var(--border); padding: 20px; border-radius: 15px; margin-bottom: 20px; backdrop-filter: blur(10px); }
+        .reg-input { width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn-gold:hover { transform: scale(1.02); filter: brightness(1.1); }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 800px; }
+        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo"><img src="logo.jpeg" alt="SCC" style="width:100%; max-width:140px; background:white; padding:8px; border-radius:8px; margin-bottom:20px;"></div>
+        <div class="logo-area" style="text-align:center; padding-bottom:30px;">
+            <img src="logo.jpeg" alt="SCC" style="width:100%; max-width:140px; background:white; padding:5px; border-radius:8px;">
+        </div>
         <div class="nav-item active" onclick="showTab('home', this)"><i class="fas fa-home"></i> Home</div>
         <div class="nav-item" onclick="showTab('assessment', this)"><i class="fas fa-bolt"></i> Assessment</div>
         <div class="nav-item" onclick="showTab('tracking', this)"><i class="fas fa-search-location"></i> Tracking</div>
         <div class="nav-item" onclick="showTab('withdraw', this)"><i class="fas fa-wallet"></i> Earning</div>
         <div class="nav-item" onclick="showTab('profile', this)"><i class="fas fa-user-circle"></i> Profile</div>
+        <div class="nav-item" onclick="logout()" style="margin-top:auto; color:#ff4757;"><i class="fas fa-sign-out-alt"></i> Logout</div>
     </div>
 
     <div class="wrapper">
-        <div class="top-bar" style="display: flex; justify-content: space-between; padding: 15px 30px; background: var(--glass); border-bottom: 1px solid var(--border);">
+        <div class="top-bar" style="display:flex; justify-content:space-between; padding:20px 30px; background:var(--glass); border-bottom:1px solid var(--border); align-items:center;">
             <div>Welcome, <span id="welcomeName" style="color:var(--gold); font-weight:bold;">Partner</span></div>
-            <button onclick="logout()" style="background:#ff4757; color:white; padding:5px 15px; border:none; border-radius:5px; cursor:pointer;">Logout</button>
+            <div style="color:var(--gold); font-size:14px;"><i class="fas fa-clock"></i> 2026 Portal Live</div>
         </div>
 
         <div class="main">
@@ -48,35 +60,26 @@
                 </div>
                 <div class="card">
                     <h3 style="color:var(--gold);">Recent Applications</h3>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead><tr><th>Student/Uni</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead>
-                            <tbody id="homeTrackingBody"></tbody>
-                        </table>
-                    </div>
+                    <div style="overflow-x:auto;"><table id="homeTable"><thead><tr><th>Student</th><th>Passport</th><th>Uni</th><th>Status</th></tr></thead><tbody id="homeTrackingBody"></tbody></table></div>
                 </div>
             </div>
 
             <div id="assessment" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold);">Smart Search Filter</h3>
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Smart Search Filter</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: flex-end;">
-                        <div><label style="font-size:10px;color:#aaa">Country</label><input type="text" id="fCountry" placeholder="UK, USA" class="reg-input"></div>
+                        <div><label style="font-size:10px;color:#aaa">Country</label><input type="text" id="fCountry" placeholder="e.g. UK" class="reg-input"></div>
                         <div><label style="font-size:10px;color:#aaa">Degree</label>
-                            <select id="fDegree" class="reg-input">
-                                <option value="">Any Degree</option>
-                                <option value="Bachelor">Bachelor</option>
-                                <option value="Master">Master</option>
-                            </select>
+                            <select id="fDegree" class="reg-input"><option value="">Any</option><option value="UG">Bachelor</option><option value="PG">Master</option></select>
                         </div>
-                        <div><label style="font-size:10px;color:#aaa">GPA</label><input type="number" step="0.01" id="fGPA" placeholder="GPA" class="reg-input"></div>
-                        <button onclick="searchUniversity()" class="btn-gold" style="height:40px; margin-bottom:10px;">SEARCH</button>
+                        <div><label style="font-size:10px;color:#aaa">GPA</label><input type="number" step="0.1" id="fGPA" placeholder="4.50" class="reg-input"></div>
+                        <button onclick="searchUni()" class="btn-gold" style="margin-bottom:10px; height:45px;">SEARCH</button>
                     </div>
                 </div>
                 <div id="searchResultArea" style="display:none;" class="card">
                     <div style="overflow-x:auto;">
                         <table>
-                            <thead><tr><th>University</th><th>Degree</th><th>Min GPA</th><th>Fees (৳)</th><th>Comm (৳)</th><th>Action</th></tr></thead>
+                            <thead><tr><th>University</th><th>Course</th><th>Req.</th><th>Fees (৳)</th><th>Comm (৳)</th><th>Action</th></tr></thead>
                             <tbody id="uniListContainer"></tbody>
                         </table>
                     </div>
@@ -85,38 +88,38 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold);">Detailed Application Status</h3>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead><tr><th>Student/Uni</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead>
-                            <tbody id="sidebarTrackingBody"></tbody>
-                        </table>
-                    </div>
+                    <h3 style="color:var(--gold);">Full Application Tracking</h3>
+                    <div style="overflow-x:auto;"><table><thead><tr><th>Date</th><th>Student Name</th><th>Passport</th><th>University</th><th>Status</th></tr></thead><tbody id="fullTrackingBody"></tbody></table></div>
                 </div>
             </div>
 
             <div id="withdraw" class="section">
-                <div class="card" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-wallet" style="font-size: 40px; color: var(--gold);"></i>
-                    <h2>৳ <span id="withdrawFinalBalance">0</span></h2>
-                    <div style="max-width:300px; margin:auto;">
-                        <input type="number" id="wdAmount" placeholder="Amount" class="reg-input">
+                <div class="card" style="text-align: center; padding: 50px;">
+                    <i class="fas fa-wallet" style="font-size: 50px; color: var(--gold); margin-bottom: 20px;"></i>
+                    <p>Current Final Balance</p>
+                    <h1 style="color:var(--gold); margin: 10px 0;">৳ <span id="withdrawFinalDisplay">0</span></h1>
+                    <div style="max-width:300px; margin: 30px auto;">
+                        <input type="number" id="wdAmount" placeholder="Amount (৳)" class="reg-input">
                         <select id="wdMethod" class="reg-input">
                             <option value="bKash">bKash</option>
                             <option value="Nagad">Nagad</option>
+                            <option value="Bank">Bank Transfer</option>
                         </select>
-                        <button onclick="requestWithdraw()" class="btn-gold">WITHDRAW NOW</button>
+                        <button onclick="handleWithdraw()" class="btn-gold">WITHDRAW NOW</button>
                     </div>
                 </div>
             </div>
 
             <div id="profile" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold);">Agency Profile</h3>
-                    <label>Agency Name</label><input type="text" id="pAgency" class="reg-input" readonly>
-                    <label>Email</label><input type="text" id="pEmail" class="reg-input" readonly>
-                    <label>Contact No</label><input type="text" id="pContact" class="reg-input">
-                    <button onclick="updateProfile()" class="btn-gold">SAVE CHANGES</button>
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Agency Profile</h3>
+                    <div style="max-width:500px;">
+                        <label style="font-size:11px; color:#aaa;">Agency Name</label><input type="text" id="pAgency" class="reg-input" readonly>
+                        <label style="font-size:11px; color:#aaa;">Login Email</label><input type="text" id="pEmail" class="reg-input" readonly>
+                        <label style="font-size:11px; color:#aaa;">Update Phone</label><input type="text" id="pContact" class="reg-input">
+                        <label style="font-size:11px; color:#aaa;">Address</label><textarea id="pAddress" class="reg-input" style="height:80px;"></textarea>
+                        <button onclick="updateProfile()" class="btn-gold">UPDATE PROFILE</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,91 +127,128 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, where, doc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // Admin প্যানেলের একই Firebase Config ব্যবহার করুন
         const firebaseConfig = {
-            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk",
-            authDomain: "ihp-portal-v3.firebaseapp.com",
-            projectId: "ihp-portal-v3",
-            storageBucket: "ihp-portal-v3.firebasestorage.app",
-            messagingSenderId: "481157902534",
-            appId: "1:481157902534:web:2d9784032fbf0f2f7fe7c7"
+            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
+            authDomain: "scc-partner-portal.firebaseapp.com",
+            projectId: "scc-partner-portal",
+            storageBucket: "scc-partner-portal.firebasestorage.app",
+            messagingSenderId: "13013457431",
+            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const userEmail = localStorage.getItem('partnerEmail');
+        const userEmail = localStorage.getItem('partnerEmail') || 'test@partner.com'; // লগইন সেশন অনুযায়ী
 
-        // ১. রিয়েল-টাইম প্রোফাইল এবং ব্যালেন্স লোড
+        // ১. রিয়েল-টাইম প্রোফাইল এবং ওয়ালেট ব্যালেন্স ফিক্স
         function loadPartnerData() {
-            if (!userEmail) return;
-            const q = query(collection(db, "partners"), where("email", "==", userEmail));
-            
+            const q = query(collection(db, "users"), where("email", "==", userEmail));
             onSnapshot(q, (snap) => {
-                snap.forEach(doc => {
-                    const data = doc.data();
-                    document.getElementById('welcomeName').innerText = data.agencyName || "Partner";
-                    document.getElementById('pAgency').value = data.agencyName || "";
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+                    localStorage.setItem('partnerDocId', docId); // ভবিষ্যতে আপডেটের জন্য
+
+                    document.getElementById('welcomeName').innerText = data.fullName || "Partner";
+                    document.getElementById('pAgency').value = data.fullName || "";
                     document.getElementById('pEmail').value = data.email || "";
                     document.getElementById('pContact').value = data.phone || "";
+                    
+                    // Wallet Logic - Admin যদি Firestore-এ pendingComm বা finalBalance যোগ করে
                     document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
                     document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
-                    document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
+                    document.getElementById('withdrawFinalDisplay').innerText = (data.finalBalance || 0).toLocaleString();
                 });
             });
         }
 
-        // ২. ট্র্যাকিং ডাটা লোড (রিয়েল-টাইম)
+        // ২. স্মার্ট অ্যাসেসমেন্ট (ইউনিভার্সিটি কানেকশন)
+        window.searchUni = async () => {
+            const country = document.getElementById('fCountry').value.toLowerCase();
+            const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
+            const resArea = document.getElementById('searchResultArea');
+            const container = document.getElementById('uniListContainer');
+            
+            resArea.style.display = "block";
+            container.innerHTML = "Searching...";
+
+            const BDT_RATE = 120; // অ্যাডমিন প্যানেল অনুযায়ী ফিক্সড রেট
+
+            const snap = await getDocs(collection(db, "universities"));
+            let html = "";
+            snap.forEach(docSnap => {
+                const u = docSnap.data();
+                if ((!country || u.country.toLowerCase().includes(country)) && gpa >= (u.minGPA || 0)) {
+                    const feesBDT = (u.semesterFee || 0) * BDT_RATE;
+                    const commBDT = Math.round((feesBDT * (u.partnerComm || 0)) / 100);
+                    
+                    html += `<tr>
+                        <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
+                        <td>${u.courseName}</td>
+                        <td>GPA ${u.minGPA}+</td>
+                        <td>৳${feesBDT.toLocaleString()}</td>
+                        <td style="color:var(--gold); font-weight:bold;">৳${commBDT.toLocaleString()}</td>
+                        <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY NOW</button></td>
+                    </tr>`;
+                }
+            });
+            container.innerHTML = html || "<tr><td colspan='6'>No matching university found.</td></tr>";
+        };
+
+        // ৩. রিয়েল-টাইম ট্র্যাকিং
         function loadTracking() {
             const q = query(collection(db, "applications"), where("partnerEmail", "==", userEmail));
             onSnapshot(q, (snap) => {
                 let html = "";
-                snap.forEach(doc => {
-                    const a = doc.data();
-                    html += `<tr><td><b>${a.studentName}</b><br><small>${a.university}</small></td><td>${a.passport}</td><td>${a.status || 'Pending'}</td><td>${a.date || 'N/A'}</td></tr>`;
+                snap.forEach(docSnap => {
+                    const a = docSnap.data();
+                    html += `<tr>
+                        <td>${a.date || '2026'}</td>
+                        <td><b>${a.studentName}</b></td>
+                        <td>${a.passport}</td>
+                        <td>${a.university}</td>
+                        <td><span style="color:var(--gold)">${a.status || 'Processing'}</span></td>
+                    </tr>`;
                 });
                 document.getElementById('homeTrackingBody').innerHTML = html;
-                document.getElementById('sidebarTrackingBody').innerHTML = html;
+                document.getElementById('fullTrackingBody').innerHTML = html;
             });
         }
 
-        // ৩. স্মার্ট সার্চ লজিক
-        window.searchUniversity = async () => {
-            const country = document.getElementById('fCountry').value.trim().toLowerCase();
-            const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
-            const container = document.getElementById('uniListContainer');
-            document.getElementById('searchResultArea').style.display = "block";
-            container.innerHTML = "Searching...";
+        // ৪. উইথড্র হ্যান্ডলার
+        window.handleWithdraw = async () => {
+            const amount = document.getElementById('wdAmount').value;
+            if(!amount || amount < 500) return alert("Minimum withdrawal ৳500");
 
-            const BDT_RATES = { "uk": 155, "usa": 120, "canada": 88, "australia": 78, "default": 120 };
-            const snap = await getDocs(collection(db, "universities"));
-            let html = "";
+            try {
+                await addDoc(collection(db, "withdrawals"), {
+                    partnerEmail: userEmail,
+                    amount: Number(amount),
+                    method: document.getElementById('wdMethod').value,
+                    status: "pending",
+                    date: new Date().toLocaleDateString()
+                });
+                alert("Withdrawal request sent successfully!");
+                document.getElementById('wdAmount').value = "";
+            } catch (e) { alert("Error: " + e.message); }
+        };
+
+        // ৫. প্রোফাইল আপডেট
+        window.updateProfile = async () => {
+            const docId = localStorage.getItem('partnerDocId');
+            if(!docId) return alert("Error: Session Expired");
             
-            snap.forEach(doc => {
-                const u = doc.data();
-                if ((!country || u.country.toLowerCase().includes(country)) && gpa >= (u.minGPA || 0)) {
-                    const rate = BDT_RATES[u.country.toLowerCase()] || BDT_RATES.default;
-                    const comm = Math.round(((u.totalComm || 0) * (u.partnerShare || 50) / 100) * rate);
-                    html += `<tr><td>${u.name}</td><td>${u.degree}</td><td>${u.minGPA}</td><td>৳${((u.tuitionFee || 0) * rate).toLocaleString()}</td><td style="color:var(--gold)">৳${comm.toLocaleString()}</td><td><button class="btn-gold" style="padding:5px">Apply</button></td></tr>`;
-                }
+            await updateDoc(doc(db, "users", docId), {
+                phone: document.getElementById('pContact').value,
+                address: document.getElementById('pAddress').value
             });
-            container.innerHTML = html || "<tr><td colspan='6'>No results found</td></tr>";
+            alert("Profile Updated!");
         };
 
-        // ৪. উইথড্র রিকোয়েস্ট
-        window.requestWithdraw = async () => {
-            const amt = document.getElementById('wdAmount').value;
-            if(!amt) return alert("Enter amount");
-            await addDoc(collection(db, "withdrawals"), {
-                email: userEmail,
-                amount: amt,
-                method: document.getElementById('wdMethod').value,
-                status: "Pending",
-                date: new Date().toLocaleDateString()
-            });
-            alert("Request Sent!");
-        };
-
+        // Tab Switcher
         window.showTab = (id, el) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
             document.getElementById(id).classList.add('active-section');
@@ -216,8 +256,9 @@
             el.classList.add('active');
         };
 
-        window.logout = () => { localStorage.clear(); location.href = "index.html"; };
+        window.logout = () => { localStorage.clear(); window.location.href = "index.html"; };
 
+        // ইনিশিয়াল লোড
         loadPartnerData();
         loadTracking();
     </script>
