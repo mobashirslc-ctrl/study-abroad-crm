@@ -14,48 +14,71 @@
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; }
-        .verified { background: #2ecc71; color: white; }
-        .submitted { background: #3498db; color: white; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-action:hover { transform: scale(1.05); }
-        .btn-locked { background: #555; cursor: not-allowed; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); width: 400px; }
+        
+        .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 15px; }
+        .btn-action { background: var(--gold); color: black; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
         <div><img src="logo.jpeg" alt="SCC" width="80"></div>
-        <div>Staff: <span id="staffDisplay" style="color:var(--gold); font-weight:bold;">Loading...</span></div>
-        <button onclick="location.href='index.html'" style="background:#ff4757; border:none; color:white; padding:5px 15px; border-radius:5px; cursor:pointer;">Logout</button>
+        <div>Staff: <span id="staffDisplay" style="color:var(--gold);">Loading...</span></div>
     </div>
 
     <div class="container">
         <div class="card">
-            <h3><i class="fas fa-file-import"></i> Incoming Applications</h3>
+            <h3>Incoming Applications & Status Update</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Student Info</th>
-                        <th>Agency/Partner</th>
+                        <th>Student Name</th>
                         <th>Passport</th>
-                        <th>Status</th>
+                        <th>Current Status</th>
                         <th>Handled By</th>
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody id="incomingTableBody">
-                    <tr><td colspan="6" style="text-align:center;">Fetching data...</td></tr>
-                </tbody>
+                <tbody id="incomingTableBody"></tbody>
             </table>
+        </div>
+    </div>
+
+    <div id="reviewModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:var(--gold);">Update Student Status</h3>
+            <p id="reviewStudentName" style="font-size:14px;"></p>
+            
+            <label style="font-size:12px; color:#aaa;">Select New Status:</label>
+            <select id="statusSelect" class="reg-input">
+                <option value="submitted">Submitted</option>
+                <option value="document_pending">Document Pending</option>
+                <option value="under_review">Under Review</option>
+                <option value="conditional_offer">Conditional Offer</option>
+                <option value="unconditional_offer">Unconditional Offer</option>
+                <option value="tuition_fee_paid">Tuition Fee Paid</option>
+                <option value="cas_issued">CAS / COE Issued</option>
+                <option value="visa_applied">Visa Applied</option>
+                <option value="visa_granted">Visa Granted</option>
+                <option value="visa_refused">Visa Refused</option>
+                <option value="refund_process">Refund Process</option>
+                <option value="verified">Verified (Add to Wallet)</option>
+            </select>
+
+            <button onclick="updateStatusNow()" class="btn-action" style="width:100%;">UPDATE STATUS</button>
+            <button onclick="closeModal()" style="background:transparent; color:red; border:none; margin-top:10px; cursor:pointer; width:100%;">Close</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // আপনার ফায়ারবেস কনফিগ
         const firebaseConfig = { 
             apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
             authDomain: "ihp-portal-v3.firebaseapp.com", 
@@ -69,62 +92,52 @@
         const db = getFirestore(app);
         const staffEmail = localStorage.getItem('userEmail') || "staff@scc.com";
 
-        // ১. স্ট্যাফ প্রোফাইল সেটআপ
         document.getElementById('staffDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
 
-        // ২. লাইভ ডাটা লোডিং
-        const q = query(collection(db, "applications"), orderBy("createdAt", "desc"));
-        
-        onSnapshot(q, (snap) => {
+        onSnapshot(collection(db, "applications"), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
             let html = "";
-            
             snap.forEach(dSnap => {
                 const d = dSnap.data();
                 const id = dSnap.id;
-                // যদি অন্য কেউ হ্যান্ডেল করে তবে লক দেখাবে
-                const isLocked = d.handledBy && d.handledBy !== staffEmail;
-                const handlerName = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'WAITING';
-
                 html += `
-                    <tr style="${isLocked ? 'opacity: 0.5;' : ''}">
-                        <td><b>${d.studentName}</b><br><small>${d.university}</small></td>
-                        <td style="color:#a29bfe;">${d.partnerEmail ? d.partnerEmail.split('@')[0].toUpperCase() : 'N/A'}</td>
+                    <tr>
+                        <td><b>${d.studentName}</b></td>
                         <td>${d.passportNo}</td>
-                        <td><span class="status-pill ${d.status}">${d.status.toUpperCase()}</span></td>
-                        <td style="font-size:12px; font-weight:bold;">${isLocked ? '<i class="fas fa-lock"></i> ' : ''}${handlerName}</td>
-                        <td>
-                            <button class="btn-action ${isLocked ? 'btn-locked' : ''}" 
-                                onclick="window.verifyApp('${id}', '${d.studentName}')" 
-                                ${isLocked || d.isVerified ? 'disabled' : ''}>
-                                ${d.isVerified ? 'VERIFIED' : 'VERIFY NOW'}
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                        <td><span class="status-pill">${d.status.replace('_', ' ')}</span></td>
+                        <td>${d.handledBy ? d.handledBy.split('@')[0] : 'Waiting'}</td>
+                        <td><button class="btn-action" onclick="openReview('${id}', '${d.studentName}')">REVIEW</button></td>
+                    </tr>`;
             });
-            tbody.innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No records found.</td></tr>";
+            tbody.innerHTML = html;
         });
 
-        // ৩. ভেরিফিকেশন লজিক (এটি পার্টনার ওয়ালেটকে ট্রিগার করবে)
-        window.verifyApp = async (id, name) => {
-            if(!confirm(`Confirm verification for ${name}?`)) return;
+        window.openReview = (id, name) => {
+            window.currentAppId = id;
+            document.getElementById('reviewStudentName').innerText = "Student: " + name;
+            document.getElementById('reviewModal').style.display = "flex";
+        };
+
+        window.closeModal = () => document.getElementById('reviewModal').style.display = "none";
+
+        window.updateStatusNow = async () => {
+            const newStatus = document.getElementById('statusSelect').value;
+            const docRef = doc(db, "applications", window.currentAppId);
             
-            const docRef = doc(db, "applications", id);
+            // "verified" status dilei kebol wallet-e taka add hobe
+            const isVerified = (newStatus === "verified");
+
             try {
-                // isVerified: true হলে পার্টনারের পেন্ডিং ওয়ালেটে টাকা যাবে
                 await updateDoc(docRef, {
-                    isVerified: true,
-                    status: "verified",
+                    status: newStatus,
+                    isVerified: isVerified,
                     handledBy: staffEmail,
                     updatedAt: serverTimestamp()
                 });
-                alert("Verification Successful!");
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+                alert("Status Updated Successfully!");
+                closeModal();
+            } catch (e) { alert(e.message); }
         };
-
     </script>
 </body>
 </html>
