@@ -102,7 +102,6 @@
 
         document.getElementById('staffDisplay').innerText = staffEmail.toUpperCase();
 
-        // 1. Real-time applications listener
         onSnapshot(collection(db, "applications"), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
             let html = "";
@@ -127,7 +126,7 @@
             tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
 
-        // 2. View Documents Function (Updated with Fallback names)
+        // 1. View Docs Logic (Universal Fallback)
         window.viewDocs = async (id) => {
             const list = document.getElementById('docList');
             list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Searching for files...</p>";
@@ -138,16 +137,16 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const docItems = [
-                        { label: "Passport", url: data.pdf1 || data.docURL1 || data.passportPDF || data.passportUrl },
-                        { label: "Academic", url: data.pdf2 || data.docURL2 || data.academicPDF || data.academicUrl },
-                        { label: "Language", url: data.pdf3 || data.docURL3 || data.languagePDF || data.languageUrl },
-                        { label: "Other", url: data.pdf4 || data.docURL4 || data.otherPDF || data.otherUrl }
+                        { label: "Passport", url: data.pdf1 || data.passportPDF || data.docURL1 || data.passportUrl || data.passport },
+                        { label: "Academic", url: data.pdf2 || data.academicPDF || data.docURL2 || data.academicUrl || data.academic },
+                        { label: "Language", url: data.pdf3 || data.languagePDF || data.docURL3 || data.languageUrl || data.language },
+                        { label: "Other", url: data.pdf4 || data.otherPDF || data.docURL4 || data.otherUrl || data.other }
                     ];
 
                     let html = "";
                     let found = false;
                     docItems.forEach(item => {
-                        if (item.url && item.url !== "" && item.url !== "undefined") {
+                        if (item.url && item.url !== "" && item.url !== "undefined" && item.url !== null) {
                             found = true;
                             html += `
                                 <a href="${item.url}" target="_blank" class="doc-link">
@@ -160,26 +159,29 @@
                         }
                     });
 
-                    list.innerHTML = found ? html : `<div style="text-align:center; padding:20px;"><i class="fas fa-exclamation-triangle" style="font-size:30px; color:red;"></i><p style="color:red; margin-top:10px;">No PDF links found in database.</p></div>`;
+                    list.innerHTML = found ? html : `<p style="text-align:center; padding:20px; color:red;">No documents found.</p>`;
                 }
             } catch (e) {
                 list.innerHTML = `<p style='color:red;'>Error: ${e.message}</p>`;
             }
         };
 
-        // 3. Helper Functions
+        // 2. Open Review Function (MISSING IN YOUR CODE)
         window.openReview = (id, name) => {
             window.currentAppId = id;
             document.getElementById('reviewStudentName').innerText = "Reviewing: " + name;
             document.getElementById('reviewModal').style.display = "flex";
         };
 
+        // 3. Close Modal Function (MISSING IN YOUR CODE)
         window.closeModal = () => {
             document.getElementById('reviewModal').style.display = "none";
             document.getElementById('docModal').style.display = "none";
         };
 
+        // 4. Update Status Function (MISSING IN YOUR CODE)
         window.updateStatusNow = async () => {
+            if(!window.currentAppId) return;
             const newStatus = document.getElementById('statusSelect').value;
             const docRef = doc(db, "applications", window.currentAppId);
             try {
@@ -188,12 +190,11 @@
                     handledBy: staffEmail.toLowerCase(),
                     updatedAt: serverTimestamp()
                 });
-                alert("Status updated successfully!");
+                alert("Status updated!");
                 closeModal();
-            } catch (e) {
-                alert("Update failed: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
+
     </script>
 </body>
 </html>
