@@ -18,24 +18,20 @@ const db = getFirestore(app);
 const partnerEmail = (localStorage.getItem('partnerEmail') || '').toString().trim().toLowerCase();
 
 if (!partnerEmail) {
-    console.warn("No partner email found, redirecting to login...");
     window.location.replace("index.html");
 }
 
 // ৩. প্রোফাইল ও ব্যালেন্স লোড করা
 export function initRealtimeData() {
     if (!partnerEmail) return;
-
     const q = query(collection(db, "users"), where("email", "==", partnerEmail));
     onSnapshot(q, (snap) => {
         snap.forEach(docSnap => {
             const data = docSnap.data();
             localStorage.setItem('userDocId', docSnap.id);
-            
             if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = data.fullName || 'Partner';
             if(document.getElementById('topPending')) document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
             if(document.getElementById('topFinal')) document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
-            if(document.getElementById('withdrawFinalBalance')) document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
             if(document.getElementById('pAgency')) document.getElementById('pAgency').value = data.fullName || '';
             if(document.getElementById('pContact')) document.getElementById('pContact').value = data.phone || '';
         });
@@ -46,6 +42,7 @@ export function initRealtimeData() {
 export function initTracking() {
     if (!partnerEmail) return;
 
+    // সরাসরি 'applications' কালেকশন থেকে সব ডাটা পড়া হচ্ছে
     const q = collection(db, "applications");
     
     onSnapshot(q, (snap) => {
@@ -53,26 +50,23 @@ export function initTracking() {
         let homeHtml = "";
         let count = 0;
 
-        // আপনার লগইন করা ইমেইলটি ক্লিন করে নেওয়া হচ্ছে
-        const currentPartner = partnerEmail.toString().trim().toLowerCase();
+        const currentPartner = partnerEmail.toLowerCase();
         console.log("DEBUG: System looking for cleaned email:", currentPartner);
 
         snap.forEach(docSnap => {
             const a = docSnap.data();
             
-            // ডাটাবেস থেকে আসা ইমেইলটিও ক্লিন করে মেলাচ্ছি (যাতে স্পেস থাকলেও ম্যাচ করে)
+            // ডাটাবেসের ইমেইল চেক (partnerEmail অথবা email ফিল্ড থেকে)
             const dbEmail = (a.partnerEmail || a.email || '').toString().trim().toLowerCase();
             
             if (dbEmail === currentPartner) {
                 count++;
                 
-                // টাইমস্ট্যাম্প ফরম্যাট (DD/MM/YYYY)
                 let lastUpdate = 'N/A';
                 if (a.updatedAt && a.updatedAt.seconds) {
                     lastUpdate = new Date(a.updatedAt.seconds * 1000).toLocaleDateString('en-GB');
                 }
 
-                // স্ট্যাটাস টেক্সট ক্লিনআপ (student_paid -> STUDENT PAID)
                 const statusText = (a.status || 'Processing').replace(/_/g, ' ').toUpperCase();
 
                 fullHtml += `
@@ -89,7 +83,7 @@ export function initTracking() {
             }
         });
         
-        console.log("FINAL DEBUG - Matches Found:", count);
+        console.log("FINAL DEBUG - Total Matches Found:", count);
 
         const fullBody = document.getElementById('fullTrackingBody');
         const homeBody = document.getElementById('homeTrackingBody');
@@ -129,42 +123,6 @@ export async function searchUni() {
         });
         container.innerHTML = html || "<tr><td colspan='6' style='text-align:center'>No universities found.</td></tr>";
     } catch (err) { 
-        console.error("Search Error:", err);
-        container.innerHTML = "<tr><td colspan='6' style='text-align:center'>Error loading data!</td></tr>"; 
-    }
-}
-
-// ৬. উইথড্রয়াল রিকোয়েস্ট
-export async function requestWithdraw() {
-    const amt = document.getElementById('wdAmount').value;
-    if(!amt || amt <= 0) return alert("Please enter a valid amount");
-    
-    try {
-        await addDoc(collection(db, "withdrawals"), { 
-            email: partnerEmail, 
-            amount: Number(amt), 
-            method: document.getElementById('wdMethod').value, 
-            status: "Pending", 
-            timestamp: serverTimestamp() 
-        });
-        alert("Withdrawal Request Submitted!");
-        document.getElementById('wdAmount').value = "";
-    } catch (err) { 
-        console.error("Withdraw Error:", err);
-        alert("Request failed!"); 
-    }
-}
-
-// ৭. প্রোফাইল আপডেট
-export async function updateProfile() {
-    const docId = localStorage.getItem('userDocId');
-    if(!docId) return alert("Session expired, please login again.");
-    
-    try {
-        await updateDoc(doc(db, "users", docId), { phone: document.getElementById('pContact').value });
-        alert("Profile Updated Successfully!");
-    } catch (err) { 
-        console.error("Update Error:", err);
-        alert("Update failed!"); 
+        container.innerHTML = "<tr><td colspan='6'>Error loading data!</td></tr>"; 
     }
 }
