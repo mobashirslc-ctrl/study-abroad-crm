@@ -108,7 +108,6 @@
             snap.forEach(dSnap => {
                 const d = dSnap.data();
                 const id = dSnap.id;
-                
                 const isLocked = d.handledBy && d.handledBy.toLowerCase() !== staffEmail.toLowerCase();
                 const handlerDisplay = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'FREE';
 
@@ -127,40 +126,43 @@
             tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
 
-        // --- ডাইনামিক ডক ভিউ লজিক (Functional) ---
         window.viewDocs = async (id) => {
             const list = document.getElementById('docList');
-            list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Fetching Links...</p>";
+            list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Searching for files...</p>";
             document.getElementById('docModal').style.display = "flex";
 
             try {
                 const docSnap = await getDoc(doc(db, "applications", id));
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    
-                    // আপনার পার্টনার প্যানেল থেকে পাঠানো ফিল্ড নাম অনুযায়ী ম্যাপিং
                     const docItems = [
-                        { label: "Passport Copy", url: data.pdf1 || data.docURL1 },
-                        { label: "Academic Docs", url: data.pdf2 || data.docURL2 },
-                        { label: "Language Test", url: data.pdf3 || data.docURL3 },
-                        { label: "Other Papers", url: data.pdf4 || data.docURL4 }
+                        { label: "Passport", url: data.pdf1 || data.docURL1 || data.passportPDF },
+                        { label: "Academic", url: data.pdf2 || data.docURL2 || data.academicPDF },
+                        { label: "Language", url: data.pdf3 || data.docURL3 || data.languagePDF },
+                        { label: "Other", url: data.pdf4 || data.docURL4 || data.otherPDF }
                     ];
 
                     let html = "";
+                    let found = false;
                     docItems.forEach(item => {
-                        if (item.url) {
+                        if (item.url && item.url !== "") {
+                            found = true;
                             html += `
                                 <a href="${item.url}" target="_blank" class="doc-link">
                                     <i class="fas fa-file-pdf"></i>
                                     <div>
                                         <div style="font-weight:bold;">${item.label}</div>
-                                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">Click to open in new tab</div>
+                                        <div style="font-size:10px; color:rgba(255,255,255,0.5);">Click to View/Download</div>
                                     </div>
                                 </a>`;
                         }
                     });
 
-                    list.innerHTML = html || "<p style='text-align:center; color:red;'>No PDF links found for this student.</p>";
+                    list.innerHTML = found ? html : `
+                        <div style="text-align:center; padding:20px;">
+                            <i class="fas fa-exclamation-triangle" style="font-size:30px; color:red;"></i>
+                            <p style="color:red; margin-top:10px;">No PDF links found in database.</p>
+                        </div>`;
                 }
             } catch (e) {
                 list.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>";
@@ -180,15 +182,14 @@
         window.updateStatusNow = async () => {
             const newStatus = document.getElementById('statusSelect').value;
             const docRef = doc(db, "applications", window.currentAppId);
-            
             try {
                 await updateDoc(docRef, {
                     status: newStatus,
-                    handledBy: staffEmail.toLowerCase(), 
+                    handledBy: staffEmail.toLowerCase(),
                     isVerified: newStatus === "verified",
                     updatedAt: serverTimestamp()
                 });
-                alert("Updated & Locked to you!");
+                alert("Status Updated Successfully!");
                 closeModal();
             } catch (e) { alert(e.message); }
         };
