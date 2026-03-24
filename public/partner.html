@@ -71,8 +71,22 @@
 
             <div id="tracking" class="section">
                 <div class="card">
-                    <h3 style="color:var(--gold);">Detailed Application Status</h3>
-                    <div style="overflow-x:auto;"><table><thead><tr><th>Student/Uni</th><th>Passport</th><th>Status</th><th>Date</th></tr></thead><tbody id="sidebarTrackingBody"></tbody></table></div>
+                    <h3 style="color:var(--gold); margin-bottom:15px;">Detailed Application Status</h3>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Contact No</th>
+                                    <th>Passport No</th>
+                                    <th>Status</th>
+                                    <th>Compliance Staff</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullTrackingBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -102,9 +116,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Admin Config অনুযায়ী
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
             authDomain: "scc-partner-portal.firebaseapp.com",
@@ -118,7 +131,6 @@
         const db = getFirestore(app);
         const partnerEmail = localStorage.getItem('partnerEmail') || 'demo@scc.com';
 
-        // ১. রিয়েল-টাইম প্রোফাইল ও ওয়ালেট লজিক
         function initRealtimeData() {
             const q = query(collection(db, "users"), where("email", "==", partnerEmail));
             onSnapshot(q, (snap) => {
@@ -128,8 +140,6 @@
                     document.getElementById('welcomeName').innerText = data.fullName;
                     document.getElementById('pAgency').value = data.fullName;
                     document.getElementById('pContact').value = data.phone || '';
-                    
-                    // Wallet Logic (Realtime)
                     document.getElementById('topPending').innerText = `৳${(data.pendingComm || 0).toLocaleString()}`;
                     document.getElementById('topFinal').innerText = `৳${(data.finalBalance || 0).toLocaleString()}`;
                     document.getElementById('withdrawFinalBalance').innerText = (data.finalBalance || 0).toLocaleString();
@@ -137,69 +147,47 @@
             });
         }
 
-        // ২. ৫টি ফিল্ড সহ স্মার্ট অ্যাসেসমেন্ট
         window.searchUni = async () => {
             const country = document.getElementById('fCountry').value.toLowerCase();
             const degree = document.getElementById('fDegree').value;
-            const gpa = parseFloat(document.getElementById('fGPA').value) || 0;
-            const langScore = parseFloat(document.getElementById('fLangScore').value) || 0;
-            
             const container = document.getElementById('uniListContainer');
             document.getElementById('searchResultArea').style.display = "block";
             container.innerHTML = "Searching...";
 
-            const BDT_RATE = 120; // Admin প্যানেল অনুযায়ী
+            const BDT_RATE = 120;
             const snap = await getDocs(collection(db, "universities"));
             let html = "";
-            
             snap.forEach(docSnap => {
                 const u = docSnap.data();
-                // ফিল্টারিং লজিক
-                if ((!country || u.country.toLowerCase().includes(country)) && 
-                    (!degree || u.degree === degree) && 
-                    (gpa >= (u.minGPA || 0))) {
-                    
+                if ((!country || u.country.toLowerCase().includes(country)) && (!degree || u.degree === degree)) {
                     const feesBDT = (u.semesterFee || 0) * BDT_RATE;
                     const commBDT = (feesBDT * (u.partnerComm || 0)) / 100;
-
-                    html += `<tr>
-                        <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                        <td>${u.degree}</td>
-                        <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq || 'N/A'}</td>
-                        <td>৳${feesBDT.toLocaleString()}</td>
-                        <td style="color:var(--gold)">৳${commBDT.toLocaleString()}</td>
-                        <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td>
-                    </tr>`;
+                    html += `<tr><td><b>${u.universityName}</b><br><small>${u.country}</small></td><td>${u.degree}</td><td>GPA: ${u.minGPA}</td><td>৳${feesBDT.toLocaleString()}</td><td style="color:var(--gold)">৳${commBDT.toLocaleString()}</td><td><button class="btn-gold" style="padding:5px 10px; font-size:11px;">APPLY</button></td></tr>`;
                 }
             });
-            container.innerHTML = html || "<tr><td colspan='6'>No University Matches Found</td></tr>";
+            container.innerHTML = html || "<tr><td colspan='6'>No Matches Found</td></tr>";
         };
 
-        // ৩. রিয়েল-টাইম ট্র্যাকিং
         function initTracking() {
             const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
             onSnapshot(q, (snap) => {
-                let html = "";
+                let fullHtml = ""; let homeHtml = "";
                 snap.forEach(docSnap => {
                     const a = docSnap.data();
-                    html += `<tr><td><b>${a.studentName}</b><br><small>${a.university}</small></td><td>${a.passport}</td><td>${a.status}</td><td>${a.date}</td></tr>`;
+                    const lastUpdate = a.updatedAt ? new Date(a.updatedAt.seconds * 1000).toLocaleString() : (a.date || 'N/A');
+                    fullHtml += `<tr><td><b>${a.studentName}</b><br><small>${a.university}</small></td><td>${a.studentContact || 'N/A'}</td><td>${a.passport}</td><td>${a.status}</td><td>${a.complianceStaff || 'N/A'}</td><td>${lastUpdate}</td></tr>`;
+                    homeHtml += `<tr><td><b>${a.studentName}</b></td><td>${a.passport}</td><td>${a.status}</td><td>${a.date}</td></tr>`;
                 });
-                document.getElementById('homeTrackingBody').innerHTML = html;
-                document.getElementById('sidebarTrackingBody').innerHTML = html;
+                document.getElementById('fullTrackingBody').innerHTML = fullHtml;
+                document.getElementById('homeTrackingBody').innerHTML = homeHtml;
             });
         }
 
         window.requestWithdraw = async () => {
             const amt = document.getElementById('wdAmount').value;
             if(!amt) return alert("Enter amount");
-            await addDoc(collection(db, "withdrawals"), {
-                email: partnerEmail,
-                amount: Number(amt),
-                method: document.getElementById('wdMethod').value,
-                status: "Pending",
-                timestamp: new Date().getTime()
-            });
-            alert("Withdrawal request submitted!");
+            await addDoc(collection(db, "withdrawals"), { email: partnerEmail, amount: Number(amt), method: document.getElementById('wdMethod').value, status: "Pending", timestamp: serverTimestamp() });
+            alert("Requested!");
         };
 
         window.showTab = (id, el) => {
@@ -210,9 +198,7 @@
         };
 
         window.logout = () => { localStorage.clear(); location.href = "index.html"; };
-
-        initRealtimeData();
-        initTracking();
+        initRealtimeData(); initTracking();
     </script>
 </body>
 </html>
