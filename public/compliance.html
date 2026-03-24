@@ -102,6 +102,7 @@
 
         document.getElementById('staffDisplay').innerText = staffEmail.toUpperCase();
 
+        // 1. Real-time applications listener
         onSnapshot(collection(db, "applications"), (snap) => {
             const tbody = document.getElementById('incomingTableBody');
             let html = "";
@@ -126,6 +127,7 @@
             tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
         });
 
+        // 2. View Documents Function (Updated with Fallback names)
         window.viewDocs = async (id) => {
             const list = document.getElementById('docList');
             list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Searching for files...</p>";
@@ -136,16 +138,16 @@
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     const docItems = [
-                        { label: "Passport", url: data.pdf1 || data.docURL1 || data.passportPDF },
-                        { label: "Academic", url: data.pdf2 || data.docURL2 || data.academicPDF },
-                        { label: "Language", url: data.pdf3 || data.docURL3 || data.languagePDF },
-                        { label: "Other", url: data.pdf4 || data.docURL4 || data.otherPDF }
+                        { label: "Passport", url: data.pdf1 || data.docURL1 || data.passportPDF || data.passportUrl },
+                        { label: "Academic", url: data.pdf2 || data.docURL2 || data.academicPDF || data.academicUrl },
+                        { label: "Language", url: data.pdf3 || data.docURL3 || data.languagePDF || data.languageUrl },
+                        { label: "Other", url: data.pdf4 || data.docURL4 || data.otherPDF || data.otherUrl }
                     ];
 
                     let html = "";
                     let found = false;
                     docItems.forEach(item => {
-                        if (item.url && item.url !== "") {
+                        if (item.url && item.url !== "" && item.url !== "undefined") {
                             found = true;
                             html += `
                                 <a href="${item.url}" target="_blank" class="doc-link">
@@ -158,17 +160,14 @@
                         }
                     });
 
-                    list.innerHTML = found ? html : `
-                        <div style="text-align:center; padding:20px;">
-                            <i class="fas fa-exclamation-triangle" style="font-size:30px; color:red;"></i>
-                            <p style="color:red; margin-top:10px;">No PDF links found in database.</p>
-                        </div>`;
+                    list.innerHTML = found ? html : `<div style="text-align:center; padding:20px;"><i class="fas fa-exclamation-triangle" style="font-size:30px; color:red;"></i><p style="color:red; margin-top:10px;">No PDF links found in database.</p></div>`;
                 }
             } catch (e) {
-                list.innerHTML = "<p style='color:red;'>Error: " + e.message + "</p>";
+                list.innerHTML = `<p style='color:red;'>Error: ${e.message}</p>`;
             }
         };
 
+        // 3. Helper Functions
         window.openReview = (id, name) => {
             window.currentAppId = id;
             document.getElementById('reviewStudentName').innerText = "Reviewing: " + name;
@@ -176,7 +175,8 @@
         };
 
         window.closeModal = () => {
-            document.querySelectorAll('.modal').forEach(m => m.style.display = "none");
+            document.getElementById('reviewModal').style.display = "none";
+            document.getElementById('docModal').style.display = "none";
         };
 
         window.updateStatusNow = async () => {
@@ -186,12 +186,13 @@
                 await updateDoc(docRef, {
                     status: newStatus,
                     handledBy: staffEmail.toLowerCase(),
-                    isVerified: newStatus === "verified",
                     updatedAt: serverTimestamp()
                 });
-                alert("Status Updated Successfully!");
+                alert("Status updated successfully!");
                 closeModal();
-            } catch (e) { alert(e.message); }
+            } catch (e) {
+                alert("Update failed: " + e.message);
+            }
         };
     </script>
 </body>
