@@ -164,66 +164,62 @@
         </div>
     </div>
 
-   <script type="module">
+   // partner.html এর <script type="module"> অংশটি এটি দিয়ে রিপ্লেস করুন
+<script type="module">
     import * as Logic from './partner-logic.js';
 
-    // ১. AUTH GUARD: পেজ লোড হওয়ার আগেই চেক করবে ইউজার লগইন করা কি না
+    // ১. শক্তিশালী AUTH GUARD
     const checkAuth = () => {
         const userData = localStorage.getItem('user');
-        
-        if (!userData) {
-            alert("Please login first!");
+        console.log("Checking storage data...", userData);
+
+        // যদি ডাটা না থাকে বা ভুলভাল ডাটা থাকে
+        if (!userData || userData === "undefined" || userData === "null") {
+            console.error("No valid user session found.");
             window.location.href = 'index.html';
             return null;
         }
 
         try {
             const user = JSON.parse(userData);
-            // ড্যাশবোর্ডে নাম সেট করা
+            
+            // ইউজারনেম আপডেট করা
             if (document.getElementById('welcomeName')) {
                 document.getElementById('welcomeName').innerText = user.fullName || "Partner";
             }
-            // প্রোফাইল ট্যাবে এজেন্সি নাম সেট করা
             if (document.getElementById('pAgency')) {
                 document.getElementById('pAgency').value = user.fullName || "";
             }
+            
             return user;
         } catch (e) {
+            console.error("Session data corrupted:", e);
             localStorage.clear();
             window.location.href = 'index.html';
             return null;
         }
     };
 
-    // ২. TAB NAVIGATION LOGIC
+    // ২. TAB NAVIGATION (Global scope এ রাখার জন্য window ব্যবহার)
     window.showTab = function(event, tabId) {
-        console.log("Switching to tab:", tabId);
-        
-        // সব কন্টেন্ট হাইড করা
         const contents = document.querySelectorAll('.tab-content');
         contents.forEach(t => t.style.display = 'none');
         
-        // সব মেনু থেকে active ক্লাস সরানো
         const menuItems = document.querySelectorAll('.sidebar ul li');
         menuItems.forEach(li => li.classList.remove('active'));
         
-        // টার্গেট ট্যাব দেখানো
         const target = document.getElementById(tabId);
-        if(target) {
-            target.style.display = 'block';
-        }
+        if(target) target.style.display = 'block';
 
-        // ক্লিক করা মেনুকে হাইলাইট করা
         if(event && event.currentTarget) {
             event.currentTarget.classList.add('active');
         } else {
-            // পেজ লোড হলে প্রথম মেনুটিকে active করা
             const firstMenu = document.querySelector(`.sidebar ul li[onclick*="${tabId}"]`);
             if(firstMenu) firstMenu.classList.add('active');
         }
     };
 
-    // ৩. ব্যাকএন্ড লজিক কানেক্ট করা
+    // ৩. লজিক কানেক্ট করা
     window.searchUni = Logic.searchUni;
     window.openApplyModal = Logic.openApplyModal;
     window.closeModal = Logic.closeModal;
@@ -238,15 +234,15 @@
         }
     };
 
-    // ৪. INITIALIZE EVERYTHING
+    // ৪. পেজ লোড হলে চেক রান করা
     window.onload = () => {
-        const user = checkAuth(); // প্রথমে লগইন চেক করবে
-        
+        const user = checkAuth();
         if (user) {
-            console.log("Portal Initialized for:", user.email);
-            Logic.initRealtimeData();
-            Logic.initTracking();
-            window.showTab(null, 'dashboard'); // ডিফল্ট ড্যাশবোর্ড দেখাবে
+            console.log("Welcome back:", user.email);
+            // ডাটা লোড করা
+            if(Logic.initRealtimeData) Logic.initRealtimeData();
+            if(Logic.initTracking) Logic.initTracking();
+            window.showTab(null, 'dashboard');
         }
     };
 </script>
