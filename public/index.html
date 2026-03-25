@@ -24,16 +24,10 @@
             </div>
             <button id="loginBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Login</button>
         </div>
-
-        <p class="text-center text-gray-400 mt-6 text-sm">
-            Don't have an account? <a href="register.html" class="text-[#ffcc00] font-bold hover:underline">Register Now</a>
-        </p>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
@@ -48,50 +42,45 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        document.getElementById('loginBtn').onclick = async () => {
+        async function handleLogin() {
             const email = document.getElementById('logEmail').value;
-            const pass = document.getElementById('logPass').value;
+            const password = document.getElementById('logPass').value;
             const btn = document.getElementById('loginBtn');
 
-            if(!email || !pass) return alert("Fill all fields!");
+            if(!email || !password) return alert("Please fill all fields!");
+
+            btn.innerText = "Authenticating...";
+            btn.disabled = true;
 
             try {
-                btn.disabled = true;
-                btn.innerText = "Checking...";
-                
-                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                const user = userCredential.user;
+                // এখানে ব্র্যাকেট ফিক্স করা হয়েছে
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
+                const data = await res.json();
+
+                if (res.ok) {
+                    // সেশন সেভ করা হচ্ছে যেন Partner Logic এটা ব্যবহার করতে পারে
+                    localStorage.setItem('partnerEmail', email.toLowerCase().trim()); 
                     
-                    if (userData.status !== "active") {
-                        alert("Account Pending! Please wait for admin approval.");
-                        await signOut(auth);
-                        btn.disabled = false;
-                        btn.innerText = "Login";
-                        return;
-                    }
-
-                    // গুরুত্বপূর্ণ: ইমেইল localStorage এ সেভ করা হচ্ছে ড্যাশবোর্ডের জন্য
-                    localStorage.setItem('partnerEmail', email.trim().toLowerCase());
-
-                    if (userData.role === "partner") {
-                        window.location.replace("partner.html");
-                    } else if (userData.role === "compliance") {
-                        window.location.replace("compliance.html");
-                    } else {
-                        alert("Role not defined. Contact Admin.");
-                    }
+                    alert("Login Successful!");
+                    window.location.href = "/partner"; 
+                } else {
+                    alert(data.msg || "Login Failed");
                 }
             } catch (err) {
-                alert("Login Failed: " + err.message);
-                btn.disabled = false;
+                console.error(err);
+                alert("Server error. Please try again.");
+            } finally {
                 btn.innerText = "Login";
+                btn.disabled = false;
             }
-        };
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', handleLogin);
     </script>
 </body>
 </html>

@@ -58,6 +58,15 @@ app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'p
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
 
+const firebaseConfig = {
+    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg", 
+    authDomain: "scc-partner-portal.firebaseapp.com",
+    projectId: "scc-partner-portal",
+    storageBucket: "scc-partner-portal.firebasestorage.app",
+    messagingSenderId: "13013457431",
+    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+};
+
 // Catch-all (Redirect to Track)
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
 

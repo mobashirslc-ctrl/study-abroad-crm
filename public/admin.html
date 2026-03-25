@@ -131,27 +131,43 @@
         const auth = getAuth(app);
 
         // --- University Save Logic ---
-        document.getElementById('saveUniBtn').onclick = async () => {
-            const data = {
-                universityName: document.getElementById('uName').value,
-                country: document.getElementById('uCountry').value,
-                courseName: document.getElementById('uCourse').value,
-                degree: document.getElementById('uDegree').value,
-                semesterFee: Number(document.getElementById('uSemesterFee').value),
-                partnerComm: Number(document.getElementById('uPartnerComm').value),
-                minGPA: document.getElementById('uMinGPA').value,
-                ieltsReq: document.getElementById('uIeltsO').value,
-                gap: document.getElementById('uGap').value,
-                timestamp: new Date().getTime()
-            };
+        // --- University Save Logic ---
+document.getElementById('saveUniBtn').onclick = async () => {
+    // ইনপুট ভ্যালুগুলো ধরা হচ্ছে
+    const uName = document.getElementById('uName').value.trim();
+    const uCountry = document.getElementById('uCountry').value.trim();
+    const uDegree = document.getElementById('uDegree').value; // Select এর জন্য trim প্রয়োজন নেই
 
-            try {
-                await addDoc(collection(db, "universities"), data);
-                alert("University Added Successfully!");
-                location.reload(); 
-            } catch (e) { alert(e.message); }
-        };
+    // ভ্যালিডেশন: নাম বা দেশ ফাঁকা থাকলে সেভ হবে না
+    if(!uName || !uCountry) {
+        alert("Please fill University Name and Country!");
+        return;
+    }
 
+    const data = {
+        universityName: uName,
+        country: uCountry,
+        courseName: document.getElementById('uCourse').value.trim(),
+        degree: uDegree, 
+        semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
+        partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
+        minGPA: document.getElementById('uMinGPA').value.trim(),
+        ieltsReq: document.getElementById('uIeltsO').value.trim(),
+        gap: document.getElementById('uGap').value.trim(),
+        timestamp: new Date().getTime()
+    };
+
+    try {
+        await addDoc(collection(db, "universities"), data);
+        alert("University Added Successfully!");
+        // ইনপুট ফিল্ডগুলো খালি করে দেওয়া (reload এর বদলে এটি ভালো)
+        document.getElementById('uName').value = "";
+        document.getElementById('uCountry').value = "";
+        // চাইলে location.reload(); ও রাখতে পারেন
+    } catch (e) { 
+        alert("Error: " + e.message); 
+    }
+};
         // --- Real-time University List ---
         onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
             let html = "";
