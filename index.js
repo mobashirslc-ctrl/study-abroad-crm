@@ -65,22 +65,33 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const cleanEmail = email.toLowerCase().trim();
+        console.log(`Login attempt for: ${email}`); // ভিয়ারসেল লগে দেখার জন্য
 
-        // ইউজার খোঁজা
+        if (!email || !password) {
+            return res.status(400).json({ msg: 'Please provide email and password' });
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
         const user = await User.findOne({ email: cleanEmail });
-        if (!user) return res.status(400).json({ msg: 'Invalid Credentials' });
-        
-        // পাসওয়ার্ড তুলনা
+
+        if (!user) {
+            console.log("User not found in database");
+            return res.status(400).json({ msg: 'Invalid Credentials' });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ msg: 'Invalid Credentials' });
-        
-        // সাকসেস রেসপন্স
+        if (!isMatch) {
+            console.log("Password did not match");
+            return res.status(400).json({ msg: 'Invalid Credentials' });
+        }
+
+        console.log("✅ Login Successful");
         res.status(200).json({ 
             msg: 'Login Successful', 
             user: { email: user.email, name: user.fullName, role: user.role } 
         });
     } catch (err) { 
+        console.error("Login Error:", err.message);
         res.status(500).json({ error: err.message }); 
     }
 });
