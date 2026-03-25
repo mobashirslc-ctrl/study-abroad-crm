@@ -1,6 +1,3 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
 // ১. সেশন চেক এবং গ্লোবাল ভেরিয়েবল
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = userData.email ? userData.email.toLowerCase().trim() : null;
@@ -13,91 +10,83 @@ if (!partnerEmail) {
 let currentUniCommission = 0;
 let selectedUniversity = "";
 
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
 // Cloudinary Config
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
-// ২. রিয়েল-টাইম ডাটা লোড (Dashboard)
-export function initRealtimeData() {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
-    
-    onSnapshot(q, (snapshot) => {
+// ২. রিয়েল-টাইম ডাটা লোড (Dashboard) - MongoDB API থেকে
+export async function initRealtimeData() {
+    try {
+        const res = await fetch('/api/applications');
+        const allApps = await res.json();
+        const myApps = allApps.filter(app => app.partnerEmail === partnerEmail);
+
         let pendingComm = 0;
         let finalBal = 0;
         let tableHTML = "";
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.status === "PAID") {
-                finalBal += Number(data.commissionBDT || 0);
-            } else {
-                pendingComm += Number(data.commissionBDT || 0);
-            }
+        myApps.forEach(data => {
+            // ওয়ালেট ক্যালকুলেশন (index.js এর ফিল্ড অনুযায়ী)
+            pendingComm += Number(data.pendingAmount || 0);
+            finalBal += Number(data.finalAmount || 0);
 
             tableHTML += `
                 <tr>
                     <td>${data.studentName}</td>
                     <td>${data.passportNo}</td>
                     <td><span style="color:${getStatusColor(data.status)}">${data.status}</span></td>
-                    <td>${data.submittedAt ? new Date(data.submittedAt.seconds * 1000).toLocaleDateString() : 'Just now'}</td>
+                    <td>${data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'Just now'}</td>
                 </tr>
             `;
         });
 
         if(document.getElementById('topPending')) document.getElementById('topPending').innerText = `৳${pendingComm.toLocaleString()}`;
         if(document.getElementById('topFinal')) document.getElementById('topFinal').innerText = `৳${finalBal.toLocaleString()}`;
-        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHTML;
+        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHTML || "<tr><td colspan='4'>No data found</td></tr>";
         if(document.getElementById('withdrawFinalBalance')) document.getElementById('withdrawFinalBalance').innerText = `৳${finalBal.toLocaleString()}`;
         
-        // উইথড্র বাটন এনাবেল লজিক
         const wdBtn = document.getElementById('requestWdBtn');
         if(wdBtn) wdBtn.disabled = finalBal <= 0;
-    });
+    } catch (err) {
+        console.error("Dashboard Load Error:", err);
+    }
 }
 
 // ৩. লাইভ ট্র্যাকিং ট্যাব ডাটা
-export function initTracking() {
-    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
-    onSnapshot(q, (snapshot) => {
+export async function initTracking() {
+    try {
+        const res = await fetch('/api/applications');
+        const allApps = await res.json();
+        const myApps = allApps.filter(app => app.partnerEmail === partnerEmail);
+
         let html = "";
-        snapshot.forEach(doc => {
-            const data = doc.data();
+        myApps.forEach(data => {
             html += `
                 <tr>
                     <td><b>${data.studentName}</b><br><small>${data.university}</small></td>
-                    <td>${data.handledBy || "Processing..."}</td>
+                    <td>${data.complianceMember || "Processing..."}</td>
                     <td>${data.passportNo}</td>
                     <td>${data.status === "PENDING" ? "Checking..." : "Verified"}</td>
                     <td><span style="padding:4px 8px; border-radius:4px; background:rgba(241, 196, 15, 0.1); color:#f1c40f">${data.status}</span></td>
-                    <td>${data.submittedAt ? new Date(data.submittedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                    <td>${data.timestamp ? new Date(data.timestamp).toLocaleDateString() : 'N/A'}</td>
                 </tr>
             `;
         });
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = html;
-    });
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = html || "<tr><td colspan='6'>No records found</td></tr>";
+    } catch (err) {
+        console.error("Tracking Load Error:", err);
+    }
 }
 
 function getStatusColor(status) {
-    if(status === "PENDING") return "#f1c40f";
-    if(status === "APPROVED") return "#2ecc71";
-    if(status === "REJECTED") return "#e74c3c";
+    const s = status ? status.toUpperCase() : "PENDING";
+    if(s === "PENDING") return "#f1c40f";
+    if(s === "APPROVED" || s === "VERIFIED" || s === "PAID") return "#2ecc71";
+    if(s === "REJECTED") return "#e74c3c";
     return "#fff";
 }
 
-// ৪. ইউনিভার্সিটি সার্চ লজিক
+// ৪. ইউনিভার্সিটি সার্চ লজিক (API থেকে)
 export async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.toLowerCase().trim();
     const degreeInput = document.getElementById('fDegree').value.trim();
@@ -106,12 +95,13 @@ export async function searchUni() {
     container.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Searching...</td></tr>";
 
     try {
-        const snap = await getDocs(collection(db, "universities"));
+        const res = await fetch('/api/universities'); // আপনি MongoDB-তে ইউনিভার্সিটিগুলো সেভ করলে এই API লাগবে
+        const universities = await res.json();
+        
         let html = "";
         let found = false;
 
-        snap.forEach(docSnap => {
-            const u = docSnap.data();
+        universities.forEach(u => {
             const dbDegree = u.degree ? u.degree.trim() : "";
             const dbCountry = u.country ? u.country.toLowerCase().trim() : "";
 
@@ -140,7 +130,7 @@ export async function searchUni() {
     }
 }
 
-// ৫. ফাইল আপলোড লজিক
+// ৫. ফাইল আপলোড লজিক (Cloudinary)
 async function uploadFile(file) {
     if (!file) return null;
     const formData = new FormData();
@@ -153,7 +143,7 @@ async function uploadFile(file) {
     } catch (e) { return null; }
 }
 
-// ৬. অ্যাপ্লিকেশন সাবমিট
+// ৬. অ্যাপ্লিকেশন সাবমিট (MongoDB API)
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -166,10 +156,13 @@ export async function submitApplication() {
 
     try {
         const fileIds = ['file1', 'file2', 'file3', 'file4'];
-        const uploadPromises = fileIds.map(id => uploadFile(document.getElementById(id).files[0]));
+        const uploadPromises = fileIds.map(id => {
+            const el = document.getElementById(id);
+            return el && el.files[0] ? uploadFile(el.files[0]) : null;
+        });
         const urls = await Promise.all(uploadPromises);
 
-        await addDoc(collection(db, "applications"), {
+        const appData = {
             studentName: sName,
             passportNo: sPass,
             university: selectedUniversity,
@@ -179,13 +172,22 @@ export async function submitApplication() {
             pdf2: urls[1] || "", 
             pdf3: urls[2] || "", 
             pdf4: urls[3] || "", 
-            status: "PENDING",
-            submittedAt: serverTimestamp(),
-            handledBy: "" 
+            status: "PENDING"
+        };
+
+        const response = await fetch('/api/submit-application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(appData)
         });
 
-        alert("Application Submitted Successfully!");
-        window.closeModal();
+        if (response.ok) {
+            alert("✅ Application Submitted Successfully!");
+            window.closeModal();
+            initRealtimeData();
+        } else {
+            alert("Submission failed on server.");
+        }
     } catch (e) {
         alert("Submission failed.");
     } finally {
@@ -194,49 +196,34 @@ export async function submitApplication() {
     }
 }
 
-// ৭. প্রোফাইল আপডেট (লোগোসহ)
+// ৭. প্রোফাইল আপডেট (MongoDB API)
 export async function updateProfile() {
     const contact = document.getElementById('pContact').value;
     const logoFile = document.getElementById('pLogo').files[0];
-    const user = JSON.parse(localStorage.getItem('user'));
     
-    if(!user) return alert("Session expired. Please login again.");
-
     const btn = document.querySelector('#profile .btn-gold');
     btn.innerText = "Saving... ⏳";
     btn.disabled = true;
 
     try {
-        let logoURL = user.logoURL || "";
-
-        // লোগো ফাইল থাকলে আপলোড করো
+        let logoURL = userData.logoURL || "";
         if (logoFile) {
             logoURL = await uploadFile(logoFile);
         }
 
-        // Firestore এ আপডেট (users কালেকশনে)
-        // আমরা ইমেইল দিয়ে ইউজার খুঁজি
-        const userQuery = query(collection(db, "users"), where("email", "==", partnerEmail));
-        const querySnap = await getDocs(userQuery);
-        
-        if (!querySnap.empty) {
-            const userDocId = querySnap.docs[0].id;
-            await updateDoc(doc(db, "users", userDocId), {
-                contact: contact,
-                logoURL: logoURL
-            });
+        const response = await fetch('/api/update-profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: partnerEmail, contact, logoURL })
+        });
+
+        if (response.ok) {
+            const updatedUser = { ...userData, contact, logoURL };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            if(logoURL) document.getElementById('slipPartnerLogo').src = logoURL;
+            alert("✅ Agency Profile Updated!");
         }
-
-        // Local Storage আপডেট (যাতে স্লিপে সাথে সাথে দেখা যায়)
-        const updatedUser = { ...user, contact, logoURL };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-
-        // UI তে লোগো রিফ্রেশ
-        if(logoURL) document.getElementById('slipPartnerLogo').src = logoURL;
-
-        alert("✅ Agency Profile Updated Successfully!");
     } catch (error) {
-        console.error(error);
         alert("❌ Profile update failed.");
     } finally {
         btn.innerText = "Save Profile";
@@ -251,20 +238,20 @@ export async function requestWithdraw() {
     const details = document.getElementById('wdDetails').value;
 
     if(!amount || amount <= 0) return alert("Enter valid amount");
-    if(!details) return alert("Enter payment details (Bkash/Bank info)");
+    if(!details) return alert("Enter payment details");
 
     try {
-        await addDoc(collection(db, "withdrawals"), {
-            partnerEmail: partnerEmail,
-            amount: Number(amount),
-            method: method,
-            details: details,
-            status: "PENDING",
-            requestedAt: serverTimestamp()
+        const response = await fetch('/api/withdrawals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ partnerEmail, amount: Number(amount), method, details })
         });
-        alert(`Withdrawal request for ৳${amount} submitted!`);
-        document.getElementById('wdAmount').value = "";
-        document.getElementById('wdDetails').value = "";
+
+        if (response.ok) {
+            alert(`Withdrawal request for ৳${amount} submitted!`);
+            document.getElementById('wdAmount').value = "";
+            document.getElementById('wdDetails').value = "";
+        }
     } catch (e) {
         alert("Withdrawal request failed.");
     }
