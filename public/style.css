@@ -26,6 +26,7 @@ body {
     border-right: 1px solid var(--border);
     position: fixed;
     padding: 20px;
+    z-index: 1000;
 }
 
 .logo img {
@@ -140,7 +141,25 @@ td {
     font-size: 13px;
 }
 
-/* Modal Styling (Fixes image_e3f84b.png) */
+/* --- Status Badges (ব্রাউজারে দেখার জন্য) --- */
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+    text-align: center;
+    min-width: 90px;
+}
+
+.status-badge.pending { background: #3498db; color: white; }
+.status-badge.verified { background: #2ecc71; color: white; }
+.status-badge.fees_paid_pending_admin { background: #f39c12; color: white; }
+.status-badge.paid { background: #9b59b6; color: white; }
+.status-badge.rejected { background: #ff4757; color: white; }
+
+/* Modal Styling */
 .modal {
     display: none;
     position: fixed;
@@ -152,14 +171,49 @@ td {
     backdrop-filter: blur(8px);
 }
 
-.status-pill {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
+.modal textarea { 
+    resize: none; 
+    height: 80px; 
+    font-family: inherit;
+    width: 100%;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 8px;
 }
 
-.submitted { background: #3498db; color: white; }
-.verified { background: #2ecc71; color: white; }
-.rejected { background: #e74c3c; color: white; }
+.modal-open {
+    overflow: hidden;
+}
+
+#slipContent {
+    margin: auto;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* Print Optimization */
+@media print {
+    .no-print, .sidebar, .top-bar, .btn-gold, .logo-container {
+        display: none !important;
+    }
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    .wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    #slipModal {
+        display: block !important;
+        background: white !important;
+        position: absolute;
+        inset: 0;
+    }
+    .status-badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border: 1px solid #ccc;
+    }
+}

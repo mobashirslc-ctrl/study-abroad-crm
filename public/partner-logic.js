@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ১. সেশন চেক এবং গ্লোবাল ভেরিয়েবল
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
@@ -26,6 +26,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Cloudinary Config
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
+const UPLOAD_PRESET = "ihp_upload";
+
 // ২. রিয়েল-টাইম ডাটা লোড (Dashboard)
 export function initRealtimeData() {
     const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
@@ -37,14 +41,12 @@ export function initRealtimeData() {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            // কমিশন ক্যালকুলেশন (যদি স্ট্যাটাস PAID হয় তবে ব্যালেন্সে যাবে)
             if (data.status === "PAID") {
                 finalBal += Number(data.commissionBDT || 0);
             } else {
                 pendingComm += Number(data.commissionBDT || 0);
             }
 
-            // রিসেন্ট অ্যাক্টিভিটি টেবিল জেনারেট
             tableHTML += `
                 <tr>
                     <td>${data.studentName}</td>
@@ -55,11 +57,14 @@ export function initRealtimeData() {
             `;
         });
 
-        // UI আপডেট
         if(document.getElementById('topPending')) document.getElementById('topPending').innerText = `৳${pendingComm.toLocaleString()}`;
         if(document.getElementById('topFinal')) document.getElementById('topFinal').innerText = `৳${finalBal.toLocaleString()}`;
         if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHTML;
         if(document.getElementById('withdrawFinalBalance')) document.getElementById('withdrawFinalBalance').innerText = `৳${finalBal.toLocaleString()}`;
+        
+        // উইথড্র বাটন এনাবেল লজিক
+        const wdBtn = document.getElementById('requestWdBtn');
+        if(wdBtn) wdBtn.disabled = finalBal <= 0;
     });
 }
 
@@ -115,8 +120,8 @@ export async function searchUni() {
 
             if (matchCountry && matchDegree) {
                 found = true;
-                const totalFee = (u.semesterFee || 0) * 120; // Example conversion
-                const comm = (totalFee * (u.partnerComm || 0)) / 100;
+                const totalFee = (Number(u.semesterFee) || 0) * 120; 
+                const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
 
                 html += `
                 <tr>
@@ -131,15 +136,11 @@ export async function searchUni() {
         });
         container.innerHTML = found ? html : "<tr><td colspan='6' style='text-align:center; color:orange;'>No university found!</td></tr>";
     } catch (e) {
-        console.error(e);
         container.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Database Error!</td></tr>";
     }
 }
 
-// ৫. ফাইল আপলোড এবং সাবমিশন
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
-const UPLOAD_PRESET = "ihp_upload";
-
+// ৫. ফাইল আপলোড লজিক
 async function uploadFile(file) {
     if (!file) return null;
     const formData = new FormData();
@@ -152,6 +153,7 @@ async function uploadFile(file) {
     } catch (e) { return null; }
 }
 
+// ৬. অ্যাপ্লিকেশন সাবমিট
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -192,7 +194,83 @@ export async function submitApplication() {
     }
 }
 
-// ৬. মডাল ফাংশন (Global Scope)
+// ৭. প্রোফাইল আপডেট (লোগোসহ)
+export async function updateProfile() {
+    const contact = document.getElementById('pContact').value;
+    const logoFile = document.getElementById('pLogo').files[0];
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if(!user) return alert("Session expired. Please login again.");
+
+    const btn = document.querySelector('#profile .btn-gold');
+    btn.innerText = "Saving... ⏳";
+    btn.disabled = true;
+
+    try {
+        let logoURL = user.logoURL || "";
+
+        // লোগো ফাইল থাকলে আপলোড করো
+        if (logoFile) {
+            logoURL = await uploadFile(logoFile);
+        }
+
+        // Firestore এ আপডেট (users কালেকশনে)
+        // আমরা ইমেইল দিয়ে ইউজার খুঁজি
+        const userQuery = query(collection(db, "users"), where("email", "==", partnerEmail));
+        const querySnap = await getDocs(userQuery);
+        
+        if (!querySnap.empty) {
+            const userDocId = querySnap.docs[0].id;
+            await updateDoc(doc(db, "users", userDocId), {
+                contact: contact,
+                logoURL: logoURL
+            });
+        }
+
+        // Local Storage আপডেট (যাতে স্লিপে সাথে সাথে দেখা যায়)
+        const updatedUser = { ...user, contact, logoURL };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // UI তে লোগো রিফ্রেশ
+        if(logoURL) document.getElementById('slipPartnerLogo').src = logoURL;
+
+        alert("✅ Agency Profile Updated Successfully!");
+    } catch (error) {
+        console.error(error);
+        alert("❌ Profile update failed.");
+    } finally {
+        btn.innerText = "Save Profile";
+        btn.disabled = false;
+    }
+}
+
+// ৮. পেআউট রিকোয়েস্ট
+export async function requestWithdraw() {
+    const amount = document.getElementById('wdAmount').value;
+    const method = document.getElementById('wdMethod').value;
+    const details = document.getElementById('wdDetails').value;
+
+    if(!amount || amount <= 0) return alert("Enter valid amount");
+    if(!details) return alert("Enter payment details (Bkash/Bank info)");
+
+    try {
+        await addDoc(collection(db, "withdrawals"), {
+            partnerEmail: partnerEmail,
+            amount: Number(amount),
+            method: method,
+            details: details,
+            status: "PENDING",
+            requestedAt: serverTimestamp()
+        });
+        alert(`Withdrawal request for ৳${amount} submitted!`);
+        document.getElementById('wdAmount').value = "";
+        document.getElementById('wdDetails').value = "";
+    } catch (e) {
+        alert("Withdrawal request failed.");
+    }
+}
+
+// গ্লোবাল উইন্ডো ফাংশন
 window.openApplyModal = (uniName, commission) => {
     selectedUniversity = uniName;
     currentUniCommission = commission;
@@ -203,13 +281,3 @@ window.openApplyModal = (uniName, commission) => {
 window.closeModal = () => {
     document.getElementById('applyModal').style.display = 'none';
 };
-
-export async function updateProfile() {
-    alert("Profile update feature coming soon with Firebase Auth!");
-}
-
-export async function requestWithdraw() {
-    const amount = document.getElementById('wdAmount').value;
-    if(!amount || amount <= 0) return alert("Enter valid amount");
-    alert(`Withdrawal request for ৳${amount} submitted!`);
-}

@@ -71,35 +71,41 @@ window.closeSlider = () => {
     document.getElementById('statusSlider').style.right = "-400px";
 };
 
-// ৪. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক লজিক (CRITICAL PART)
+// ৪. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক লজিক
 document.getElementById('applyStatusBtn').onclick = async () => {
     if (!currentActiveId) return;
     
     const selectedStatus = document.getElementById('statusSelect').value;
     const btn = document.getElementById('applyStatusBtn');
     
-    // ডাটাবেজ আপডেট অবজেক্ট
+    // প্রাথমিক আপডেট অবজেক্ট
     let updateData = { 
-        status: selectedStatus.toUpperCase(),
         complianceMember: staffName,
         lastUpdated: new Date().toISOString()
     };
 
-    // --- ওয়ালেট ক্যালকুলেশন লজিক ---
+    // --- ওয়ালেট ও স্ট্যাটাস লজিক (আপনার রিকোয়েস্ট অনুযায়ী) ---
+    
     if (selectedStatus === "verified") {
-        // ফাইল ভেরিফাইড হলে টাকা পেন্ডিং ওয়ালেটে যাবে
+        // ফাইল ভেরিফাইড -> টাকা শুধুমাত্র পার্টনারের পেন্ডিং বক্সে যাবে
+        updateData.status = "VERIFIED";
         updateData.pendingAmount = currentCommission;
         updateData.finalAmount = 0;
     } 
     else if (selectedStatus === "fees_paid") {
-        // টিউশন ফি পেইড হলে পেন্ডিং থেকে কেটে ফাইনালে যাবে
-        updateData.pendingAmount = 0;
-        updateData.finalAmount = currentCommission;
+        // ফি পেইড -> এটি এডমিনের কনফার্মেশনের জন্য ওয়েট করবে
+        // এখানে পেন্ডিং অ্যামাউন্ট আগের মতোই থাকবে, এডমিন কনফার্ম করলে তবেই সরবে
+        updateData.status = "FEES_PAID_PENDING_ADMIN"; 
+        // Note: এখানে finalAmount ০ থাকবে কারণ এডমিন এটি কাস্টমাইজ করে কনফার্ম করবেন
     } 
     else if (selectedStatus === "rejected" || selectedStatus === "refund") {
         // রিজেক্ট হলে সব জিরো
+        updateData.status = selectedStatus.toUpperCase();
         updateData.pendingAmount = 0;
         updateData.finalAmount = 0;
+    } else {
+        // অন্য যেকোনো সাধারণ স্ট্যাটাস আপডেট
+        updateData.status = selectedStatus.toUpperCase();
     }
 
     try {
@@ -108,9 +114,10 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         
         await updateDoc(doc(db, "applications", currentActiveId), updateData);
         
-        alert("Status Updated & Wallet Synced!");
+        alert("✅ Status Updated! Pending wallet synced for Partner.");
         closeSlider();
     } catch (e) {
+        console.error("Error updating:", e);
         alert("Error updating: " + e.message);
     } finally {
         btn.disabled = false;
