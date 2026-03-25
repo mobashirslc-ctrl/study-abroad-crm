@@ -62,15 +62,15 @@
                         <div class="form-group"><label>Country</label><input type="text" id="uCountry"></div>
                         <div class="form-group"><label>Course Name</label><input type="text" id="uCourse"></div>
                         <div class="form-group">
-    <label>Degree Type</label>
-    <select id="uDegree">
-        <option value="Bachelor">Bachelor</option>
-        <option value="Masters">Masters</option>
-        <option value="Foundation">Foundation</option>
-        <option value="Diploma">Diploma</option>
-        <option value="PHD">PHD</option>
-    </select>
-</div>
+                            <label>Applying For</label>
+                            <select id="uDegree">
+                                <option value="Bachelor">Bachelor</option>
+                                <option value="Masters">Masters</option>
+                                <option value="Foundation">Foundation</option>
+                                <option value="Diploma">Diploma</option>
+                                <option value="PHD">PHD</option>
+                            </select>
+                        </div>
                         <div class="form-group"><label>Semester Fee (USD)</label><input type="number" id="uSemesterFee"></div>
                         <div class="form-group"><label>Partner Comm (%)</label><input type="number" id="uPartnerComm"></div>
                         <div class="form-group"><label>Min. Academic GPA</label><input type="number" step="0.01" id="uMinGPA"></div>
@@ -95,13 +95,7 @@
                     <h3><i class="fas fa-user-clock"></i> User Approval & Management</h3>
                     <table>
                         <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
+                            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
                         </thead>
                         <tbody id="userTableBody"></tbody>
                     </table>
@@ -136,7 +130,7 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- ১. ইউনিভার্সিটি সেভ লজিক ---
+        // --- University Save Logic ---
         document.getElementById('saveUniBtn').onclick = async () => {
             const data = {
                 universityName: document.getElementById('uName').value,
@@ -158,7 +152,7 @@
             } catch (e) { alert(e.message); }
         };
 
-        // --- ২. ইউনিভার্সিটি লিস্ট (Real-time) ---
+        // --- Real-time University List ---
         onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
@@ -178,14 +172,13 @@
             if(confirm("Are you sure?")) await deleteDoc(doc(db, "universities", id));
         };
 
-        // --- ৩. ইউজার অ্যাপ্রুভাল লজিক (Real-time Fix) ---
+        // --- User Approval ---
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
                 const user = docSnap.data();
                 const id = docSnap.id;
                 const statusBadge = user.status === 'active' ? 'badge-active' : 'badge-pending';
-                
                 html += `<tr>
                     <td>${user.fullName}</td>
                     <td>${user.email}</td>
@@ -206,9 +199,7 @@
             await updateDoc(doc(db, "users", id), { status: newStatus });
         };
 
-        // --- ৪. লগআউট ---
         document.getElementById('logoutAdmin').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
-
     </script>
 
     <script>
@@ -217,12 +208,7 @@
             document.getElementById(id).classList.add('active-section');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('m-' + id).classList.add('active');
-            
-            const titles = {
-                'uni-manage': 'University Management',
-                'partners': 'Partner Management',
-                'payouts': 'Payouts & Wallet Control'
-            };
+            const titles = { 'uni-manage': 'University Management', 'partners': 'Partner Management', 'payouts': 'Payouts & Wallet Control' };
             document.getElementById('page-title').innerText = titles[id];
         }
     </script>
