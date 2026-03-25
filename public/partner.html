@@ -44,13 +44,13 @@
             <img src="logo.jpeg" alt="SCC Logo" onerror="this.src='https://via.placeholder.com/180x60?text=SCC+Group'">
         </div>
         <ul>
-            <li class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
-            <li onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
-            <li onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
-            <li onclick="showTab('withdraw')"><i class="fas fa-wallet"></i> Wallet</li>
-            <li onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
-            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
-        </ul>
+    <li class="active" onclick="showTab(event, 'dashboard')"><i class="fas fa-home"></i> Dashboard</li>
+    <li onclick="showTab(event, 'tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
+    <li onclick="showTab(event, 'universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+    <li onclick="showTab(event, 'withdraw')"><i class="fas fa-wallet"></i> Wallet</li>
+    <li onclick="showTab(event, 'profile')"><i class="fas fa-user-cog"></i> Profile</li>
+    <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+</ul>
     </div>
 
     <div class="main-content">
@@ -164,35 +164,58 @@
         </div>
     </div>
 
-    <script type="module">
-        import * as Logic from './partner-logic.js';
+   <script type="module">
+    import * as Logic from './partner-logic.js';
 
-        // ১. মেনু পরিবর্তন গ্লোবাল ফাংশন
-        window.showTab = function(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
-            const target = document.getElementById(tabId);
-            if(target) target.style.display = 'block';
-            if(event && event.currentTarget) event.currentTarget.classList.add('active');
-        };
+    // Function definition এ event যোগ করতে হবে
+window.showTab = function(event, tabId) {
+        console.log("Switching to tab:", tabId);
+        
+        // সব কন্টেন্ট হাইড করা
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(t => t.style.display = 'none');
+        
+        // সব মেনু থেকে active ক্লাস সরানো
+        const menuItems = document.querySelectorAll('.sidebar ul li');
+        menuItems.forEach(li => li.classList.remove('active'));
+        
+        // টার্গেট ট্যাব দেখানো
+        const target = document.getElementById(tabId);
+        if(target) {
+            target.style.display = 'block';
+        } else {
+            console.error("Tab ID not found:", tabId);
+        }
 
-        // ২. সব লজিক ফাংশন গ্লোবাল (Window) এ পুশ করা
-        window.initRealtimeData = Logic.initRealtimeData;
-        window.initTracking = Logic.initTracking;
-        window.searchUni = Logic.searchUni;
-        window.openApplyModal = Logic.openApplyModal;
-        window.closeModal = Logic.closeModal;
-        window.submitApplication = Logic.submitApplication;
-        window.requestWithdraw = Logic.requestWithdraw;
-        window.updateProfile = Logic.updateProfile;
-        window.logout = () => { localStorage.clear(); location.href='index.html'; };
+        // ক্লিক করা মেনুকে হাইলাইট করা
+        if(event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        }
+    };
 
-        // ৩. পেজ লোড স্টার্টআপ
-        window.onload = () => {
-            Logic.initRealtimeData();
-            Logic.initTracking();
-            window.showTab('dashboard'); 
-        };
-    </script>
+    // ২. লজিক ফাইলের ফাংশনগুলো কানেক্ট করা
+    window.initRealtimeData = Logic.initRealtimeData;
+    window.initTracking = Logic.initTracking;
+    window.searchUni = Logic.searchUni;
+    window.openApplyModal = Logic.openApplyModal;
+    window.closeModal = Logic.closeModal;
+    window.submitApplication = Logic.submitApplication;
+    window.requestWithdraw = Logic.requestWithdraw;
+    window.updateProfile = Logic.updateProfile;
+    
+    window.logout = () => { 
+        localStorage.clear(); 
+        location.href='index.html'; 
+    };
+
+    // ৩. পেজ লোড হওয়ার সাথে সাথে যা রান করবে
+    window.onload = () => {
+    console.log("Portal Initialized...");
+    Logic.initRealtimeData();
+    Logic.initTracking();
+    // এখানে null পাঠিয়ে দিন যেহেতু পেজ লোডে কোনো ক্লিক ইভেন্ট নেই
+    window.showTab(null, 'dashboard'); 
+};
+</script>
 </body>
 </html>
