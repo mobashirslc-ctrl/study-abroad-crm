@@ -5,10 +5,10 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "index.js" },
-    { "src": "/partner", "dest": "/public/partner.html" },
-    { "src": "/login", "dest": "/public/index.html" },
-    { "src": "/register", "dest": "/public/register.html" },
-    { "src": "/track", "dest": "/public/track.html" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+    { "src": "/partner", "dest": "public/partner.html" },
+    { "src": "/login", "dest": "public/index.html" },
+    { "src": "/register", "dest": "public/register.html" },
+    { "src": "/track", "dest": "public/track.html" },
+    { "src": "/(.*)", "dest": "public/$1" }
   ]
 }
