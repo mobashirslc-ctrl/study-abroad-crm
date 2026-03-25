@@ -167,8 +167,36 @@
    <script type="module">
     import * as Logic from './partner-logic.js';
 
-    // Function definition এ event যোগ করতে হবে
-window.showTab = function(event, tabId) {
+    // ১. AUTH GUARD: পেজ লোড হওয়ার আগেই চেক করবে ইউজার লগইন করা কি না
+    const checkAuth = () => {
+        const userData = localStorage.getItem('user');
+        
+        if (!userData) {
+            alert("Please login first!");
+            window.location.href = 'index.html';
+            return null;
+        }
+
+        try {
+            const user = JSON.parse(userData);
+            // ড্যাশবোর্ডে নাম সেট করা
+            if (document.getElementById('welcomeName')) {
+                document.getElementById('welcomeName').innerText = user.fullName || "Partner";
+            }
+            // প্রোফাইল ট্যাবে এজেন্সি নাম সেট করা
+            if (document.getElementById('pAgency')) {
+                document.getElementById('pAgency').value = user.fullName || "";
+            }
+            return user;
+        } catch (e) {
+            localStorage.clear();
+            window.location.href = 'index.html';
+            return null;
+        }
+    };
+
+    // ২. TAB NAVIGATION LOGIC
+    window.showTab = function(event, tabId) {
         console.log("Switching to tab:", tabId);
         
         // সব কন্টেন্ট হাইড করা
@@ -183,19 +211,19 @@ window.showTab = function(event, tabId) {
         const target = document.getElementById(tabId);
         if(target) {
             target.style.display = 'block';
-        } else {
-            console.error("Tab ID not found:", tabId);
         }
 
         // ক্লিক করা মেনুকে হাইলাইট করা
         if(event && event.currentTarget) {
             event.currentTarget.classList.add('active');
+        } else {
+            // পেজ লোড হলে প্রথম মেনুটিকে active করা
+            const firstMenu = document.querySelector(`.sidebar ul li[onclick*="${tabId}"]`);
+            if(firstMenu) firstMenu.classList.add('active');
         }
     };
 
-    // ২. লজিক ফাইলের ফাংশনগুলো কানেক্ট করা
-    window.initRealtimeData = Logic.initRealtimeData;
-    window.initTracking = Logic.initTracking;
+    // ৩. ব্যাকএন্ড লজিক কানেক্ট করা
     window.searchUni = Logic.searchUni;
     window.openApplyModal = Logic.openApplyModal;
     window.closeModal = Logic.closeModal;
@@ -204,18 +232,23 @@ window.showTab = function(event, tabId) {
     window.updateProfile = Logic.updateProfile;
     
     window.logout = () => { 
-        localStorage.clear(); 
-        location.href='index.html'; 
+        if(confirm("Are you sure you want to logout?")) {
+            localStorage.clear(); 
+            window.location.href='index.html'; 
+        }
     };
 
-    // ৩. পেজ লোড হওয়ার সাথে সাথে যা রান করবে
+    // ৪. INITIALIZE EVERYTHING
     window.onload = () => {
-    console.log("Portal Initialized...");
-    Logic.initRealtimeData();
-    Logic.initTracking();
-    // এখানে null পাঠিয়ে দিন যেহেতু পেজ লোডে কোনো ক্লিক ইভেন্ট নেই
-    window.showTab(null, 'dashboard'); 
-};
+        const user = checkAuth(); // প্রথমে লগইন চেক করবে
+        
+        if (user) {
+            console.log("Portal Initialized for:", user.email);
+            Logic.initRealtimeData();
+            Logic.initTracking();
+            window.showTab(null, 'dashboard'); // ডিফল্ট ড্যাশবোর্ড দেখাবে
+        }
+    };
 </script>
 </body>
 </html>
