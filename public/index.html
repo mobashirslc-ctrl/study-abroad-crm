@@ -24,6 +24,8 @@
             </div>
             <button id="loginBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Login</button>
         </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -53,8 +55,8 @@
             btn.disabled = true;
 
             try {
-                // এখানে ব্র্যাকেট ফিক্স করা হয়েছে
-                const res = await fetch('/api/login', {
+                // এখানে আপনার ব্যাকএন্ডের ফুল লিঙ্ক 'http://localhost:10000' যোগ করা হয়েছে
+                const res = await fetch('http://localhost:10000/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
@@ -63,9 +65,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    // সেশন সেভ করা হচ্ছে যেন Partner Logic এটা ব্যবহার করতে পারে
                     localStorage.setItem('partnerEmail', email.toLowerCase().trim()); 
-                    
                     alert("Login Successful!");
                     window.location.href = "/partner"; 
                 } else {
