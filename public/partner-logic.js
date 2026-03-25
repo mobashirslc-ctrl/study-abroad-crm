@@ -1,18 +1,17 @@
-// ১. সেশন চেক (একদম শুরুতে থাকবে)
-const currentUser = localStorage.getItem('partnerEmail');
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-if (!currentUser) {
-    alert("Please login first!");
-    window.location.href = "/login"; 
+// ১. সেশন চেক এবং গ্লোবাল ভেরিয়েবল
+const userData = JSON.parse(localStorage.getItem('user') || "{}");
+const partnerEmail = userData.email ? userData.email.toLowerCase().trim() : null;
+
+if (!partnerEmail) {
+    console.error("No valid session. Redirecting...");
+    window.location.href = 'index.html';
 }
 
-// ২. গ্লোবাল স্টেট এবং ইমেইল হ্যান্ডলিং
 let currentUniCommission = 0;
 let selectedUniversity = "";
-const partnerEmail = currentUser.toLowerCase().trim(); // সরাসরি সেশন থেকে নেওয়া হচ্ছে
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -27,7 +26,73 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ৩. ইউনিভার্সিটি সার্চ লজিক
+// ২. রিয়েল-টাইম ডাটা লোড (Dashboard)
+export function initRealtimeData() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+    
+    onSnapshot(q, (snapshot) => {
+        let pendingComm = 0;
+        let finalBal = 0;
+        let tableHTML = "";
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // কমিশন ক্যালকুলেশন (যদি স্ট্যাটাস PAID হয় তবে ব্যালেন্সে যাবে)
+            if (data.status === "PAID") {
+                finalBal += Number(data.commissionBDT || 0);
+            } else {
+                pendingComm += Number(data.commissionBDT || 0);
+            }
+
+            // রিসেন্ট অ্যাক্টিভিটি টেবিল জেনারেট
+            tableHTML += `
+                <tr>
+                    <td>${data.studentName}</td>
+                    <td>${data.passportNo}</td>
+                    <td><span style="color:${getStatusColor(data.status)}">${data.status}</span></td>
+                    <td>${data.submittedAt ? new Date(data.submittedAt.seconds * 1000).toLocaleDateString() : 'Just now'}</td>
+                </tr>
+            `;
+        });
+
+        // UI আপডেট
+        if(document.getElementById('topPending')) document.getElementById('topPending').innerText = `৳${pendingComm.toLocaleString()}`;
+        if(document.getElementById('topFinal')) document.getElementById('topFinal').innerText = `৳${finalBal.toLocaleString()}`;
+        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHTML;
+        if(document.getElementById('withdrawFinalBalance')) document.getElementById('withdrawFinalBalance').innerText = `৳${finalBal.toLocaleString()}`;
+    });
+}
+
+// ৩. লাইভ ট্র্যাকিং ট্যাব ডাটা
+export function initTracking() {
+    const q = query(collection(db, "applications"), where("partnerEmail", "==", partnerEmail));
+    onSnapshot(q, (snapshot) => {
+        let html = "";
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `
+                <tr>
+                    <td><b>${data.studentName}</b><br><small>${data.university}</small></td>
+                    <td>${data.handledBy || "Processing..."}</td>
+                    <td>${data.passportNo}</td>
+                    <td>${data.status === "PENDING" ? "Checking..." : "Verified"}</td>
+                    <td><span style="padding:4px 8px; border-radius:4px; background:rgba(241, 196, 15, 0.1); color:#f1c40f">${data.status}</span></td>
+                    <td>${data.submittedAt ? new Date(data.submittedAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                </tr>
+            `;
+        });
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = html;
+    });
+}
+
+function getStatusColor(status) {
+    if(status === "PENDING") return "#f1c40f";
+    if(status === "APPROVED") return "#2ecc71";
+    if(status === "REJECTED") return "#e74c3c";
+    return "#fff";
+}
+
+// ৪. ইউনিভার্সিটি সার্চ লজিক
 export async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.toLowerCase().trim();
     const degreeInput = document.getElementById('fDegree').value.trim();
@@ -50,7 +115,7 @@ export async function searchUni() {
 
             if (matchCountry && matchDegree) {
                 found = true;
-                const totalFee = (u.semesterFee || 0) * 120;
+                const totalFee = (u.semesterFee || 0) * 120; // Example conversion
                 const comm = (totalFee * (u.partnerComm || 0)) / 100;
 
                 html += `
@@ -64,14 +129,14 @@ export async function searchUni() {
                 </tr>`;
             }
         });
-
         container.innerHTML = found ? html : "<tr><td colspan='6' style='text-align:center; color:orange;'>No university found!</td></tr>";
     } catch (e) {
         console.error(e);
+        container.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Database Error!</td></tr>";
     }
 }
 
-// ৪. ফাইল আপলোড (Cloudinary)
+// ৫. ফাইল আপলোড এবং সাবমিশন
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
@@ -80,26 +145,21 @@ async function uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-
     try {
         const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
         const data = await res.json();
         return data.secure_url;
-    } catch (e) {
-        console.error("Cloudinary Error:", e);
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
-// ৫. স্টুডেন্ট অ্যাপ্লিকেশন সাবমিট
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
-
     if(!sName || !sPass) return alert("Student name and passport are required!");
 
-    const btn = document.querySelector('.btn-gold');
-    btn.innerText = "Processing... ⏳";
+    const btn = document.querySelector('#applyModal .btn-gold');
+    const originalText = btn.innerText;
+    btn.innerText = "Uploading Files... ⏳";
     btn.disabled = true;
 
     try {
@@ -124,36 +184,32 @@ export async function submitApplication() {
 
         alert("Application Submitted Successfully!");
         window.closeModal();
-        location.reload(); 
     } catch (e) {
-        console.error("Firebase Error:", e);
         alert("Submission failed.");
     } finally {
         btn.disabled = false;
-        btn.innerText = "Submit Application";
+        btn.innerText = originalText;
     }
 }
 
-// ৬. মডাল এবং গ্লোবাল ফাংশন
+// ৬. মডাল ফাংশন (Global Scope)
 window.openApplyModal = (uniName, commission) => {
     selectedUniversity = uniName;
     currentUniCommission = commission;
-    const modal = document.getElementById('applyModal');
-    if (modal) {
-        document.getElementById('modalTitle').innerText = "Apply for " + uniName;
-        modal.style.display = 'block';
-    }
+    document.getElementById('modalTitle').innerText = "Apply for " + uniName;
+    document.getElementById('applyModal').style.display = 'block';
 };
 
 window.closeModal = () => {
     document.getElementById('applyModal').style.display = 'none';
 };
 
-// সাইন আউট ফাংশন
-window.logout = () => {
-    localStorage.removeItem('partnerEmail'); // সেশন ডিলিট করবে
-    alert("Logged out successfully!");
-    window.location.href = "/login"; // লগইন পেজে পাঠিয়ে দিবে
-};
-export function initRealtimeData() { console.log("System Ready."); }
-export function initTracking() { console.log("Tracking Ready."); }
+export async function updateProfile() {
+    alert("Profile update feature coming soon with Firebase Auth!");
+}
+
+export async function requestWithdraw() {
+    const amount = document.getElementById('wdAmount').value;
+    if(!amount || amount <= 0) return alert("Enter valid amount");
+    alert(`Withdrawal request for ৳${amount} submitted!`);
+}
