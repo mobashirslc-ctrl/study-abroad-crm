@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, where, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ১. Firebase Config
 const firebaseConfig = {
@@ -15,33 +15,29 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const partnerEmail = (localStorage.getItem('partnerEmail') || '').toLowerCase().trim();
 
-// ২. Cloudinary Configuration
+// ২. Cloudinary Config
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
-let currentUni = ""; // Global variable to store selected university
+let selectedUniversity = ""; // এটি গ্লোবাল রাখুন
 
-// ৩. ফাইল আপলোড ফাংশন (Cloudinary)
+// ৩. ফাইল আপলোড ফাংশন
 async function uploadFile(file) {
     if (!file) return null;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-
     try {
         const resp = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
         const data = await resp.json();
         return data.secure_url; 
-    } catch (err) {
-        console.error("Cloudinary Error:", err);
-        return null;
-    }
+    } catch (err) { return null; }
 }
 
-// ৪. সার্চ লজিক (University Filter)
+// ৪. ইউনিভার্সিটি সার্চ (Degree Case-Insensitive Fix)
 export async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.toLowerCase().trim();
-    const degreeInput = document.getElementById('fDegree').value; 
+    const degreeInput = document.getElementById('fDegree').value.toLowerCase().trim(); 
     const container = document.getElementById('uniListContainer');
     
     container.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Searching...</td></tr>";
@@ -53,33 +49,32 @@ export async function searchUni() {
 
         snap.forEach(docSnap => {
             const u = docSnap.data();
+            // ডাটাবেসের ডিগ্রিকেও ছোট হাতের করে চেক করা হচ্ছে যাতে ভুল না হয়
+            const dbDegree = (u.degree || "").toLowerCase().trim();
+            
             const matchCountry = !countryInput || u.country.toLowerCase().includes(countryInput);
-            const matchDegree = !degreeInput || (u.degree && u.degree.trim() === degreeInput.trim());
+            const matchDegree = !degreeInput || dbDegree === degreeInput;
 
             if (matchCountry && matchDegree) {
                 found = true;
-                const totalFee = u.semesterFee * 120;
-                const commission = (totalFee * (u.partnerComm || 0)) / 100;
-                
                 html += `
                 <tr>
                     <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
                     <td>${u.degree}</td>
                     <td>${u.minGPA}</td>
-                    <td>৳${totalFee.toLocaleString()}</td>
-                    <td style="color:#f1c40f">৳${commission.toLocaleString()}</td>
+                    <td>৳${(u.semesterFee * 120).toLocaleString()}</td>
+                    <td style="color:#f1c40f">৳${(u.semesterFee * 120 * (u.partnerComm || 0) / 100).toLocaleString()}</td>
                     <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">APPLY</button></td>
                 </tr>`;
             }
         });
-
-        container.innerHTML = found ? html : "<tr><td colspan='6' style='text-align:center; color:orange;'>No exact match found.</td></tr>";
+        container.innerHTML = found ? html : "<tr><td colspan='6' style='text-align:center; color:orange;'>No matching university found.</td></tr>";
     } catch (e) {
-        container.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error! Check Console.</td></tr>";
+        container.innerHTML = "<tr><td colspan='6' style='text-align:center; color:red;'>Error loading data.</td></tr>";
     }
 }
 
-// ৫. অ্যাপ্লিকেশন সাবমিট লজিক (Cloudinary + Firebase)
+// ৫. অ্যাপ্লিকেশন সাবমিট (Merged)
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -87,24 +82,17 @@ export async function submitApplication() {
     if(!sName || !sPass) return alert("Please enter Student Name and Passport!");
 
     const submitBtn = document.querySelector('.btn-gold');
-    submitBtn.innerText = "Processing... ⏳";
+    submitBtn.innerText = "Processing... Please wait";
     submitBtn.disabled = true;
 
     try {
-        // ফাইল আপলোড প্রসেস
         const fileInputs = ['file1', 'file2', 'file3', 'file4'];
-        const uploadPromises = fileInputs.map(id => {
-            const file = document.getElementById(id).files[0];
-            return uploadFile(file);
-        });
+        const urls = await Promise.all(fileInputs.map(id => uploadFile(document.getElementById(id).files[0])));
 
-        const urls = await Promise.all(uploadPromises);
-
-        // Firebase এ ডাটা পাঠানো
         await addDoc(collection(db, "applications"), {
             studentName: sName,
             passportNo: sPass,
-            university: currentUni, 
+            university: selectedUniversity, 
             partnerEmail: partnerEmail,
             files: {
                 passport: urls[0],
@@ -113,25 +101,23 @@ export async function submitApplication() {
                 other: urls[3]
             },
             status: "Pending Assessment",
-            submittedAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-            handledBy: "Waiting for Staff" 
+            submittedAt: serverTimestamp()
         });
 
-        alert("Application Submitted Successfully!");
+        alert("Application Submitted!");
         closeModal();
+        location.reload(); // ডাটা আপডেট দেখানোর জন্য পেজ রিফ্রেশ
     } catch (e) {
-        console.error("Submit Error:", e);
-        alert("Submission failed. Try again.");
+        alert("Error submitting file.");
     } finally {
-        submitBtn.innerText = "Submit Application";
         submitBtn.disabled = false;
+        submitBtn.innerText = "Submit Application";
     }
 }
 
-// ৬. মডাল এবং প্রোফাইল কন্ট্রোল
+// ৬. কন্ট্রোল ফাংশনস
 export function openApplyModal(uniName) {
-    currentUni = uniName;
+    selectedUniversity = uniName;
     document.getElementById('modalTitle').innerText = "Apply for " + uniName;
     document.getElementById('applyModal').style.display = 'block';
 }
@@ -140,8 +126,6 @@ export function closeModal() {
     document.getElementById('applyModal').style.display = 'none';
 }
 
-// স্যাম্পল ফাংশন (এগুলো আপনার ডাটাবেস অনুযায়ী পরবর্তীতে লিখবেন)
-export function initRealtimeData() { console.log("Dashboard Ready"); }
-export function initTracking() { console.log("Tracking Ready"); }
-export function requestWithdraw() { alert("Request Sent!"); }
-export function updateProfile() { alert("Profile Updated!"); }
+// খালি ফাংশনগুলো সচল রাখা
+export function initRealtimeData() {}
+export function initTracking() {}
