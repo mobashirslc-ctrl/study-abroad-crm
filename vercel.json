@@ -12,22 +12,6 @@
       "dest": "index.js"
     },
     {
-      "src": "/register",
-      "dest": "index.js"
-    },
-    {
-      "src": "/login",
-      "dest": "index.js"
-    },
-    {
-      "src": "/partner-access",
-      "dest": "index.js"
-    },
-    {
-      "src": "/partner",
-      "dest": "index.js"
-    },
-    {
       "src": "/(.*)",
       "dest": "index.js"
     }

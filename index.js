@@ -3,11 +3,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const path = require('path');
+const cors = require('cors'); // ১. এটি যোগ করা হয়েছে
 
 dotenv.config();
 const app = express();
 
 // Middleware
+app.use(cors()); // ২. এটি অবশ্যই লাগবে লগইন ফিক্স করতে
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -29,11 +31,13 @@ const User = mongoose.model('User', new mongoose.Schema({
 app.post('/api/register', async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ email: email.toLowerCase().trim() });
         if (user) return res.status(400).json({ msg: 'User already exists' });
+        
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        user = new User({ fullName, email, password: hashedPassword });
+        
+        user = new User({ fullName, email: email.toLowerCase().trim(), password: hashedPassword });
         await user.save();
         res.status(201).json({ msg: 'Registration Successful' });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -42,33 +46,21 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
         if (!user) return res.status(400).json({ msg: 'Invalid Credentials' });
+        
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Invalid Credentials' });
-        res.status(200).json({ msg: 'Login Successful' });
+        
+        res.status(200).json({ msg: 'Login Successful', user: { email: user.email, name: user.fullName } });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // --- 🌐 DEDICATED ROUTING ---
-
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/track', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
 app.get('/partner', (req, res) => res.sendFile(path.join(__dirname, 'public', 'partner.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg", 
-    authDomain: "scc-partner-portal.firebaseapp.com",
-    projectId: "scc-partner-portal",
-    storageBucket: "scc-partner-portal.firebasestorage.app",
-    messagingSenderId: "13013457431",
-    appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
-};
-
-// Catch-all (Redirect to Track)
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'track.html')));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

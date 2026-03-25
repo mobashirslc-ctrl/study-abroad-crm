@@ -55,8 +55,8 @@
             btn.disabled = true;
 
             try {
-                // এখানে আপনার ব্যাকএন্ডের ফুল লিঙ্ক 'http://localhost:10000' যোগ করা হয়েছে
-                const res = await fetch('http://localhost:10000/api/login', {
+                // Vercel বা লাইভ সার্ভারের জন্য relative path ব্যবহার করা হয়েছে
+                const res = await fetch('/api/login', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
