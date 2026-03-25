@@ -32,7 +32,7 @@ export function initRealtimeData() {
     });
 }
 
-// ২. ট্র্যাকিং লজিক (ইমেইল ফিল্টারসহ)
+// ২. ট্র্যাকিং লজিক
 export function initTracking() {
     if (!partnerEmail) return;
     const q = collection(db, "applications");
@@ -40,34 +40,22 @@ export function initTracking() {
         let fullHtml = ""; let homeHtml = "";
         snap.forEach(docSnap => {
             const a = docSnap.data();
-            const dbEmail = (a.partnerEmail || a.email || '').toString().toLowerCase().trim();
-            
-            if (dbEmail === partnerEmail) {
+            if ((a.partnerEmail || '').toLowerCase().trim() === partnerEmail) {
                 const date = a.updatedAt?.toDate().toLocaleDateString('en-GB') || 'Pending';
                 const status = (a.status || 'Pending').toUpperCase();
-
-                fullHtml += `<tr>
-                    <td><b>${a.studentName}</b><br><small>${a.university || ''}</small></td>
-                    <td>${a.handledBy || 'Processing'}</td>
-                    <td>${a.passportNo}</td>
-                    <td style="color:#f1c40f">${status}</td>
-                    <td><span style="color:#2ecc71"><i class="fas fa-check-circle"></i> Verified</span></td>
-                    <td>${date}</td>
-                </tr>`;
-                
+                fullHtml += `<tr><td><b>${a.studentName}</b><br><small>${a.university || ''}</small></td><td>${a.handledBy || 'Processing'}</td><td>${a.passportNo}</td><td style="color:#f1c40f">${status}</td><td>Verified</td><td>${date}</td></tr>`;
                 homeHtml += `<tr><td>${a.studentName}</td><td>${a.passportNo}</td><td>${status}</td><td>${date}</td></tr>`;
             }
         });
-        document.getElementById('fullTrackingBody').innerHTML = fullHtml || "<tr><td colspan='6'>No files found.</td></tr>";
-        document.getElementById('homeTrackingBody').innerHTML = homeHtml || "<tr><td colspan='4'>No activity.</td></tr>";
+        document.getElementById('fullTrackingBody').innerHTML = fullHtml || "<tr><td colspan='6'>No records found.</td></tr>";
+        document.getElementById('homeTrackingBody').innerHTML = homeHtml || "<tr><td colspan='4'>No recent activity.</td></tr>";
     });
 }
 
-// ৩. সার্চ লজিক (৫টি ফিল্ড)
+// ৩. ৫-ফিল্ড সার্চ লজিক
 export async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const degree = document.getElementById('fDegree').value;
-    
     const container = document.getElementById('uniListContainer');
     container.innerHTML = "Searching...";
 
@@ -77,21 +65,14 @@ export async function searchUni() {
         snap.forEach(docSnap => {
             const u = docSnap.data();
             if ((!country || u.country.toLowerCase().includes(country)) && (!degree || u.degree === degree)) {
-                html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                    <td>${u.degree}</td>
-                    <td>${u.minGPA}</td>
-                    <td>৳${(u.semesterFee * 120).toLocaleString()}</td>
-                    <td style="color:#f1c40f">৳${(u.semesterFee * 120 * u.partnerComm / 100).toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">APPLY</button></td>
-                </tr>`;
+                html += `<tr><td><b>${u.universityName}</b></td><td>${u.degree}</td><td>${u.minGPA}</td><td>৳${(u.semesterFee * 120).toLocaleString()}</td><td>৳${(u.semesterFee * 120 * u.partnerComm / 100).toLocaleString()}</td><td><button class="btn-gold" onclick="openApplyModal('${u.universityName}')">APPLY</button></td></tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='6'>No results.</td></tr>";
-    } catch (e) { container.innerHTML = "Error loading data."; }
+        container.innerHTML = html || "<tr><td colspan='6'>No results found.</td></tr>";
+    } catch (e) { container.innerHTML = "Error loading universities."; }
 }
 
-// ৪. পপআপ ও সাবমিশন লজিক
+// ৪. পপআপ ও সাবমিশন
 let currentUni = "";
 export function openApplyModal(uniName) {
     currentUni = uniName;
@@ -99,27 +80,19 @@ export function openApplyModal(uniName) {
     document.getElementById('applyModal').style.display = "block";
 }
 
-export function closeModal() {
-    document.getElementById('applyModal').style.display = "none";
-}
+export function closeModal() { document.getElementById('applyModal').style.display = "none"; }
 
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
-    
-    if(!sName || !sPass) return alert("Please fill Student Name and Passport!");
+    if(!sName || !sPass) return alert("Fill required fields!");
 
     try {
         const docRef = await addDoc(collection(db, "applications"), {
-            studentName: sName,
-            passportNo: sPass,
-            university: currentUni,
-            partnerEmail: partnerEmail,
-            status: "Submitted",
-            updatedAt: serverTimestamp()
+            studentName: sName, passportNo: sPass, university: currentUni,
+            partnerEmail: partnerEmail, status: "Submitted", updatedAt: serverTimestamp()
         });
-
-        alert(`Application Successful!\nSlip ID: ${docRef.id}\nStudent: ${sName}\nUniversity: ${currentUni}`);
+        alert(`Application Submitted! ID: ${docRef.id}`);
         closeModal();
     } catch (e) { alert("Submission failed!"); }
 }
@@ -135,8 +108,7 @@ export async function requestWithdraw() {
     const amt = document.getElementById('wdAmount').value;
     if(!amt || amt <= 0) return alert("Enter valid amount");
     await addDoc(collection(db, "withdrawals"), { 
-        email: partnerEmail, amount: Number(amt), 
-        method: document.getElementById('wdMethod').value, 
+        email: partnerEmail, amount: Number(amt), method: document.getElementById('wdMethod').value, 
         status: "Pending", timestamp: serverTimestamp() 
     });
     alert("Withdrawal Requested!");
