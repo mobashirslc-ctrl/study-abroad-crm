@@ -114,7 +114,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -130,54 +130,91 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- University Save Logic ---
-        // --- University Save Logic ---
-document.getElementById('saveUniBtn').onclick = async () => {
-    const btn = document.getElementById('saveUniBtn');
-    
-    const data = {
-        universityName: document.getElementById('uName').value.trim(),
-        country: document.getElementById('uCountry').value.trim(),
-        courseName: document.getElementById('uCourse').value.trim(),
-        degree: document.getElementById('uDegree').value,
-        semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
-        partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
-        minGPA: document.getElementById('uMinGPA').value.trim(),
-        ieltsReq: document.getElementById('uIeltsO').value.trim(),
-        gap: document.getElementById('uGap').value.trim()
-    };
-
-    if(!data.universityName || !data.country) {
-        alert("Please fill University Name and Country!");
-        return;
-    }
-
-    btn.innerText = "Saving to MongoDB...";
-    btn.disabled = true;
-
-    try {
-        // Firebase এর বদলে সরাসরি আপনার Node.js API-তে ডাটা পাঠানো হচ্ছে
-        const response = await fetch('/api/add-university', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-            alert("✅ University Added to MongoDB Successfully!");
-            location.reload(); 
-        } else {
-            alert("❌ Server Error: Could not save to MongoDB.");
+        // --- 1. MongoDB University Display (Load Data) ---
+        async function loadUniversities() {
+            try {
+                const response = await fetch('/api/universities'); 
+                if (!response.ok) throw new Error("Failed to fetch");
+                const unis = await response.json();
+                let html = "";
+                unis.forEach(u => {
+                    html += `<tr>
+                        <td>${u.universityName}</td>
+                        <td>${u.country}</td>
+                        <td>${u.courseName}</td>
+                        <td>${u.minGPA}</td>
+                        <td><button onclick="deleteUni('${u._id}')" class="btn btn-delete">Delete</button></td>
+                    </tr>`;
+                });
+                document.getElementById('uniTableBody').innerHTML = html;
+            } catch (e) {
+                console.error("Error loading universities:", e);
+                document.getElementById('uniTableBody').innerHTML = "<tr><td colspan='5'>Error loading data from MongoDB</td></tr>";
+            }
         }
-    } catch (e) {
-        alert("❌ Connection Error: API is not responding.");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Save University Data";
-    }
-};
 
-        // --- User Approval ---
+        // --- 2. Save University to MongoDB ---
+        document.getElementById('saveUniBtn').onclick = async () => {
+            const btn = document.getElementById('saveUniBtn');
+            const data = {
+                universityName: document.getElementById('uName').value.trim(),
+                country: document.getElementById('uCountry').value.trim(),
+                courseName: document.getElementById('uCourse').value.trim(),
+                degree: document.getElementById('uDegree').value,
+                semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
+                partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
+                minGPA: document.getElementById('uMinGPA').value.trim(),
+                ieltsReq: document.getElementById('uIeltsO').value.trim(),
+                gap: document.getElementById('uGap').value.trim()
+            };
+
+            if(!data.universityName || !data.country) {
+                alert("Please fill University Name and Country!");
+                return;
+            }
+
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/add-university', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert("✅ Saved to MongoDB!");
+                    loadUniversities(); // Refresh table
+                    // Reset fields
+                    document.querySelectorAll('.admin-form-grid input').forEach(i => i.value = "");
+                } else {
+                    alert("❌ Failed to save.");
+                }
+            } catch (e) {
+                alert("❌ Connection Error.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Save University Data";
+            }
+        };
+
+        // --- 3. Delete University from MongoDB ---
+        window.deleteUni = async (id) => {
+            if(confirm("Are you sure?")) {
+                try {
+                    const response = await fetch(`/api/delete-university/${id}`, { method: 'DELETE' });
+                    if(response.ok) {
+                        alert("Deleted!");
+                        loadUniversities();
+                    }
+                } catch (e) {
+                    alert("Delete failed.");
+                }
+            }
+        };
+
+        // --- 4. Firebase User Approval ---
         onSnapshot(collection(db, "users"), (snap) => {
             let html = "";
             snap.forEach(docSnap => {
@@ -204,6 +241,8 @@ document.getElementById('saveUniBtn').onclick = async () => {
             await updateDoc(doc(db, "users", id), { status: newStatus });
         };
 
+        // Initial Load
+        loadUniversities();
         document.getElementById('logoutAdmin').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
     </script>
 
