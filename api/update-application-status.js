@@ -1,13 +1,15 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
 export default async function handler(req, res) {
-    // CORS এবং মেথড চেক
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ message: 'Method Not Allowed' });
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
 
     const uri = process.env.MONGODB_URI;
     const client = new MongoClient(uri);
@@ -19,9 +21,11 @@ export default async function handler(req, res) {
         
         const { appId, status, note, staff } = req.body;
 
-        if (!appId) return res.status(400).json({ message: 'Missing App ID' });
+        if (!appId) {
+            return res.status(400).json({ message: 'App ID missing' });
+        }
 
-        await applications.updateOne(
+        const result = await applications.updateOne(
             { _id: new ObjectId(appId) },
             { 
                 $set: { 
@@ -33,9 +37,9 @@ export default async function handler(req, res) {
             }
         );
 
-        res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, message: 'Saved successfully' });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     } finally {
         await client.close();
     }
