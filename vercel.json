@@ -1,14 +1,14 @@
 {
   "version": 2,
   "rewrites": [
-    {
-      "source": "/api/applications",
-      "destination": "/api/index.js"
-    },
-    {
-      "source": "/api/update-application-status",
-      "destination": "/api/update-application-status.js"
-    }
+    { "source": "/api/applications", "destination": "/api/index.js" },
+    { "source": "/api/universities", "destination": "/api/index.js?type=universities" },
+    { "source": "/api/register", "destination": "/api/register.js" },
+    { "source": "/api/login", "destination": "/api/login.js" },
+    { "source": "/api/submit-application", "destination": "/api/submit-application.js" },
+    { "source": "/api/withdrawals", "destination": "/api/withdrawals.js" },
+    { "source": "/api/update-application-status", "destination": "/api/update-application-status.js" },
+    { "source": "/api/lock-application", "destination": "/api/update-application-status.js" }
   ],
   "headers": [
     {
@@ -17,7 +17,7 @@
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
       ]
     }
   ]
