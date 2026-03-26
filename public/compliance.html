@@ -64,7 +64,7 @@
     <div id="reviewModal" class="modal">
         <div class="modal-content">
             <h3 id="revStudentName">Review Application</h3>
-            <p style="font-size: 12px; color: #888;">Review student documents and update tracking status.</p>
+            <p id="debugInfo" style="font-size: 10px; color: #555;"></p>
             
             <div id="docLinksArea"></div>
 
@@ -122,38 +122,37 @@
         }
 
         window.openReviewByIndex = (index) => {
-    const app = pendingAppsList[index];
-    if(!app) return alert("No data found!");
+            const app = pendingAppsList[index];
+            if(!app) return alert("No data found!");
 
-    currentAppId = app._id;
-    document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
-    
-    let docHtml = "";
-    
-    // আপনার ডাটাবেসের আসল কী (image1, image2, image3) এখানে সেট করা হয়েছে
-    const fileKeys = ['image1', 'image2', 'image3', 'pdf1', 'pdf2', 'pdf3', 'passport'];
-    
-    fileKeys.forEach(key => {
-        if (app[key] && app[key] !== "null" && app[key] !== "") {
-            // ফাইলের নাম সুন্দর দেখানোর জন্য
-            let label = key.replace('image', 'Document ');
-            if(key === 'image1') label = "Passport / Photo";
-            if(key === 'image2') label = "Academic Docs";
-            if(key === 'image3') label = "Other Docs";
+            currentAppId = app._id;
+            document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
+            
+            let docHtml = "";
+            // আপনার ডাটাবেসের সঠিক কী গুলো এখানে দেওয়া হলো
+            const fileKeys = ['image1', 'image2', 'image3', 'pdf1', 'pdf2', 'pdf3'];
+            
+            fileKeys.forEach(key => {
+                const url = app[key];
+                if (url && url !== "null" && url !== "" && url.startsWith('http')) {
+                    let label = "Document " + key.replace('image', '');
+                    if(key === 'image1' || key === 'pdf1') label = "Passport / Photo";
+                    if(key === 'image2' || key === 'pdf2') label = "Academic Records";
+                    if(key === 'image3' || key === 'pdf3') label = "Language / Other Docs";
 
-            docHtml += `<a href="${app[key]}" target="_blank" class="doc-link">
-                <i class="fas fa-file-image"></i> View ${label}
-            </a>`;
-        }
-    });
+                    docHtml += `<a href="${url}" target="_blank" class="doc-link">
+                        <i class="fas fa-file-alt"></i> View ${label}
+                    </a>`;
+                }
+            });
 
-    if (docHtml === "") {
-        docHtml = `<p style="color:orange; font-size:12px;">⚠️ No images or PDFs found for this student.</p>`;
-    }
-    
-    document.getElementById('docLinksArea').innerHTML = docHtml;
-    document.getElementById('reviewModal').style.display = 'flex';
-};
+            if (docHtml === "") {
+                docHtml = `<p style="color:orange; font-size:12px;">⚠️ No images or PDFs found in database.</p>`;
+            }
+            
+            document.getElementById('docLinksArea').innerHTML = docHtml;
+            document.getElementById('reviewModal').style.display = 'flex';
+        };
 
         async function updateAppStatus() {
             const status = document.getElementById('trackingStatusUpdate').value;
@@ -170,7 +169,6 @@
                     appId: currentAppId, 
                     status: status, 
                     note: note || "Reviewed by compliance", 
-                    isVerified: (status === 'DOC_VERIFIED'),
                     staff: staffEmail 
                 };
 
@@ -181,40 +179,25 @@
                 });
 
                 if(res.ok) {
-                    alert("✅ Success: Status updated successfully.");
+                    alert("✅ Success: Status updated!");
                     closeModal();
                     fetchApplications();
                 } else {
-                    const errData = await res.json();
-                    alert("❌ Failed: " + (errData.message || "Server Error"));
+                    const err = await res.json();
+                    alert("❌ Failed: " + err.message);
                 }
             } catch (e) { 
-                console.error("Update Error:", e);
-                alert("❌ Error: Backend server is not responding."); 
+                alert("❌ Error: API not responding. Make sure api/update-application-status.js is in the 'api' folder on GitHub."); 
             } finally {
                 btn.innerText = "SAVE REVIEW";
                 btn.disabled = false;
             }
         }
 
-        async function fetchHistory() {
-            try {
-                const res = await fetch('/api/applications');
-                const apps = await res.json();
-                const myHistory = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
-                let html = "";
-                myHistory.forEach(d => {
-                    html += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td><td>${d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : 'N/A'}</td></tr>`;
-                });
-                document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
-            } catch (e) { console.error("History Fetch Error:", e); }
-        }
-
-        window.closeModal = () => { 
+        function closeModal() { 
             document.getElementById('reviewModal').style.display = 'none';
             document.getElementById('complianceNote').value = "";
-            currentAppId = null;
-        };
+        }
 
         fetchApplications();
     </script>
