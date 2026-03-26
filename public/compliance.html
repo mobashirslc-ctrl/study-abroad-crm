@@ -105,7 +105,7 @@
             try {
                 const res = await fetch('/api/applications');
                 const apps = await res.json();
-                // স্ট্যাটাস ফিল্টারিং লজিক ফিক্স
+                // Filtering logic to separate pending vs completed
                 pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
                 let html = "";
@@ -124,13 +124,13 @@
 
         window.openReviewByIndex = (index) => {
             const app = pendingAppsList[index];
-            if(!app) return;
+            if(!app) return alert("No data found for this application.");
 
             currentAppId = app._id;
             document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
             let docHtml = "";
-            // ফাইল লিঙ্কের জন্য কন্ডিশনাল চেক (Blank আসা ফিক্স করতে)
+            // Check all 3 PDF fields from StudyAbroadCRM database
             const docs = [
                 { url: app.pdf1, label: "Passport / Photo" },
                 { url: app.pdf2, label: "Academic Docs" },
@@ -138,12 +138,13 @@
             ];
 
             docs.forEach(doc => {
+                // Ensure the URL is not null, empty, or the string "null"
                 if (doc.url && doc.url !== "null" && doc.url !== "") {
                     docHtml += `<a href="${doc.url}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View ${doc.label}</a>`;
                 }
             });
             
-            document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>No documents provided.</p>";
+            document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>⚠️ No valid PDF links found in Database.</p>";
             document.getElementById('reviewModal').style.display = 'flex';
         };
 
@@ -173,16 +174,16 @@
                 });
 
                 if(res.ok) {
-                    alert("✅ Success: Status updated.");
+                    alert("✅ Success: Status updated successfully.");
                     closeModal();
-                    fetchApplications();
+                    fetchApplications(); // Refresh the list
                 } else {
                     const errData = await res.json();
-                    alert("❌ Failed: " + (errData.message || "Server error"));
+                    alert("❌ Failed: " + (errData.message || "Server Error"));
                 }
             } catch (e) { 
                 console.error("Update Error:", e);
-                alert("❌ Connection Error: Backend server is not responding."); 
+                alert("❌ Error: Backend server is not responding. Check if /api/update-application-status.js exists."); 
             } finally {
                 btn.innerText = "SAVE REVIEW";
                 btn.disabled = false;
@@ -196,10 +197,10 @@
                 const myHistory = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
                 let html = "";
                 myHistory.forEach(d => {
-                    html += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
+                    html += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td><td>${d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : 'N/A'}</td></tr>`;
                 });
                 document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
-            } catch (e) { }
+            } catch (e) { console.error("History Fetch Error:", e); }
         }
 
         window.closeModal = () => { 
@@ -208,6 +209,7 @@
             currentAppId = null;
         };
 
+        // Initial Load
         fetchApplications();
     </script>
 </body>
