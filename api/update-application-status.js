@@ -1,11 +1,15 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
 export default async function handler(req, res) {
+    // CORS এবং মেথড চেক
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ message: 'Method Not Allowed' });
 
     const uri = process.env.MONGODB_URI;
-    if (!uri) return res.status(500).json({ message: 'MONGODB_URI is not defined in Vercel settings' });
-
     const client = new MongoClient(uri);
 
     try {
@@ -15,11 +19,9 @@ export default async function handler(req, res) {
         
         const { appId, status, note, staff } = req.body;
 
-        if (!appId || !ObjectId.isValid(appId)) {
-            return res.status(400).json({ message: 'Invalid or missing Application ID' });
-        }
+        if (!appId) return res.status(400).json({ message: 'Missing App ID' });
 
-        const result = await applications.updateOne(
+        await applications.updateOne(
             { _id: new ObjectId(appId) },
             { 
                 $set: { 
@@ -31,9 +33,9 @@ export default async function handler(req, res) {
             }
         );
 
-        res.status(200).json({ success: true, message: 'Updated successfully' });
+        res.status(200).json({ success: true });
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ error: error.message });
     } finally {
         await client.close();
     }
