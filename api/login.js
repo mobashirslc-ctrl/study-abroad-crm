@@ -2,8 +2,6 @@ import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
 
 export default async function handler(req, res) {
-    // CORS Headers
-    res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -11,46 +9,41 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ message: 'Method Not Allowed' });
 
-    const client = new MongoClient(process.env.MONGODB_URI || process.env.MONGO_URI);
+    // Fallback logic: check both possible variable names
+    const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    
+    if (!uri) {
+        return res.status(500).json({ error: "No Database Connection String found in Vercel!" });
+    }
+
+    const client = new MongoClient(uri);
 
     try {
         await client.connect();
-        // ভিডিও অনুযায়ী সঠিক ডাটাবেস নাম ব্যবহার করা হয়েছে
+        // ভিডিও অনুযায়ী ডেটাবেস নাম
         const database = client.db('StudyAbroadCRM'); 
         const users = database.collection('users');
 
         const { email, password } = req.body;
         
-        if (!email || !password) {
-            return res.status(400).json({ msg: 'Email and Password required' });
-        }
-
-        // ইউজার খোঁজা
+        // কেস-সেনসিটিভ ইস্যু এড়াতে trim এবং lowercase করা হয়েছে
         const user = await users.findOne({ email: email.toLowerCase().trim() });
 
         if (!user) {
-            return res.status(400).json({ msg: 'User not found' });
+            return res.status(401).json({ msg: 'User not found in StudyAbroadCRM' });
         }
 
-        // পাসওয়ার্ড চেক
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ msg: 'Invalid credentials' });
+            return res.status(401).json({ msg: 'Invalid Password' });
         }
 
-        // সফল লগইন
         return res.json({ 
-            user: { 
-                email: user.email, 
-                name: user.fullName, 
-                role: user.role, 
-                logoURL: user.logoURL || "" 
-            } 
+            user: { email: user.email, name: user.fullName, role: user.role, logoURL: user.logoURL || "" } 
         });
 
     } catch (e) {
-        console.error("Login Error:", e);
-        return res.status(500).json({ error: "Server error: " + e.message });
+        return res.status(500).json({ error: "Server Error: " + e.message });
     } finally {
         await client.close();
     }
