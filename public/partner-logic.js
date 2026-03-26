@@ -7,39 +7,45 @@ let selectedUniversity = "";
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
-// ১. ড্যাশবোর্ড ডাটা লোড (Home Tracking Table)
+// ১. ড্যাশবোর্ড ডাটা লোড (পেমেন্ট লজিক ফিক্সড)
 export async function initRealtimeData() {
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
         const myApps = allApps.filter(app => app.partnerEmail === partnerEmail);
 
-        let pending = 0, final = 0, html = "";
+        let pendingBalance = 0; 
+        let finalBalance = 0;   
+        let html = "";
+
         myApps.forEach(data => {
-            pending += Number(data.pendingAmount || 0);
-            final += Number(data.finalAmount || 0);
+            // পেমেন্ট ক্যালকুলেশন: শুধুমাত্র Verified স্ট্যাটাস থাকলেই পেন্ডিং ব্যালেন্সে যোগ হবে
+            if (data.status === 'DOC_VERIFIED' || data.isVerified === true) {
+                pendingBalance += Number(data.commissionBDT || 0);
+            }
             
-            // Dashboard table specific logic
+            // যদি পেমেন্ট হয়ে যায় (Status 'PAID')
+            if (data.status === 'PAID') {
+                finalBalance += Number(data.commissionBDT || 0);
+                pendingBalance -= Number(data.commissionBDT || 0);
+            }
+
             html += `<tr>
                 <td><b>${data.studentName}</b></td>
                 <td>${data.passportNo}</td>
-                <td><span class="status-pill" style="color:#f1c40f">${data.status}</span></td>
+                <td><span style="color:#f1c40f">${data.status}</span></td>
                 <td>${data.university || 'N/A'}</td>
-                <td>
-                    <button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick='printAdmissionSlip(${JSON.stringify(data)})'>
-                        <i class="fas fa-print"></i> Slip
-                    </button>
-                </td>
+                <td><button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick='printAdmissionSlip(${JSON.stringify(data)})'>Slip</button></td>
             </tr>`;
         });
 
-        document.getElementById('topPending').innerText = `৳${pending.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${final.toLocaleString()}`;
-        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5'>No activity found.</td></tr>";
-    } catch (e) { console.error(e); }
+        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5'>No activity</td></tr>";
+    } catch (e) { console.error("Error loading dashboard data:", e); }
 }
 
-// ২. ফুল ট্র্যাকিং মেনু (With New Fields)
+// ২. ফুল ট্র্যাকিং মেনু
 export async function initTracking() {
     const container = document.getElementById('fullTrackingBody');
     container.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Loading Tracks...</td></tr>";
@@ -60,37 +66,10 @@ export async function initTracking() {
             </tr>`;
         });
         container.innerHTML = html || "<tr><td colspan='6'>No students found.</td></tr>";
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error loading tracking:", e); }
 }
 
-// ৩. স্লিপ জেনারেশন ফাংশন (Fixing Print Button)
-export function printAdmissionSlip(appData) {
-    const modal = document.getElementById('slipModal');
-    
-    // ডাটা সেট করা
-    document.getElementById('slipName').innerText = appData.studentName;
-    document.getElementById('slipPassport').innerText = appData.passportNo;
-    document.getElementById('slipAgency').innerText = userData.fullName || userData.name || "Authorized Partner";
-    
-    // লোগো সেট করা
-    const slipLogo = document.getElementById('slipPartnerLogo');
-    if(userData.logoURL) slipLogo.src = userData.logoURL;
-
-    // QR Code জেনারেট করা
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = "";
-    new QRCode(qrContainer, {
-        text: `https://study-abroad-crm-nine.vercel.app/track.html?id=${appData._id}`,
-        width: 100,
-        height: 100,
-        colorDark: "#2b0054"
-    });
-
-    // মোডাল ওপেন করা
-    modal.style.display = 'flex';
-}
-
-// ৪. অ্যাপ্লিকেশন সাবমিট (Contact No সহ)
+// ৩. অ্যাপ্লিকেশন সাবমিট (ব্যালেন্স ০ রেখে সাবমিট হবে)
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -99,6 +78,10 @@ export async function submitApplication() {
     if(!sName || !sPass) return alert("Fill Student Name & Passport");
 
     try {
+        const submitBtn = document.querySelector('button[onclick="submitApplication()"]');
+        submitBtn.innerText = "Uploading Docs...";
+        submitBtn.disabled = true;
+
         const fileIds = ['file1', 'file2', 'file3'];
         const urls = await Promise.all(fileIds.map(id => {
             const file = document.getElementById(id).files[0];
@@ -115,7 +98,11 @@ export async function submitApplication() {
                 university: selectedUniversity, 
                 partnerEmail,
                 commissionBDT: currentUniCommission,
-                pdf1: urls[0], pdf2: urls[1], pdf3: urls[2],
+                pendingAmount: 0, // সাবমিট করার সময় টাকা যোগ হবে না (নিরাপদ রাখার জন্য)
+                isVerified: false, // কমপ্লায়েন্স চেক করার আগে false থাকবে
+                pdf1: urls[0], 
+                pdf2: urls[1], 
+                pdf3: urls[2],
                 status: 'PENDING',
                 timestamp: new Date().toISOString()
             })
@@ -125,31 +112,29 @@ export async function submitApplication() {
             alert("Application Submitted Successfully!");
             location.reload();
         }
-    } catch (e) { alert("Submission failed. Try again."); }
+    } catch (e) { 
+        alert("Submission failed. Try again."); 
+        console.error(e);
+    }
 }
 
-// প্রোফাইল আপডেট
-export async function updateProfile() {
-    const contact = document.getElementById('pContact').value;
-    const logoFile = document.getElementById('pLogo').files[0];
-    let logoURL = userData.logoURL;
+// ৪. স্লিপ জেনারেশন
+export function printAdmissionSlip(appData) {
+    const modal = document.getElementById('slipModal');
+    document.getElementById('slipName').innerText = appData.studentName;
+    document.getElementById('slipPassport').innerText = appData.passportNo;
+    document.getElementById('slipAgency').innerText = userData.fullName || userData.name || "Authorized Partner";
+    
+    const slipLogo = document.getElementById('slipPartnerLogo');
+    if(userData.logoURL) slipLogo.src = userData.logoURL;
 
-    try {
-        if(logoFile) {
-            alert("Uploading Logo...");
-            logoURL = await uploadFile(logoFile);
-        }
-        const res = await fetch('/api/update-profile', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: partnerEmail, contact, logoURL })
-        });
-        if(res.ok) {
-            localStorage.setItem('user', JSON.stringify({...userData, contact, logoURL}));
-            alert("Profile Synced Successfully!");
-            location.reload();
-        }
-    } catch (e) { alert("Failed to update profile"); }
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = "";
+    new QRCode(qrContainer, {
+        text: `https://study-abroad-crm-nine.vercel.app/track.html?id=${appData._id}`,
+        width: 100, height: 100, colorDark: "#2b0054"
+    });
+    modal.style.display = 'flex';
 }
 
 // ইউনিভার্সিটি সার্চ
@@ -181,7 +166,31 @@ export async function searchUni() {
             }
         });
         container.innerHTML = html || "<tr><td colspan='6'>No results found</td></tr>";
-    } catch (e) { }
+    } catch (e) { console.error(e); }
+}
+
+// প্রোফাইল আপডেট
+export async function updateProfile() {
+    const contact = document.getElementById('pContact').value;
+    const logoFile = document.getElementById('pLogo').files[0];
+    let logoURL = userData.logoURL;
+
+    try {
+        if(logoFile) {
+            alert("Uploading Logo...");
+            logoURL = await uploadFile(logoFile);
+        }
+        const res = await fetch('/api/update-profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: partnerEmail, contact, logoURL })
+        });
+        if(res.ok) {
+            localStorage.setItem('user', JSON.stringify({...userData, contact, logoURL}));
+            alert("Profile Synced Successfully!");
+            location.reload();
+        }
+    } catch (e) { alert("Failed to update profile"); }
 }
 
 async function uploadFile(file) {
