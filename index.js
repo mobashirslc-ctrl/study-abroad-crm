@@ -13,11 +13,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 🗄️ MongoDB Connection ---
-// Ekhane noutun user GORUN ebong StudyAbroadCRM database set kora hoyeche
+// সরাসরি কানেকশন স্ট্রিং-এ ডাটাবেস নাম (StudyAbroadCRM) যোগ করা হয়েছে
 const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM?retryWrites=true&w=majority';
 
-mongoose.connect(MONGO_URI, { dbName: 'StudyAbroadCRM' })
-    .then(() => console.log('✅ Connected to StudyAbroadCRM via GORUN'))
+mongoose.connect(MONGO_URI)
+    .then(() => console.log('✅ Connected successfully to StudyAbroadCRM via GORUN'))
     .catch(err => console.error('❌ DB Error:', err.message));
 
 // --- 👤 Models ---
@@ -28,7 +28,7 @@ const User = mongoose.model('User', new mongoose.Schema({
     role: { type: String, default: 'partner' },
     contact: String,
     logoURL: String
-}, { collection: 'users' }));
+}, { collection: 'users' })); // Collection name nishchit kora holo
 
 const Application = mongoose.model('Application', new mongoose.Schema({
     studentName: String,
@@ -59,28 +59,21 @@ const Withdrawal = mongoose.model('Withdrawal', new mongoose.Schema({
 
 // --- 🚀 API Routes ---
 
-// Auth
-app.post('/api/register', async (req, res) => {
-    try {
-        const { fullName, email, password } = req.body;
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const user = new User({ fullName, email: email.toLowerCase().trim(), password: hashedPassword });
-        await user.save();
-        res.status(201).json({ msg: 'Success' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
+// Login API
 app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(password, user.password))) return res.status(400).json({ msg: 'Invalid Credentials' });
+        if (!user) return res.status(401).json({ msg: 'User not found' });
+        
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ msg: 'Invalid Credentials' });
+        
         res.json({ user: { email: user.email, name: user.fullName, role: user.role, logoURL: user.logoURL } });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Applications List
+// Applications API
 app.get('/api/applications', async (req, res) => {
     try {
         const apps = await Application.find().sort({ timestamp: -1 });
@@ -88,41 +81,7 @@ app.get('/api/applications', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// File Locking
-app.patch('/api/lock-application', async (req, res) => {
-    try {
-        const { appId, staff } = req.body;
-        const appData = await Application.findById(appId);
-        if (!appData) return res.status(404).json({ msg: "Not found" });
-
-        if (appData.status === 'UNDER_REVIEW' && appData.complianceMember !== staff) {
-            return res.status(403).json({ msg: "Already being reviewed by " + appData.complianceMember });
-        }
-
-        appData.status = 'UNDER_REVIEW';
-        appData.complianceMember = staff;
-        await appData.save();
-        res.json({ msg: "Locked for review", data: appData });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Compliance Decision
-app.patch('/api/update-compliance', async (req, res) => {
-    try {
-        const { appId, status, note, staff } = req.body;
-        const appData = await Application.findById(appId);
-        if (!appData) return res.status(404).json({ msg: "File not found" });
-
-        appData.status = status;
-        appData.complianceNote = note;
-        appData.complianceMember = staff;
-        appData.pendingAmount = (status === 'VERIFIED') ? (appData.commissionBDT || 0) : 0;
-
-        await appData.save();
-        res.json({ msg: `Application ${status} successfully` });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
+// Submit Application API
 app.post('/api/submit-application', async (req, res) => {
     try {
         const newApp = new Application(req.body);
@@ -131,37 +90,30 @@ app.post('/api/submit-application', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/universities', async (req, res) => {
+// Other routes (Lock, Update, Uni, etc.)
+app.patch('/api/lock-application', async (req, res) => {
     try {
-        const unis = await University.find().sort({ timestamp: -1 });
-        res.json(unis);
+        const { appId, staff } = req.body;
+        await Application.findByIdAndUpdate(appId, { status: 'UNDER_REVIEW', complianceMember: staff });
+        res.json({ msg: "Locked" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/add-university', async (req, res) => {
+app.patch('/api/update-compliance', async (req, res) => {
     try {
-        const newUni = new University(req.body);
-        await newUni.save();
-        res.status(201).json({ msg: 'University Added' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/withdrawals', async (req, res) => {
-    try {
-        const wd = new Withdrawal(req.body);
-        await wd.save();
-        res.status(201).json({ msg: 'Requested' });
+        const { appId, status, note, staff } = req.body;
+        const update = { status, complianceNote: note, complianceMember: staff };
+        if (status === 'VERIFIED') {
+            const app = await Application.findById(appId);
+            update.pendingAmount = app.commissionBDT || 0;
+        }
+        await Application.findByIdAndUpdate(appId, update);
+        res.json({ msg: "Updated" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // Frontend Routing
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Export for Vercel
+// Vercel Export
 module.exports = app;
-
-// Listen locally
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 10000;
-    app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
-}
