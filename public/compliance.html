@@ -64,8 +64,6 @@
     <div id="reviewModal" class="modal">
         <div class="modal-content">
             <h3 id="revStudentName">Review Application</h3>
-            <p id="debugInfo" style="font-size: 10px; color: #555;"></p>
-            
             <div id="docLinksArea"></div>
 
             <label style="font-size: 12px; color: var(--gold);">Tracking Update:</label>
@@ -99,6 +97,7 @@
             document.getElementById(tabId + 'Section').style.display = 'block';
             el.classList.add('active');
             if(tabId === 'history') fetchHistory();
+            if(tabId === 'queue') fetchApplications();
         }
 
         async function fetchApplications() {
@@ -121,6 +120,25 @@
             } catch (e) { console.error("Fetch Error:", e); }
         }
 
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/api/applications');
+                const apps = await res.json();
+                const history = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
+                
+                let html = "";
+                history.forEach(d => {
+                    html += `<tr>
+                        <td><b>${d.studentName}</b></td>
+                        <td>${d.university}</td>
+                        <td><span class="status-pill">${d.status}</span></td>
+                        <td>${d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : 'N/A'}</td>
+                    </tr>`;
+                });
+                document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
+            } catch (e) { console.error("History Fetch Error:", e); }
+        }
+
         window.openReviewByIndex = (index) => {
             const app = pendingAppsList[index];
             if(!app) return alert("No data found!");
@@ -129,16 +147,15 @@
             document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
             let docHtml = "";
-            // আপনার ডাটাবেসের সঠিক কী গুলো এখানে দেওয়া হলো
             const fileKeys = ['image1', 'image2', 'image3', 'pdf1', 'pdf2', 'pdf3'];
             
             fileKeys.forEach(key => {
                 const url = app[key];
                 if (url && url !== "null" && url !== "" && url.startsWith('http')) {
-                    let label = "Document " + key.replace('image', '');
-                    if(key === 'image1' || key === 'pdf1') label = "Passport / Photo";
-                    if(key === 'image2' || key === 'pdf2') label = "Academic Records";
-                    if(key === 'image3' || key === 'pdf3') label = "Language / Other Docs";
+                    let label = "Document " + key.replace('image', '').replace('pdf', '');
+                    if(key.includes('1')) label = "Passport / Photo";
+                    if(key.includes('2')) label = "Academic Records";
+                    if(key.includes('3')) label = "Language / Other Docs";
 
                     docHtml += `<a href="${url}" target="_blank" class="doc-link">
                         <i class="fas fa-file-alt"></i> View ${label}
@@ -146,55 +163,49 @@
                 }
             });
 
-            if (docHtml === "") {
-                docHtml = `<p style="color:orange; font-size:12px;">⚠️ No images or PDFs found in database.</p>`;
-            }
-            
-            document.getElementById('docLinksArea').innerHTML = docHtml;
+            document.getElementById('docLinksArea').innerHTML = docHtml || `<p style="color:orange; font-size:12px;">⚠️ No documents found.</p>`;
             document.getElementById('reviewModal').style.display = 'flex';
         };
 
         async function updateAppStatus() {
-    const status = document.getElementById('trackingStatusUpdate').value;
-    const note = document.getElementById('complianceNote').value;
-    const btn = document.getElementById('saveReviewBtn');
+            const status = document.getElementById('trackingStatusUpdate').value;
+            const note = document.getElementById('complianceNote').value;
+            const btn = document.getElementById('saveReviewBtn');
 
-    if(!currentAppId) return alert("Please select an application first.");
+            if(!currentAppId) return alert("Please select an application first.");
 
-    try {
-        btn.innerText = "Saving...";
-        btn.disabled = true;
+            try {
+                btn.innerText = "Saving...";
+                btn.disabled = true;
 
-        const payload = { 
-            appId: currentAppId, 
-            status: status, 
-            note: note || "Reviewed by compliance", 
-            staff: staffEmail 
-        };
+                const payload = { 
+                    appId: currentAppId, 
+                    status: status, 
+                    note: note || "Reviewed by compliance", 
+                    staff: staffEmail 
+                };
 
-        // মেথড অবশ্যই 'POST' হতে হবে
-        const res = await fetch('/api/update-application-status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+                const res = await fetch('/api/update-application-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-        if(res.ok) {
-            alert("✅ Success: Status updated!");
-            closeModal();
-            fetchApplications();
-        } else {
-            const err = await res.json();
-            alert("❌ Failed: " + (err.message || "Unknown error"));
+                if(res.ok) {
+                    alert("✅ Success: Status updated!");
+                    closeModal();
+                    fetchApplications();
+                } else {
+                    const err = await res.json();
+                    alert("❌ Failed: " + (err.message || "Unknown error"));
+                }
+            } catch (e) { 
+                alert("❌ Error: API not responding. Check Vercel logs."); 
+            } finally {
+                btn.innerText = "SAVE REVIEW";
+                btn.disabled = false;
+            }
         }
-    } catch (e) { 
-        console.error("API Error:", e);
-        alert("❌ Error: API not responding. Check Vercel logs."); 
-    } finally {
-        btn.innerText = "SAVE REVIEW";
-        btn.disabled = false;
-    }
-}
 
         function closeModal() { 
             document.getElementById('reviewModal').style.display = 'none';
