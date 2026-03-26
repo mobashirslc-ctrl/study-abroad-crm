@@ -13,11 +13,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- 🗄️ MongoDB Connection ---
-// আপনার সেটিংস অনুযায়ী MONGODB_URI অথবা MONGO_URI চেক করবে
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://IHPCRM:CRM2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM?retryWrites=true&w=majority';
+// Ekhane noutun user GORUN ebong StudyAbroadCRM database set kora hoyeche
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/StudyAbroadCRM?retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URI, { dbName: 'StudyAbroadCRM' })
-    .then(() => console.log('✅ Connected to StudyAbroadCRM'))
+    .then(() => console.log('✅ Connected to StudyAbroadCRM via GORUN'))
     .catch(err => console.error('❌ DB Error:', err.message));
 
 // --- 👤 Models ---
