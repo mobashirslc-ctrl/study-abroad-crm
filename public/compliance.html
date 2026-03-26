@@ -17,12 +17,10 @@
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid var(--gold); color: var(--gold); }
-        .btn-action { background: var(--gold); border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-action:hover { opacity: 0.8; }
+        .btn-action { background: var(--gold); border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 500px; }
         .doc-link { display: block; background: rgba(255,255,255,0.05); padding: 10px; margin: 8px 0; color: var(--gold); text-decoration: none; border-radius: 5px; border: 1px solid var(--border); font-size: 13px; }
-        .doc-link:hover { background: rgba(255,255,255,0.1); }
         select, textarea { width: 100%; background: #070014; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 5px; margin: 10px 0; box-sizing: border-box; }
     </style>
 </head>
@@ -67,7 +65,7 @@
             <h3 id="revStudentName">Review Application</h3>
             <p style="font-size: 12px; color: #888;">Review student documents and update tracking status.</p>
             
-            <div id="docLinksArea" style="max-height: 200px; overflow-y: auto; margin-bottom: 15px;"></div>
+            <div id="docLinksArea"></div>
 
             <label style="font-size: 12px; color: var(--gold);">Tracking Update:</label>
             <select id="trackingStatusUpdate">
@@ -81,7 +79,7 @@
             <textarea id="complianceNote" placeholder="Add compliance notes..."></textarea>
 
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button id="saveBtn" onclick="updateAppStatus()" style="flex:1; background:#2ecc71; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer; font-weight:bold;">SAVE REVIEW</button>
+                <button id="saveReviewBtn" onclick="updateAppStatus()" style="flex:1; background:#2ecc71; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer; font-weight:bold;">SAVE REVIEW</button>
                 <button onclick="closeModal()" style="flex:1; background:transparent; color:gray; border:1px solid #444; border-radius:5px; cursor:pointer;">Cancel</button>
             </div>
         </div>
@@ -92,7 +90,7 @@
         document.getElementById('staffName').innerText = staffEmail.split('@')[0].toUpperCase();
         
         let currentAppId = null;
-        let pendingAppsList = []; // ফেচ করা অ্যাপলিকেশন স্টোর করার জন্য
+        let allApps = []; // Local storage for fetched data to avoid JSON stringify issues
 
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -105,50 +103,54 @@
         async function fetchApplications() {
             try {
                 const res = await fetch('/api/applications');
-                const apps = await res.json();
-                // স্ট্যাটাস ফিল্টার: শুধুমাত্র ইনকামিং ফাইলগুলো দেখাবে
-                pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
+                allApps = await res.json();
+                const pendingApps = allApps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
                 let html = "";
-                pendingAppsList.forEach((d, index) => {
+                pendingApps.forEach((d, index) => {
                     html += `<tr>
                         <td><b>${d.studentName}</b></td>
                         <td>${d.university}</td>
                         <td style="color:var(--gold)">৳${(d.commissionBDT || 0).toLocaleString()}</td>
                         <td><span class="status-pill">${d.status}</span></td>
-                        <td><button class="btn-action" onclick="openReview(${index})">REVIEW</button></td>
+                        <td><button class="btn-action" onclick="openReviewByIndex(${index}, 'pending')">REVIEW</button></td>
                     </tr>`;
                 });
-                document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5' style='text-align:center; padding:20px;'>No pending files.</td></tr>";
-            } catch (e) { console.error("Fetch Error:", e); }
+                document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5'>No pending files.</td></tr>";
+            } catch (e) { console.error("Fetch Applications Error:", e); }
         }
 
-        window.openReview = (index) => {
-            const app = pendingAppsList[index];
+        window.openReviewByIndex = (index, type) => {
+            let app;
+            if(type === 'pending') {
+                const pendingApps = allApps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
+                app = pendingApps[index];
+            }
+            
             if(!app) return;
 
             currentAppId = app._id;
             document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
             let docHtml = "";
-            if(app.pdf1) docHtml += `<a href="${app.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Passport/Photo</a>`;
-            if(app.pdf2) docHtml += `<a href="${app.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Academic Docs</a>`;
-            if(app.pdf3) docHtml += `<a href="${app.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Language Proficiency</a>`;
+            if(app.pdf1) docHtml += `<a href="${app.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Passport/Photo</a>`;
+            if(app.pdf2) docHtml += `<a href="${app.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Docs</a>`;
+            if(app.pdf3) docHtml += `<a href="${app.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Language Proficiency</a>`;
             
-            document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='font-size:12px; color:orange;'>No documents uploaded.</p>";
+            document.getElementById('docLinksArea').innerHTML = docHtml || "No documents uploaded.";
             document.getElementById('reviewModal').style.display = 'flex';
         };
 
         async function updateAppStatus() {
             const status = document.getElementById('trackingStatusUpdate').value;
             const note = document.getElementById('complianceNote').value;
-            const saveBtn = document.getElementById('saveBtn');
+            const btn = document.getElementById('saveReviewBtn');
 
-            if(!currentAppId) return alert("Application ID missing.");
+            if(!currentAppId) return alert("Select an application first");
 
             try {
-                saveBtn.innerText = "SAVING...";
-                saveBtn.disabled = true;
+                btn.innerText = "Saving...";
+                btn.disabled = true;
 
                 const res = await fetch('/api/update-application-status', {
                     method: 'PATCH',
@@ -157,8 +159,7 @@
                         appId: currentAppId, 
                         status: status, 
                         note: note,
-                        // যদি 'DOC_VERIFIED' হয় তবে ব্যালেন্স ট্রিগার হবে
-                        isVerified: (status === 'DOC_VERIFIED'), 
+                        isVerified: (status === 'DOC_VERIFIED'),
                         staff: staffEmail 
                     })
                 });
@@ -168,14 +169,14 @@
                     closeModal();
                     fetchApplications();
                 } else {
-                    alert("Update failed. Please try again.");
+                    alert("Failed to update status");
                 }
             } catch (e) { 
-                console.error(e);
-                alert("Server error!"); 
+                console.error("Update Error:", e);
+                alert("Error connecting to server"); 
             } finally {
-                saveBtn.innerText = "SAVE REVIEW";
-                saveBtn.disabled = false;
+                btn.innerText = "SAVE REVIEW";
+                btn.disabled = false;
             }
         }
 
@@ -183,28 +184,20 @@
             try {
                 const res = await fetch('/api/applications');
                 const apps = await res.json();
-                // যারা ইতিমধ্যে ভেরিফাইড বা রিজেক্টেড হয়েছে তাদের দেখাবে
                 const myHistory = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
-                
                 let html = "";
                 myHistory.forEach(d => {
-                    html += `<tr>
-                        <td>${d.studentName}</td>
-                        <td>${d.university}</td>
-                        <td><span class="status-pill">${d.status}</span></td>
-                        <td>${new Date(d.timestamp).toLocaleDateString()}</td>
-                    </tr>`;
+                    html += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
                 });
-                document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4' style='text-align:center; padding:20px;'>No history found.</td></tr>";
-            } catch (e) { console.error(e); }
+                document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
+            } catch (e) { console.error("History Error:", e); }
         }
 
         window.closeModal = () => { 
             document.getElementById('reviewModal').style.display = 'none';
-            document.getElementById('complianceNote').value = ""; // রিসেট নোট
+            document.getElementById('complianceNote').value = "";
         };
 
-        // ইনিশিয়াল লোড
         fetchApplications();
     </script>
 </body>
