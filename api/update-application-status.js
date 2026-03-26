@@ -1,44 +1,47 @@
-
 import { MongoClient, ObjectId } from 'mongodb';
 
 export default async function handler(req, res) {
-    // CORS headers
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,PATCH,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
 
-    const uri = process.env.MONGODB_URI;
-    const client = new MongoClient(uri);
+    const client = new MongoClient(process.env.MONGODB_URI || process.env.MONGO_URI);
 
     try {
         await client.connect();
-        const database = client.db('StudyAbroadCRM'); 
+        const database = client.db('crm_db');
         const applications = database.collection('applications');
         
-        const { appId, status, note, staff } = req.body;
+        const { appId, status, note, staff, action } = req.body;
+        if (!appId) return res.status(400).json({ message: 'App ID missing' });
 
-        if (!appId) {
-            return res.status(400).json({ message: 'App ID missing' });
+        let updateData = { updatedAt: new Date() };
+
+        if (action === 'lock') {
+            updateData.status = 'UNDER_REVIEW';
+            updateData.complianceMember = staff;
+        } else {
+            updateData.status = status;
+            updateData.complianceNote = note || "";
+            updateData.complianceMember = staff;
+            
+            const app = await applications.findOne({ _id: new ObjectId(appId) });
+            if (status === 'VERIFIED' && app) {
+                updateData.pendingAmount = app.commissionBDT || 0;
+            } else {
+                updateData.pendingAmount = 0;
+            }
         }
 
-        const result = await applications.updateOne(
+        await applications.updateOne(
             { _id: new ObjectId(appId) },
-            { 
-                $set: { 
-                    status: status,
-                    complianceNote: note,
-                    verifiedBy: staff,
-                    updatedAt: new Date()
-                } 
-            }
+            { $set: updateData }
         );
 
-        return res.status(200).json({ success: true, message: 'Saved successfully' });
+        return res.status(200).json({ success: true, message: 'Updated successfully' });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
     } finally {
