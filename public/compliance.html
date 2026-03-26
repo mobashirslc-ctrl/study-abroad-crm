@@ -3,189 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Compliance & Doc Review</title>
+    <title>SCC | Compliance Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); --error: #ff4757; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; }
-        .top-bar { padding: 15px 40px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .container { padding: 30px; }
-        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; overflow-x: auto; }
+        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; }
+        
+        /* Sidebar Styles */
+        .sidebar { width: 260px; height: 100vh; background: rgba(255,255,255,0.03); border-right: 1px solid var(--border); padding: 25px; position: fixed; }
+        .nav-item { padding: 15px; cursor: pointer; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; color: #ccc; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; border-left: 4px solid var(--gold); }
+        .nav-item i { margin-right: 12px; width: 20px; }
+
+        /* Main Content */
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); text-transform: uppercase; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-view { background: #3498db; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
+        
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); }
+        .btn-action { background: var(--gold); border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        /* Modal Styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 450px; }
-        .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 10px; }
-        .doc-link { display: flex; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); }
-        .doc-link i { margin-right: 15px; font-size: 20px; color: #ff4757; }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 500px; }
+        .doc-link { display: block; background: rgba(255,255,255,0.05); padding: 10px; margin: 10px 0; color: var(--gold); text-decoration: none; border-radius: 5px; border: 1px solid var(--border); }
+        .doc-link:hover { background: rgba(255,255,255,0.1); }
+        textarea { width: 100%; background: #070014; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 5px; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <img src="logo.jpeg" alt="SCC" width="70">
-        <div>Logged in: <span id="staffDisplay" style="color:var(--gold); font-weight:bold;">...</span></div>
+    <div class="sidebar">
+        <img src="logo.jpeg" width="100" style="margin-bottom: 40px;">
+        <div class="nav-item active" onclick="switchTab('queue', this)"><i class="fas fa-layer-group"></i> Incoming Files</div>
+        <div class="nav-item" onclick="switchTab('history', this)"><i class="fas fa-check-double"></i> Verified History</div>
+        
+        <div style="position: absolute; bottom: 30px; width: 210px;">
+            <p style="font-size: 12px; color: var(--gold);">Logged in as:</p>
+            <p id="staffName" style="font-size: 14px; margin-top: -10px;">...</p>
+            <button onclick="localStorage.clear(); window.location.href='index.html';" style="width: 100%; padding: 10px; background: transparent; border: 1px solid red; color: red; cursor: pointer; border-radius: 5px;">Logout</button>
+        </div>
     </div>
 
-    <div class="container">
-        <div class="card">
-            <h3><i class="fas fa-tasks"></i> Compliance Application Queue</h3>
-            <table>
+    <div class="main-content">
+        <div id="queueSection" class="card tab-content">
+            <h3><i class="fas fa-hourglass-half"></i> Compliance Application Queue</h3>
+            <table id="complianceTable">
                 <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>University</th>
-                        <th>Commission</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
+                    <tr><th>Student</th><th>University</th><th>Commission</th><th>Status</th><th>Actions</th></tr>
                 </thead>
-                <tbody id="complianceTableBody">
-                    <tr><td colspan="5" style="text-align:center;">Loading applications...</td></tr>
-                </tbody>
+                <tbody id="complianceTableBody"></tbody>
+            </table>
+        </div>
+
+        <div id="historySection" class="card tab-content" style="display:none;">
+            <h3><i class="fas fa-history"></i> My Processed History</h3>
+            <table id="historyTable">
+                <thead>
+                    <tr><th>Student</th><th>University</th><th>Decision</th><th>Date</th></tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
             </table>
         </div>
     </div>
 
     <div id="reviewModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Update Status & Wallet</h3>
-            <p id="reviewStudentName" style="color:#ccc; font-size:13px;"></p>
-            <label style="font-size:12px; color:var(--gold);">Select Progress Stage:</label>
-            <select id="statusSelect" class="reg-input">
-                <option value="UNDER_REVIEW">Under Review</option>
-                <option value="DOCUMENT_PENDING">Document Pending</option>
-                <option value="CONDITIONAL_OFFER">Conditional Offer</option>
-                <option value="UNCONDITIONAL_OFFER">Unconditional Offer</option>
-                <option value="VERIFIED">VERIFIED (Add to Pending Wallet)</option>
-                <option value="FEES_PAID">Tuition Fee Paid</option>
-                <option value="VISA_GRANTED">Visa Granted</option>
-                <option value="REJECTED">Rejected / Cancelled</option>
-            </select>
-            <button id="saveBtn" class="btn-action" style="width:100%; margin-top:20px;">SYNC TO PARTNER WALLET</button>
-            <button onclick="closeModal()" style="width:100%; background:transparent; color:red; border:none; margin-top:10px; cursor:pointer;">Cancel</button>
-        </div>
-    </div>
+            <h3 id="revStudentName">Review Application</h3>
+            <hr border="1" style="border-color: var(--border);">
+            
+            <p>Documents (Click to verify):</p>
+            <div id="docLinksArea"></div>
 
-    <div id="docModal" class="modal">
-        <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Submitted Documents</h3>
-            <div id="docList"></div>
-            <button onclick="closeModal()" class="btn-action" style="width:100%; margin-top:15px;">CLOSE</button>
+            <textarea id="complianceNote" placeholder="Add compliance notes or reason for rejection..."></textarea>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="updateAppStatus('VERIFIED')" style="flex:1; background:#2ecc71; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">APPROVE & VERIFY</button>
+                <button onclick="updateAppStatus('REJECTED')" style="flex:1; background:#e74c3c; color:white; border:none; padding:12px; border-radius:5px; cursor:pointer;">REJECT FILE</button>
+            </div>
+            <button onclick="closeModal()" style="width:100%; background:transparent; color:gray; border:none; margin-top:10px; cursor:pointer;">Cancel</button>
         </div>
     </div>
 
     <script>
-        let currentAppId = null;
-        let currentComm = 0;
         const staffEmail = localStorage.getItem('userEmail') || "compliance@scc.com";
-        document.getElementById('staffDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
+        document.getElementById('staffName').innerText = staffEmail.split('@')[0].toUpperCase();
+        let currentAppId = null;
 
-        // ১. লোড ডাটা (MongoDB থেকে)
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(tabId + 'Section').style.display = 'block';
+            el.classList.add('active');
+            if(tabId === 'history') fetchHistory();
+        }
+
         async function fetchApplications() {
             try {
                 const res = await fetch('/api/applications');
                 const apps = await res.json();
+                const pendingApps = apps.filter(a => a.status === 'PENDING' || a.status === 'UNDER_REVIEW');
+                
                 let html = "";
-                apps.forEach(d => {
-                    html += `
-                    <tr>
-                        <td><b>${d.studentName}</b><br><small>${d.passportNo}</small></td>
+                pendingApps.forEach(d => {
+                    html += `<tr>
+                        <td><b>${d.studentName}</b></td>
                         <td>${d.university}</td>
                         <td style="color:var(--gold)">৳${(d.commissionBDT || 0).toLocaleString()}</td>
                         <td><span class="status-pill">${d.status}</span></td>
                         <td>
-                            <button class="btn-view" onclick='viewDocs(${JSON.stringify(d)})'><i class="fas fa-eye"></i></button>
-                            <button class="btn-action" onclick="openReview('${d._id}', '${d.studentName}', ${d.commissionBDT})">REVIEW</button>
+                            <button class="btn-action" onclick='openReview(${JSON.stringify(d)})'>REVIEW</button>
                         </td>
                     </tr>`;
                 });
-                document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No Data</td></tr>";
+                document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5'>No pending files.</td></tr>";
             } catch (e) { console.error(e); }
         }
 
-        // ২. ডকুমেন্ট দেখা
-        window.viewDocs = (data) => {
-            const list = document.getElementById('docList');
-            const docs = [
-                { label: "Passport", url: data.pdf1 },
-                { label: "Academic", url: data.pdf2 },
-                { label: "Language", url: data.pdf3 },
-                { label: "Other", url: data.pdf4 }
-            ];
-            let html = "";
-            docs.forEach(doc => {
-                if(doc.url) {
-                    html += `<a href="${doc.url}" target="_blank" class="doc-link">
-                        <i class="fas fa-file-pdf"></i>
-                        <div><b>${doc.label}</b><br><small>View Document</small></div>
-                    </a>`;
-                }
-            });
-            list.innerHTML = html || "<p>No files uploaded.</p>";
-            document.getElementById('docModal').style.display = "flex";
-        };
-
-        // ৩. রিভিউ ওপেন
-        window.openReview = (id, name, comm) => {
-            currentAppId = id;
-            currentComm = comm;
-            document.getElementById('reviewStudentName').innerText = "Reviewing Student: " + name;
-            document.getElementById('reviewModal').style.display = "flex";
-        };
-
-        window.closeModal = () => {
-            document.querySelectorAll('.modal').forEach(m => m.style.display = "none");
-        };
-
-        // ৪. স্ট্যাটাস আপডেট ও ওয়ালেট লজিক (Verified Function)
-        document.getElementById('saveBtn').onclick = async () => {
-            const newStatus = document.getElementById('statusSelect').value;
-            const btn = document.getElementById('saveBtn');
+        window.openReview = (app) => {
+            currentAppId = app._id;
+            document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
-            let updateData = { 
-                status: newStatus,
-                complianceMember: staffEmail
-            };
+            let docHtml = "";
+            if(app.pdf1) docHtml += `<a href="${app.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Passport/Photo</a>`;
+            if(app.pdf2) docHtml += `<a href="${app.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Docs</a>`;
+            if(app.pdf3) docHtml += `<a href="${app.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> IELTS/Language</a>`;
+            
+            document.getElementById('docLinksArea').innerHTML = docHtml || "No documents uploaded.";
+            document.getElementById('reviewModal').style.display = 'flex';
+        };
 
-            // Wallet Logic: যদি VERIFIED হয় তবেই পেন্ডিং এ টাকা যাবে
-            if (newStatus === "VERIFIED") {
-                updateData.pendingAmount = currentComm;
-                updateData.finalAmount = 0;
-            } else if (newStatus === "REJECTED") {
-                updateData.pendingAmount = 0;
-                updateData.finalAmount = 0;
-            }
-
-            btn.innerText = "Syncing...";
-            btn.disabled = true;
-
+        async function updateAppStatus(newStatus) {
+            const note = document.getElementById('complianceNote').value;
             try {
-                // আমরা প্রোফাইল আপডেটের মতো একটি PATCH রুট ব্যবহার করবো অ্যাপ্লিকেশন আপডেটের জন্য
-                // আপনার index.js এ এটি অ্যাড করতে হবে।
-                const res = await fetch(`/api/update-application/${currentAppId}`, {
+                const res = await fetch('/api/update-application-status', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updateData)
+                    body: JSON.stringify({ 
+                        appId: currentAppId, 
+                        status: newStatus, 
+                        note: note,
+                        staff: staffEmail 
+                    })
                 });
-
                 if(res.ok) {
-                    alert("Success! Partner wallet updated.");
+                    alert("Status Updated to " + newStatus);
                     closeModal();
                     fetchApplications();
                 }
-            } catch (e) { alert("Error updating."); }
-            finally { 
-                btn.disabled = false; 
-                btn.innerText = "SYNC TO PARTNER WALLET"; 
-            }
-        };
+            } catch (e) { alert("Error updating status"); }
+        }
 
-        setInterval(fetchApplications, 10000); // ১০ সেকেন্ড পর পর অটো চেক করবে
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/api/applications');
+                const apps = await res.json();
+                const myHistory = apps.filter(a => a.complianceMember === staffEmail);
+                
+                let html = "";
+                myHistory.forEach(d => {
+                    html += `<tr>
+                        <td>${d.studentName}</td>
+                        <td>${d.university}</td>
+                        <td><span style="color:${d.status === 'VERIFIED' ? '#2ecc71' : 'red'}">${d.status}</span></td>
+                        <td>${new Date(d.timestamp).toLocaleDateString()}</td>
+                    </tr>`;
+                });
+                document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
+            } catch (e) { }
+        }
+
+        window.closeModal = () => { document.getElementById('reviewModal').style.display = 'none'; };
+
+        setInterval(fetchApplications, 15000);
         fetchApplications();
     </script>
 </body>
