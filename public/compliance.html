@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Compliance & Functional Doc Viewer</title>
+    <title>SCC | Compliance & Doc Review</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); --error: #ff4757; }
@@ -11,22 +11,16 @@
         .top-bar { padding: 15px 40px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
         .container { padding: 30px; }
         .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; overflow-x: auto; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 13px; }
         td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
-
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); text-transform: uppercase; }
-        .btn-action { background: var(--gold); color: black; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-right: 5px; }
-        .btn-view { background: #3498db; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; }
-        .locked-row { opacity: 0.6; cursor: not-allowed; pointer-events: none; filter: grayscale(1); }
-
+        .btn-action { background: var(--gold); color: black; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-view { background: #3498db; color: white; border: none; padding: 7px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 450px; position: relative; }
+        .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 450px; }
         .reg-input { width: 100%; padding: 12px; background: #000; border: 1px solid var(--border); color: white; border-radius: 8px; margin-top: 10px; }
-        
-        .doc-link { display: flex; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); transition: 0.3s; }
-        .doc-link:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+        .doc-link { display: flex; align-items: center; padding: 12px; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 8px; color: var(--gold); text-decoration: none; border: 1px solid var(--border); }
         .doc-link i { margin-right: 15px; font-size: 20px; color: #ff4757; }
     </style>
 </head>
@@ -34,164 +28,165 @@
 
     <div class="top-bar">
         <img src="logo.jpeg" alt="SCC" width="70">
-        <div>Logged in as: <span id="staffDisplay" style="color:var(--gold); font-weight:bold;">...</span></div>
+        <div>Logged in: <span id="staffDisplay" style="color:var(--gold); font-weight:bold;">...</span></div>
     </div>
 
     <div class="container">
         <div class="card">
-            <h3><i class="fas fa-tasks"></i> Compliance Queue</h3>
+            <h3><i class="fas fa-tasks"></i> Compliance Application Queue</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Student / Passport</th>
-                        <th>Agency</th>
+                        <th>Student</th>
+                        <th>University</th>
+                        <th>Commission</th>
                         <th>Status</th>
-                        <th>Handled By</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="incomingTableBody"></tbody>
+                <tbody id="complianceTableBody">
+                    <tr><td colspan="5" style="text-align:center;">Loading applications...</td></tr>
+                </tbody>
             </table>
         </div>
     </div>
 
     <div id="reviewModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Update Application Status</h3>
-            <p id="reviewStudentName" style="font-size:13px; color:#ccc;"></p>
+            <h3 style="color:var(--gold); margin-top:0;">Update Status & Wallet</h3>
+            <p id="reviewStudentName" style="color:#ccc; font-size:13px;"></p>
+            <label style="font-size:12px; color:var(--gold);">Select Progress Stage:</label>
             <select id="statusSelect" class="reg-input">
-                <option value="under_review">Under Review</option>
-                <option value="document_pending">Document Pending</option>
-                <option value="conditional_offer">Conditional Offer</option>
-                <option value="unconditional_offer">Unconditional Offer</option>
-                <option value="tuition_fee_paid">Tuition Fee Paid</option>
-                <option value="visa_applied">Visa Applied</option>
-                <option value="visa_granted">Visa Granted</option>
-                <option value="visa_refused">Visa Refused</option>
-                <option value="verified">Verified (Add to Wallet)</option>
+                <option value="UNDER_REVIEW">Under Review</option>
+                <option value="DOCUMENT_PENDING">Document Pending</option>
+                <option value="CONDITIONAL_OFFER">Conditional Offer</option>
+                <option value="UNCONDITIONAL_OFFER">Unconditional Offer</option>
+                <option value="VERIFIED">VERIFIED (Add to Pending Wallet)</option>
+                <option value="FEES_PAID">Tuition Fee Paid</option>
+                <option value="VISA_GRANTED">Visa Granted</option>
+                <option value="REJECTED">Rejected / Cancelled</option>
             </select>
-            <button onclick="updateStatusNow()" class="btn-action" style="width:100%; margin-top:20px;">SAVE CHANGES</button>
+            <button id="saveBtn" class="btn-action" style="width:100%; margin-top:20px;">SYNC TO PARTNER WALLET</button>
             <button onclick="closeModal()" style="width:100%; background:transparent; color:red; border:none; margin-top:10px; cursor:pointer;">Cancel</button>
         </div>
     </div>
 
     <div id="docModal" class="modal">
         <div class="modal-content">
-            <h3 style="color:var(--gold); margin-top:0;">Student Documents</h3>
+            <h3 style="color:var(--gold); margin-top:0;">Submitted Documents</h3>
             <div id="docList"></div>
-            <button onclick="closeModal()" style="width:100%; background:var(--gold); color:black; border:none; padding:10px; border-radius:8px; margin-top:15px; cursor:pointer; font-weight:bold;">CLOSE</button>
+            <button onclick="closeModal()" class="btn-action" style="width:100%; margin-top:15px;">CLOSE</button>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = { 
-            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
-            authDomain: "ihp-portal-v3.firebaseapp.com", 
-            projectId: "ihp-portal-v3", 
-            storageBucket: "ihp-portal-v3.firebasestorage.app", 
-            messagingSenderId: "481157902534", 
-            appId: "1:481157902534:web:2d9784032fbf0f2f7fe7c7" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    <script>
+        let currentAppId = null;
+        let currentComm = 0;
         const staffEmail = localStorage.getItem('userEmail') || "compliance@scc.com";
+        document.getElementById('staffDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
 
-        document.getElementById('staffDisplay').innerText = staffEmail.toUpperCase();
-
-        // ১. রিয়েল-টাইম ডাটা লিসেনার
-        onSnapshot(collection(db, "applications"), (snap) => {
-            const tbody = document.getElementById('incomingTableBody');
-            let html = "";
-            snap.forEach(dSnap => {
-                const d = dSnap.data();
-                const id = dSnap.id;
-                const isLocked = d.handledBy && d.handledBy.toLowerCase() !== staffEmail.toLowerCase();
-                const handlerDisplay = d.handledBy ? d.handledBy.split('@')[0].toUpperCase() : 'FREE';
-
-                html += `
-                    <tr class="${isLocked ? 'locked-row' : ''}">
+        // ১. লোড ডাটা (MongoDB থেকে)
+        async function fetchApplications() {
+            try {
+                const res = await fetch('/api/applications');
+                const apps = await res.json();
+                let html = "";
+                apps.forEach(d => {
+                    html += `
+                    <tr>
                         <td><b>${d.studentName}</b><br><small>${d.passportNo}</small></td>
-                        <td style="color:#a29bfe;">${d.partnerEmail ? d.partnerEmail.split('@')[0].toUpperCase() : 'N/A'}</td>
-                        <td><span class="status-pill">${(d.status || 'Pending').replace('_', ' ')}</span></td>
-                        <td><i class="fas ${isLocked ? 'fa-lock' : 'fa-unlock'}"></i> ${handlerDisplay}</td>
+                        <td>${d.university}</td>
+                        <td style="color:var(--gold)">৳${(d.commissionBDT || 0).toLocaleString()}</td>
+                        <td><span class="status-pill">${d.status}</span></td>
                         <td>
-                            <button class="btn-view" onclick="viewDocs('${id}')"><i class="fas fa-eye"></i></button>
-                            <button class="btn-action" onclick="openReview('${id}', '${d.studentName}')">REVIEW</button>
+                            <button class="btn-view" onclick='viewDocs(${JSON.stringify(d)})'><i class="fas fa-eye"></i></button>
+                            <button class="btn-action" onclick="openReview('${d._id}', '${d.studentName}', ${d.commissionBDT})">REVIEW</button>
                         </td>
                     </tr>`;
-            });
-            tbody.innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No applications found.</td></tr>";
-        });
+                });
+                document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5' style='text-align:center;'>No Data</td></tr>";
+            } catch (e) { console.error(e); }
+        }
 
-        // ২. ডকুমেন্ট দেখার লজিক
-        window.viewDocs = async (id) => {
+        // ২. ডকুমেন্ট দেখা
+        window.viewDocs = (data) => {
             const list = document.getElementById('docList');
-            list.innerHTML = "<p style='text-align:center; color:var(--gold);'>Searching for files...</p>";
-            document.getElementById('docModal').style.display = "flex";
-
-            try {
-                const docSnap = await getDoc(doc(db, "applications", id));
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const docItems = [
-                        { label: "Passport", url: data.pdf1 || data.passportPDF || data.docURL1 || data.passportUrl },
-                        { label: "Academic", url: data.pdf2 || data.academicPDF || data.docURL2 || data.academicUrl },
-                        { label: "Language", url: data.pdf3 || data.languagePDF || data.docURL3 || data.languageUrl },
-                        { label: "Other", url: data.pdf4 || data.otherPDF || data.docURL4 || data.otherUrl }
-                    ];
-
-                    let html = "";
-                    let found = false;
-                    docItems.forEach(item => {
-                        if (item.url && item.url !== "" && item.url !== "undefined") {
-                            found = true;
-                            html += `<a href="${item.url}" target="_blank" class="doc-link">
-                                        <i class="fas fa-file-pdf"></i>
-                                        <div><b>${item.label}</b><br><small>Click to view</small></div>
-                                     </a>`;
-                        }
-                    });
-                    list.innerHTML = found ? html : "<p style='text-align:center; color:red;'>No documents found.</p>";
+            const docs = [
+                { label: "Passport", url: data.pdf1 },
+                { label: "Academic", url: data.pdf2 },
+                { label: "Language", url: data.pdf3 },
+                { label: "Other", url: data.pdf4 }
+            ];
+            let html = "";
+            docs.forEach(doc => {
+                if(doc.url) {
+                    html += `<a href="${doc.url}" target="_blank" class="doc-link">
+                        <i class="fas fa-file-pdf"></i>
+                        <div><b>${doc.label}</b><br><small>View Document</small></div>
+                    </a>`;
                 }
-            } catch (e) { list.innerHTML = "Error: " + e.message; }
+            });
+            list.innerHTML = html || "<p>No files uploaded.</p>";
+            document.getElementById('docModal').style.display = "flex";
         };
 
-        // ৩. রিভিউ মডাল খোলার ফাংশন (অবশ্যই উইন্ডো অবজেক্টে দিতে হবে)
-        window.openReview = (id, name) => {
-            window.currentAppId = id; // গ্লোবাল ভেরিয়েবলে আইডি সেভ করা
-            document.getElementById('reviewStudentName').innerText = "Reviewing: " + name;
+        // ৩. রিভিউ ওপেন
+        window.openReview = (id, name, comm) => {
+            currentAppId = id;
+            currentComm = comm;
+            document.getElementById('reviewStudentName').innerText = "Reviewing Student: " + name;
             document.getElementById('reviewModal').style.display = "flex";
         };
 
-        // ৪. মডাল বন্ধ করার ফাংশন
         window.closeModal = () => {
-            document.getElementById('reviewModal').style.display = "none";
-            document.getElementById('docModal').style.display = "none";
+            document.querySelectorAll('.modal').forEach(m => m.style.display = "none");
         };
 
-        // ৫. স্ট্যাটাস আপডেট করার ফাংশন
-        window.updateStatusNow = async () => {
-            if(!window.currentAppId) return;
+        // ৪. স্ট্যাটাস আপডেট ও ওয়ালেট লজিক (Verified Function)
+        document.getElementById('saveBtn').onclick = async () => {
             const newStatus = document.getElementById('statusSelect').value;
-            const docRef = doc(db, "applications", window.currentAppId);
+            const btn = document.getElementById('saveBtn');
+            
+            let updateData = { 
+                status: newStatus,
+                complianceMember: staffEmail
+            };
+
+            // Wallet Logic: যদি VERIFIED হয় তবেই পেন্ডিং এ টাকা যাবে
+            if (newStatus === "VERIFIED") {
+                updateData.pendingAmount = currentComm;
+                updateData.finalAmount = 0;
+            } else if (newStatus === "REJECTED") {
+                updateData.pendingAmount = 0;
+                updateData.finalAmount = 0;
+            }
+
+            btn.innerText = "Syncing...";
+            btn.disabled = true;
 
             try {
-                await updateDoc(docRef, {
-                    status: newStatus,
-                    handledBy: staffEmail.toLowerCase(),
-                    updatedAt: serverTimestamp()
+                // আমরা প্রোফাইল আপডেটের মতো একটি PATCH রুট ব্যবহার করবো অ্যাপ্লিকেশন আপডেটের জন্য
+                // আপনার index.js এ এটি অ্যাড করতে হবে।
+                const res = await fetch(`/api/update-application/${currentAppId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
                 });
-                alert("Status updated successfully!");
-                closeModal();
-            } catch (e) {
-                alert("Update failed: " + e.message);
+
+                if(res.ok) {
+                    alert("Success! Partner wallet updated.");
+                    closeModal();
+                    fetchApplications();
+                }
+            } catch (e) { alert("Error updating."); }
+            finally { 
+                btn.disabled = false; 
+                btn.innerText = "SYNC TO PARTNER WALLET"; 
             }
         };
 
+        setInterval(fetchApplications, 10000); // ১০ সেকেন্ড পর পর অটো চেক করবে
+        fetchApplications();
     </script>
 </body>
 </html>
