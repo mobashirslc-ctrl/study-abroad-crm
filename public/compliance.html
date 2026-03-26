@@ -155,44 +155,46 @@
         };
 
         async function updateAppStatus() {
-            const status = document.getElementById('trackingStatusUpdate').value;
-            const note = document.getElementById('complianceNote').value;
-            const btn = document.getElementById('saveReviewBtn');
+    const status = document.getElementById('trackingStatusUpdate').value;
+    const note = document.getElementById('complianceNote').value;
+    const btn = document.getElementById('saveReviewBtn');
 
-            if(!currentAppId) return alert("Please select an application first.");
+    if(!currentAppId) return alert("Please select an application first.");
 
-            try {
-                btn.innerText = "Saving...";
-                btn.disabled = true;
+    try {
+        btn.innerText = "Saving...";
+        btn.disabled = true;
 
-                const payload = { 
-                    appId: currentAppId, 
-                    status: status, 
-                    note: note || "Reviewed by compliance", 
-                    staff: staffEmail 
-                };
+        const payload = { 
+            appId: currentAppId, 
+            status: status, 
+            note: note || "Reviewed by compliance", 
+            staff: staffEmail 
+        };
 
-                const res = await fetch('/api/update-application-status', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+        // মেথড অবশ্যই 'POST' হতে হবে
+        const res = await fetch('/api/update-application-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-                if(res.ok) {
-                    alert("✅ Success: Status updated!");
-                    closeModal();
-                    fetchApplications();
-                } else {
-                    const err = await res.json();
-                    alert("❌ Failed: " + err.message);
-                }
-            } catch (e) { 
-                alert("❌ Error: API not responding. Make sure api/update-application-status.js is in the 'api' folder on GitHub."); 
-            } finally {
-                btn.innerText = "SAVE REVIEW";
-                btn.disabled = false;
-            }
+        if(res.ok) {
+            alert("✅ Success: Status updated!");
+            closeModal();
+            fetchApplications();
+        } else {
+            const err = await res.json();
+            alert("❌ Failed: " + (err.message || "Unknown error"));
         }
+    } catch (e) { 
+        console.error("API Error:", e);
+        alert("❌ Error: API not responding. Check Vercel logs."); 
+    } finally {
+        btn.innerText = "SAVE REVIEW";
+        btn.disabled = false;
+    }
+}
 
         function closeModal() { 
             document.getElementById('reviewModal').style.display = 'none';
