@@ -20,7 +20,7 @@
         .btn-action { background: var(--gold); border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: #1a1a2e; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 500px; }
-        .doc-link { display: block; background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; color: var(--gold); text-decoration: none; border-radius: 5px; border: 1px solid var(--border); font-size: 13px; transition: 0.3s; }
+        .doc-link { display: block; background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; color: var(--gold); text-decoration: none; border-radius: 5px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
         .doc-link:hover { background: rgba(241, 196, 15, 0.1); }
         select, textarea { width: 100%; background: #070014; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 5px; margin: 10px 0; box-sizing: border-box; }
     </style>
@@ -91,7 +91,7 @@
         document.getElementById('staffName').innerText = staffEmail.split('@')[0].toUpperCase();
         
         let currentAppId = null;
-        let pendingApps = []; 
+        let pendingAppsList = []; 
 
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -104,12 +104,12 @@
         async function fetchApplications() {
             try {
                 const res = await fetch('/api/applications');
-                const data = await res.json();
-                // স্ট্যাটাস ফিল্টার আপডেট
-                pendingApps = data.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
+                const apps = await res.json();
+                // স্ট্যাটাস ফিল্টারিং লজিক ফিক্স
+                pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
                 let html = "";
-                pendingApps.forEach((d, index) => {
+                pendingAppsList.forEach((d, index) => {
                     html += `<tr>
                         <td><b>${d.studentName}</b></td>
                         <td>${d.university}</td>
@@ -119,23 +119,31 @@
                     </tr>`;
                 });
                 document.getElementById('complianceTableBody').innerHTML = html || "<tr><td colspan='5'>No pending files.</td></tr>";
-            } catch (e) { console.error("Fetch Applications Error:", e); }
+            } catch (e) { console.error("Fetch Error:", e); }
         }
 
         window.openReviewByIndex = (index) => {
-            const app = pendingApps[index];
+            const app = pendingAppsList[index];
             if(!app) return;
 
             currentAppId = app._id;
             document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
             let docHtml = "";
-            // ফাইল লিঙ্ক চেক এবং জেনারেশন (Blank আসা ফিক্স করা হয়েছে)
-            if(app.pdf1) docHtml += `<a href="${app.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-alt"></i> Passport / Photo</a>`;
-            if(app.pdf2) docHtml += `<a href="${app.pdf2}" target="_blank" class="doc-link"><i class="fas fa-graduation-cap"></i> Academic Documents</a>`;
-            if(app.pdf3) docHtml += `<a href="${app.pdf3}" target="_blank" class="doc-link"><i class="fas fa-language"></i> Language Proficiency</a>`;
+            // ফাইল লিঙ্কের জন্য কন্ডিশনাল চেক (Blank আসা ফিক্স করতে)
+            const docs = [
+                { url: app.pdf1, label: "Passport / Photo" },
+                { url: app.pdf2, label: "Academic Docs" },
+                { url: app.pdf3, label: "Language Proficiency" }
+            ];
+
+            docs.forEach(doc => {
+                if (doc.url && doc.url !== "null" && doc.url !== "") {
+                    docHtml += `<a href="${doc.url}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View ${doc.label}</a>`;
+                }
+            });
             
-            document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>No documents found.</p>";
+            document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>No documents provided.</p>";
             document.getElementById('reviewModal').style.display = 'flex';
         };
 
@@ -144,36 +152,37 @@
             const note = document.getElementById('complianceNote').value;
             const btn = document.getElementById('saveReviewBtn');
 
-            if(!currentAppId) return alert("Error: No Application Selected");
+            if(!currentAppId) return alert("Please select an application first.");
 
             try {
                 btn.innerText = "Saving...";
                 btn.disabled = true;
 
+                const payload = { 
+                    appId: currentAppId, 
+                    status: status, 
+                    note: note || "Reviewed by compliance", 
+                    isVerified: (status === 'DOC_VERIFIED'),
+                    staff: staffEmail 
+                };
+
                 const res = await fetch('/api/update-application-status', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        appId: currentAppId, 
-                        status: status, 
-                        note: note || "No notes added", // নোট খালি থাকলে ডিফল্ট টেক্সট
-                        isVerified: (status === 'DOC_VERIFIED'),
-                        staff: staffEmail 
-                    })
+                    body: JSON.stringify(payload)
                 });
 
-                const result = await res.json();
-
                 if(res.ok) {
-                    alert("✅ Status Updated Successfully");
+                    alert("✅ Success: Status updated.");
                     closeModal();
                     fetchApplications();
                 } else {
-                    alert("❌ Update Failed: " + (result.message || "Unknown Error"));
+                    const errData = await res.json();
+                    alert("❌ Failed: " + (errData.message || "Server error"));
                 }
             } catch (e) { 
                 console.error("Update Error:", e);
-                alert("❌ Connection Error: Cloud function not responding"); 
+                alert("❌ Connection Error: Backend server is not responding."); 
             } finally {
                 btn.innerText = "SAVE REVIEW";
                 btn.disabled = false;
@@ -190,7 +199,7 @@
                     html += `<tr><td>${d.studentName}</td><td>${d.university}</td><td>${d.status}</td><td>${new Date(d.timestamp).toLocaleDateString()}</td></tr>`;
                 });
                 document.getElementById('historyTableBody').innerHTML = html || "<tr><td colspan='4'>No history found.</td></tr>";
-            } catch (e) { console.error("History Error:", e); }
+            } catch (e) { }
         }
 
         window.closeModal = () => { 
