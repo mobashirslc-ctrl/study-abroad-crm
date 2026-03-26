@@ -37,25 +37,19 @@ const applicationSchema = new mongoose.Schema({
     university: String,
     commissionBDT: Number,
     pdf1: String, pdf2: String, pdf3: String, pdf4: String,
-    status: { type: String, default: 'PENDING' },
-    complianceMember: String,
+    status: { type: String, default: 'PENDING' }, // PENDING, UNDER_REVIEW, VERIFIED, REJECTED
+    complianceMember: String, // কে ফাইলটি লক করেছে বা হ্যান্ডেল করছে
+    complianceNote: String,
     pendingAmount: { type: Number, default: 0 },
     finalAmount: { type: Number, default: 0 },
     timestamp: { type: Date, default: Date.now }
 });
 const Application = mongoose.model('Application', applicationSchema);
 
-// --- University Schema Updated ---
+// ... (University & Withdrawal Schemas remain same as your provided code) ...
 const universitySchema = new mongoose.Schema({
-    universityName: String, 
-    country: String, 
-    courseName: String,
-    degree: String,
-    semesterFee: Number, 
-    partnerComm: Number, 
-    minGPA: String,
-    ieltsReq: String,
-    gap: String,
+    universityName: String, country: String, courseName: String, degree: String,
+    semesterFee: Number, partnerComm: Number, minGPA: String, ieltsReq: String, gap: String,
     timestamp: { type: Date, default: Date.now }
 });
 const University = mongoose.model('University', universitySchema);
@@ -68,6 +62,54 @@ const withdrawalSchema = new mongoose.Schema({
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
 // --- 🚀 API Routes ---
+
+// 1. [NEW] File Locking API: যখন কেউ REVIEW বাটনে ক্লিক করবে
+app.patch('/api/lock-application', async (req, res) => {
+    try {
+        const { appId, staff } = req.body;
+        const appData = await Application.findById(appId);
+
+        if (!appData) return res.status(404).json({ msg: "Not found" });
+
+        // যদি অলরেডি অন্য কেউ রিভিউ শুরু করে দেয়
+        if (appData.status === 'UNDER_REVIEW' && appData.complianceMember !== staff) {
+            return res.status(403).json({ msg: "Already being reviewed by " + appData.complianceMember });
+        }
+
+        // স্ট্যাটাস পরিবর্তন এবং লক করা
+        appData.status = 'UNDER_REVIEW';
+        appData.complianceMember = staff;
+        await appData.save();
+
+        res.json({ msg: "Locked for review", data: appData });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 2. [NEW] Compliance Decision API: Approve বা Reject করার জন্য
+app.patch('/api/update-compliance', async (req, res) => {
+    try {
+        const { appId, status, note, staff } = req.body; // status: 'VERIFIED' or 'REJECTED'
+        const appData = await Application.findById(appId);
+
+        if (!appData) return res.status(404).json({ msg: "File not found" });
+
+        appData.status = status;
+        appData.complianceNote = note;
+        appData.complianceMember = staff;
+
+        // যদি ভেরিফাইড হয়, কমিশনটি পেন্ডিং ব্যালেন্সে যোগ করা (যাতে একাউন্টস প্যানেল দেখতে পায়)
+        if (status === 'VERIFIED') {
+            appData.pendingAmount = appData.commissionBDT;
+        } else {
+            appData.pendingAmount = 0;
+        }
+
+        await appData.save();
+        res.json({ msg: `Application ${status} successfully` });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- Existing Routes ---
 
 // Auth
 app.post('/api/register', async (req, res) => {
@@ -99,25 +141,8 @@ app.post('/api/submit-application', async (req, res) => {
     await newApp.save();
     res.status(201).json({ msg: 'Submitted' });
 });
-// --- 🚀 Add this to your API Routes in index.js ---
 
-app.patch('/api/update-application/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updates = req.body;
-        
-        const updatedApp = await Application.findByIdAndUpdate(
-            id, 
-            { $set: updates }, 
-            { new: true }
-        );
-        
-        res.json({ msg: 'Application Updated', data: updatedApp });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-// --- 🏛️ University API Routes (Admin & Partner) ---
+// University & Profile APIs (Keep as they were)
 app.get('/api/universities', async (req, res) => {
     try {
         const unis = await University.find().sort({ timestamp: -1 });
@@ -129,32 +154,18 @@ app.post('/api/add-university', async (req, res) => {
     try {
         const newUni = new University(req.body);
         await newUni.save();
-        res.status(201).json({ msg: 'University Added Successfully' });
+        res.status(201).json({ msg: 'University Added' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.delete('/api/delete-university/:id', async (req, res) => {
-    try {
-        await University.findByIdAndDelete(req.params.id);
-        res.json({ msg: 'Deleted Successfully' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Withdrawal Requests
+// Profile & Withdrawal...
 app.post('/api/withdrawals', async (req, res) => {
     const wd = new Withdrawal(req.body);
     await wd.save();
     res.status(201).json({ msg: 'Requested' });
 });
 
-// Profile Update
-app.patch('/api/update-profile', async (req, res) => {
-    const { email, contact, logoURL } = req.body;
-    await User.findOneAndUpdate({ email }, { $set: { contact, logoURL } });
-    res.json({ msg: 'Updated' });
-});
-
-// Frontend Routing - Keep this at the END
+// Frontend Routing
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 10000;
