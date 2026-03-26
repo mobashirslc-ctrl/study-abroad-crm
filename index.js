@@ -99,7 +99,24 @@ app.post('/api/submit-application', async (req, res) => {
     await newApp.save();
     res.status(201).json({ msg: 'Submitted' });
 });
+// --- 🚀 Add this to your API Routes in index.js ---
 
+app.patch('/api/update-application/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        const updatedApp = await Application.findByIdAndUpdate(
+            id, 
+            { $set: updates }, 
+            { new: true }
+        );
+        
+        res.json({ msg: 'Application Updated', data: updatedApp });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 // --- 🏛️ University API Routes (Admin & Partner) ---
 app.get('/api/universities', async (req, res) => {
     try {
