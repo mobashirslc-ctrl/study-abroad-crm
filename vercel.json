@@ -1,10 +1,12 @@
 {
   "version": 2,
   "builds": [
+    { "src": "api/*.js", "use": "@vercel/node" },
     { "src": "index.js", "use": "@vercel/node" },
     { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/api/update-application-status", "dest": "api/update-application-status.js" },
     { "src": "/api/(.*)", "dest": "index.js" },
     { "src": "/login", "dest": "public/index.html" },
     { "src": "/partner", "dest": "public/partner.html" },
