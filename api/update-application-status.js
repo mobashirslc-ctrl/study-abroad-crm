@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
     try {
         await client.connect();
-        const database = client.db('crm_db');
+        const database = client.db('StudyAbroadCRM');
         const applications = database.collection('applications');
         
         const { appId, status, note, staff, action } = req.body;
