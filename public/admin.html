@@ -3,258 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCC | Super Admin Control</title>
+    <title>Partner Portal | SCC Group</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #2b0054; --bg-dark: #070014; --glass: rgba(255, 255, 255, 0.05); --border: rgba(255, 255, 255, 0.1); --accent: #f1c40f; --danger: #ff4757; --success: #2ecc71; --blue: #3498db; }
-        body { background: linear-gradient(145deg, var(--bg-dark), var(--primary)); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 260px; background: rgba(0, 0, 0, 0.95); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 1000; }
-        .logo-area { padding: 30px; text-align: center; border-bottom: 1px solid var(--border); }
-        .logo-area img { width: 100%; max-height: 50px; background: white; padding: 5px; border-radius: 5px; }
-        .nav-item { padding: 15px 25px; display: flex; align-items: center; gap: 15px; color: #888; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--accent); border-left: 4px solid var(--accent); }
-        .wrapper { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .main { flex-grow: 1; padding: 30px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .card { background: var(--glass); border: 1px solid var(--border); border-radius: 15px; padding: 25px; margin-bottom: 25px; }
-        .admin-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group label { font-size: 0.7rem; color: var(--accent); opacity: 0.8; }
-        input, select { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; outline: none; transition: 0.3s; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 12px; color: var(--accent); border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.75rem; color: white; transition: 0.2s; }
-        .btn-approve { background: var(--success); width: 100%; margin-top: 20px; font-size: 1rem; }
-        .btn-delete { background: var(--danger); }
-        .section { display: none; }
-        .active-section { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .badge { padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 0.7rem; }
-        .badge-pending { background: #f39c12; color: black; }
-        .badge-active { background: var(--success); color: black; }
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --light: #ffffff; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f0f1b; color: white; display: flex; overflow-x: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; border-radius: 8px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; user-select: none; }
+        .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
+        .sidebar ul li i { margin-right: 12px; width: 20px; }
+        
+        /* Main Content */
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
+        
+        /* Grid & Cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .search-box-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; background: var(--dark); padding: 20px; border-radius: 10px; border: 1px solid #333; margin-bottom: 25px; }
+        
+        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 20px; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
+        th { background: #252545; color: var(--gold); }
+        
+        input, select { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn-gold:hover { background: #d4ac0d; }
+
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); overflow-y: auto; }
+        .modal-content { background: var(--dark); margin: 5% auto; padding: 30px; border: 1px solid var(--gold); width: 50%; border-radius: 15px; }
+        .file-box { border: 1px dashed #555; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .file-box label { font-size: 11px; color: var(--gold); display: block; margin-bottom: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media print {
+            body * { visibility: hidden; }
+            #slipContent, #slipContent * { visibility: visible; }
+            #slipContent { position: absolute; left: 0; top: 0; width: 100%; border: none; background: white !important; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-area"><img src="logo.jpeg" alt="SCC Logo"></div>
-        <div onclick="showTab('uni-manage')" id="m-uni-manage" class="nav-item active"><i class="fas fa-university"></i> University Data</div>
-        <div onclick="showTab('partners')" id="m-partners" class="nav-item"><i class="fas fa-handshake"></i> Partner Management</div>
-        <div onclick="showTab('payouts')" id="m-payouts" class="nav-item"><i class="fas fa-wallet"></i> Payouts Control</div>
-        <div style="margin-top:auto; padding:20px;">
-            <div class="nav-item" style="color:var(--danger);" id="logoutAdmin"><i class="fas fa-power-off"></i> Logout</div>
+        <div class="logo-container">
+            <img src="logo.jpeg" alt="SCC Logo" onerror="this.src='https://via.placeholder.com/180x60?text=SCC+Group'">
+        </div>
+        <ul>
+            <li class="active" onclick="showTab(event, 'dashboard')"><i class="fas fa-home"></i> Dashboard</li>
+            <li onclick="showTab(event, 'tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
+            <li onclick="showTab(event, 'universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+            <li onclick="showTab(event, 'withdraw')"><i class="fas fa-wallet"></i> Wallet</li>
+            <li onclick="showTab(event, 'profile')"><i class="fas fa-user-cog"></i> Profile</li>
+            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
+
+        <div id="dashboard" class="tab-content" style="display: block;">
+            <div class="card-grid">
+                <div class="card"><h3>Pending Commission</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
+                <div class="card"><h3>Final Balance</h3><p id="topFinal" style="font-size:24px; color:#2ecc71;">৳0</p></div>
+            </div>
+            <h3 style="color:var(--gold);">Recent Activity</h3>
+            <table>
+                <thead><tr><th>Student</th><th>Status</th><th>Last Update</th><th>Action</th></tr></thead>
+                <tbody id="homeTrackingBody"></tbody>
+            </table>
+        </div>
+
+        <div id="tracking" class="tab-content">
+            <h3>Live Student Tracking</h3>
+            <table>
+                <thead>
+                    <tr><th>Student & University</th><th>Handled By</th><th>Passport</th><th>Status</th><th>Update</th><th>Slip</th></tr>
+                </thead>
+                <tbody id="fullTrackingBody"></tbody>
+            </table>
+        </div>
+
+        <div id="universities" class="tab-content">
+            <h3>Find Universities & Eligibility</h3>
+            <div class="search-box-5">
+                <input type="text" id="fCountry" placeholder="Country" onkeyup="searchUni()">
+                <select id="fDegree" onchange="searchUni()">
+                    <option value="">Degree Type</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Masters">Masters</option>
+                    <option value="Foundation">Foundation</option>
+                    <option value="Diploma">Diploma</option>
+                </select>
+                <input type="number" id="userGPA" step="0.01" placeholder="Student GPA" onkeyup="searchUni()">
+                <select id="userLang" onchange="searchUni()">
+                    <option value="IELTS">IELTS</option>
+                    <option value="DUOLINGO">Duolingo</option>
+                    <option value="PTE">PTE</option>
+                    <option value="MOI">MOI / Internal</option>
+                </select>
+                <input type="number" id="userScore" step="0.5" placeholder="Score" onkeyup="searchUni()">
+                <button class="btn-gold" onclick="searchUni()">Analyze Now</button>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>University</th><th>Min. Req.</th><th>Eligibility</th><th>Fee</th><th>Commission</th><th>Action</th></tr>
+                </thead>
+                <tbody id="uniListContainer"></tbody>
+            </table>
+        </div>
+
+        <div id="withdraw" class="tab-content">
+            <h3>Wallet & Withdrawals</h3>
+            <div class="card" style="width: 280px; margin-bottom: 20px; text-align: left;">
+                <h3>Cashable Balance</h3>
+                <p id="withdrawFinalBalance" style="font-size:24px; color:#2ecc71;">৳0</p>
+            </div>
+            <div style="max-width: 400px; background: var(--dark); padding: 20px; border-radius: 10px; border: 1px solid #333;">
+                <label>Amount</label>
+                <input type="number" id="wdAmount" placeholder="Enter Amount">
+                <label>Method</label>
+                <select id="wdMethod">
+                    <option value="Bkash">Bkash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Bank">Bank Transfer</option>
+                </select>
+                <textarea id="wdDetails" style="width:100%; height:60px; background:#252545; color:white; border:1px solid #444; margin-bottom:10px;" placeholder="Details..."></textarea>
+                <button id="requestWdBtn" class="btn-gold" onclick="requestWithdraw()">Request Payout</button>
+            </div>
+        </div>
+
+        <div id="profile" class="tab-content">
+            <h3>Agency Profile</h3>
+            <div style="max-width: 500px; background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333;">
+                <label>Agency Name</label>
+                <input type="text" id="pAgency" readonly>
+                <label>Contact Number</label>
+                <input type="text" id="pContact">
+                <label>Update Logo</label>
+                <input type="file" id="pLogo" accept="image/*">
+                <button class="btn-gold" onclick="updateProfile()">Save Changes</button>
+            </div>
         </div>
     </div>
 
-    <div class="wrapper">
-        <div class="main">
-            <div class="header">
-                <h2 id="page-title">University Management</h2>
-                <div style="color:var(--accent); font-weight:bold;">Rate: 1 USD = 120 BDT</div>
+    <div id="applyModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="color:var(--gold);">Student Application</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <input type="text" id="sName" placeholder="Full Name">
+                <input type="text" id="sPassport" placeholder="Passport No">
             </div>
+            <div class="file-box"><label>Passport Copy</label><input type="file" id="file1"></div>
+            <div class="file-box"><label>Academic Records</label><input type="file" id="file2"></div>
+            <div class="file-box"><label>Language Proficiency</label><input type="file" id="file3"></div>
+            <div class="file-box"><label>CV / Experience</label><input type="file" id="file4"></div>
+            <button class="btn-gold" onclick="submitApplication()">Submit Now</button>
+            <button class="btn-gold" style="background:#444; margin-top:10px;" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
 
-            <div id="uni-manage" class="section active-section">
-                <div class="card">
-                    <h3><i class="fas fa-plus-circle"></i> Add New University</h3>
-                    <div class="admin-form-grid">
-                        <div class="form-group"><label>University Name</label><input type="text" id="uName"></div>
-                        <div class="form-group"><label>Country</label><input type="text" id="uCountry"></div>
-                        <div class="form-group"><label>Course Name</label><input type="text" id="uCourse"></div>
-                        <div class="form-group">
-                            <label>Applying For</label>
-                            <select id="uDegree">
-                                <option value="Bachelor">Bachelor</option>
-                                <option value="Masters">Masters</option>
-                                <option value="Foundation">Foundation</option>
-                                <option value="Diploma">Diploma</option>
-                                <option value="PHD">PHD</option>
-                            </select>
-                        </div>
-                        <div class="form-group"><label>Semester Fee (USD)</label><input type="number" id="uSemesterFee"></div>
-                        <div class="form-group"><label>Partner Comm (%)</label><input type="number" id="uPartnerComm"></div>
-                        <div class="form-group"><label>Min. Academic GPA</label><input type="number" step="0.01" id="uMinGPA"></div>
-                        <div class="form-group"><label>IELTS Requirement</label><input type="text" id="uIeltsO" placeholder="e.g. 6.5 No band less 6"></div>
-                        <div class="form-group"><label>Gap Acceptance</label><input type="text" id="uGap"></div>
+    <div id="slipModal" class="modal">
+        <div id="slipContent" style="background: white; color: #333; width: 750px; margin: 2% auto; padding: 0; border-radius: 10px; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 4px solid #2b0054;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img id="slipPartnerLogo" src="logo.jpeg" style="height: 60px; max-width: 150px; object-fit: contain;">
+                    <div>
+                        <h2 style="margin: 0; color: #2b0054; font-size: 18px;">Student Career Consultancy</h2>
+                        <small style="color: #2ecc71;">Global Education Network</small>
                     </div>
-                    <button class="btn btn-approve" id="saveUniBtn">Save University Data</button>
                 </div>
-
-                <div class="card">
-                    <table>
-                        <thead>
-                            <tr><th>Uni Name</th><th>Country</th><th>Course</th><th>GPA Req.</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="uniTableBody"></tbody>
-                    </table>
+                <div style="text-align: right;">
+                    <h4 style="margin: 0; color: #2b0054;">OFFICIAL ACKNOWLEDGEMENT</h4>
+                    <p style="margin: 0; font-size: 12px;">Date: <span id="slipDate"></span></p>
                 </div>
             </div>
-
-            <div id="partners" class="section">
-                <div class="card">
-                    <h3><i class="fas fa-user-clock"></i> User Approval & Management</h3>
-                    <table>
-                        <thead>
-                            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="userTableBody"></tbody>
-                    </table>
+            <div style="padding: 30px;">
+                <div style="background: #f8f8f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #2ecc71;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 16px;">Verified Applicant</h3>
+                    <p style="margin: 5px 0;"><b>Name:</b> <span id="slipName">-</span></p>
+                    <p style="margin: 5px 0;"><b>Passport:</b> <span id="slipPassport">-</span></p>
+                    <p style="margin: 5px 0;"><b>Applied via:</b> <span id="slipAgency">-</span></p>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px;">
+                    <div>
+                        <p style="font-size: 11px; color: #666; margin-bottom: 5px;">Scan to Track Status:</p>
+                        <div id="qrcode"></div>
+                    </div>
+                    <div style="text-align: center; width: 200px; border-top: 1px solid #333; padding-top: 10px;">
+                        <span style="font-size: 12px;">Authorized Signature</span>
+                    </div>
                 </div>
             </div>
-
-            <div id="payouts" class="section">
-                <div class="card">
-                    <h3><i class="fas fa-money-check-alt"></i> Payouts Control</h3>
-                    <p class="text-gray-500">Real-time withdrawal requests will appear here.</p>
-                </div>
+            <div class="no-print" style="padding: 20px; text-align: center; background: #eee;">
+                <button class="btn-gold" style="width: 120px;" onclick="window.print()">Print Slip</button>
+                <button class="btn-gold" style="width: 120px; background: #444;" onclick="closeModal()">Close</button>
             </div>
-
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBxIzx-mzvUNdywOz5xxSPS9FQYynLHJlg",
-            authDomain: "scc-partner-portal.firebaseapp.com",
-            projectId: "scc-partner-portal",
-            storageBucket: "scc-partner-portal.firebasestorage.app",
-            messagingSenderId: "13013457431",
-            appId: "1:13013457431:web:9c2a470f569721b1cf9a52"
+        import * as Logic from './partner-logic.js';
+        
+        window.showTab = (event, tabId) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            if(event) event.currentTarget.classList.add('active');
+            if(tabId === 'dashboard') Logic.initRealtimeData();
+            if(tabId === 'tracking') Logic.initTracking();
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        window.logout = () => { if(confirm("Logout?")) { localStorage.clear(); window.location.href='index.html'; } };
+        window.closeModal = () => { document.getElementById('applyModal').style.display='none'; document.getElementById('slipModal').style.display='none'; };
+        
+        // Mapping Logic functions to window
+        window.searchUni = Logic.searchUni;
+        window.submitApplication = Logic.submitApplication;
+        window.requestWithdraw = Logic.requestWithdraw;
+        window.updateProfile = Logic.updateProfile;
+        window.printAdmissionSlip = (data) => Logic.printAdmissionSlip(data);
 
-        // --- 1. MongoDB University Display (Load Data) ---
-        async function loadUniversities() {
-            try {
-                const response = await fetch('/api/universities'); 
-                if (!response.ok) throw new Error("Failed to fetch");
-                const unis = await response.json();
-                let html = "";
-                unis.forEach(u => {
-                    html += `<tr>
-                        <td>${u.universityName}</td>
-                        <td>${u.country}</td>
-                        <td>${u.courseName}</td>
-                        <td>${u.minGPA}</td>
-                        <td><button onclick="deleteUni('${u._id}')" class="btn btn-delete">Delete</button></td>
-                    </tr>`;
-                });
-                document.getElementById('uniTableBody').innerHTML = html;
-            } catch (e) {
-                console.error("Error loading universities:", e);
-                document.getElementById('uniTableBody').innerHTML = "<tr><td colspan='5'>Error loading data from MongoDB</td></tr>";
-            }
-        }
-
-        // --- 2. Save University to MongoDB ---
-        document.getElementById('saveUniBtn').onclick = async () => {
-            const btn = document.getElementById('saveUniBtn');
-            const data = {
-                universityName: document.getElementById('uName').value.trim(),
-                country: document.getElementById('uCountry').value.trim(),
-                courseName: document.getElementById('uCourse').value.trim(),
-                degree: document.getElementById('uDegree').value,
-                semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
-                partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
-                minGPA: document.getElementById('uMinGPA').value.trim(),
-                ieltsReq: document.getElementById('uIeltsO').value.trim(),
-                gap: document.getElementById('uGap').value.trim()
-            };
-
-            if(!data.universityName || !data.country) {
-                alert("Please fill University Name and Country!");
-                return;
-            }
-
-            btn.innerText = "Saving...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch('/api/add-university', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    alert("✅ Saved to MongoDB!");
-                    loadUniversities(); // Refresh table
-                    // Reset fields
-                    document.querySelectorAll('.admin-form-grid input').forEach(i => i.value = "");
-                } else {
-                    alert("❌ Failed to save.");
-                }
-            } catch (e) {
-                alert("❌ Connection Error.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Save University Data";
-            }
+        window.onload = () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if(!user) return window.location.href = 'index.html';
+            document.getElementById('welcomeName').innerText = user.name || user.fullName;
+            document.getElementById('pAgency').value = user.name || user.fullName;
+            if(user.contact) document.getElementById('pContact').value = user.contact;
+            Logic.initRealtimeData();
         };
-
-        // --- 3. Delete University from MongoDB ---
-        window.deleteUni = async (id) => {
-            if(confirm("Are you sure?")) {
-                try {
-                    const response = await fetch(`/api/delete-university/${id}`, { method: 'DELETE' });
-                    if(response.ok) {
-                        alert("Deleted!");
-                        loadUniversities();
-                    }
-                } catch (e) {
-                    alert("Delete failed.");
-                }
-            }
-        };
-
-        // --- 4. Firebase User Approval ---
-        onSnapshot(collection(db, "users"), (snap) => {
-            let html = "";
-            snap.forEach(docSnap => {
-                const user = docSnap.data();
-                const id = docSnap.id;
-                const statusBadge = user.status === 'active' ? 'badge-active' : 'badge-pending';
-                html += `<tr>
-                    <td>${user.fullName}</td>
-                    <td>${user.email}</td>
-                    <td><span class="badge" style="background:var(--blue)">${user.role}</span></td>
-                    <td><span class="badge ${statusBadge}">${user.status}</span></td>
-                    <td>
-                        ${user.status === 'pending' ? 
-                            `<button onclick="updateStatus('${id}', 'active')" class="btn" style="background:var(--success)">Approve</button>` : 
-                            `<button onclick="updateStatus('${id}', 'pending')" class="btn" style="background:var(--danger)">Suspend</button>`
-                        }
-                    </td>
-                </tr>`;
-            });
-            document.getElementById('userTableBody').innerHTML = html;
-        });
-
-        window.updateStatus = async (id, newStatus) => {
-            await updateDoc(doc(db, "users", id), { status: newStatus });
-        };
-
-        // Initial Load
-        loadUniversities();
-        document.getElementById('logoutAdmin').onclick = () => signOut(auth).then(() => window.location.href = "index.html");
-    </script>
-
-    <script>
-        function showTab(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active-section'));
-            document.getElementById(id).classList.add('active-section');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('m-' + id).classList.add('active');
-            const titles = { 'uni-manage': 'University Management', 'partners': 'Partner Management', 'payouts': 'Payouts & Wallet Control' };
-            document.getElementById('page-title').innerText = titles[id];
-        }
     </script>
 </body>
 </html>
