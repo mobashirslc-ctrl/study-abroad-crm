@@ -133,60 +133,49 @@
         // --- University Save Logic ---
         // --- University Save Logic ---
 document.getElementById('saveUniBtn').onclick = async () => {
-    // ইনপুট ভ্যালুগুলো ধরা হচ্ছে
-    const uName = document.getElementById('uName').value.trim();
-    const uCountry = document.getElementById('uCountry').value.trim();
-    const uDegree = document.getElementById('uDegree').value; // Select এর জন্য trim প্রয়োজন নেই
-
-    // ভ্যালিডেশন: নাম বা দেশ ফাঁকা থাকলে সেভ হবে না
-    if(!uName || !uCountry) {
-        alert("Please fill University Name and Country!");
-        return;
-    }
-
+    const btn = document.getElementById('saveUniBtn');
+    
     const data = {
-        universityName: uName,
-        country: uCountry,
+        universityName: document.getElementById('uName').value.trim(),
+        country: document.getElementById('uCountry').value.trim(),
         courseName: document.getElementById('uCourse').value.trim(),
-        degree: uDegree, 
+        degree: document.getElementById('uDegree').value,
         semesterFee: Number(document.getElementById('uSemesterFee').value) || 0,
         partnerComm: Number(document.getElementById('uPartnerComm').value) || 0,
         minGPA: document.getElementById('uMinGPA').value.trim(),
         ieltsReq: document.getElementById('uIeltsO').value.trim(),
-        gap: document.getElementById('uGap').value.trim(),
-        timestamp: new Date().getTime()
+        gap: document.getElementById('uGap').value.trim()
     };
 
-    try {
-        await addDoc(collection(db, "universities"), data);
-        alert("University Added Successfully!");
-        // ইনপুট ফিল্ডগুলো খালি করে দেওয়া (reload এর বদলে এটি ভালো)
-        document.getElementById('uName').value = "";
-        document.getElementById('uCountry').value = "";
-        // চাইলে location.reload(); ও রাখতে পারেন
-    } catch (e) { 
-        alert("Error: " + e.message); 
+    if(!data.universityName || !data.country) {
+        alert("Please fill University Name and Country!");
+        return;
     }
-};
-        // --- Real-time University List ---
-        onSnapshot(query(collection(db, "universities"), orderBy("timestamp", "desc")), (snap) => {
-            let html = "";
-            snap.forEach(docSnap => {
-                const u = docSnap.data();
-                html += `<tr>
-                    <td>${u.universityName}</td>
-                    <td>${u.country}</td>
-                    <td>${u.courseName}</td>
-                    <td>${u.minGPA}</td>
-                    <td><button onclick="deleteUni('${docSnap.id}')" class="btn btn-delete">Delete</button></td>
-                </tr>`;
-            });
-            document.getElementById('uniTableBody').innerHTML = html;
+
+    btn.innerText = "Saving to MongoDB...";
+    btn.disabled = true;
+
+    try {
+        // Firebase এর বদলে সরাসরি আপনার Node.js API-তে ডাটা পাঠানো হচ্ছে
+        const response = await fetch('/api/add-university', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
         });
 
-        window.deleteUni = async (id) => {
-            if(confirm("Are you sure?")) await deleteDoc(doc(db, "universities", id));
-        };
+        if (response.ok) {
+            alert("✅ University Added to MongoDB Successfully!");
+            location.reload(); 
+        } else {
+            alert("❌ Server Error: Could not save to MongoDB.");
+        }
+    } catch (e) {
+        alert("❌ Connection Error: API is not responding.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Save University Data";
+    }
+};
 
         // --- User Approval ---
         onSnapshot(collection(db, "users"), (snap) => {
