@@ -24,9 +24,16 @@
         th { background: #252545; color: var(--gold); }
         input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
-        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); overflow-y: auto; }
-        .modal-content { background: var(--dark); margin: 5% auto; padding: 30px; border: 1px solid var(--gold); width: 500px; border-radius: 15px; }
-        @media print { .no-print { display: none !important; } body * { visibility: hidden; } #slipContent, #slipContent * { visibility: visible; } #slipContent { position: fixed; left: 0; top: 0; width: 100%; } }
+        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); overflow-y: auto; align-items: center; justify-content: center; }
+        .modal-content { background: var(--dark); margin: auto; padding: 30px; border: 1px solid var(--gold); width: 500px; border-radius: 15px; }
+        
+        /* প্রিন্ট লজিক ফিক্স */
+        @media print { 
+            body * { visibility: hidden; } 
+            #slipModal, #slipContent, #slipContent * { visibility: visible; } 
+            #slipModal { display: flex !important; position: absolute; left: 0; top: 0; background: white; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -37,7 +44,6 @@
             <li class="active" onclick="showTab(event, 'dashboard')"><i class="fas fa-home"></i> Dashboard</li>
             <li onclick="showTab(event, 'tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
             <li onclick="showTab(event, 'universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
-            <li onclick="showTab(event, 'withdraw')"><i class="fas fa-wallet"></i> Wallet</li>
             <li onclick="showTab(event, 'profile')"><i class="fas fa-user-cog"></i> Profile</li>
             <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
         </ul>
@@ -51,17 +57,31 @@
                 <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
                 <div class="card"><h3>Final Balance</h3><p id="topFinal" style="font-size:24px; color:#2ecc71;">৳0</p></div>
             </div>
-            <h3>Recent Activity</h3>
-            <table>
-                <thead><tr><th>Student</th><th>Status</th><th>Update</th><th>Slip</th></tr></thead>
-                <tbody id="homeTrackingBody"></tbody>
-            </table>
+            
+            <div class="card" style="text-align: left; background: transparent; padding: 0; border: none;">
+                <h3><i class="fas fa-stream"></i> Live Tracking (Quick View)</h3>
+                <table>
+                    <thead>
+                        <tr><th>Student Name</th><th>Passport No</th><th>Status</th><th>University</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="homeTrackingBody"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="tracking" class="tab-content">
-            <h3>Student Tracking Panel</h3>
+            <h3><i class="fas fa-map-marker-alt"></i> Full Application Tracking</h3>
             <table>
-                <thead><tr><th>Student</th><th>Counselor</th><th>Passport</th><th>Status</th><th>Action</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Contact No</th>
+                        <th>Passport No</th>
+                        <th>Status</th>
+                        <th>Handled By</th>
+                        <th>Last Update</th>
+                    </tr>
+                </thead>
                 <tbody id="fullTrackingBody"></tbody>
             </table>
         </div>
@@ -93,28 +113,28 @@
     </div>
 
     <div id="slipModal" class="modal">
-        <div id="slipContent" style="background: white; color: #333; width: 700px; margin: 2% auto; border-radius: 10px; border: 1px solid #ddd; overflow: hidden;">
+        <div id="slipContent" style="background: white; color: #333; width: 700px; padding: 0; border-radius: 10px; overflow: hidden;">
             <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 4px solid #2b0054;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <img src="logo.jpeg" style="height: 50px;">
-                    <div><h2 style="margin: 0; font-size: 16px;">SCC Group</h2><small>Education Network</small></div>
+                    <div><h2 style="margin: 0; font-size: 16px; color: #2b0054;">SCC Group</h2><small>Education Network</small></div>
                 </div>
                 <img id="slipPartnerLogo" src="logo.jpeg" style="height: 50px; max-width: 100px; object-fit: contain;">
             </div>
             <div style="padding: 30px;">
-                <div style="background: #f4f4f4; padding: 15px; border-left: 5px solid #2ecc71;">
-                    <p><b>Student:</b> <span id="slipName"></span></p>
-                    <p><b>Passport:</b> <span id="slipPassport"></span></p>
-                    <p><b>Partner Agency:</b> <span id="slipAgency"></span></p>
+                <div style="background: #f4f4f4; padding: 20px; border-left: 5px solid #2ecc71;">
+                    <p style="margin: 5px 0;"><b>Student Name:</b> <span id="slipName"></span></p>
+                    <p style="margin: 5px 0;"><b>Passport No:</b> <span id="slipPassport"></span></p>
+                    <p style="margin: 5px 0;"><b>Partner Agency:</b> <span id="slipAgency"></span></p>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px;">
                     <div id="qrcode"></div>
-                    <div style="text-align: center; border-top: 1px solid #333; width: 150px; padding-top: 5px;">Authorized Seal</div>
+                    <div style="text-align: center; border-top: 1px solid #333; width: 180px; padding-top: 10px; font-size: 12px;">Authorized Seal & Signature</div>
                 </div>
             </div>
-            <div class="no-print" style="padding: 15px; text-align: center; background: #eee;">
-                <button onclick="window.print()" class="btn-gold" style="width: 120px;">Print</button>
-                <button onclick="closeModal()" class="btn-gold" style="width: 120px; background: #555;">Close</button>
+            <div class="no-print" style="padding: 15px; text-align: center; background: #eee; display: flex; gap: 10px; justify-content: center;">
+                <button onclick="window.print()" class="btn-gold" style="width: 120px;">Print Slip</button>
+                <button onclick="closeModal()" class="btn-gold" style="width: 120px; background: #555; color: white;">Close</button>
             </div>
         </div>
     </div>
@@ -124,11 +144,12 @@
             <h2 id="modalTitle">Apply</h2>
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="sPassport" placeholder="Passport Number">
+            <input type="text" id="sContact" placeholder="Student Contact Number">
             <label>Passport Copy</label><input type="file" id="file1">
             <label>Academic Docs</label><input type="file" id="file2">
             <label>Language Certificate</label><input type="file" id="file3">
             <button class="btn-gold" onclick="submitApplication()">Submit Now</button>
-            <button onclick="closeModal()" class="btn-gold" style="background: #444; margin-top: 5px;">Cancel</button>
+            <button onclick="closeModal()" class="btn-gold" style="background: #444; margin-top: 5px; color: white;">Cancel</button>
         </div>
     </div>
 
@@ -143,9 +164,10 @@
             if(id === 'dashboard') Logic.initRealtimeData();
         };
         window.logout = () => { localStorage.clear(); window.location.href='index.html'; };
-        window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); };
+        window.closeModal = () => { 
+            document.querySelectorAll('.modal').forEach(m => m.style.display='none'); 
+        };
         
-        // Logic Mappings
         window.searchUni = Logic.searchUni;
         window.submitApplication = Logic.submitApplication;
         window.updateProfile = Logic.updateProfile;
