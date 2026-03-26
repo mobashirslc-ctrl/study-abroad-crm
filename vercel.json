@@ -1,14 +1,24 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/api/update-application-status", "destination": "/api/update-application-status.js" },
-    { "source": "/api/applications", "destination": "/api/applications.js" },
-    { "source": "/login", "destination": "/public/index.html" },
-    { "source": "/partner", "destination": "/public/partner.html" },
-    { "source": "/register", "destination": "/public/register.html" },
-    { "source": "/track", "destination": "/public/track.html" },
-    { "source": "/admin", "destination": "/public/admin.html" },
-    { "source": "/compliance", "destination": "/public/compliance.html" },
-    { "source": "/(.*)", "destination": "/public/$1" }
+    {
+      "source": "/api/applications",
+      "destination": "/api/applications.js"
+    },
+    {
+      "source": "/api/update-application-status",
+      "destination": "/api/update-application-status.js"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+      ]
+    }
   ]
 }
