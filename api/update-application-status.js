@@ -4,9 +4,8 @@ const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 export default async function handler(req, res) {
-    // এখানে POST চেক করা নিরাপদ কারণ অধিকাংশ ফ্রন্টএন্ড ফর্ম POST পাঠায়
-    if (req.method !== 'POST' && req.method !== 'PATCH') {
-        return res.status(405).json({ message: 'Method Not Allowed' });
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
 
     try {
@@ -14,14 +13,16 @@ export default async function handler(req, res) {
         const database = client.db('StudyAbroadCRM'); 
         const applications = database.collection('applications');
         
-        const { appId, status, note, staff } = req.body;
+        // এখানে id এবং appId দুইটাই চেক করা হচ্ছে যাতে ভুল না হয়
+        const { id, appId, status, note, staff } = req.body;
+        const targetId = appId || id;
 
-        if (!appId) {
-            return res.status(400).json({ message: 'Application ID is required' });
+        if (!targetId) {
+            return res.status(400).json({ message: 'Application ID (appId) is missing in request' });
         }
 
         const result = await applications.updateOne(
-            { _id: new ObjectId(appId) },
+            { _id: new ObjectId(targetId) },
             { 
                 $set: { 
                     status: status,
@@ -33,12 +34,12 @@ export default async function handler(req, res) {
         );
 
         if (result.matchedCount === 0) {
-            return res.status(404).json({ message: 'No application found in StudyAbroadCRM database' });
+            return res.status(404).json({ message: 'No application found with this ID' });
         }
 
         res.status(200).json({ message: 'Status updated successfully' });
     } catch (error) {
-        console.error("Database Error:", error);
+        console.error("API Error:", error);
         res.status(500).json({ message: 'Server Error', error: error.message });
     } finally {
         await client.close();
