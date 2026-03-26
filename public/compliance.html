@@ -105,7 +105,6 @@
             try {
                 const res = await fetch('/api/applications');
                 const apps = await res.json();
-                // Filtering logic to separate pending vs completed
                 pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
                 let html = "";
@@ -123,41 +122,40 @@
         }
 
         window.openReviewByIndex = (index) => {
-        window.openReviewByIndex = (index) => {
-    const app = pendingAppsList[index];
-    if(!app) return alert("No data found!");
+            const app = pendingAppsList[index];
+            if(!app) return alert("No data found!");
 
-    currentAppId = app._id;
-    document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
-    
-    // কনসোলে চেক করার জন্য (ব্রাউজার ইন্সপেক্টরে দেখা যাবে)
-    console.log("Full Application Data:", app);
+            currentAppId = app._id;
+            document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
+            
+            console.log("Full Application Data:", app);
 
-    let docHtml = "";
-    
-    // ডাটাবেসে সম্ভাব্য সব নাম চেক করা হচ্ছে
-    const fileKeys = ['pdf1', 'pdf2', 'pdf3', 'passport', 'academic', 'language', 'passportCopy'];
-    
-    fileKeys.forEach(key => {
-        if (app[key] && app[key] !== "null" && app[key] !== "") {
-            docHtml += `<a href="${app[key]}" target="_blank" class="doc-link">
-                <i class="fas fa-file-pdf"></i> View ${key.toUpperCase()}
-            </a>`;
-        }
-    });
+            let docHtml = "";
+            const fileKeys = ['pdf1', 'pdf2', 'pdf3', 'passport', 'academic', 'language', 'passportCopy'];
+            
+            fileKeys.forEach(key => {
+                if (app[key] && app[key] !== "null" && app[key] !== "") {
+                    docHtml += `<a href="${app[key]}" target="_blank" class="doc-link">
+                        <i class="fas fa-file-pdf"></i> View ${key.toUpperCase()}
+                    </a>`;
+                }
+            });
 
-    // যদি উপরের কোনো নামই না মেলে, তবে ডাটাবেসে কী কী নাম আছে তা দেখাবে
-    if (docHtml === "") {
-        const availableKeys = Object.keys(app).filter(k => k.includes('http') || k.toLowerCase().includes('pdf') || k.toLowerCase().includes('doc'));
-        docHtml = `<p style="color:orange; font-size:12px;">⚠️ No standard PDF keys found.</p>`;
-        if(availableKeys.length > 0) {
-            docHtml += `<p style="font-size:10px;">Found these fields instead: ${availableKeys.join(', ')}</p>`;
-        }
-    }
-    
-    document.getElementById('docLinksArea').innerHTML = docHtml;
-    document.getElementById('reviewModal').style.display = 'flex';
-};
+            if (docHtml === "") {
+                const availableKeys = Object.keys(app).filter(k => 
+                    String(app[k]).includes('http') || 
+                    k.toLowerCase().includes('pdf') || 
+                    k.toLowerCase().includes('doc')
+                );
+                docHtml = `<p style="color:orange; font-size:12px;">⚠️ No standard PDF keys found.</p>`;
+                if(availableKeys.length > 0) {
+                    docHtml += `<p style="font-size:10px;">Available fields: ${availableKeys.join(', ')}</p>`;
+                }
+            }
+            
+            document.getElementById('docLinksArea').innerHTML = docHtml;
+            document.getElementById('reviewModal').style.display = 'flex';
+        };
 
         async function updateAppStatus() {
             const status = document.getElementById('trackingStatusUpdate').value;
@@ -187,14 +185,14 @@
                 if(res.ok) {
                     alert("✅ Success: Status updated successfully.");
                     closeModal();
-                    fetchApplications(); // Refresh the list
+                    fetchApplications();
                 } else {
                     const errData = await res.json();
                     alert("❌ Failed: " + (errData.message || "Server Error"));
                 }
             } catch (e) { 
                 console.error("Update Error:", e);
-                alert("❌ Error: Backend server is not responding. Check if /api/update-application-status.js exists."); 
+                alert("❌ Error: Backend server is not responding."); 
             } finally {
                 btn.innerText = "SAVE REVIEW";
                 btn.disabled = false;
@@ -220,7 +218,6 @@
             currentAppId = null;
         };
 
-        // Initial Load
         fetchApplications();
     </script>
 </body>
