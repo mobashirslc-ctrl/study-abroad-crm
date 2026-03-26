@@ -45,9 +45,18 @@ const applicationSchema = new mongoose.Schema({
 });
 const Application = mongoose.model('Application', applicationSchema);
 
+// --- University Schema Updated ---
 const universitySchema = new mongoose.Schema({
-    universityName: String, country: String, degree: String,
-    semesterFee: Number, partnerComm: Number, minGPA: String
+    universityName: String, 
+    country: String, 
+    courseName: String,
+    degree: String,
+    semesterFee: Number, 
+    partnerComm: Number, 
+    minGPA: String,
+    ieltsReq: String,
+    gap: String,
+    timestamp: { type: Date, default: Date.now }
 });
 const University = mongoose.model('University', universitySchema);
 
@@ -62,12 +71,14 @@ const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
 // Auth
 app.post('/api/register', async (req, res) => {
-    const { fullName, email, password } = req.body;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const user = new User({ fullName, email: email.toLowerCase().trim(), password: hashedPassword });
-    await user.save();
-    res.status(201).json({ msg: 'Success' });
+    try {
+        const { fullName, email, password } = req.body;
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const user = new User({ fullName, email: email.toLowerCase().trim(), password: hashedPassword });
+        await user.save();
+        res.status(201).json({ msg: 'Success' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/login', async (req, res) => {
@@ -89,11 +100,30 @@ app.post('/api/submit-application', async (req, res) => {
     res.status(201).json({ msg: 'Submitted' });
 });
 
+// --- 🏛️ University API Routes (Admin & Partner) ---
 app.get('/api/universities', async (req, res) => {
-    const unis = await University.find();
-    res.json(unis);
+    try {
+        const unis = await University.find().sort({ timestamp: -1 });
+        res.json(unis);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.post('/api/add-university', async (req, res) => {
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.status(201).json({ msg: 'University Added Successfully' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/delete-university/:id', async (req, res) => {
+    try {
+        await University.findByIdAndDelete(req.params.id);
+        res.json({ msg: 'Deleted Successfully' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Withdrawal Requests
 app.post('/api/withdrawals', async (req, res) => {
     const wd = new Withdrawal(req.body);
     await wd.save();
@@ -107,7 +137,7 @@ app.patch('/api/update-profile', async (req, res) => {
     res.json({ msg: 'Updated' });
 });
 
-// Frontend Routing
+// Frontend Routing - Keep this at the END
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 10000;
