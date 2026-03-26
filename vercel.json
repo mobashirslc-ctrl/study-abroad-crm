@@ -2,7 +2,7 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/update-application-status", "destination": "/api/update-application-status.js" },
-    { "source": "/api/(.*)", "destination": "/index.js" },
+    { "source": "/api/applications", "destination": "/api/applications.js" },
     { "source": "/login", "destination": "/public/index.html" },
     { "source": "/partner", "destination": "/public/partner.html" },
     { "source": "/register", "destination": "/public/register.html" },
