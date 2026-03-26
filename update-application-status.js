@@ -1,23 +1,28 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
-
 export default async function handler(req, res) {
-    if (req.method !== 'PATCH') {
-        return res.status(405).json({ message: 'Method Not Allowed' });
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
+
+    const uri = process.env.MONGODB_URI;
+    const client = new MongoClient(uri);
 
     try {
         await client.connect();
-        // আপনার ভিডিও অনুযায়ী সঠিক ডাটাবেস নাম
         const database = client.db('StudyAbroadCRM'); 
         const applications = database.collection('applications');
-
+        
         const { appId, status, note, staff } = req.body;
 
         if (!appId) {
-            return res.status(400).json({ message: 'Application ID is required' });
+            return res.status(400).json({ message: 'App ID missing' });
         }
 
         const result = await applications.updateOne(
@@ -32,13 +37,9 @@ export default async function handler(req, res) {
             }
         );
 
-        if (result.matchedCount === 0) {
-            return res.status(404).json({ message: 'No application found with this ID in StudyAbroadCRM' });
-        }
-
-        res.status(200).json({ message: 'Status updated successfully' });
+        return res.status(200).json({ success: true, message: 'Saved successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        return res.status(500).json({ success: false, error: error.message });
     } finally {
         await client.close();
     }
