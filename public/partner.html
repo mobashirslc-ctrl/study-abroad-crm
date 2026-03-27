@@ -48,6 +48,13 @@
         .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 100%; max-width: 500px; border-radius: 15px; max-height: 90vh; overflow-y: auto; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        // initRealtimeData ফাংশনের শেষে এটি যোগ করুন
+document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='4'>No records found</td></tr>";
+
+// এই নিচের লাইনটি যোগ করুন যাতে ট্র্যাকিং টেবিল ব্ল্যাঙ্ক না থাকে
+const trackTable = document.getElementById('trackingTableBody');
+if(trackTable) trackTable.innerHTML = html; 
+
     </style>
 </head>
 <body>
