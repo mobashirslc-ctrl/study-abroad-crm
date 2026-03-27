@@ -28,13 +28,48 @@ const connectDB = async () => {
 };
 
 // --- 👤 Models ---
+// --- 👤 Updated User Model ---
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     role: { type: String, default: 'partner' },
-    contact: String
+    contact: String,
+    // নতুন ফিল্ডসমূহ:
+    orgName: String,
+    authorisedPerson: String,
+    address: String,
+    logoUrl: String,
+    walletBalance: { type: Number, default: 0 }
 }, { collection: 'users' }));
+
+// --- নতুন API: প্রোফাইল আপডেট ---
+app.patch('/api/user/profile', async (req, res) => {
+    await connectDB();
+    try {
+        const { email, contact, orgName, authorisedPerson, address, logoUrl } = req.body;
+        const updatedUser = await User.findOneAndUpdate(
+            { email: email.toLowerCase() },
+            { contact, orgName, authorisedPerson, address, logoUrl },
+            { new: true }
+        );
+        res.json(updatedUser);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// আপনার দেওয়া এপিআই এরর ফিক্স করতে অ্যাপ্লিকেশন আইডি চেক করার লজিক
+app.get('/api/applications/:id', async (req, res) => {
+    await connectDB();
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: "Invalid ID" });
+        }
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "Not found" });
+        res.json(appData);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 
 // স্কিমার ভেতরে lockBy এবং lockUntil ঢুকিয়ে দিয়েছি
 const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
