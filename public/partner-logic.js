@@ -7,27 +7,24 @@ let selectedUniversity = "";
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
-// ১. ড্যাশবোর্ড ডাটা লোড (পেমেন্ট লজিক ফিক্সড)
 export async function initRealtimeData() {
+    if(!partnerEmail) return;
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
-        const myApps = allApps.filter(app => app.partnerEmail === partnerEmail);
+        // ইমেইল ফিল্টার আরও নিরাপদ করা হলো
+        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
         let finalBalance = 0;   
         let html = "";
 
         myApps.forEach(data => {
-            // পেমেন্ট ক্যালকুলেশন: শুধুমাত্র Verified স্ট্যাটাস থাকলেই পেন্ডিং ব্যালেন্সে যোগ হবে
             if (data.status === 'DOC_VERIFIED' || data.isVerified === true) {
                 pendingBalance += Number(data.commissionBDT || 0);
             }
-            
-            // যদি পেমেন্ট হয়ে যায় (Status 'PAID')
             if (data.status === 'PAID') {
                 finalBalance += Number(data.commissionBDT || 0);
-                pendingBalance -= Number(data.commissionBDT || 0);
             }
 
             html += `<tr>
@@ -42,17 +39,15 @@ export async function initRealtimeData() {
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5'>No activity</td></tr>";
-    } catch (e) { console.error("Error loading dashboard data:", e); }
+    } catch (e) { console.error("Error loading dashboard:", e); }
 }
 
-// ২. ফুল ট্র্যাকিং মেনু
 export async function initTracking() {
     const container = document.getElementById('fullTrackingBody');
-    container.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Loading Tracks...</td></tr>";
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
-        const myStudents = allApps.filter(app => app.partnerEmail === partnerEmail);
+        const myStudents = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let html = "";
         myStudents.forEach(s => {
@@ -69,7 +64,6 @@ export async function initTracking() {
     } catch (e) { console.error("Error loading tracking:", e); }
 }
 
-// ৩. অ্যাপ্লিকেশন সাবমিট (ব্যালেন্স ০ রেখে সাবমিট হবে)
 export async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -98,8 +92,6 @@ export async function submitApplication() {
                 university: selectedUniversity, 
                 partnerEmail,
                 commissionBDT: currentUniCommission,
-                pendingAmount: 0, // সাবমিট করার সময় টাকা যোগ হবে না (নিরাপদ রাখার জন্য)
-                isVerified: false, // কমপ্লায়েন্স চেক করার আগে false থাকবে
                 pdf1: urls[0], 
                 pdf2: urls[1], 
                 pdf3: urls[2],
@@ -113,20 +105,18 @@ export async function submitApplication() {
             location.reload();
         }
     } catch (e) { 
-        alert("Submission failed. Try again."); 
+        alert("Submission failed."); 
         console.error(e);
     }
 }
 
-// ৪. স্লিপ জেনারেশন
 export function printAdmissionSlip(appData) {
     const modal = document.getElementById('slipModal');
     document.getElementById('slipName').innerText = appData.studentName;
     document.getElementById('slipPassport').innerText = appData.passportNo;
     document.getElementById('slipAgency').innerText = userData.fullName || userData.name || "Authorized Partner";
     
-    const slipLogo = document.getElementById('slipPartnerLogo');
-    if(userData.logoURL) slipLogo.src = userData.logoURL;
+    if(userData.logoURL) document.getElementById('slipPartnerLogo').src = userData.logoURL;
 
     const qrContainer = document.getElementById('qrcode');
     qrContainer.innerHTML = "";
@@ -137,7 +127,6 @@ export function printAdmissionSlip(appData) {
     modal.style.display = 'flex';
 }
 
-// ইউনিভার্সিটি সার্চ
 export async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase().trim();
     const degree = document.getElementById('fDegree').value;
@@ -169,17 +158,12 @@ export async function searchUni() {
     } catch (e) { console.error(e); }
 }
 
-// প্রোফাইল আপডেট
 export async function updateProfile() {
     const contact = document.getElementById('pContact').value;
     const logoFile = document.getElementById('pLogo').files[0];
     let logoURL = userData.logoURL;
-
     try {
-        if(logoFile) {
-            alert("Uploading Logo...");
-            logoURL = await uploadFile(logoFile);
-        }
+        if(logoFile) logoURL = await uploadFile(logoFile);
         const res = await fetch('/api/update-profile', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -187,7 +171,7 @@ export async function updateProfile() {
         });
         if(res.ok) {
             localStorage.setItem('user', JSON.stringify({...userData, contact, logoURL}));
-            alert("Profile Synced Successfully!");
+            alert("Profile Updated!");
             location.reload();
         }
     } catch (e) { alert("Failed to update profile"); }
@@ -202,14 +186,9 @@ async function uploadFile(file) {
     return data.secure_url;
 }
 
-// এই ফাংশনটি ফাইলের শেষে যোগ করুন অথবা রিপ্লেস করুন
 export function openApplyModal(name, comm) {
     selectedUniversity = name;
     currentUniCommission = comm;
-    const modalTitle = document.getElementById('modalTitle');
-    const applyModal = document.getElementById('applyModal');
-    
-    if(modalTitle) modalTitle.innerText = "Apply to: " + name;
-    if(applyModal) applyModal.style.display = 'flex';
+    document.getElementById('modalTitle').innerText = "Apply to: " + name;
+    document.getElementById('applyModal').style.display = 'flex';
 }
-
