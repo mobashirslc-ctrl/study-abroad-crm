@@ -39,12 +39,11 @@ window.onload = () => {
 // ---------------------------------------------------------
 // 3. Core Logic: Dashboard, Tracking & Wallet (FIXED)
 // ---------------------------------------------------------
+// সংশোধিত initRealtimeData ফাংশন
 async function initRealtimeData() {
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
-        
-        // Filter applications for this specific partner
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
@@ -53,15 +52,15 @@ async function initRealtimeData() {
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
-            const comm = Number(data.commissionBDT || 0);
+            
+            // মেইন ফিক্স: commissionBDT এর বদলে pendingAmount ব্যবহার করা হয়েছে
+            const actualAmount = Number(data.pendingAmount || 0);
 
-            // ব্যালেন্স লজিক: PAID ছাড়া বাকি সব পজিটিভ স্ট্যাটাস পেন্ডিংয়ে দেখাবে
             if (status !== 'PAID' && status !== 'REJECTED') {
-                pendingBalance += comm;
+                pendingBalance += actualAmount;
             }
-            // PAID হলে উইথড্রয়েবল ব্যালেন্সে আসবে
             if (status === 'PAID') {
-                finalBalance += comm;
+                finalBalance += actualAmount;
             }
 
             combinedHtml += `<tr>
@@ -73,15 +72,18 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        // UI Updates - Stats
+        // UI Updates...
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
 
-        // টেবিল আপডেট (উভয় টেবিল আইডি হ্যান্ডেল করা হয়েছে)
+        // টেবিল আপডেট...
         const homeTable = document.getElementById('homeTrackingBody');
         if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
+    } catch (e) { console.error("Data Fetch Error:", e); }
+}
+
 
         const trackTable = document.getElementById('fullTrackingBody');
         if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
