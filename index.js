@@ -53,8 +53,15 @@ const Application = mongoose.models.Application || mongoose.model('Application',
 }, { collection: 'applications' }));
 
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
-    universityName: String, country: String, courseName: String, degree: String,
-    semesterFee: Number, partnerComm: Number, minGPA: String, ieltsReq: String, gap: String
+    universityName: String,
+    country: String,
+    courseName: String,
+    degree: String,
+    semesterFee: Number,
+    partnerComm: Number,
+    minGPA: Number,   // String থেকে Number করা হয়েছে (গাণিতিক তুলনার জন্য)
+    ieltsReq: Number, // Language Score (Number)
+    gap: Number       // Study Gap Years (Number)
 }, { collection: 'universities' }));
 
 // --- 🚀 API Routes ---
