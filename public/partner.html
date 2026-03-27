@@ -26,6 +26,7 @@
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
         .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
         .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 450px; border-radius: 15px; }
+        .file-input-group small { display: block; margin-bottom: 5px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -67,28 +68,27 @@
         </div>
 
         <div id="universities" class="tab-content">
-    <h3>Search Universities & Eligibility</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
-        <input type="text" id="fCountry" placeholder="Country" onkeyup="searchUni()">
-        <input type="number" id="userGPA" step="0.01" placeholder="Your GPA/CGPA" onkeyup="searchUni()">
-        <input type="number" id="userScore" step="0.1" placeholder="IELTS/Score" onkeyup="searchUni()">
-        <input type="number" id="userGap" placeholder="Study Gap (Years)" onkeyup="searchUni()">
-        <button class="btn-gold" onclick="searchUni()">Analyze</button>
-    </div>
-    <table id="uniTable">
-        <thead>
-            <tr>
-                <th>University</th>
-                <th>Requirement</th>
-                <th>Status</th>
-                <th>Commission</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="uniListContainer"></tbody>
-    </table>
-</div>
-
+            <h3>Search Universities & Eligibility</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="fCountry" placeholder="Country" onkeyup="searchUni()">
+                <input type="number" id="userGPA" step="0.01" placeholder="Your GPA/CGPA" onkeyup="searchUni()">
+                <input type="number" id="userScore" step="0.1" placeholder="IELTS/Score" onkeyup="searchUni()">
+                <input type="number" id="userGap" placeholder="Study Gap (Years)" onkeyup="searchUni()">
+                <button class="btn-gold" onclick="searchUni()">Analyze</button>
+            </div>
+            <table id="uniTable">
+                <thead>
+                    <tr>
+                        <th>University</th>
+                        <th>Requirement</th>
+                        <th>Status</th>
+                        <th>Commission</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="uniListContainer"></tbody>
+            </table>
+        </div>
 
         <div id="profile" class="tab-content">
             <h3>Profile</h3>
@@ -99,6 +99,7 @@
             </div>
         </div>
     </div>
+
     <div id="applyModal" class="modal">
         <div class="modal-content">
             <h3 id="modalTitle" style="color:var(--gold); margin-top:0;">Student Application</h3>
@@ -132,16 +133,8 @@
         </div>
     </div>
 
-
-        <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:10px;">Submit Application</button>
-        <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Cancel</button>
-    </div>
-</div>
-
-
     <script src="partner-logic.js"></script>
     <script>
-        // Tab switching logic (Global Scope)
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
@@ -153,7 +146,7 @@
             if(id === 'tracking') initTracking();
         }
 
-        function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
+        function closeModal() { document.getElementById('applyModal').style.display='none'; }
         function logout() { localStorage.clear(); window.location.href='index.html'; }
 
         window.onload = () => {
