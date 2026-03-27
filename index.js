@@ -111,37 +111,39 @@ app.patch('/api/admin/users/:id/expiry', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৫. ম্যানুয়াল ওয়ালেট আপডেট (Pending থেকে বিয়োগ এবং Available-এ যোগ)
+// ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইনপুট অ্যামাউন্ট অনুযায়ী আপডেট)
 app.patch('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
+        // ফ্রন্টএন্ড থেকে আসা পেন্ডিং অ্যামাউন্ট (যেটা অ্যাডমিন বক্সে লিখেছে)
         const { pendingAmount, status } = req.body;
-        const finalAmount = Number(pendingAmount) || 0;
+        const amountFromAdmin = Number(pendingAmount) || 0;
 
-        // ১. অ্যাপ্লিকেশন ডাটা খুঁজে বের করা
+        // ১. অ্যাপ্লিকেশনটি খুঁজে বের করা
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ২. অ্যাপ্লিকেশন আপডেট (অ্যামাউন্ট এখন ০ করে দেওয়া কারণ এটি পেইড হয়ে যাচ্ছে)
-        // অথবা আপনি চাইলে pendingAmount এ ০ সেভ করতে পারেন যাতে আর পেন্ডিং না দেখায়
+        // ২. অ্যাপ্লিকেশন আপডেট: 
+        // পেন্ডিং থেকে এই অ্যামাউন্টটি মাইনাস করা (increment with negative value)
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
-            { pendingAmount: 0, status: 'COMPLETED' }, // স্ট্যাটাস কমপ্লিট করে দেওয়া হলো
+            { 
+                $inc: { pendingAmount: -amountFromAdmin }, // পেন্ডিং থেকে অত টাকা কমবে
+                status: status || 'PARTIAL_PAID' 
+            }, 
             { new: true }
         );
 
-        // ৩. পার্টনারের মেইন ওয়ালেট আপডেট লজিক:
-        if (finalAmount > 0) {
+        // ৩. পার্টনারের মেইন (Available) ওয়ালেটে টাকা যোগ করা
+        if (amountFromAdmin > 0) {
             await User.findOneAndUpdate(
                 { email: appData.partnerEmail }, 
-                { 
-                    $inc: { walletBalance: finalAmount } // মেইন ওয়ালেটে টাকা যোগ হচ্ছে
-                }
+                { $inc: { walletBalance: amountFromAdmin } } // মেইন ব্যালেন্সে যোগ হবে
             );
         }
 
         res.json({ 
-            msg: `Successfully transferred ${finalAmount} to available wallet.`, 
+            msg: `Successfully moved ${amountFromAdmin} to available wallet.`, 
             data: updatedApp 
         });
     } catch (e) { 
