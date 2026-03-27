@@ -99,18 +99,24 @@
             </div>
         </div>
     </div>
-
-    <div id="applyModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle">Apply</h3>
-            <input type="text" id="sName" placeholder="Student Name">
-            <input type="text" id="sPassport" placeholder="Passport Number">
-            <input type="file" id="file1"><small>Passport</small>
-            <input type="file" id="file2"><small>Academic</small>
-            <button class="btn-gold" onclick="submitApplication()">Submit Application</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Close</button>
+<div id="applyModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="color:var(--gold);">Apply Student</h3>
+        <input type="text" id="sName" placeholder="Student Full Name">
+        <input type="text" id="sPassport" placeholder="Passport Number">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div><small>Passport Copy</small><input type="file" id="file1"></div>
+            <div><small>Academic Docs</small><input type="file" id="file2"></div>
+            <div><small>Language/IELTS</small><input type="file" id="file3"></div>
+            <div><small>CV/Experience</small><input type="file" id="file4"></div>
         </div>
+
+        <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:10px;">Submit Application</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Cancel</button>
     </div>
+</div>
+
 
     <script src="partner-logic.js"></script>
     <script>
