@@ -202,9 +202,14 @@ async function uploadFile(file) {
     return data.secure_url;
 }
 
-window.openApplyModal = (name, comm) => {
+// এই ফাংশনটি ফাইলের শেষে যোগ করুন অথবা রিপ্লেস করুন
+export function openApplyModal(name, comm) {
     selectedUniversity = name;
     currentUniCommission = comm;
-    document.getElementById('modalTitle').innerText = "Apply to: " + name;
-    document.getElementById('applyModal').style.display = 'flex';
-};
+    const modalTitle = document.getElementById('modalTitle');
+    const applyModal = document.getElementById('applyModal');
+    
+    if(modalTitle) modalTitle.innerText = "Apply to: " + name;
+    if(applyModal) applyModal.style.display = 'flex';
+}
+
