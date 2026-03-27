@@ -159,6 +159,8 @@ async function submitApplication() {
 // ---------------------------------------------------------
 // 5. Admission Slip, Search & Profiles
 // ---------------------------------------------------------
+// 5. Admission Slip (Fixed with Auto-Print & PDF Support)
+// ---------------------------------------------------------
 function generateAdmissionSlip(data) {
     const partnerLogo = document.getElementById('currentLogo').src;
     const partnerName = document.getElementById('pOrg').value || "Partner Agency";
@@ -168,50 +170,81 @@ function generateAdmissionSlip(data) {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
 
     const slipWindow = window.open('', '_blank', 'width=900,height=850');
+    
     const slipHtml = `
     <html>
-    <head><title>Admission Slip - ${data.studentName}</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f0f2f5; }
-        .slip-card { background: white; border: 4px solid #2b0054; border-radius: 15px; max-width: 800px; margin: auto; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 25px; border-bottom: 2px solid #eee; }
-        .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; margin-top:15px; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px; font-size: 14px; }
-        .footer { background: #2b0054; color: white; text-align: center; padding: 15px; font-size: 11px; }
-    </style>
+    <head>
+        <title>Admission Slip - ${data.studentName}</title>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #fff; }
+            .no-print { text-align: center; margin-bottom: 20px; }
+            .btn-print { background: #2ecc71; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-weight: bold; }
+            .slip-card { border: 2px solid #2b0054; border-radius: 15px; max-width: 800px; margin: auto; overflow: hidden; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+            .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
+            .section-header { background: #2ecc71; color: white; padding: 8px 15px; font-weight: bold; font-size: 14px; margin-top: 10px; }
+            .details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; font-size: 14px; }
+            .qr-area { text-align: center; padding: 15px; background: #f9f9f9; border-top: 1px solid #eee; }
+            .footer { background: #2b0054; color: white; text-align: center; padding: 10px; font-size: 11px; }
+            
+            /* Print Optimization */
+            @media print {
+                .no-print { display: none; }
+                body { padding: 0; }
+                .slip-card { border: 1px solid #2b0054; box-shadow: none; width: 100%; margin: 0; }
+                @page { margin: 0.5cm; }
+            }
+        </style>
     </head>
-    <body>
+    <body onload="setTimeout(() => { window.print(); }, 500)">
+        <div class="no-print">
+            <button class="btn-print" onclick="window.print()">SAVE AS PDF / PRINT</button>
+            <p style="font-size: 12px; color: #666;">If the print window doesn't open, click the button above.</p>
+        </div>
+        
         <div class="slip-card">
             <div class="header">
-                <img src="${partnerLogo}" height="65">
-                <div style="text-align:right"><h3 style="margin:0;">ADMISSION ENROLLMENT SLIP</h3><small>REF: SCC-2026</small></div>
+                <img src="${partnerLogo}" height="60">
+                <div style="text-align:right">
+                    <h3 style="margin:0; color:#2b0054;">ADMISSION ENROLLMENT SLIP</h3>
+                    <small style="color: #666;">REF: SCC-2026-${Math.floor(Math.random()*90000)}</small>
+                </div>
             </div>
-            <div class="section-header">APPLICANT INFORMATION</div>
+
+            <div class="section-header">STUDENT INFORMATION</div>
             <div class="details">
-                <div><b>Student:</b> ${data.studentName}</div>
-                <div><b>Passport:</b> ${data.passportNo}</div>
+                <div><b>Student Name:</b> ${data.studentName}</div>
+                <div><b>Passport No:</b> ${data.passportNo}</div>
+                <div><b>Target Country:</b> United Kingdom (UK)</div>
                 <div><b>University:</b> ${data.university}</div>
-                <div><b>Country:</b> UK / Europe</div>
             </div>
-            <div class="section-header">PARTNER AGENCY</div>
+
+            <div class="section-header">PARTNER AGENCY DETAILS</div>
             <div class="details">
-                <div><b>Agency:</b> ${partnerName}</div>
-                <div><b>Authorized:</b> ${authPerson}</div>
+                <div><b>Agency Name:</b> ${partnerName}</div>
+                <div><b>Authorized Person:</b> ${authPerson}</div>
+                <div><b>Partner Email:</b> ${partnerEmail}</div>
             </div>
-            <div style="text-align:center; padding: 20px;">
-                <img src="${qrUrl}" width="120">
-                <p style="font-size:10px; color:#2b0054;">SCAN TO TRACK STATUS</p>
+
+            <div class="qr-area">
+                <img src="${qrUrl}" width="100">
+                <p style="font-size:10px; margin-top:5px; color:#2b0054; font-weight: bold;">SCAN TO TRACK STUDENT STATUS</p>
+                <div style="margin-top: 10px; color: #2ecc71;">
+                    <h3 style="margin: 0;">🎉 Congratulations!</h3>
+                    <p style="font-size: 11px; color: #666; margin: 2px 0;">We wish you a successful journey ahead.</p>
+                </div>
             </div>
-            <div style="text-align:center; color:#2ecc71; padding-bottom: 20px;">
-                <h3>🎉 Congratulations on your successful admission!</h3>
+
+            <div class="footer">
+                2026 @ GORUN LTD. | Study Abroad B2B Division | Powered by SCC Group
             </div>
-            <div class="footer">2026 @ GORUN LTD. B2B System | study-abroad-crm-nine.vercel.app</div>
         </div>
     </body>
     </html>`;
+    
     slipWindow.document.write(slipHtml);
     slipWindow.document.close();
 }
+
 
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
