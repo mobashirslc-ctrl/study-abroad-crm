@@ -21,7 +21,23 @@
         /* Table Styles */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
         th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* এই অংশটুকু আপনার ফাইলে আপডেট করুন */
+td { 
+    padding: 15px; 
+    border-bottom: 1px solid var(--border); 
+    font-size: 14px; 
+    color: #eee; 
+    white-space: normal; /* এটি 'nowrap' থেকে 'normal' করে দিন */
+    word-break: break-word; 
+}
+
+/* অ্যাকশন কলামের জন্য নির্দিষ্ট উইডথ */
+th:last-child, td:last-child {
+    width: 130px; 
+    text-align: center;
+    overflow: visible; /* বাটন যাতে কেটে না যায় */
+}
+
         
         /* Status Pills */
         .status-pill { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: var(--gold); border: 1px solid var(--gold); }
