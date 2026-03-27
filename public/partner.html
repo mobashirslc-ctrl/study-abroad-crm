@@ -5,97 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal | SCC Group</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --gold: #f1c40f; --dark: #1a1a2e; --light: #ffffff; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f0f1b; color: white; display: flex; }
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --light: #ffffff; --green: #2ecc71; --red: #e74c3c; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0f0f1b; color: white; display: flex; overflow-x: hidden; }
+        
+        /* Sidebar */
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; z-index: 1000; }
         .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; }
         .logo-container img { max-width: 150px; border-radius: 8px; }
         .sidebar ul { list-style: none; padding: 0; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; transition: 0.3s; }
         .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
-        .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; }
+        .sidebar ul li i { margin-right: 10px; width: 20px; }
+
+        /* Main Content */
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; box-sizing: border-box; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
+        
+        /* Dashboard Cards */
         .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; text-align: center; }
-        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 20px; border-radius: 8px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
-        th { background: #252545; color: var(--gold); }
-        input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
-        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
-        .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 450px; border-radius: 15px; }
-        .file-input-group small { display: block; margin-bottom: 5px; font-size: 11px; }
+
+        /* Search Box */
+        .search-container { background: var(--dark); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        
+        /* Table Styling */
+        .table-wrapper { overflow-x: auto; background: var(--dark); border-radius: 10px; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: #252545; color: var(--gold); padding: 15px; text-align: left; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #333; }
+        td { padding: 15px; border-bottom: 1px solid #222; font-size: 13px; vertical-align: middle; }
+        
+        /* Status & Badges */
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .eligible { background: rgba(46, 204, 113, 0.15); color: var(--green); border: 1px solid var(--green); }
+        .not-eligible { background: rgba(231, 76, 60, 0.15); color: var(--red); border: 1px solid var(--red); }
+
+        input, select { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        .btn-gold:hover { background: #d4ac0d; transform: translateY(-2px); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 100%; max-width: 500px; border-radius: 15px; max-height: 90vh; overflow-y: auto; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-container"><img src="logo.jpeg"></div>
+        <div class="logo-container"><img src="logo.jpeg" alt="SCC Logo"></div>
         <ul>
             <li id="menu-dashboard" class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
-            <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
             <li id="menu-universities" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+            <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
             <li id="menu-profile" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
             <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
         </ul>
     </div>
 
     <div class="main-content">
-        <h2 style="margin-bottom: 25px;">Hello, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
+        <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
 
         <div id="dashboard" class="tab-content" style="display: block;">
             <div class="card-grid">
-                <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
-                <div class="card"><h3>Final Balance</h3><p id="topFinal" style="font-size:24px; color:#2ecc71;">৳0</p></div>
+                <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:26px; color:var(--gold);">৳0</p></div>
+                <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:26px; color:var(--green);">৳0</p></div>
+                <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:26px; color:#3498db;">0</p></div>
             </div>
-            <div class="card" style="text-align: left; background: transparent; padding: 0; border: none;">
-                <h3><i class="fas fa-stream"></i> Quick View</h3>
+            <h3 style="color:var(--gold);">Quick View (Recent Students)</h3>
+            <div class="table-wrapper">
                 <table>
-                    <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>University</th><th>Action</th></tr></thead>
+                    <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>University</th></tr></thead>
                     <tbody id="homeTrackingBody"></tbody>
                 </table>
             </div>
         </div>
 
-        <div id="tracking" class="tab-content">
-            <h3>Full Tracking</h3>
-            <table>
-                <thead><tr><th>Student</th><th>Contact</th><th>Passport</th><th>Status</th><th>Updated</th></tr></thead>
-                <tbody id="fullTrackingBody"></tbody>
-            </table>
+        <div id="universities" class="tab-content">
+            <h3>Find Universities & Eligibility</h3>
+            <div class="search-container">
+                <div><small>Target Country</small><input type="text" id="fCountry" placeholder="e.g. UK" onkeyup="searchUni()"></div>
+                <div><small>Student GPA</small><input type="number" id="userGPA" step="0.01" placeholder="3.50" onkeyup="searchUni()"></div>
+                <div><small>IELTS/English</small><input type="number" id="userScore" step="0.1" placeholder="6.5" onkeyup="searchUni()"></div>
+                <div><small>Study Gap (Years)</small><input type="number" id="userGap" placeholder="0" onkeyup="searchUni()"></div>
+                <div style="display: flex; align-items: flex-end;"><button class="btn-gold" onclick="searchUni()">Analyze Now</button></div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="uniTable">
+                    <thead>
+                        <tr>
+                            <th>University & City</th>
+                            <th>Requirements</th>
+                            <th>Fee & Duration</th>
+                            <th>Living & Jobs</th>
+                            <th>Status</th>
+                            <th>Commission</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="uniListContainer"></tbody>
+                </table>
+            </div>
         </div>
 
-        <div id="universities" class="tab-content">
-            <h3>Search Universities & Eligibility</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
-                <input type="text" id="fCountry" placeholder="Country" onkeyup="searchUni()">
-                <input type="number" id="userGPA" step="0.01" placeholder="Your GPA/CGPA" onkeyup="searchUni()">
-                <input type="number" id="userScore" step="0.1" placeholder="IELTS/Score" onkeyup="searchUni()">
-                <input type="number" id="userGap" placeholder="Study Gap (Years)" onkeyup="searchUni()">
-                <button class="btn-gold" onclick="searchUni()">Analyze</button>
+        <div id="tracking" class="tab-content">
+            <h3>Student Tracking History</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Last Update</th></tr></thead>
+                    <tbody id="fullTrackingBody"></tbody>
+                </table>
             </div>
-            <table id="uniTable">
-                <thead>
-                    <tr>
-                        <th>University</th>
-                        <th>Requirement</th>
-                        <th>Status</th>
-                        <th>Commission</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="uniListContainer"></tbody>
-            </table>
         </div>
 
         <div id="profile" class="tab-content">
-            <h3>Profile</h3>
-            <div class="card" style="max-width: 400px; text-align: left;">
-                <label>Agency</label><input type="text" id="pAgency" readonly>
-                <label>Contact</label><input type="text" id="pContact">
-                <button class="btn-gold" onclick="updateProfile()">Update Profile</button>
+            <h3>Agency Profile</h3>
+            <div class="card" style="max-width: 450px; text-align: left; margin: 0 auto;">
+                <label>Agency Name</label><input type="text" id="pAgency" readonly>
+                <label>Contact Number</label><input type="text" id="pContact">
+                <button class="btn-gold" style="margin-top:15px;" onclick="updateProfile()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -103,33 +133,21 @@
     <div id="applyModal" class="modal">
         <div class="modal-content">
             <h3 id="modalTitle" style="color:var(--gold); margin-top:0;">Student Application</h3>
-            
-            <label style="font-size: 12px; color: #aaa;">Basic Info</label>
             <input type="text" id="sName" placeholder="Student Full Name">
             <input type="text" id="sPassport" placeholder="Passport Number">
             
-            <label style="font-size: 12px; color: #aaa;">Required Documents (PDF/JPG)</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="file-input-group">
-                    <small style="color:var(--gold)">Passport Copy</small>
-                    <input type="file" id="file1">
-                </div>
-                <div class="file-input-group">
-                    <small style="color:var(--gold)">Academic Docs</small>
-                    <input type="file" id="file2">
-                </div>
-                <div class="file-input-group">
-                    <small style="color:var(--gold)">Language Score</small>
-                    <input type="file" id="file3">
-                </div>
-                <div class="file-input-group">
-                    <small style="color:var(--gold)">CV / Others</small>
-                    <input type="file" id="file4">
+            <div style="margin-top:15px;">
+                <small style="color:var(--gold)">Upload Documents (Clear Scanned Copy)</small>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                    <div><small>Passport Copy</small><input type="file" id="file1"></div>
+                    <div><small>Academic Docs</small><input type="file" id="file2"></div>
+                    <div><small>English Proficiency</small><input type="file" id="file3"></div>
+                    <div><small>CV / Other Docs</small><input type="file" id="file4"></div>
                 </div>
             </div>
 
-            <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:20px;">Submit Application</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Cancel / Close</button>
+            <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:25px;">Submit Now</button>
+            <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:12px;">Close Window</button>
         </div>
     </div>
 
@@ -138,15 +156,13 @@
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-            
             document.getElementById(id).style.display = 'block';
             document.getElementById('menu-' + id).classList.add('active');
-
             if(id === 'dashboard') initRealtimeData();
             if(id === 'tracking') initTracking();
         }
 
-        function closeModal() { document.getElementById('applyModal').style.display='none'; }
+        function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
         function logout() { localStorage.clear(); window.location.href='index.html'; }
 
         window.onload = () => {
@@ -154,7 +170,7 @@
             if(!user) window.location.href='index.html';
             document.getElementById('welcomeName').innerText = user.name || "Partner";
             document.getElementById('pAgency').value = user.name || "";
-            initRealtimeData();
+            initRealtimeData(); // Load first screen data
         };
     </script>
 </body>
