@@ -122,7 +122,8 @@ document.getElementById('statusSelect').addEventListener('change', (e) => {
     updateWalletIndicator(e.target.value);
 });
 
-// ৫. ডাটা সেভ করা (With Confirmation)
+// ৫. ডাটা সেভ করা (With Confirmation & Targeted Wallet Sync)
+// ৫. ডাটা সেভ করা (With Confirmation & Targeted Wallet Sync)
 document.getElementById('applyStatusBtn').onclick = async () => {
     if (!currentActiveId) return;
     
@@ -132,16 +133,24 @@ document.getElementById('applyStatusBtn').onclick = async () => {
 
     if(!note) return alert("Please add a note before authorizing!");
 
+    // --- নতুন লজিক শুরু ---
+    let amountToSync = 0; // ডিফল্টভাবে ০ থাকবে
+
     if(selectedStatus === 'DOCS_VERIFIED') {
+        // কনফার্মেশন নিচ্ছি
         if(!confirm("Are you sure? This will verify documents and sync BDT " + currentCommission + " to wallet (Pending).")) return;
+        
+        // শুধুমাত্র 'DOCS_VERIFIED' হলেই অংকটি সেট হবে
+        amountToSync = currentCommission; 
     }
+    // --- নতুন লজিক শেষ ---
 
     const payload = {
         appId: currentActiveId,
         status: selectedStatus,
         complianceNote: note,
         staffEmail: staffEmail,
-        commission: currentCommission 
+        commission: amountToSync // এটি এখন ডাইনামিক (০ অথবা কমিশন এমাউন্ট)
     };
 
     try {
@@ -157,7 +166,7 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         if(res.ok) {
             alert("✅ Updated Successfully!");
             currentActiveId = null; 
-            closeModal();
+            closeModal(); // এটি কল করলে অটোমেটিক আনলক এপিআই কল হবে
             loadApplications(); 
         }
     } catch (e) { 
@@ -167,6 +176,8 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         btn.innerHTML = `<i class="fas fa-shield-alt"></i> SYNC & AUTHORIZE`;
     }
 };
+
+
 
 // অতিরিক্ত: অটো-আনলক এবং ট্যাব সুইচ
 window.closeModal = async () => {
