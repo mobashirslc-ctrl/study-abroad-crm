@@ -24,15 +24,8 @@
         th { background: #252545; color: var(--gold); }
         input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
-        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); overflow-y: auto; align-items: center; justify-content: center; }
-        .modal-content { background: var(--dark); margin: auto; padding: 30px; border: 1px solid var(--gold); width: 500px; border-radius: 15px; }
-        
-        @media print { 
-            body * { visibility: hidden; } 
-            #slipModal, #slipContent, #slipContent * { visibility: visible; } 
-            #slipModal { display: flex !important; position: absolute; left: 0; top: 0; background: white; }
-            .no-print { display: none !important; }
-        }
+        .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 450px; border-radius: 15px; }
     </style>
 </head>
 <body>
@@ -40,10 +33,10 @@
     <div class="sidebar">
         <div class="logo-container"><img src="logo.jpeg"></div>
         <ul>
-            <li class="active" onclick="showTab(event, 'dashboard')"><i class="fas fa-home"></i> Dashboard</li>
-            <li onclick="showTab(event, 'tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
-            <li onclick="showTab(event, 'universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
-            <li onclick="showTab(event, 'profile')"><i class="fas fa-user-cog"></i> Profile</li>
+            <li id="menu-dashboard" class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
+            <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
+            <li id="menu-universities" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+            <li id="menu-profile" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
             <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
         </ul>
     </div>
@@ -56,133 +49,82 @@
                 <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
                 <div class="card"><h3>Final Balance</h3><p id="topFinal" style="font-size:24px; color:#2ecc71;">৳0</p></div>
             </div>
-            
             <div class="card" style="text-align: left; background: transparent; padding: 0; border: none;">
-                <h3><i class="fas fa-stream"></i> Live Tracking (Quick View)</h3>
+                <h3><i class="fas fa-stream"></i> Quick View</h3>
                 <table>
-                    <thead>
-                        <tr><th>Student Name</th><th>Passport No</th><th>Status</th><th>University</th><th>Action</th></tr>
-                    </thead>
+                    <thead><tr><th>Student</th><th>Passport</th><th>Status</th><th>University</th><th>Action</th></tr></thead>
                     <tbody id="homeTrackingBody"></tbody>
                 </table>
             </div>
         </div>
 
         <div id="tracking" class="tab-content">
-            <h3><i class="fas fa-map-marker-alt"></i> Full Application Tracking</h3>
+            <h3>Full Tracking</h3>
             <table>
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Contact No</th>
-                        <th>Passport No</th>
-                        <th>Status</th>
-                        <th>Handled By</th>
-                        <th>Last Update</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Student</th><th>Contact</th><th>Passport</th><th>Status</th><th>Updated</th></tr></thead>
                 <tbody id="fullTrackingBody"></tbody>
             </table>
         </div>
 
         <div id="universities" class="tab-content">
-            <h3>Eligibility Search</h3>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+            <h3>Search Universities</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <input type="text" id="fCountry" placeholder="Country">
-                <select id="fDegree"><option value="">Degree</option><option value="Bachelor">Bachelor</option><option value="Masters">Masters</option></select>
                 <input type="number" id="userGPA" placeholder="GPA">
-                <input type="number" id="userScore" placeholder="IELTS">
-                <button class="btn-gold" onclick="searchUni()" style="grid-column: span 4;">Search Universities</button>
+                <button class="btn-gold" onclick="searchUni()">Search</button>
             </div>
-            <table>
-                <thead><tr><th>University</th><th>Req.</th><th>Status</th><th>Fee</th><th>Comm.</th><th>Action</th></tr></thead>
+            <table id="uniTable">
+                <thead><tr><th>University</th><th>Status</th><th>Commission</th><th>Action</th></tr></thead>
                 <tbody id="uniListContainer"></tbody>
             </table>
         </div>
 
         <div id="profile" class="tab-content">
-            <h3>Agency Profile Update</h3>
+            <h3>Profile</h3>
             <div class="card" style="max-width: 400px; text-align: left;">
-                <label>Agency Name</label><input type="text" id="pAgency" readonly>
-                <label>Contact Number</label><input type="text" id="pContact">
-                <label>Agency Logo</label><input type="file" id="pLogo">
-                <button class="btn-gold" onclick="updateProfile()">Save & Sync Database</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="slipModal" class="modal">
-        <div id="slipContent" style="background: white; color: #333; width: 700px; padding: 0; border-radius: 10px; overflow: hidden;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 4px solid #2b0054;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img src="logo.jpeg" style="height: 50px;">
-                    <div><h2 style="margin: 0; font-size: 16px; color: #2b0054;">SCC Group</h2><small>Education Network</small></div>
-                </div>
-                <img id="slipPartnerLogo" src="logo.jpeg" style="height: 50px; max-width: 100px; object-fit: contain;">
-            </div>
-            <div style="padding: 30px;">
-                <div style="background: #f4f4f4; padding: 20px; border-left: 5px solid #2ecc71;">
-                    <p style="margin: 5px 0;"><b>Student Name:</b> <span id="slipName"></span></p>
-                    <p style="margin: 5px 0;"><b>Passport No:</b> <span id="slipPassport"></span></p>
-                    <p style="margin: 5px 0;"><b>Partner Agency:</b> <span id="slipAgency"></span></p>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px;">
-                    <div id="qrcode"></div>
-                    <div style="text-align: center; border-top: 1px solid #333; width: 180px; padding-top: 10px; font-size: 12px;">Authorized Seal & Signature</div>
-                </div>
-            </div>
-            <div class="no-print" style="padding: 15px; text-align: center; background: #eee; display: flex; gap: 10px; justify-content: center;">
-                <button onclick="window.print()" class="btn-gold" style="width: 120px;">Print Slip</button>
-                <button onclick="closeModal()" class="btn-gold" style="width: 120px; background: #555; color: white;">Close</button>
+                <label>Agency</label><input type="text" id="pAgency" readonly>
+                <label>Contact</label><input type="text" id="pContact">
+                <button class="btn-gold" onclick="updateProfile()">Update Profile</button>
             </div>
         </div>
     </div>
 
     <div id="applyModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitle">Apply</h2>
+            <h3 id="modalTitle">Apply</h3>
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="sPassport" placeholder="Passport Number">
-            <input type="text" id="sContact" placeholder="Student Contact Number">
-            <label>Passport Copy (PDF)</label><input type="file" id="file1">
-            <label>Academic Docs (PDF)</label><input type="file" id="file2">
-            <label>Language Certificate (PDF)</label><input type="file" id="file3">
-            <button class="btn-gold" onclick="submitApplication()">Submit Now</button>
-            <button onclick="closeModal()" class="btn-gold" style="background: #444; margin-top: 5px; color: white;">Cancel</button>
+            <input type="file" id="file1"><small>Passport</small>
+            <input type="file" id="file2"><small>Academic</small>
+            <button class="btn-gold" onclick="submitApplication()">Submit Application</button>
+            <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Close</button>
         </div>
     </div>
 
-    <script type="module">
-    import * as Logic from './partner-logic.js';
+    <script src="partner-logic.js"></script>
+    <script>
+        // Tab switching logic (Global Scope)
+        function showTab(id) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+            
+            document.getElementById(id).style.display = 'block';
+            document.getElementById('menu-' + id).classList.add('active');
 
-    window.showTab = (e, id) => {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        const targetTab = document.getElementById(id);
-        if(targetTab) targetTab.style.display = 'block';
-        if(e) e.currentTarget.classList.add('active');
+            if(id === 'dashboard') initRealtimeData();
+            if(id === 'tracking') initTracking();
+        }
 
-        if(id === 'tracking') Logic.initTracking();
-        if(id === 'dashboard') Logic.initRealtimeData();
-        if(id === 'universities') Logic.searchUni();
-    };
+        function closeModal() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
+        function logout() { localStorage.clear(); window.location.href='index.html'; }
 
-    window.logout = () => { localStorage.clear(); window.location.href='index.html'; };
-    window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); };
-    window.searchUni = Logic.searchUni;
-    window.submitApplication = Logic.submitApplication;
-    window.updateProfile = Logic.updateProfile;
-    window.printAdmissionSlip = Logic.printAdmissionSlip;
-    window.openApplyModal = (name, comm) => { Logic.openApplyModal(name, comm); };
-
-    window.onload = () => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if(!user) return window.location.href='index.html';
-        document.getElementById('welcomeName').innerText = user.name || user.fullName || "Partner";
-        document.getElementById('pAgency').value = user.name || user.fullName || "";
-        if(user.contact) document.getElementById('pContact').value = user.contact;
-        Logic.initRealtimeData();
-    };
-</script>
+        window.onload = () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if(!user) window.location.href='index.html';
+            document.getElementById('welcomeName').innerText = user.name || "Partner";
+            document.getElementById('pAgency').value = user.name || "";
+            initRealtimeData();
+        };
+    </script>
 </body>
 </html>
