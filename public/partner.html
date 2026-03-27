@@ -67,17 +67,28 @@
         </div>
 
         <div id="universities" class="tab-content">
-            <h3>Search Universities</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                <input type="text" id="fCountry" placeholder="Country">
-                <input type="number" id="userGPA" placeholder="GPA">
-                <button class="btn-gold" onclick="searchUni()">Search</button>
-            </div>
-            <table id="uniTable">
-                <thead><tr><th>University</th><th>Status</th><th>Commission</th><th>Action</th></tr></thead>
-                <tbody id="uniListContainer"></tbody>
-            </table>
-        </div>
+    <h3>Search Universities & Eligibility</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px;">
+        <input type="text" id="fCountry" placeholder="Country" onkeyup="searchUni()">
+        <input type="number" id="userGPA" step="0.01" placeholder="Your GPA/CGPA" onkeyup="searchUni()">
+        <input type="number" id="userScore" step="0.1" placeholder="IELTS/Score" onkeyup="searchUni()">
+        <input type="number" id="userGap" placeholder="Study Gap (Years)" onkeyup="searchUni()">
+        <button class="btn-gold" onclick="searchUni()">Analyze</button>
+    </div>
+    <table id="uniTable">
+        <thead>
+            <tr>
+                <th>University</th>
+                <th>Requirement</th>
+                <th>Status</th>
+                <th>Commission</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="uniListContainer"></tbody>
+    </table>
+</div>
+
 
         <div id="profile" class="tab-content">
             <h3>Profile</h3>
