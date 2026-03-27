@@ -21,25 +21,26 @@ async function initRealtimeData() {
         let html = "";
 
         myApps.forEach(data => {
+            // ব্যালেন্স ক্যালকুলেশন
             if (data.status === 'DOC_VERIFIED' || data.status === 'VERIFIED') pendingBalance += Number(data.pendingAmount || 0);
             if (data.status === 'PAID') finalBalance += Number(data.commissionBDT || 0);
 
             html += `<tr>
                 <td><b>${data.studentName}</b></td>
                 <td>${data.passportNo}</td>
-                <td><span style="color:var(--gold)">${data.status}</span></td>
+                <td><span class="badge" style="background:#252545; color:var(--gold)">${data.status}</span></td>
                 <td>${data.university || 'N/A'}</td>
-                <td><button class="btn-gold" style="padding:5px 10px; width:auto; font-size:11px;" onclick='viewSlip("${data._id}")'>Slip</button></td>
             </tr>`;
         });
 
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
-        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='5'>No records found</td></tr>";
+        document.getElementById('totalStudents').innerText = myApps.length;
+        document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='4'>No records found</td></tr>";
     } catch (e) { console.error("Dashboard Error", e); }
 }
 
-// ২. ইউনিভার্সিটি সার্চ এবং এলিজিবিলিটি (Updated Logic)
+// ২. ইউনিভার্সিটি সার্চ এবং এলিজিবিলিটি (Updated with New Fields)
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase().trim();
     const userGPA = parseFloat(document.getElementById('userGPA').value) || 0;
@@ -47,7 +48,7 @@ async function searchUni() {
     const userGap = parseFloat(document.getElementById('userGap').value) || 0;
     
     const container = document.getElementById('uniListContainer');
-    container.innerHTML = "<tr><td colspan='5'>Searching...</td></tr>";
+    container.innerHTML = "<tr><td colspan='7'>Searching Universities...</td></tr>";
     
     try {
         const res = await fetch('/api/universities');
@@ -57,32 +58,53 @@ async function searchUni() {
         unis.forEach(u => {
             if (!country || u.country.toLowerCase().includes(country)) {
                 
-                // Eligibility Comparison
+                // Eligibility Logic
                 const isGpaOk = userGPA >= (u.minGPA || 0);
                 const isScoreOk = userScore >= (u.ieltsReq || 0);
                 const isGapOk = userGap <= (u.gap || 0);
-
                 const isEligible = isGpaOk && isScoreOk && isGapOk;
 
+                // Commission Calculation (Assuming 120 is exchange rate)
                 const totalFee = (Number(u.semesterFee) || 0) * 120;
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
 
-                const statusText = isEligible ? `<b style="color:#2ecc71">✅ ELIGIBLE</b>` : `<b style="color:#ff4757">❌ NOT ELIGIBLE</b>`;
+                const statusBadge = isEligible ? 
+                    `<span class="badge eligible">✅ ELIGIBLE</span>` : 
+                    `<span class="badge not-eligible">❌ NOT ELIGIBLE</span>`;
+
                 const applyBtn = isEligible ? 
-                    `<button class="btn-gold" style="width:auto; padding:5px 10px;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button>` : 
-                    `<button class="btn-gold" style="width:auto; padding:5px 10px; background:#444; cursor:not-allowed;" disabled>Locked</button>`;
+                    `<button class="btn-gold" style="padding:6px 12px;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply Now</button>` : 
+                    `<button class="btn-gold" style="background:#333; color:#777; cursor:not-allowed;" disabled>Locked</button>`;
 
                 html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.country} | ${u.degree}</small></td>
-                    <td><small>GPA:${u.minGPA}+ | Score:${u.ieltsReq}+ | Gap:${u.gap}y</small></td>
-                    <td>${statusText}</td>
-                    <td style="color:var(--gold)">৳${comm.toLocaleString()}</td>
+                    <td>
+                        <b>${u.universityName}</b><br>
+                        <small style="color:#aaa;"><i class="fas fa-map-marker-alt"></i> ${u.location || u.country}</small>
+                    </td>
+                    <td>
+                        <small>GPA: ${u.minGPA}+</small><br>
+                        <small>Score: ${u.ieltsReq}+</small><br>
+                        <small>Gap: ${u.gap || 0}y Max</small>
+                    </td>
+                    <td>
+                        <b>$${u.semesterFee.toLocaleString()}</b><br>
+                        <small style="color:#aaa;">Duration: ${u.duration || 'N/A'}</small>
+                    </td>
+                    <td>
+                        <small>Living: $${u.livingCost || '0'}/y</small><br>
+                        <span style="font-size:10px; padding:2px 5px; background:#444; border-radius:3px;">${u.jobOpportunity || 'Standard'} Jobs</span>
+                    </td>
+                    <td>${statusBadge}</td>
+                    <td style="color:var(--gold); font-weight:bold;">৳${comm.toLocaleString()}</td>
                     <td>${applyBtn}</td>
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='5'>No results found</td></tr>";
-    } catch (e) { console.error(e); }
+        container.innerHTML = html || "<tr><td colspan='7'>No universities found matching your criteria.</td></tr>";
+    } catch (e) { 
+        console.error(e); 
+        container.innerHTML = "<tr><td colspan='7'>Error loading data.</td></tr>";
+    }
 }
 
 // ৩. ফাইল আপলোড লজিক (Cloudinary)
@@ -96,27 +118,26 @@ async function uploadFile(file) {
     return data.secure_url || "";
 }
 
-// ৪. ৪টি ফাইল আপলোড সহ সাবমিশন
+// ৪. স্টুডেন্ট সাবমিশন
 async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
     const btn = document.getElementById('submitBtn');
 
-    if(!sName || !sPass) return alert("Fill student details!");
+    if(!sName || !sPass) return alert("Please enter student name and passport number!");
 
     try {
-        btn.innerText = "Uploading 4 Files...";
+        btn.innerText = "Processing Files...";
         btn.disabled = true;
 
-        // ৪টি ফাইল বক্স থেকে ফাইল ধরা
         const f1 = document.getElementById('file1').files[0];
         const f2 = document.getElementById('file2').files[0];
         const f3 = document.getElementById('file3').files[0];
         const f4 = document.getElementById('file4').files[0];
 
-        if(!f1 || !f2) return alert("Passport and Academic files are mandatory!");
+        if(!f1 || !f2) return alert("Passport Copy and Academic Records are mandatory!");
 
-        // প্যারালাল আপলোড (দ্রুত কাজ করার জন্য)
+        // Uploading all files in parallel
         const [url1, url2, url3, url4] = await Promise.all([
             uploadFile(f1), uploadFile(f2), uploadFile(f3), uploadFile(f4)
         ]);
@@ -128,7 +149,8 @@ async function submitApplication() {
             partnerEmail: partnerEmail,
             commissionBDT: currentUniCommission,
             pdf1: url1, pdf2: url2, pdf3: url3, pdf4: url4,
-            status: 'PENDING'
+            status: 'PENDING',
+            date: new Date().toISOString()
         };
 
         const res = await fetch('/api/submit-application', {
@@ -138,11 +160,11 @@ async function submitApplication() {
         });
 
         if(res.ok) {
-            alert("✅ Successfully Submitted!");
+            alert("✅ Student application submitted successfully!");
             location.reload();
         }
     } catch (e) {
-        alert("Upload Failed: " + e.message);
+        alert("Submission Failed: " + e.message);
     } finally {
         btn.innerText = "Submit Application";
         btn.disabled = false;
@@ -154,4 +176,9 @@ function openApplyModal(name, comm) {
     currentUniCommission = comm;
     document.getElementById('modalTitle').innerText = name;
     document.getElementById('applyModal').style.display = 'flex';
+}
+
+function initTracking() {
+    // This will fetch full history for the tracking tab
+    initRealtimeData(); 
 }
