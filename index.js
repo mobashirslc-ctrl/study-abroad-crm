@@ -27,15 +27,14 @@ const connectDB = async () => {
     }
 };
 
-// --- 👤 Models ---
-// --- 👤 Updated User Model ---
+// --- 👤 Models (সব মডেল আগে ডিফাইন করা ভালো) ---
+
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     role: { type: String, default: 'partner' },
     contact: String,
-    // নতুন ফিল্ডসমূহ:
     orgName: String,
     authorisedPerson: String,
     address: String,
@@ -43,35 +42,6 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     walletBalance: { type: Number, default: 0 }
 }, { collection: 'users' }));
 
-// --- নতুন API: প্রোফাইল আপডেট ---
-app.patch('/api/user/profile', async (req, res) => {
-    await connectDB();
-    try {
-        const { email, contact, orgName, authorisedPerson, address, logoUrl } = req.body;
-        const updatedUser = await User.findOneAndUpdate(
-            { email: email.toLowerCase() },
-            { contact, orgName, authorisedPerson, address, logoUrl },
-            { new: true }
-        );
-        res.json(updatedUser);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// আপনার দেওয়া এপিআই এরর ফিক্স করতে অ্যাপ্লিকেশন আইডি চেক করার লজিক
-app.get('/api/applications/:id', async (req, res) => {
-    await connectDB();
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ error: "Invalid ID" });
-        }
-        const appData = await Application.findById(req.params.id);
-        if (!appData) return res.status(404).json({ error: "Not found" });
-        res.json(appData);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-
-// স্কিমার ভেতরে lockBy এবং lockUntil ঢুকিয়ে দিয়েছি
 const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
     studentName: String, 
     passportNo: String, 
@@ -84,8 +54,8 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     complianceNote: String, 
     pendingAmount: { type: Number, default: 0 },
     handledBy: String, 
-    lockBy: { type: String, default: null }, // Hard locking field
-    lockUntil: { type: Date, default: null }, // Hard locking field
+    lockBy: { type: String, default: null }, 
+    lockUntil: { type: Date, default: null }, 
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
 
@@ -103,79 +73,69 @@ const University = mongoose.models.University || mongoose.model('University', ne
 
 // --- 🚀 API Routes ---
 
+// ১. প্রোফাইল আপডেট
+app.patch('/api/user/profile', async (req, res) => {
+    await connectDB();
+    try {
+        const { email, contact, orgName, authorisedPerson, address, logoUrl } = req.body;
+        const updatedUser = await User.findOneAndUpdate(
+            { email: email.toLowerCase().trim() },
+            { contact, orgName, authorisedPerson, address, logoUrl },
+            { new: true }
+        );
+        res.json(updatedUser);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ২. সিঙ্গেল অ্যাপ্লিকেশন ডিটেইলস (আইডি চেকসহ)
 app.get('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: "Invalid ID Format" });
+        }
         const appData = await Application.findById(req.params.id);
-        if (!appData) return res.status(404).json({ error: "Not found" });
+        if (!appData) return res.status(404).json({ error: "No student found with this ID" });
         res.json(appData);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// লকিং রুট: ফাইল রিভিউ করার আগে এটি কল হবে
+// ৩. অ্যাপ্লিকেশন লকিং রুট
 app.patch('/api/lock-application/:id', async (req, res) => {
     await connectDB();
     try {
         const { staffEmail } = req.body;
         const appData = await Application.findById(req.params.id);
-        
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // চেক: যদি অন্য কেউ ৫ মিনিটের মধ্যে লক করে থাকে
         if (appData.lockBy && appData.lockBy !== staffEmail && appData.lockUntil > new Date()) {
-            return res.status(403).json({ 
-                locked: true, 
-                message: `Locked by ${appData.lockBy}` 
-            });
+            return res.status(403).json({ locked: true, message: `Locked by ${appData.lockBy}` });
         }
 
-        // ৫ মিনিটের জন্য লক সেট করা
         const lockTime = new Date(Date.now() + 5 * 60000); 
-        await Application.findByIdAndUpdate(req.params.id, {
-            lockBy: staffEmail,
-            lockUntil: lockTime
-        });
-
+        await Application.findByIdAndUpdate(req.params.id, { lockBy: staffEmail, lockUntil: lockTime });
         res.json({ locked: false, message: "Lock acquired" });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ৪. কমপ্লায়েন্স আপডেট
 app.patch('/api/update-compliance', async (req, res) => {
     await connectDB(); 
     try {
         const { appId, status, complianceNote, staffEmail, commission } = req.body;
-        
         let updateData = { 
-            status: status, 
-            complianceNote: complianceNote, 
-            complianceMember: staffEmail,
-            lockBy: null,     // ফাইল সেভ হলে লক খুলে যাবে
-            lockUntil: null,  // ফাইল সেভ হলে লক খুলে যাবে
-            timestamp: new Date()
+            status, complianceNote, complianceMember: staffEmail,
+            lockBy: null, lockUntil: null, timestamp: new Date()
         };
+        if (status === 'VERIFIED') updateData.pendingAmount = commission || 0;
+        else if (status === 'REJECTED') updateData.pendingAmount = 0;
 
-        if (status === 'VERIFIED') {
-            updateData.pendingAmount = commission || 0;
-        } else if (status === 'REJECTED') {
-            updateData.pendingAmount = 0;
-        }
-
-        const updatedApp = await Application.findByIdAndUpdate(
-            appId, 
-            { $set: updateData }, 
-            { new: true }
-        );
-        
+        const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
         res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
-    } catch (e) { 
-        res.status(500).json({ error: e.message }); 
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ৫. সব অ্যাপ্লিকেশন লিস্ট
 app.get('/api/applications', async (req, res) => {
     await connectDB();
     try {
@@ -184,6 +144,7 @@ app.get('/api/applications', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ৬. সব ইউনিভার্সিটি লিস্ট
 app.get('/api/universities', async (req, res) => {
     await connectDB();
     try {
@@ -192,6 +153,7 @@ app.get('/api/universities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// ৭. লগইন রুট
 app.post('/api/login', async (req, res) => {
     await connectDB();
     try {
@@ -200,7 +162,13 @@ app.post('/api/login', async (req, res) => {
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
-        res.json({ user: { email: user.email, name: user.fullName, role: user.role } });
+        res.json({ user: { 
+            email: user.email, 
+            name: user.fullName, 
+            role: user.role,
+            orgName: user.orgName, // প্রোফাইলের জন্য এগুলো দরকার
+            logoUrl: user.logoUrl 
+        }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
