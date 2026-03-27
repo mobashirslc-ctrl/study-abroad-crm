@@ -23,16 +23,20 @@
         th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
+        /* Status Pills */
+        .status-pill { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: var(--gold); border: 1px solid var(--gold); }
+
         /* Modal Styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .modal-content { background: #0f0f1e; padding: 35px; border-radius: 20px; border: 1px solid var(--border); width: 90%; max-width: 580px; position: relative; }
         
         select, textarea { width: 100%; background: #1a1a2e; border: 1px solid var(--border); color: white; padding: 14px; border-radius: 10px; margin: 12px 0; font-size: 14px; box-sizing: border-box; }
         
-        .doc-link { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; color: #ddd; text-decoration: none; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
+        .doc-link { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; color: #ddd; text-decoration: none; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
         .doc-link:hover { border-color: var(--gold); color: var(--gold); background: rgba(241, 196, 15, 0.05); }
 
-        .btn-action { background: var(--gold); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-action { background: var(--gold); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; color: black; }
+        .btn-action:hover { transform: scale(1.05); background: #fff; }
         
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
@@ -64,23 +68,21 @@
 
     <div class="main-content">
         <div id="queueSection" class="card tab-content">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="margin: 0;"><i class="fas fa-folder-open" style="color:var(--gold); margin-right: 12px;"></i> Verification Queue</h3>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>Student Name</th>
-                <th>Passport</th>
-                <th>University</th>
-                <th>Status</th>
-                <th>Action</th> </tr>
-        </thead>
-        <tbody id="complianceTableBody">
-            </tbody>
-    </table>
-</div>
-
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;"><i class="fas fa-folder-open" style="color:var(--gold); margin-right: 12px;"></i> Verification Queue</h3>
+                <span style="font-size: 12px; color: #888;">Live Connection <i class="fas fa-circle" style="color: var(--success); font-size: 8px;"></i></span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Student Name</th>
+                        <th style="width: 20%;">Passport</th>
+                        <th style="width: 20%;">University</th>
+                        <th style="width: 20%;">Status</th>
+                        <th style="width: 15%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="complianceTableBody">
                     <tr><td colspan="5" style="text-align:center; padding: 60px; color: #666;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 15px;"></i><br>Fetching records...
                     </td></tr>
@@ -155,11 +157,9 @@
     </div>
 
     <script>
-        // Tab switching logic
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
             if(tab === 'queue') {
                 document.getElementById('queueSection').style.display = 'block';
                 document.getElementById('nav-queue').classList.add('active');
@@ -168,11 +168,8 @@
                 document.getElementById('nav-history').classList.add('active');
             }
         }
-
         function closeModal() { document.getElementById('reviewModal').style.display = 'none'; }
         function logout() { localStorage.clear(); window.location.href='index.html'; }
-
-        // Sidebar display update
         const user = JSON.parse(localStorage.getItem('user') || "{}");
         document.getElementById('staffNameDisplay').innerText = user.name || "Compliance Agent";
     </script>
