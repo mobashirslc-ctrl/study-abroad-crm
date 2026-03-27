@@ -102,7 +102,7 @@
 
         async function fetchApplications() {
             try {
-                const res = await fetch('/api/applications');
+                const res = await fetch('/api/update-compliance', {
                 const apps = await res.json();
                 pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
@@ -122,7 +122,7 @@
 
         async function fetchHistory() {
             try {
-                const res = await fetch('/api/applications');
+                const res = await fetch('/api/update-compliance', {
                 const apps = await res.json();
                 const history = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
                 
