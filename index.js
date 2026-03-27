@@ -166,9 +166,63 @@ app.patch('/api/applications/:id', async (req, res) => {
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনারের জন্য)
+app.post('/api/withdrawals', async (req, res) => {
+    await connectDB();
+    try {
+        const { email, amount, partnerName } = req.body;
+        
+        // চেক করা যে পার্টনারের ওয়ালেটে যথেষ্ট টাকা আছে কিনা
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user || user.walletBalance < amount) {
+            return res.status(400).json({ error: "Insufficient balance in wallet!" });
+        }
 
+        const newWithdraw = new Withdrawal({
+            partnerEmail: email.toLowerCase().trim(),
+            partnerName,
+            amount: Number(amount)
+        });
+        await newWithdraw.save();
+        res.status(201).json({ msg: "Withdrawal request submitted successfully!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// ২. সব উইথড্রয়াল লিস্ট দেখা (এডমিনের জন্য)
+app.get('/api/withdrawals', async (req, res) => {
+    await connectDB();
+    try {
+        const list = await Withdrawal.find().sort({ timestamp: -1 });
+        res.json(list);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
+// ৩. উইথড্রয়াল এপ্রুভ করা এবং মেইন ওয়ালেট থেকে টাকা কাটা (এডমিনের জন্য)
+app.post('/api/admin/approve-withdrawal', async (req, res) => {
+    await connectDB();
+    try {
+        const { withdrawId, partnerEmail, amount } = req.body;
 
+        // ১. উইথড্রয়াল স্ট্যাটাস আপডেট করা
+        await Withdrawal.findByIdAndUpdate(withdrawId, { status: 'COMPLETED' });
+
+        // ২. পার্টনারের মেইন ওয়ালেট থেকে টাকা মাইনাস করা
+        const updatedUser = await User.findOneAndUpdate(
+            { email: partnerEmail.toLowerCase().trim() },
+            { $inc: { walletBalance: -Number(amount) } },
+            { new: true }
+        );
+
+        res.json({ msg: "Payment completed and wallet updated!", newBalance: updatedUser.walletBalance });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/withdrawals/:id', async (req, res) => {
+    await connectDB();
+    try {
+        await Withdrawal.findByIdAndUpdate(req.params.id, { status: req.body.status });
+        res.json({ msg: "Withdrawal status updated" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ১. প্রোফাইল আপডেট
 app.patch('/api/user/profile', async (req, res) => {
