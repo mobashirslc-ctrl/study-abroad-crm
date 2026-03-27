@@ -44,7 +44,7 @@ async function loadApplications() {
     }
 }
 
-// ৩. রিভিউ মোডাল ওপেন
+// সংশোধিত রিভিউ মোডাল ওপেন ফাংশন (API কল ছাড়া)
 window.openReviewModal = async (id, name, commission, passport) => {
     currentActiveId = id;
     currentCommission = commission;
@@ -52,27 +52,31 @@ window.openReviewModal = async (id, name, commission, passport) => {
     document.getElementById('revStudentName').innerText = "Reviewing: " + name;
     document.getElementById('targetComm').innerText = `Passport: ${passport} | Commission: ৳${commission.toLocaleString()}`;
     
+    // ডাটা অলরেডি টেবিলে আছে, তাই আলাদা fetch করার দরকার নেই যদি ডাটা স্ট্রাকচার জানা থাকে।
+    // তবে যদি PDF লিংক গুলো ডাটাবেস থেকে আনতে হয়, তবে নিচের fetch টি ঠিক করতে হবে।
+    
     try {
         const res = await fetch(`/api/applications/${id}`);
+        if (!res.ok) throw new Error("API Route not found"); // চেক করার জন্য
         const d = await res.json();
         
         let docHtml = "";
-        // আপনার MongoDB কালেকশনের ফিল্ড নেম অনুযায়ী PDF চেক
         if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Passport Copy</a>`;
         if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Academic Records</a>`;
         if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Other Documents</a>`;
 
         document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>No PDF documents found.</p>";
         
-        // ড্রপডাউনে বর্তমান স্ট্যাটাস সেট করা (HTML এর ভ্যালুর সাথে ম্যাচ করে)
         if(d.status) document.getElementById('statusSelect').value = d.status;
         document.getElementById('complianceNote').value = d.complianceNote || "";
 
         document.getElementById('reviewModal').style.display = 'flex';
     } catch (e) {
-        alert("Could not load details. Make sure API is running.");
+        console.error("Detail Fetch Error:", e);
+        alert("Could not load details. আপনার ব্যাকেন্ডে /api/applications/:id রাউটটি চেক করুন।");
     }
 };
+
 
 // ৪. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক (PATCH Request)
 document.getElementById('applyStatusBtn').onclick = async () => {
