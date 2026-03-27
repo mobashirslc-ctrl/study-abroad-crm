@@ -148,15 +148,18 @@ async function submitApplication() {
         if(!u1 || !u2) throw new Error("Passport and Academic docs are required!");
 
         const payload = {
-            studentName: sName,
-            passportNo: sPass,
-            university: selectedUniversity,
-            partnerEmail: partnerEmail,
-            commissionBDT: currentUniCommission,
-            pdf1: u1, pdf2: u2, pdf3: u3, pdf4: u4,
-            status: 'PENDING',
-            timestamp: new Date().toISOString()
-        };
+    studentName: sName,
+    passportNo: sPass,
+    university: selectedUniversity,
+    partnerEmail: partnerEmail,
+    // এই নিচের দুটি লাইন পরিবর্তন করুন
+    commissionBDT: currentUniCommission, // এটি ডাটাবেজে রেফারেন্স হিসেবে থাকবে
+    pendingAmount: 0,                   // এটি এখন ০ থাকবে (মেইন ফিক্স)
+    status: 'PENDING',
+    timestamp: new Date().toISOString(),
+    pdf1: u1, pdf2: u2, pdf3: u3, pdf4: u4
+};
+
 
         const res = await fetch('/api/submit-application', {
             method: 'POST',
