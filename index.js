@@ -57,6 +57,16 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
 
+const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', new mongoose.Schema({
+    partnerEmail: { type: String, required: true },
+    partnerName: String,
+    amount: { type: Number, required: true },
+    method: { type: String, default: 'Bank/Mobile Finance' }, // বিকাশ বা ব্যাংক ডিটেইলস
+    status: { type: String, default: 'PENDING' }, // PENDING, COMPLETED, REJECTED
+    timestamp: { type: Date, default: Date.now }
+}, { collection: 'withdrawals' }));
+
+
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
     universityName: String,
     country: String,
