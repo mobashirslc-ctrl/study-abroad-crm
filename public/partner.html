@@ -117,16 +117,23 @@
             </div>
             <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left;">
                 <h4>Request Withdrawal</h4>
-                <label>Amount (Min. 5000)</label><input type="number" id="wAmount" placeholder="Enter BDT Amount">
-                <label>Payment Method</label>
-                <select id="wMethod">
-                    <option value="Bank">Bank Transfer</option>
-                    <option value="bKash">bKash (Personal)</option>
-                </select>
-                <label>Account Details</label>
-                <textarea id="wDetails" placeholder="Bank Info (Name, A/C No, Branch) OR bKash No"></textarea>
-                <button class="btn-gold" id="btnWithdraw" disabled onclick="handleWithdraw()">Submit Request</button>
-            </div>
+            <div class="card">
+    <h3>Request Withdrawal</h3>
+    <div class="input-group">
+        <input type="number" id="withdrawAmount" placeholder="Enter Amount (৳)">
+        <select id="withdrawMethod">
+            <option value="">Select Payment Method</option>
+            <option value="Bkash">Bkash</option>
+            <option value="Nagad">Nagad</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <input type="text" id="paymentDetails" placeholder="Enter Bkash No / Bank AC Details">
+    </div>
+    <button class="btn-gold" onclick="submitWithdrawRequest()">Submit Request</button>
+</div>
+
         </div>
 
         <div id="profile" class="tab-content">
