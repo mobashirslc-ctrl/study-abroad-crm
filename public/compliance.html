@@ -18,27 +18,21 @@
         .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; width: calc(100% - 260px); }
         .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; }
         
-        /* Table Styles */
+        /* Table Styles - FIXED FOR BUTTON VISIBILITY */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
         th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
-        /* এই অংশটুকু আপনার ফাইলে আপডেট করুন */
-td { 
-    padding: 15px; 
-    border-bottom: 1px solid var(--border); 
-    font-size: 14px; 
-    color: #eee; 
-    white-space: normal; /* এটি 'nowrap' থেকে 'normal' করে দিন */
-    word-break: break-word; 
-}
-
-/* অ্যাকশন কলামের জন্য নির্দিষ্ট উইডথ */
-th:last-child, td:last-child {
-    width: 130px; 
-    text-align: center;
-    overflow: visible; /* বাটন যাতে কেটে না যায় */
-}
-
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid var(--border); 
+            font-size: 14px; 
+            color: #eee; 
+            white-space: normal; /* FIXED: 'nowrap' change to 'normal' to see buttons */
+            word-break: break-word; 
+        }
         
+        /* Specific width for Action column */
+        th:last-child, td:last-child { width: 130px; text-align: center; }
+
         /* Status Pills */
         .status-pill { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(241, 196, 15, 0.1); color: var(--gold); border: 1px solid var(--gold); }
 
@@ -51,7 +45,7 @@ th:last-child, td:last-child {
         .doc-link { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 12px; margin: 8px 0; color: #ddd; text-decoration: none; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
         .doc-link:hover { border-color: var(--gold); color: var(--gold); background: rgba(241, 196, 15, 0.05); }
 
-        .btn-action { background: var(--gold); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; color: black; }
+        .btn-action { background: var(--gold); border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; color: black; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; }
         .btn-action:hover { transform: scale(1.05); background: #fff; }
         
         ::-webkit-scrollbar { width: 6px; }
@@ -62,14 +56,14 @@ th:last-child, td:last-child {
 
     <div class="sidebar">
         <div style="text-align: center; margin-bottom: 40px;">
-            <img src="logo.jpeg" width="130" style="border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <img src="logo.jpeg" width="130" alt="SCC LOGO" style="border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
             <h4 style="color: var(--gold); margin-top: 15px; font-size: 11px; letter-spacing: 3px; font-weight: 800;">COMPLIANCE UNIT</h4>
         </div>
 
-        <div class="nav-item active" id="nav-queue" onclick="switchTab('queue')">
+        <div class="nav-item active" id="nav-queue" onclick="switchTab('queue', this)">
             <i class="fas fa-layer-group"></i> Incoming Queue
         </div>
-        <div class="nav-item" id="nav-history" onclick="switchTab('history')">
+        <div class="nav-item" id="nav-history" onclick="switchTab('history', this)">
             <i class="fas fa-check-double"></i> Processed History
         </div>
         
@@ -90,15 +84,14 @@ th:last-child, td:last-child {
             </div>
             <table>
                 <thead>
-                <thead>
-    <tr>
-        <th style="width: 25%;">Student</th>
-        <th style="width: 20%;">Passport</th>
-        <th style="width: 20%;">University</th>
-        <th style="width: 20%;">Final Status</th>
-        <th style="width: 15%;">Action</th> </tr>
-</thead>
-
+                    <tr>
+                        <th style="width: 25%;">Student</th>
+                        <th style="width: 20%;">Passport</th>
+                        <th style="width: 20%;">University</th>
+                        <th style="width: 20%;">Final Status</th>
+                        <th style="width: 15%;">Action</th> 
+                    </tr>
+                </thead>
                 <tbody id="complianceTableBody">
                     <tr><td colspan="5" style="text-align:center; padding: 60px; color: #666;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 15px;"></i><br>Fetching records...
@@ -112,11 +105,11 @@ th:last-child, td:last-child {
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 30%;">Student</th>
+                        <th style="width: 25%;">Student</th>
                         <th style="width: 20%;">Passport</th>
                         <th style="width: 20%;">University</th>
                         <th style="width: 20%;">Final Status</th>
-                        <th style="width: 10%;">Review</th>
+                        <th style="width: 15%;">Review</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody"></tbody>
@@ -136,8 +129,7 @@ th:last-child, td:last-child {
             
             <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border);">
                 <p style="font-size: 11px; color: var(--gold); margin: 0 0 10px 0; font-weight: bold; letter-spacing: 1px;">VERIFICATION DOCUMENTS (4 FILES)</p>
-                <div id="docLinksArea">
-                    </div>
+                <div id="docLinksArea"></div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
@@ -174,21 +166,21 @@ th:last-child, td:last-child {
     </div>
 
     <script>
-        function switchTab(tab) {
+        function switchTab(tab, el) {
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             if(tab === 'queue') {
                 document.getElementById('queueSection').style.display = 'block';
-                document.getElementById('nav-queue').classList.add('active');
             } else {
                 document.getElementById('historySection').style.display = 'block';
-                document.getElementById('nav-history').classList.add('active');
             }
+            if(el) el.classList.add('active');
         }
-        function closeModal() { document.getElementById('reviewModal').style.display = 'none'; }
+        function closeModal() { 
+            // modal-close function handled by compliance-logic.js usually
+            document.getElementById('reviewModal').style.display = 'none'; 
+        }
         function logout() { localStorage.clear(); window.location.href='index.html'; }
-        const user = JSON.parse(localStorage.getItem('user') || "{}");
-        document.getElementById('staffNameDisplay').innerText = user.name || "Compliance Agent";
     </script>
     <script type="module" src="compliance-logic.js"></script>
 </body>
