@@ -27,7 +27,6 @@
         .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.9); overflow-y: auto; align-items: center; justify-content: center; }
         .modal-content { background: var(--dark); margin: auto; padding: 30px; border: 1px solid var(--gold); width: 500px; border-radius: 15px; }
         
-        /* প্রিন্ট লজিক ফিক্স */
         @media print { 
             body * { visibility: hidden; } 
             #slipModal, #slipContent, #slipContent * { visibility: visible; } 
@@ -145,9 +144,9 @@
             <input type="text" id="sName" placeholder="Student Name">
             <input type="text" id="sPassport" placeholder="Passport Number">
             <input type="text" id="sContact" placeholder="Student Contact Number">
-            <label>Passport Copy</label><input type="file" id="file1">
-            <label>Academic Docs</label><input type="file" id="file2">
-            <label>Language Certificate</label><input type="file" id="file3">
+            <label>Passport Copy (PDF)</label><input type="file" id="file1">
+            <label>Academic Docs (PDF)</label><input type="file" id="file2">
+            <label>Language Certificate (PDF)</label><input type="file" id="file3">
             <button class="btn-gold" onclick="submitApplication()">Submit Now</button>
             <button onclick="closeModal()" class="btn-gold" style="background: #444; margin-top: 5px; color: white;">Cancel</button>
         </div>
@@ -156,58 +155,34 @@
     <script type="module">
     import * as Logic from './partner-logic.js';
 
-    // সাইডবার এবং ট্যাব ফাংশন গ্লোবাল করা হলো
     window.showTab = (e, id) => {
-        // সব কন্টেন্ট হাইড করা
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        // সব মেনু আইটেম থেকে একটিভ ক্লাস সরানো
         document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        
-        // নির্দিষ্ট ট্যাব দেখানো
         const targetTab = document.getElementById(id);
         if(targetTab) targetTab.style.display = 'block';
-
-        // মেনু আইটেম হাইলাইট করা
         if(e) e.currentTarget.classList.add('active');
 
-        // ডাটা লোড করা
         if(id === 'tracking') Logic.initTracking();
         if(id === 'dashboard') Logic.initRealtimeData();
         if(id === 'universities') Logic.searchUni();
     };
 
-    window.logout = () => { 
-        localStorage.clear(); 
-        window.location.href='index.html'; 
-    };
-
-    window.closeModal = () => { 
-        document.querySelectorAll('.modal').forEach(m => m.style.display='none'); 
-    };
-    
-    // লজিক ফাইল থেকে ফাংশনগুলো উইন্ডোতে এসাইন করা
+    window.logout = () => { localStorage.clear(); window.location.href='index.html'; };
+    window.closeModal = () => { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); };
     window.searchUni = Logic.searchUni;
     window.submitApplication = Logic.submitApplication;
     window.updateProfile = Logic.updateProfile;
     window.printAdmissionSlip = Logic.printAdmissionSlip;
-
-    // স্লাইডার বা এপ্লাই মোডাল ওপেন করার জন্য
-    window.openApplyModal = (name, comm) => {
-        // এই ফাংশনটি লজিক ফাইলের ভেতর ডিফাইন করা আছে, সেটাকে কল করা হচ্ছে
-        Logic.openApplyModal(name, comm);
-    };
+    window.openApplyModal = (name, comm) => { Logic.openApplyModal(name, comm); };
 
     window.onload = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if(!user) return window.location.href='index.html';
-        
         document.getElementById('welcomeName').innerText = user.name || user.fullName || "Partner";
         document.getElementById('pAgency').value = user.name || user.fullName || "";
         if(user.contact) document.getElementById('pContact').value = user.contact;
-        
         Logic.initRealtimeData();
     };
 </script>
-
 </body>
 </html>
