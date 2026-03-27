@@ -18,7 +18,7 @@ app.use(express.static(publicPath));
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
 const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return; // অলরেডি কানেক্টেড থাকলে আর কানেক্ট করবে না
+    if (mongoose.connection.readyState >= 1) return; 
     try {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Connected successfully to MongoDB');
@@ -48,7 +48,7 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     complianceMember: String, 
     complianceNote: String, 
     pendingAmount: { type: Number, default: 0 },
-    handledBy: String, // এই ফিল্ডটি হ্যান্ডলিং লকিংয়ের জন্য জরুরি
+    handledBy: String, 
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
 
@@ -59,21 +59,35 @@ const University = mongoose.models.University || mongoose.model('University', ne
 
 // --- 🚀 API Routes ---
 
-// ১. অ্যাপ্লিকেশন আপডেট / রিভিউ সেভ রুট (এখানেই সমস্যা ছিল)
+/**
+ * ১. নতুন অ্যাপ্লিকেশন সাবমিট রুট (প্রয়োজনীয় রুট)
+ * পার্টনার পোর্টাল থেকে আসা স্টুডেন্ট ডাটা এবং পিডিএফ লিঙ্ক সেভ করে।
+ */
+app.post('/api/submit-application', async (req, res) => {
+    await connectDB();
+    try {
+        const newApp = new Application(req.body);
+        const savedApp = await newApp.save();
+        res.status(201).json({ msg: 'Application Saved Successfully', data: savedApp });
+    } catch (e) {
+        console.error("Submission Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ২. অ্যাপ্লিকেশন আপডেট / রিভিউ সেভ রুট
 app.patch('/api/update-compliance', async (req, res) => {
-    await connectDB(); // কানেকশন নিশ্চিত করা
+    await connectDB(); 
     try {
         const { appId, status, note, staff } = req.body;
         
-        // ডায়নামিক আপডেট অবজেক্ট
         let update = { 
             status: status, 
             complianceNote: note, 
             complianceMember: staff,
-            handledBy: staff // কে রিভিউ করেছে তা সেভ হবে
+            handledBy: staff 
         };
 
-        // যদি ভেরিফাইড হয় তবে এমাউন্ট সেট হবে
         if (status === 'DOC_VERIFIED' || status === 'VERIFIED') {
             const appData = await Application.findById(appId);
             if (appData) {
@@ -92,7 +106,7 @@ app.patch('/api/update-compliance', async (req, res) => {
     }
 });
 
-// ২. সকল অ্যাপ্লিকেশন রিট্রিভ
+// ৩. সকল অ্যাপ্লিকেশন রিট্রিভ
 app.get('/api/applications', async (req, res) => {
     await connectDB();
     try {
@@ -101,7 +115,7 @@ app.get('/api/applications', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৩. ইউনিভার্সিটি লিস্ট
+// ৪. ইউনিভার্সিটি লিস্ট
 app.get('/api/universities', async (req, res) => {
     await connectDB();
     try {
@@ -110,7 +124,7 @@ app.get('/api/universities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৪. লগইন রুট
+// ৫. লগইন রুট
 app.post('/api/login', async (req, res) => {
     await connectDB();
     try {
