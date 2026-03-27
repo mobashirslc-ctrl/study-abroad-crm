@@ -37,30 +37,34 @@ window.onload = () => {
 };
 
 // ---------------------------------------------------------
-// 3. Core Logic: Dashboard & Wallet Tracking
+// 3. Core Logic: Dashboard & Wallet Tracking (FINAL FIXED)
 // ---------------------------------------------------------
 async function initRealtimeData() {
     try {
+        // ১. লেটেস্ট ইউজার ডাটা (ব্যালেন্স) সার্ভার থেকে নিয়ে আসা
+        // লগইন করার পর ডাটাবেস থেকে ফ্রেশ ব্যালেন্স নিতে এই কলটি জরুরি
+        const userRes = await fetch('/api/admin/users'); // অথবা প্রোফাইল দেখার নির্দিষ্ট API
+        const allUsers = await userRes.json();
+        const currentMe = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
+        
+        // যদি ডাটাবেসে ইউজার পাওয়া যায়, তবে ব্যালেন্স আপডেট করুন
+        const currentAvailable = currentMe ? (currentMe.walletBalance || 0) : 0;
+
+        // ২. অ্যাপ্লিকেশন ডাটা নিয়ে আসা (পেন্ডিং ব্যালেন্সের জন্য)
         const res = await fetch('/api/applications');
-        if (!res.ok) throw new Error("Failed to fetch data");
+        if (!res.ok) throw new Error("Failed to fetch applications");
         
         const allApps = await res.json();
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
-        let pendingBalance = 0; 
-        let finalBalance = 0;   
+        let pendingTotal = 0; 
         let combinedHtml = ""; 
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
-            const actualAmount = Number(data.pendingAmount || 0);
-
-            if (status !== 'PAID' && status !== 'REJECTED') {
-                pendingBalance += actualAmount;
-            }
-            if (status === 'PAID') {
-                finalBalance += actualAmount;
-            }
+            const pAmount = Number(data.pendingAmount || 0);
+            
+            pendingTotal += pAmount; // শুধু pendingAmount ফিল্ড থেকে যোগ হবে
 
             combinedHtml += `<tr>
                 <td><b>${data.studentName}</b></td>
@@ -71,9 +75,10 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
-        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
+        // ৩. UI আপডেট (Available Balance এখন ডাটাবেস থেকে আসছে)
+        document.getElementById('topPending').innerText = `৳${pendingTotal.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳${currentAvailable.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${currentAvailable.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
 
         const homeTable = document.getElementById('homeTrackingBody');
@@ -84,12 +89,14 @@ async function initRealtimeData() {
         
         const btnW = document.getElementById('btnWithdraw');
         if(btnW) {
-            const isEligible = finalBalance >= 5000;
+            const isEligible = currentAvailable >= 5000;
             btnW.disabled = !isEligible;
             btnW.style.background = isEligible ? "#2ecc71" : "#444";
         }
     } catch (e) { console.error("Data Fetch Error:", e); }
 }
+
+
 
 // ---------------------------------------------------------
 // 4. File Handling & Submissions
