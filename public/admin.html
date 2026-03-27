@@ -142,75 +142,17 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Partner Email</th>
+                        <th>Partner Detail</th>
                         <th>Requested Amount</th>
-                        <th>Payment Details</th>
+                        <th>Request Date</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Action Control</th>
                     </tr>
                 </thead>
                 <tbody id="adminWithdrawTable"></tbody>
             </table>
         </div>
-    </div>
-
-    <script type="module">
-        // ---  Withdrawal Management (NEW & FIXED) ---
-
-async function fetchWithdrawals() {
-    try {
-        const res = await fetch('/api/withdrawals');
-        const withdrawals = await res.json();
-        const tbody = document.getElementById('adminWithdrawTable');
-        
-        // শুধু PENDING রিকোয়েস্টগুলো উপরে দেখানোর জন্য সর্ট করা যেতে পারে
-        tbody.innerHTML = withdrawals.map(w => `
-            <tr>
-                <td>${w.partnerEmail}<br><small>${w.partnerName || ''}</small></td>
-                <td style="color:var(--gold); font-weight:bold;">৳${w.amount.toLocaleString()}</td>
-                <td>${new Date(w.timestamp).toLocaleDateString()}</td>
-                <td><span class="badge ${w.status === 'COMPLETED' ? 'status-active' : 'status-pending'}">${w.status}</span></td>
-                <td>
-                    ${w.status === 'PENDING' ? 
-                        `<button class="action-btn" style="background:var(--green)" onclick="approveWithdraw('${w._id}', '${w.partnerEmail}', ${w.amount})">Approve & Pay</button>
-                         <button class="action-btn" style="background:var(--red)" onclick="rejectWithdraw('${w._id}')">Reject</button>` 
-                        : `<span style="color:#666">Processed</span>`
-                    }
-                </td>
-            </tr>
-        `).join('');
-    } catch (e) { console.error("Withdrawal fetch error:", e); }
-}
-
-window.approveWithdraw = async (id, email, amount) => {
-    if(!confirm(`Confirm payment of ৳${amount}? This will deduct amount from partner wallet.`)) return;
-
-    try {
-        // এই কলটি ব্যাকএন্ডে গিয়ে ইউজারের ব্যালেন্স মাইনাস করবে এবং স্ট্যাটাস আপডেট করবে
-        const res = await fetch(`/api/admin/approve-withdrawal`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ withdrawId: id, partnerEmail: email, amount: amount })
-        });
-
-        if(res.ok) {
-            alert("✅ Withdrawal Approved & Balance Deducted!");
-            fetchWithdrawals(); // লিস্ট আপডেট
-            fetchUsers();       // ইউজার লিস্টে নতুন ব্যালেন্স দেখার জন্য আপডেট
-        }
-    } catch (e) { alert("Error approving withdrawal"); }
-};
-
-window.rejectWithdraw = async (id) => {
-    if(!confirm("Are you sure to reject this request?")) return;
-    await fetch(`/api/withdrawals/${id}`, {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ status: 'REJECTED' })
-    });
-    fetchWithdrawals();
-};
-
+    </div> <script type="module">
         // --- ১. ট্যাব নেভিগেশন ---
         window.showTab = (event, tabId) => {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -219,7 +161,7 @@ window.rejectWithdraw = async (id) => {
             if(event) event.currentTarget.classList.add('active');
         };
 
-        // --- ২. ইউনিভার্সিটি ম্যানেজমেন্ট (Save, Fetch, Delete) ---
+        // --- ২. ইউনিভার্সিটি ম্যানেজমেন্ট ---
         window.saveUniversity = async () => {
             const data = {
                 universityName: document.getElementById('uName').value,
@@ -250,45 +192,55 @@ window.rejectWithdraw = async (id) => {
         };
 
         async function fetchUniversities() {
-            const res = await fetch('/api/universities');
-            const unis = await res.json();
-            const tbody = document.getElementById('adminUniTable');
-            tbody.innerHTML = unis.map(u => `
-                <tr>
-                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
-                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq} | Gap: ${u.gap}y</td>
-                    <td>Fee: $${u.semesterFee} <br> Comm: ${u.partnerComm}%</td>
-                    <td>
-                        <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')">Edit</button>
-                        <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        // --- ৩. ইউজার ম্যানেজমেন্ট (Status & Expiry) ---
-        async function fetchUsers() {
-            const res = await fetch('/api/admin/users');
-            const users = await res.json();
-            const tbody = document.getElementById('adminUserTable');
-            tbody.innerHTML = users.map(user => {
-                const isExpired = user.expiryDate && new Date(user.expiryDate) < new Date();
-                return `
+            try {
+                const res = await fetch('/api/universities');
+                const unis = await res.json();
+                const tbody = document.getElementById('adminUniTable');
+                tbody.innerHTML = unis.map(u => `
                     <tr>
-                        <td>${user.fullName}<br><small>${user.orgName || ''}</small></td>
-                        <td><span class="badge" style="background:#444">${user.role.toUpperCase()}</span></td>
-                        <td>${user.email}<br>${user.contact}</td>
-                        <td><input type="date" value="${user.expiryDate || ''}" onchange="updateExpiry('${user._id}', this.value)"></td>
-                        <td><span class="badge ${isExpired ? 'status-expired' : 'status-' + user.status}">${isExpired ? 'EXPIRED' : user.status}</span></td>
+                        <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
+                        <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq} | Gap: ${u.gap}y</td>
+                        <td>Fee: $${u.semesterFee} <br> Comm: ${u.partnerComm}%</td>
                         <td>
-                            ${user.status === 'pending' ? 
-                                `<button class="action-btn" style="background:var(--green)" onclick="updateStatus('${user._id}', 'active')">Approve</button>` : 
-                                `<button class="action-btn" style="background:orange" onclick="updateStatus('${user._id}', 'pending')">Suspend</button>`
-                            }
+                            <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')">Edit</button>
+                            <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button>
                         </td>
                     </tr>
-                `;
-            }).join('');
+                `).join('');
+            } catch (e) { console.error("Fetch Unis error:", e); }
+        }
+
+        window.deleteUni = async (id) => {
+            if(!confirm("Are you sure?")) return;
+            await fetch(`/api/universities/${id}`, { method: 'DELETE' });
+            fetchUniversities();
+        };
+
+        // --- ৩. ইউজার ম্যানেজমেন্ট ---
+        async function fetchUsers() {
+            try {
+                const res = await fetch('/api/admin/users');
+                const users = await res.json();
+                const tbody = document.getElementById('adminUserTable');
+                tbody.innerHTML = users.map(user => {
+                    const isExpired = user.expiryDate && new Date(user.expiryDate) < new Date();
+                    return `
+                        <tr>
+                            <td>${user.fullName}<br><small>${user.orgName || ''}</small></td>
+                            <td><span class="badge" style="background:#444">${user.role.toUpperCase()}</span></td>
+                            <td>${user.email}<br>${user.contact}</td>
+                            <td><input type="date" value="${user.expiryDate || ''}" onchange="updateExpiry('${user._id}', this.value)"></td>
+                            <td><span class="badge ${isExpired ? 'status-expired' : 'status-' + user.status}">${isExpired ? 'EXPIRED' : user.status}</span></td>
+                            <td>
+                                ${user.status === 'pending' ? 
+                                    `<button class="action-btn" style="background:var(--green)" onclick="updateStatus('${user._id}', 'active')">Approve</button>` : 
+                                    `<button class="action-btn" style="background:orange" onclick="updateStatus('${user._id}', 'pending')">Suspend</button>`
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (e) { console.error("Fetch Users error:", e); }
         }
 
         window.updateExpiry = async (userId, date) => {
@@ -309,22 +261,24 @@ window.rejectWithdraw = async (id) => {
             fetchUsers();
         };
 
-        // --- ৪. ট্র্যাকিং ও ওয়ালেট বক্স লজিক ---
+        // --- ৪. ট্র্যাকিং ও ওয়ালেট বক্স ---
         async function fetchTracking() {
-            const res = await fetch('/api/applications');
-            const apps = await res.json();
-            const tbody = document.getElementById('adminTrackingTable');
-            tbody.innerHTML = apps.map(app => `
-                <tr>
-                    <td>${app.studentName}</td>
-                    <td>${app.partnerEmail}</td>
-                    <td><b>${app.status}</b></td>
-                    <td>৳${app.pendingAmount || 0}</td>
-                    <td>
-                        <button class="action-btn" style="background:var(--gold); color:black;" onclick="openWalletBox('${app._id}')">Set Wallet</button>
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                const res = await fetch('/api/applications');
+                const apps = await res.json();
+                const tbody = document.getElementById('adminTrackingTable');
+                tbody.innerHTML = apps.map(app => `
+                    <tr>
+                        <td>${app.studentName}</td>
+                        <td>${app.partnerEmail}</td>
+                        <td><b>${app.status}</b></td>
+                        <td>৳${app.pendingAmount || 0}</td>
+                        <td>
+                            <button class="action-btn" style="background:var(--gold); color:black;" onclick="openWalletBox('${app._id}')">Set Wallet</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error("Fetch Tracking error:", e); }
         }
 
         window.openWalletBox = async (appId) => {
@@ -339,12 +293,68 @@ window.rejectWithdraw = async (id) => {
             }
         };
 
+        // --- ৫. Withdrawal Management ---
+        async function fetchWithdrawals() {
+            try {
+                const res = await fetch('/api/withdrawals');
+                const withdrawals = await res.json();
+                const tbody = document.getElementById('adminWithdrawTable');
+                
+                tbody.innerHTML = withdrawals.map(w => `
+                    <tr>
+                        <td>${w.partnerEmail}<br><small>${w.partnerName || ''}</small></td>
+                        <td style="color:var(--gold); font-weight:bold;">৳${w.amount.toLocaleString()}</td>
+                        <td>${new Date(w.timestamp).toLocaleDateString()}</td>
+                        <td><span class="badge ${w.status === 'COMPLETED' ? 'status-active' : 'status-pending'}">${w.status}</span></td>
+                        <td>
+                            ${w.status === 'PENDING' ? 
+                                `<button class="action-btn" style="background:var(--green)" onclick="approveWithdraw('${w._id}', '${w.partnerEmail}', ${w.amount})">Approve & Pay</button>
+                                 <button class="action-btn" style="background:var(--red)" onclick="rejectWithdraw('${w._id}')">Reject</button>` 
+                                : `<span style="color:#666">Processed</span>`
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error("Withdrawal fetch error:", e); }
+        }
+
+        window.approveWithdraw = async (id, email, amount) => {
+            if(!confirm(`Confirm payment of ৳${amount}? This will deduct amount from partner wallet.`)) return;
+            try {
+                const res = await fetch(`/api/admin/approve-withdrawal`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ withdrawId: id, partnerEmail: email, amount: amount })
+                });
+                if(res.ok) {
+                    alert("✅ Withdrawal Approved!");
+                    fetchWithdrawals(); 
+                    fetchUsers();       
+                }
+            } catch (e) { alert("Error approving withdrawal"); }
+        };
+
+        window.rejectWithdraw = async (id) => {
+            if(!confirm("Are you sure?")) return;
+            await fetch(`/api/withdrawals/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: 'REJECTED' })
+            });
+            fetchWithdrawals();
+        };
+
         // --- ইনিশিয়ালাইজেশন ---
         window.onload = () => {
             fetchUniversities();
             fetchUsers();
             fetchTracking();
+            fetchWithdrawals(); 
         };
+        window.editUni = (id) => {
+    alert("Edit feature coming soon for ID: " + id);
+};
+
 
         window.logout = () => { localStorage.clear(); window.location.href='index.html'; };
     </script>
