@@ -118,16 +118,23 @@ app.patch('/api/lock-application/:id', async (req, res) => {
 });
 
 // ৪. কমপ্লায়েন্স আপডেট
+// ৪. কমপ্লায়েন্স আপডেট (index.js ফাইলে গিয়ে এটি পরিবর্তন করুন)
 app.patch('/api/update-compliance', async (req, res) => {
     await connectDB(); 
     try {
         const { appId, status, complianceNote, staffEmail, commission } = req.body;
+        
         let updateData = { 
             status, complianceNote, complianceMember: staffEmail,
             lockBy: null, lockUntil: null, timestamp: new Date()
         };
-        if (status === 'VERIFIED') updateData.pendingAmount = commission || 0;
-        else if (status === 'REJECTED') updateData.pendingAmount = 0;
+
+        // এই লাইনটিই আসল পরিবর্তন:
+        if (status === 'VERIFIED' || status === 'DOC_VERIFIED') {
+            updateData.pendingAmount = Number(commission) || 0;
+        } else if (status === 'REJECTED') {
+            updateData.pendingAmount = 0;
+        }
 
         const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
         res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
