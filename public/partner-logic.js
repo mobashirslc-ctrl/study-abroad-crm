@@ -106,6 +106,100 @@ async function searchUni() {
         container.innerHTML = "<tr><td colspan='7'>Error loading data.</td></tr>";
     }
 }
+// ১. প্রোফাইল ও লোগো হ্যান্ডলিং
+async function uploadPartnerLogo() {
+    const file = document.getElementById('logoUpload').files[0];
+    if(!file) return;
+    const url = await uploadFile(file); // Cloudinary
+    document.getElementById('currentLogo').src = url;
+}
+
+async function saveProfile() {
+    const payload = {
+        email: partnerEmail,
+        contact: document.getElementById('pPhone').value,
+        orgName: document.getElementById('pOrg').value,
+        authorisedPerson: document.getElementById('pAuth').value,
+        address: document.getElementById('pAddr').value,
+        logoUrl: document.getElementById('currentLogo').src
+    };
+    const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    if(res.ok) alert("✅ Profile Updated Successfully!");
+}
+
+// ২. অ্যাডমিশন স্লিপ জেনারেশন (আপনার দেওয়া ইমেজ অনুযায়ী)
+function generateAdmissionSlip(data) {
+    const partnerLogo = document.getElementById('currentLogo').src;
+    const partnerName = document.getElementById('pOrg').value || "Partner Agency";
+    const authPerson = document.getElementById('pAuth').value || "Authorized Staff";
+    
+    const slipWindow = window.open('', '_blank', 'width=900,height=600');
+    
+    const slipHtml = `
+    <html>
+    <head>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 40px; }
+            .slip-card { border: 4px solid #2b0054; border-radius: 10px; padding: 0; overflow: hidden; position: relative; }
+            .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #fff; border-bottom: 2px solid #eee; }
+            .header-info { text-align: right; font-size: 12px; }
+            .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; margin: 15px 0; }
+            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px; }
+            .status-stamp { background: #2ecc71; color: white; width: 220px; margin: 30px auto; padding: 15px; text-align: center; border-radius: 10px; }
+            .footer-line { background: #2b0054; color: white; padding: 10px; text-align: center; font-size: 11px; margin-top: 20px; }
+            @media print { .print-btn { display: none; } }
+        </style>
+    </head>
+    <body>
+        <div class="print-btn" style="margin-bottom: 10px;"><button onclick="window.print()">Download / Print</button></div>
+        <div class="slip-card">
+            <div class="top-bar">
+                <img src="${partnerLogo}" height="60">
+                <div style="text-align: center;"><h3 style="margin:0; color:#2b0054;">OFFICIAL ACKNOWLEDGEMENT & ADMISSION SLIP</h3></div>
+                <div class="header-info">
+                    <b>REF NO:</b> SCC-2026-A${Math.floor(Math.random()*9000)}<br>
+                    <b>ISSUE DATE:</b> ${new Date().toLocaleDateString()}<br>
+                </div>
+            </div>
+            <div class="section-header">APPLICANT INFORMATION</div>
+            <div class="details-grid">
+                <div><b>Full Name:</b> ${data.studentName}</div>
+                <div><b>Passport No:</b> ${data.passportNo}</div>
+                <div><b>Destination:</b> United Kingdom (UK)</div>
+                <div><b>University:</b> ${data.university}</div>
+            </div>
+            <div class="section-header">AUTHORIZED AGENCY DETAILS</div>
+            <div class="details-grid">
+                <div><b>Agency Name:</b> ${partnerName}</div>
+                <div><b>Contact Person:</b> ${authPerson}</div>
+            </div>
+            <div class="status-stamp">
+                <div style="font-size: 18px; font-weight: bold;">VERIFIED &</div>
+                <div style="font-size: 12px;">IN-HOUSE PROCESSING</div>
+            </div>
+            <div style="text-align:center; color:#2ecc71;"><h3>Congratulations on your successful admission!</h3></div>
+            <div class="footer-line">"Your Dream Route to Global Education" | support@scc-global.com</div>
+        </div>
+    </body>
+    </html>`;
+    
+    slipWindow.document.write(slipHtml);
+    slipWindow.document.close();
+}
+
+// ৩. উইথড্র বাটন একটিভ করা
+function checkWalletBalance(balance) {
+    const btn = document.getElementById('btnWithdraw');
+    document.getElementById('withdrawableBal').innerText = `৳${balance.toLocaleString()}`;
+    if(balance >= 5000) {
+        btn.disabled = false;
+        btn.style.background = "var(--green)";
+    }
+}
 
 // ৩. ফাইল আপলোড লজিক (Cloudinary)
 async function uploadFile(file) {
