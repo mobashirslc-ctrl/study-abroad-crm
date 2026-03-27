@@ -102,7 +102,7 @@
 
         async function fetchApplications() {
             try {
-                const res = await fetch('/api/applications'); // Path Fixed
+                const res = await fetch('/api/applications'); 
                 const apps = await res.json();
                 pendingAppsList = apps.filter(a => a.status !== 'DOC_VERIFIED' && a.status !== 'REJECTED' && a.status !== 'PAID');
                 
@@ -122,7 +122,7 @@
 
         async function fetchHistory() {
             try {
-                const res = await fetch('/api/applications'); // Path Fixed
+                const res = await fetch('/api/applications'); 
                 const apps = await res.json();
                 const history = apps.filter(a => a.status === 'DOC_VERIFIED' || a.status === 'REJECTED' || a.status === 'PAID');
                 
@@ -147,7 +147,7 @@
             document.getElementById('revStudentName').innerText = "Review: " + app.studentName;
             
             let docHtml = "";
-            const fileKeys = ['pdf1', 'pdf2', 'pdf3', 'pdf4'];
+            const fileKeys = ['pdf1', 'pdf2', 'pdf3'];
             
             fileKeys.forEach(key => {
                 const url = app[key];
@@ -156,7 +156,6 @@
                     if(key.includes('1')) label = "Passport / Photo";
                     if(key.includes('2')) label = "Academic Records";
                     if(key.includes('3')) label = "Language / Other Docs";
-                    if(key.includes('4')) label = "Additional Docs";
 
                     docHtml += `<a href="${url}" target="_blank" class="doc-link">
                         <i class="fas fa-file-alt"></i> View ${label}
@@ -186,8 +185,8 @@
                     staff: staffEmail 
                 };
 
-                const res = await fetch('/api/update-compliance', { // Path Updated to match Backend
-                    method: 'PATCH', // Method changed to PATCH for update
+                const res = await fetch('/api/update-compliance', { 
+                    method: 'PATCH', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
@@ -201,7 +200,7 @@
                     alert("❌ Failed: " + (err.error || "Unknown error"));
                 }
             } catch (e) { 
-                alert("❌ Error: API not responding. Check Vercel logs."); 
+                alert("❌ Error: API not responding."); 
             } finally {
                 btn.innerText = "SAVE REVIEW";
                 btn.disabled = false;
