@@ -115,20 +115,104 @@ async function uploadFile(file) {
         console.error("Cloudinary Error:", e);
         return "";
     }
-}
+/**
+ * SCC Group - Partner Portal Logic (2026)
+ * Final Version: Wallet Security & Application Tracking
+ */
 
-async function uploadPartnerLogo() {
-    const file = document.getElementById('logoUpload').files[0];
-    if(!file) return;
+// 1. Global Configuration
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
+const UPLOAD_PRESET = "ihp_upload";
+
+const userData = JSON.parse(localStorage.getItem('user') || "{}");
+const partnerEmail = (userData.email || "").toLowerCase().trim();
+
+let currentUniCommission = 0;
+let selectedUniversity = "";
+
+// ---------------------------------------------------------
+// 2. Initialization on Load
+// ---------------------------------------------------------
+window.onload = () => {
+    if(!partnerEmail) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    document.getElementById('welcomeName').innerText = userData.name || "Partner";
+    document.getElementById('pEmail').value = partnerEmail;
+    document.getElementById('pOrg').value = userData.orgName || userData.name || "";
+    
+    if(userData.logoUrl) {
+        document.getElementById('currentLogo').src = userData.logoUrl;
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        if(sidebarLogo) sidebarLogo.src = userData.logoUrl;
+    }
+
+    initRealtimeData(); 
+};
+
+// ---------------------------------------------------------
+// 3. Core Logic: Dashboard & Wallet (FIXED SYNTAX)
+// ---------------------------------------------------------
+async function initRealtimeData() {
     try {
-        const url = await uploadFile(file);
-        if(url) {
-            document.getElementById('currentLogo').src = url;
-            saveProfile(); // লোগো আপলোড হলে অটো প্রোফাইল সেভ হবে
+        const res = await fetch('/api/applications');
+        const allApps = await res.json();
+        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
+
+        let pendingBalance = 0; 
+        let finalBalance = 0;   
+        let combinedHtml = ""; 
+
+        myApps.forEach(data => {
+            const status = (data.status || 'PENDING').toUpperCase();
+            
+            // মেইন ফিক্স: স্টাফ ভেরিফাই না করা পর্যন্ত এটি ০ থাকবে
+            const actualAmount = Number(data.pendingAmount || 0);
+
+            if (status !== 'PAID' && status !== 'REJECTED') {
+                pendingBalance += actualAmount;
+            }
+            if (status === 'PAID') {
+                finalBalance += actualAmount;
+            }
+
+            combinedHtml += `<tr>
+                <td><b>${data.studentName}</b></td>
+                <td>${data.passportNo}</td>
+                <td>${data.university || 'N/A'}</td>
+                <td><span class="badge" style="background:#252545; color:var(--gold); border: 1px solid var(--gold); padding: 5px 10px;">${status.replace(/_/g, ' ')}</span></td>
+                <td>${new Date(data.timestamp).toLocaleDateString()}</td>
+            </tr>`;
+        });
+
+        // UI Updates - Stats
+        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('totalStudents').innerText = myApps.length;
+
+        // Table Updates
+        const homeTable = document.getElementById('homeTrackingBody');
+        if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
+
+        const trackTable = document.getElementById('fullTrackingBody');
+        if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
+        
+        // Withdraw Button Logic
+        const btnW = document.getElementById('btnWithdraw');
+        if(btnW) {
+            const isEligible = finalBalance >= 5000;
+            btnW.disabled = !isEligible;
+            btnW.style.background = isEligible ? "#2ecc71" : "#444";
         }
-    } catch (e) { alert("Logo upload failed"); }
+    } catch (e) { console.error("Data Fetch Error:", e); }
 }
 
+// ---------------------------------------------------------
+// 4. File Submission (ZERO WALLET SYNC ON SUBMIT)
+// ---------------------------------------------------------
 async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -150,18 +234,16 @@ async function submitApplication() {
         if(!u1 || !u2) throw new Error("Passport and Academic docs are required!");
 
         const payload = {
-    studentName: sName,
-    passportNo: sPass,
-    university: selectedUniversity,
-    partnerEmail: partnerEmail,
-    // এই নিচের দুটি লাইন পরিবর্তন করুন
-    commissionBDT: currentUniCommission, // এটি ডাটাবেজে রেফারেন্স হিসেবে থাকবে
-    pendingAmount: 0,                   // এটি এখন ০ থাকবে (মেইন ফিক্স)
-    status: 'PENDING',
-    timestamp: new Date().toISOString(),
-    pdf1: u1, pdf2: u2, pdf3: u3, pdf4: u4
-};
-
+            studentName: sName,
+            passportNo: sPass,
+            university: selectedUniversity,
+            partnerEmail: partnerEmail,
+            commissionBDT: currentUniCommission, // রেফারেন্স ভ্যালু
+            pendingAmount: 0,                   // মেইন ফিক্স: শুরুতে ০ থাকবে
+            status: 'PENDING',
+            timestamp: new Date().toISOString(),
+            pdf1: u1, pdf2: u2, pdf3: u3, pdf4: u4
+        };
 
         const res = await fetch('/api/submit-application', {
             method: 'POST',
@@ -181,6 +263,9 @@ async function submitApplication() {
         btn.disabled = false;
     }
 }
+
+// (বাকি ফাংশনগুলো: uploadFile, generateAdmissionSlip, searchUni, saveProfile, openApplyModal, logout আগের মতোই থাকবে)
+
 
 // ---------------------------------------------------------
 // 5. Admission Slip & Profile
