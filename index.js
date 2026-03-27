@@ -86,6 +86,18 @@ app.patch('/api/user/profile', async (req, res) => {
         res.json(updatedUser);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// ৮. স্টুডেন্ট অ্যাপ্লিকেশন সাবমিট (এটি আপনার কোডে মিসিং ছিল)
+app.post('/api/submit-application', async (req, res) => {
+    await connectDB();
+    try {
+        const newApp = new Application(req.body); // ফ্রন্টএন্ড থেকে পাঠানো সব ডাটা এখানে আসবে
+        await newApp.save();
+        res.status(201).json({ msg: "Application saved successfully", data: newApp });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 // ২. সিঙ্গেল অ্যাপ্লিকেশন ডিটেইলস (আইডি চেকসহ)
 app.get('/api/applications/:id', async (req, res) => {
