@@ -2,8 +2,10 @@ let currentActiveId = null;
 let currentCommission = 0;
 const staffEmail = localStorage.getItem('userEmail') || "compliance@scc.com";
 
+// ১. স্টাফের নাম ডিসপ্লে সেট করা
 document.getElementById('staffNameDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
 
+// ২. অ্যাপ্লিকেশন লিস্ট লোড করা
 async function loadApplications() {
     try {
         const res = await fetch('/api/applications'); 
@@ -13,10 +15,10 @@ async function loadApplications() {
         let historyHtml = "";
 
         apps.forEach(d => {
-            // লজিক: শুধু 'UNDER_REVIEW' বা 'PENDING' থাকলে ইনকামিং কিউতে দেখাবে
+            // লজিক: শুধু 'UNDER_REVIEW' বা 'PENDING' কিউতে থাকবে
             const isFinished = !["UNDER_REVIEW", "PENDING"].includes(d.status);
             
-            // লকিং ইন্ডিকেটর: যদি অন্য কেউ লক করে রাখে
+            // লকিং লজিক
             const isLockedByOther = d.lockBy && d.lockBy !== staffEmail && new Date(d.lockUntil) > new Date();
             const lockStyle = isLockedByOther ? "opacity: 0.6; cursor: not-allowed;" : "";
             const btnText = isLockedByOther ? `<i class="fas fa-lock"></i> LOCKED` : `<i class="fas fa-edit"></i> REVIEW`;
@@ -31,7 +33,7 @@ async function loadApplications() {
                     <td>
                         <button class="btn-action" 
                                 style="${lockStyle}" 
-                                onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}')"
+                                onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}', '${d.university}')"
                                 ${isLockedByOther ? 'disabled' : ''}>
                             ${btnText}
                         </button>
@@ -49,10 +51,9 @@ async function loadApplications() {
     }
 }
 
-// ৪. হার্ড লকিং নিশ্চিত করে মোডাল ওপেন
-window.openReviewModal = async (id, name, commission, passport) => {
+// ৩. লকিং এবং ৪টি PDF শো করাসহ মোডাল ওপেন
+window.openReviewModal = async (id, name, commission, passport, university) => {
     try {
-        // ১. হার্ড লকিং রিকোয়েস্ট পাঠানো
         const lockRes = await fetch(`/api/lock-application/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -60,39 +61,42 @@ window.openReviewModal = async (id, name, commission, passport) => {
         });
         
         const lockData = await lockRes.json();
-
         if (lockRes.status === 403) {
             alert(`⚠️ এই ফাইলটি বর্তমানে ${lockData.message}। অনুগ্রহ করে ৫ মিনিট পর চেষ্টা করুন।`);
             return;
         }
 
-        // ২. লক সফল হলে ডাটা ফেচ করা
         currentActiveId = id;
         currentCommission = commission;
         
         document.getElementById('revStudentName').innerText = "Reviewing: " + name;
-        document.getElementById('targetComm').innerText = `Passport: ${passport} | Commission: ৳${commission.toLocaleString()}`;
+        document.getElementById('targetUniDisplay').innerText = `Applying for: ${university}`;
         
         const res = await fetch(`/api/applications/${id}`);
         const d = await res.json();
         
+        // ৪টি ফাইল চেক করে ডাইনামিক লিঙ্ক তৈরি
         let docHtml = "";
-        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Passport</a>`;
-        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Records</a>`;
-        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Other Docs</a>`;
+        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 1. Passport Copy</a>`;
+        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 2. Academic Records</a>`;
+        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 3. English Proficiency</a>`;
+        if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 4. Other/CV Docs</a>`;
 
         document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
         
-        if(d.status) document.getElementById('statusSelect').value = d.status;
+        if(d.status) {
+            document.getElementById('statusSelect').value = d.status;
+            updateWalletIndicator(d.status); // লোড হওয়ার সময় ইন্ডিকেটর আপডেট
+        }
         document.getElementById('complianceNote').value = d.complianceNote || "";
 
         document.getElementById('reviewModal').style.display = 'flex';
     } catch (e) {
-        alert("Error acquiring lock or loading details.");
+        alert("Error loading details or acquiring lock.");
     }
 };
 
-// ৫. স্ট্যাটাস আপডেট ও অটো-আনলক
+// ৪. স্ট্যাটাস আপডেট ও অটো-আনলক
 document.getElementById('applyStatusBtn').onclick = async () => {
     if (!currentActiveId) return;
     
@@ -100,17 +104,19 @@ document.getElementById('applyStatusBtn').onclick = async () => {
     const note = document.getElementById('complianceNote').value;
     const btn = document.getElementById('applyStatusBtn');
 
+    if(!note) return alert("Please add a note before authorizing!");
+
     const payload = {
         appId: currentActiveId,
         status: selectedStatus,
-        complianceNote: note || "Reviewed by compliance",
+        complianceNote: note,
         staffEmail: staffEmail,
         commission: currentCommission 
     };
 
     try {
         btn.disabled = true;
-        btn.innerText = "Syncing...";
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SYNCING...`;
 
         const res = await fetch('/api/update-compliance', { 
             method: 'PATCH', 
@@ -119,7 +125,8 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         });
 
         if(res.ok) {
-            alert("✅ Updated & Unlocked!");
+            alert("✅ Updated & Synchronized!");
+            currentActiveId = null; // সাকসেস হলে আইডি ক্লিয়ার
             closeModal();
             loadApplications(); 
         } else {
@@ -129,11 +136,37 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         alert("Network Error.");
     } finally {
         btn.disabled = false;
-        btn.innerText = "SYNC & UPDATE";
+        btn.innerText = "SYNC & AUTHORIZE";
     }
 };
 
-window.closeModal = () => {
+// ৫. ওয়ালেট সিঙ্ক ইন্ডিকেটর লজিক
+document.getElementById('statusSelect').addEventListener('change', (e) => {
+    updateWalletIndicator(e.target.value);
+});
+
+function updateWalletIndicator(status) {
+    const indicator = document.getElementById('walletSyncIndicator');
+    if (status === 'PAID' || status === 'VISA_GRANTED' || status === 'ENROLLED') {
+        indicator.innerHTML = `<i class="fas fa-check-circle"></i> Wallet Release Ready`;
+        indicator.style.color = "#2ecc71";
+    } else {
+        indicator.innerHTML = `<i class="fas fa-sync"></i> Internal Sync Only`;
+        indicator.style.color = "#888";
+    }
+}
+
+// ৬. জেনারেল ফাংশন (অটো-আনলকসহ)
+window.closeModal = async () => {
+    if (currentActiveId) {
+        // কাজ শেষ না করে ক্লোজ করলে সার্ভারে আনলক কল যাবে
+        await fetch(`/api/unlock-application/${currentActiveId}`, { 
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staffEmail: staffEmail })
+        });
+        currentActiveId = null;
+    }
     document.getElementById('reviewModal').style.display = 'none';
 };
 
@@ -141,7 +174,8 @@ window.switchTab = (tabId, el) => {
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById(tabId + 'Section').style.display = 'block';
-    el.classList.add('active');
+    if(el) el.classList.add('active');
 };
 
+// ইনিশিয়াল লোড
 loadApplications();
