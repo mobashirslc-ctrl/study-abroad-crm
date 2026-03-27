@@ -1,19 +1,49 @@
-// Global Configuration
+/**
+ * SCC Group - Partner Portal Logic (2026)
+ * Full Integration: Firebase, Cloudinary, QR Tracking & Wallet
+ */
+
+// 1. Global Configuration
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
+// Local Storage Data
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = (userData.email || "").toLowerCase().trim();
 
 let currentUniCommission = 0;
 let selectedUniversity = "";
 
-// ১. ড্যাশবোর্ড ডাটা লোড (Realtime)
+// ---------------------------------------------------------
+// 2. Initialization on Load
+// ---------------------------------------------------------
+window.onload = () => {
+    if(!partnerEmail) {
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    // UI Updates
+    document.getElementById('welcomeName').innerText = userData.name || "Partner";
+    document.getElementById('pEmail').value = partnerEmail;
+    document.getElementById('pOrg').value = userData.orgName || userData.name || "";
+    
+    if(userData.logoUrl) {
+        document.getElementById('currentLogo').src = userData.logoUrl;
+    }
+
+    initRealtimeData(); // Dashboard Stats Load
+};
+
+// ---------------------------------------------------------
+// 3. Core Logic: Dashboard & Wallet
+// ---------------------------------------------------------
 async function initRealtimeData() {
-    if(!partnerEmail) return;
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
+        
+        // Filter applications for this specific partner
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
@@ -21,9 +51,15 @@ async function initRealtimeData() {
         let html = "";
 
         myApps.forEach(data => {
-            // ব্যালেন্স ক্যালকুলেশন
-            if (data.status === 'DOC_VERIFIED' || data.status === 'VERIFIED') pendingBalance += Number(data.pendingAmount || 0);
-            if (data.status === 'PAID') finalBalance += Number(data.commissionBDT || 0);
+            // Balance Logic: 
+            // VERIFIED/DOC_VERIFIED means commission is expected
+            // PAID means commission is moved to available balance
+            if (data.status === 'VERIFIED' || data.status === 'DOC_VERIFIED') {
+                pendingBalance += Number(data.commissionBDT || 0);
+            }
+            if (data.status === 'PAID') {
+                finalBalance += Number(data.commissionBDT || 0);
+            }
 
             html += `<tr>
                 <td><b>${data.studentName}</b></td>
@@ -33,23 +69,174 @@ async function initRealtimeData() {
             </tr>`;
         });
 
+        // UI Updates
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
         document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='4'>No records found</td></tr>";
-    } catch (e) { console.error("Dashboard Error", e); }
+        
+        // Withdraw Button Activation (Min 5000 BDT)
+        const btnW = document.getElementById('btnWithdraw');
+        if(finalBalance >= 5000) {
+            btnW.disabled = false;
+            btnW.style.background = "var(--green)";
+        }
+    } catch (e) { console.error("Data Fetch Error:", e); }
 }
 
-// ২. ইউনিভার্সিটি সার্চ এবং এলিজিবিলিটি (Updated with New Fields)
+// ---------------------------------------------------------
+// 4. File Upload & Submission
+// ---------------------------------------------------------
+async function uploadFile(file) {
+    if(!file) return "";
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    
+    try {
+        const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+        const data = await res.json();
+        return data.secure_url || "";
+    } catch (e) {
+        console.error("Cloudinary Error:", e);
+        return "";
+    }
+}
+
+async function submitApplication() {
+    const sName = document.getElementById('sName').value;
+    const sPass = document.getElementById('sPassport').value;
+    const btn = document.getElementById('submitBtn');
+
+    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
+
+    try {
+        btn.innerText = "Uploading Documents...";
+        btn.disabled = true;
+
+        // Parallel Upload for 4 Files
+        const [u1, u2, u3, u4] = await Promise.all([
+            uploadFile(document.getElementById('file1').files[0]),
+            uploadFile(document.getElementById('file2').files[0]),
+            uploadFile(document.getElementById('file3').files[0]),
+            uploadFile(document.getElementById('file4').files[0])
+        ]);
+
+        if(!u1 || !u2) throw new Error("Passport and Academic docs are required!");
+
+        const payload = {
+            studentName: sName,
+            passportNo: sPass,
+            university: selectedUniversity,
+            partnerEmail: partnerEmail,
+            commissionBDT: currentUniCommission,
+            pdf1: u1, pdf2: u2, pdf3: u3, pdf4: u4,
+            status: 'PENDING',
+            timestamp: new Date().toISOString()
+        };
+
+        const res = await fetch('/api/submit-application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+            alert("✅ Submitted Successfully!");
+            generateAdmissionSlip(payload); // Trigger Slip
+            location.reload();
+        }
+    } catch (e) {
+        alert("Error: " + e.message);
+    } finally {
+        btn.innerText = "Submit Application";
+        btn.disabled = false;
+    }
+}
+
+// ---------------------------------------------------------
+// 5. Admission Slip Generation (QR Integrated)
+// ---------------------------------------------------------
+function generateAdmissionSlip(data) {
+    const partnerLogo = document.getElementById('currentLogo').src;
+    const partnerName = document.getElementById('pOrg').value || "Partner Agency";
+    const authPerson = document.getElementById('pAuth').value || "Authorized Staff";
+    
+    const trackLink = "https://study-abroad-crm-nine.vercel.app/track.html";
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
+
+    const slipWindow = window.open('', '_blank', 'width=900,height=850');
+    
+    const slipHtml = `
+    <html>
+    <head>
+        <title>Admission Slip - ${data.studentName}</title>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f0f2f5; }
+            .slip-card { background: white; border: 4px solid #2b0054; border-radius: 15px; max-width: 800px; margin: auto; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+            .header { display: flex; justify-content: space-between; align-items: center; padding: 25px; border-bottom: 2px solid #eee; }
+            .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; margin: 20px 0 10px 0; font-size: 14px; }
+            .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 25px; font-size: 14px; }
+            .tracking-wrap { display: flex; align-items: center; justify-content: center; gap: 50px; padding: 30px; background: #fafafa; border-top: 1px solid #eee; }
+            .status-stamp { background: #2ecc71; color: white; padding: 15px 35px; border-radius: 12px; text-align: center; }
+            .footer { background: #2b0054; color: white; text-align: center; padding: 15px; font-size: 11px; }
+            @media print { .no-print { display: none; } body { padding: 0; } .slip-card { border: 2px solid #2b0054; box-shadow: none; } }
+        </style>
+    </head>
+    <body>
+        <div class="no-print" style="text-align:center; margin-bottom:15px;"><button onclick="window.print()">PRINT SLIP / PDF</button></div>
+        <div class="slip-card">
+            <div class="header">
+                <img src="${partnerLogo}" height="65">
+                <div style="text-align:right">
+                    <h3 style="margin:0; color:#2b0054;">ADMISSION ENROLLMENT SLIP</h3>
+                    <small>REF: SCC-2026-${Math.floor(Math.random()*90000)}</small>
+                </div>
+            </div>
+            <div class="section-header">APPLICANT INFORMATION</div>
+            <div class="details">
+                <div><b>Student Name:</b> ${data.studentName}</div>
+                <div><b>Passport No:</b> ${data.passportNo}</div>
+                <div><b>Target Country:</b> United Kingdom (UK)</div>
+                <div><b>University:</b> ${data.university}</div>
+            </div>
+            <div class="section-header">PARTNER AGENCY</div>
+            <div class="details">
+                <div><b>Agency Name:</b> ${partnerName}</div>
+                <div><b>Authorized Person:</b> ${authPerson}</div>
+            </div>
+            <div class="tracking-wrap">
+                <div style="text-align:center">
+                    <img src="${qrUrl}" width="120">
+                    <p style="font-size:10px; font-weight:bold; margin-top:5px; color:#2b0054;">SCAN TO TRACK STATUS</p>
+                </div>
+                <div class="status-stamp">
+                    <div style="font-size:22px; font-weight:bold;">VERIFIED</div>
+                    <div style="font-size:11px;">B2B PROCESSING SYSTEM</div>
+                </div>
+            </div>
+            <div style="text-align:center; color:#2ecc71;"><h3>🎉 Congratulations on your successful admission!</h3></div>
+            <div class="footer">2026 @ Rights & Reserved GORUN LTD | study-abroad-crm-nine.vercel.app</div>
+        </div>
+    </body>
+    </html>`;
+    
+    slipWindow.document.write(slipHtml);
+    slipWindow.document.close();
+}
+
+// ---------------------------------------------------------
+// 6. University Search & Profile
+// ---------------------------------------------------------
 async function searchUni() {
-    const country = document.getElementById('fCountry').value.toLowerCase().trim();
-    const userGPA = parseFloat(document.getElementById('userGPA').value) || 0;
-    const userScore = parseFloat(document.getElementById('userScore').value) || 0;
-    const userGap = parseFloat(document.getElementById('userGap').value) || 0;
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const gpa = parseFloat(document.getElementById('userGPA').value) || 0;
+    const score = parseFloat(document.getElementById('userScore').value) || 0;
     
     const container = document.getElementById('uniListContainer');
-    container.innerHTML = "<tr><td colspan='7'>Searching Universities...</td></tr>";
-    
+    container.innerHTML = "Searching...";
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
@@ -57,61 +244,23 @@ async function searchUni() {
 
         unis.forEach(u => {
             if (!country || u.country.toLowerCase().includes(country)) {
-                
-                // Eligibility Logic
-                const isGpaOk = userGPA >= (u.minGPA || 0);
-                const isScoreOk = userScore >= (u.ieltsReq || 0);
-                const isGapOk = userGap <= (u.gap || 0);
-                const isEligible = isGpaOk && isScoreOk && isGapOk;
-
-                // Commission Calculation (Assuming 120 is exchange rate)
-                const totalFee = (Number(u.semesterFee) || 0) * 120;
+                const isEligible = gpa >= u.minGPA && score >= u.ieltsReq;
+                const totalFee = (Number(u.semesterFee) || 0) * 120; // 120 BDT Rate
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
 
-                const statusBadge = isEligible ? 
-                    `<span class="badge eligible">✅ ELIGIBLE</span>` : 
-                    `<span class="badge not-eligible">❌ NOT ELIGIBLE</span>`;
-
-                const applyBtn = isEligible ? 
-                    `<button class="btn-gold" style="padding:6px 12px;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply Now</button>` : 
-                    `<button class="btn-gold" style="background:#333; color:#777; cursor:not-allowed;" disabled>Locked</button>`;
-
                 html += `<tr>
-                    <td>
-                        <b>${u.universityName}</b><br>
-                        <small style="color:#aaa;"><i class="fas fa-map-marker-alt"></i> ${u.location || u.country}</small>
-                    </td>
-                    <td>
-                        <small>GPA: ${u.minGPA}+</small><br>
-                        <small>Score: ${u.ieltsReq}+</small><br>
-                        <small>Gap: ${u.gap || 0}y Max</small>
-                    </td>
-                    <td>
-                        <b>$${u.semesterFee.toLocaleString()}</b><br>
-                        <small style="color:#aaa;">Duration: ${u.duration || 'N/A'}</small>
-                    </td>
-                    <td>
-                        <small>Living: $${u.livingCost || '0'}/y</small><br>
-                        <span style="font-size:10px; padding:2px 5px; background:#444; border-radius:3px;">${u.jobOpportunity || 'Standard'} Jobs</span>
-                    </td>
-                    <td>${statusBadge}</td>
-                    <td style="color:var(--gold); font-weight:bold;">৳${comm.toLocaleString()}</td>
-                    <td>${applyBtn}</td>
+                    <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
+                    <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
+                    <td>$${u.semesterFee}</td>
+                    <td>${u.jobOpportunity || 'Standard'}</td>
+                    <td>${isEligible ? '✅ Eligible' : '❌ Not Eligible'}</td>
+                    <td style="color:var(--gold)">৳${comm.toLocaleString()}</td>
+                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='7'>No universities found matching your criteria.</td></tr>";
-    } catch (e) { 
-        console.error(e); 
-        container.innerHTML = "<tr><td colspan='7'>Error loading data.</td></tr>";
-    }
-}
-// ১. প্রোফাইল ও লোগো হ্যান্ডলিং
-async function uploadPartnerLogo() {
-    const file = document.getElementById('logoUpload').files[0];
-    if(!file) return;
-    const url = await uploadFile(file); // Cloudinary
-    document.getElementById('currentLogo').src = url;
+        container.innerHTML = html;
+    } catch (e) { console.error(e); }
 }
 
 async function saveProfile() {
@@ -123,146 +272,14 @@ async function saveProfile() {
         address: document.getElementById('pAddr').value,
         logoUrl: document.getElementById('currentLogo').src
     };
+    
     const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     });
+    
     if(res.ok) alert("✅ Profile Updated Successfully!");
-}
-
-// ২. অ্যাডমিশন স্লিপ জেনারেশন (আপনার দেওয়া ইমেজ অনুযায়ী)
-function generateAdmissionSlip(data) {
-    const partnerLogo = document.getElementById('currentLogo').src;
-    const partnerName = document.getElementById('pOrg').value || "Partner Agency";
-    const authPerson = document.getElementById('pAuth').value || "Authorized Staff";
-    
-    const slipWindow = window.open('', '_blank', 'width=900,height=600');
-    
-    const slipHtml = `
-    <html>
-    <head>
-        <style>
-            body { font-family: 'Segoe UI', sans-serif; padding: 40px; }
-            .slip-card { border: 4px solid #2b0054; border-radius: 10px; padding: 0; overflow: hidden; position: relative; }
-            .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #fff; border-bottom: 2px solid #eee; }
-            .header-info { text-align: right; font-size: 12px; }
-            .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; margin: 15px 0; }
-            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px; }
-            .status-stamp { background: #2ecc71; color: white; width: 220px; margin: 30px auto; padding: 15px; text-align: center; border-radius: 10px; }
-            .footer-line { background: #2b0054; color: white; padding: 10px; text-align: center; font-size: 11px; margin-top: 20px; }
-            @media print { .print-btn { display: none; } }
-        </style>
-    </head>
-    <body>
-        <div class="print-btn" style="margin-bottom: 10px;"><button onclick="window.print()">Download / Print</button></div>
-        <div class="slip-card">
-            <div class="top-bar">
-                <img src="${partnerLogo}" height="60">
-                <div style="text-align: center;"><h3 style="margin:0; color:#2b0054;">OFFICIAL ACKNOWLEDGEMENT & ADMISSION SLIP</h3></div>
-                <div class="header-info">
-                    <b>REF NO:</b> SCC-2026-A${Math.floor(Math.random()*9000)}<br>
-                    <b>ISSUE DATE:</b> ${new Date().toLocaleDateString()}<br>
-                </div>
-            </div>
-            <div class="section-header">APPLICANT INFORMATION</div>
-            <div class="details-grid">
-                <div><b>Full Name:</b> ${data.studentName}</div>
-                <div><b>Passport No:</b> ${data.passportNo}</div>
-                <div><b>Destination:</b> United Kingdom (UK)</div>
-                <div><b>University:</b> ${data.university}</div>
-            </div>
-            <div class="section-header">AUTHORIZED AGENCY DETAILS</div>
-            <div class="details-grid">
-                <div><b>Agency Name:</b> ${partnerName}</div>
-                <div><b>Contact Person:</b> ${authPerson}</div>
-            </div>
-            <div class="status-stamp">
-                <div style="font-size: 18px; font-weight: bold;">VERIFIED &</div>
-                <div style="font-size: 12px;">IN-HOUSE PROCESSING</div>
-            </div>
-            <div style="text-align:center; color:#2ecc71;"><h3>Congratulations on your successful admission!</h3></div>
-            <div class="footer-line">"Your Dream Route to Global Education" | support@scc-global.com</div>
-        </div>
-    </body>
-    </html>`;
-    
-    slipWindow.document.write(slipHtml);
-    slipWindow.document.close();
-}
-
-// ৩. উইথড্র বাটন একটিভ করা
-function checkWalletBalance(balance) {
-    const btn = document.getElementById('btnWithdraw');
-    document.getElementById('withdrawableBal').innerText = `৳${balance.toLocaleString()}`;
-    if(balance >= 5000) {
-        btn.disabled = false;
-        btn.style.background = "var(--green)";
-    }
-}
-
-// ৩. ফাইল আপলোড লজিক (Cloudinary)
-async function uploadFile(file) {
-    if(!file) return "";
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-    const data = await res.json();
-    return data.secure_url || "";
-}
-
-// ৪. স্টুডেন্ট সাবমিশন
-async function submitApplication() {
-    const sName = document.getElementById('sName').value;
-    const sPass = document.getElementById('sPassport').value;
-    const btn = document.getElementById('submitBtn');
-
-    if(!sName || !sPass) return alert("Please enter student name and passport number!");
-
-    try {
-        btn.innerText = "Processing Files...";
-        btn.disabled = true;
-
-        const f1 = document.getElementById('file1').files[0];
-        const f2 = document.getElementById('file2').files[0];
-        const f3 = document.getElementById('file3').files[0];
-        const f4 = document.getElementById('file4').files[0];
-
-        if(!f1 || !f2) return alert("Passport Copy and Academic Records are mandatory!");
-
-        // Uploading all files in parallel
-        const [url1, url2, url3, url4] = await Promise.all([
-            uploadFile(f1), uploadFile(f2), uploadFile(f3), uploadFile(f4)
-        ]);
-
-        const payload = {
-            studentName: sName,
-            passportNo: sPass,
-            university: selectedUniversity,
-            partnerEmail: partnerEmail,
-            commissionBDT: currentUniCommission,
-            pdf1: url1, pdf2: url2, pdf3: url3, pdf4: url4,
-            status: 'PENDING',
-            date: new Date().toISOString()
-        };
-
-        const res = await fetch('/api/submit-application', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if(res.ok) {
-            alert("✅ Student application submitted successfully!");
-            location.reload();
-        }
-    } catch (e) {
-        alert("Submission Failed: " + e.message);
-    } finally {
-        btn.innerText = "Submit Application";
-        btn.disabled = false;
-    }
 }
 
 function openApplyModal(name, comm) {
@@ -272,7 +289,4 @@ function openApplyModal(name, comm) {
     document.getElementById('applyModal').style.display = 'flex';
 }
 
-function initTracking() {
-    // This will fetch full history for the tracking tab
-    initRealtimeData(); 
-}
+function logout() { localStorage.clear(); window.location.href='index.html'; }
