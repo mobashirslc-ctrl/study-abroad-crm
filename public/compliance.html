@@ -109,13 +109,21 @@
             <div id="docLinksArea" style="margin-bottom: 25px;"></div>
 
             <label style="font-size: 12px; color: var(--gold); font-weight: bold;">SET NEW STATUS:</label>
-            <select id="statusSelect">
-                <option value="UNDER_REVIEW">Under Review</option>
-                <option value="VERIFIED">Verified (Commission Add)</option>
-                <option value="GS_READY">GS Ready</option>
-                <option value="APPLIED_VISA">Applied Visa</option>
-                <option value="REJECTED">Rejected / Missing Docs</option>
-            </select>
+            <select id="statusSelect" class="form-control">
+    <option value="UNDER_REVIEW">Under Review</option>
+    <option value="MISSING_DOCS">Missing Documents</option>
+    <option value="DOCS_VERIFIED">Documents Verified</option>
+    <option value="OFFER_AWAITING">Offer Letter Awaiting</option>
+    <option value="OFFER_ISSUED">Offer Letter Issued</option>
+    <option value="TUITION_PAID">Tuition Fee Paid</option>
+    <option value="CAS_GS_READY">CAS / GS Ready</option>
+    <option value="VISA_APPLIED">Visa Applied</option>
+    <option value="VISA_GRANTED">Visa Granted ✅</option>
+    <option value="VISA_REJECTED">Visa Rejected ❌</option>
+    <option value="FLYING_SOON">Flying Soon</option>
+    <option value="ENROLLED">Success & Enrolled</option>
+</select>
+
 
             <label style="font-size: 12px; color: var(--gold); font-weight: bold;">COMPLIANCE NOTES:</label>
             <textarea id="complianceNote" placeholder="Write review notes or missing doc details here..." rows="4"></textarea>
