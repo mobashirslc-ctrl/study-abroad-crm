@@ -111,37 +111,44 @@ app.patch('/api/admin/users/:id/expiry', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৫. ম্যানুয়াল ওয়ালেট আপডেট (অ্যাডমিন যা লিখবেন তা সরাসরি পার্টনারের ওয়ালেটে যোগ হবে)
+// ৫. ম্যানুয়াল ওয়ালেট আপডেট (Pending থেকে বিয়োগ এবং Available-এ যোগ)
 app.patch('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
         const { pendingAmount, status } = req.body;
-        const amountToAdd = Number(pendingAmount) || 0;
+        const finalAmount = Number(pendingAmount) || 0;
 
-        // ১. প্রথমে এই অ্যাপ্লিকেশন থেকে পার্টনারের ইমেইল খুঁজে বের করা
+        // ১. অ্যাপ্লিকেশন ডাটা খুঁজে বের করা
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ২. অ্যাপ্লিকেশন ডাটা আপডেট করা (স্ট্যাটাস এবং পেন্ডিং অ্যামাউন্ট সেভ করা)
+        // ২. অ্যাপ্লিকেশন আপডেট (অ্যামাউন্ট এখন ০ করে দেওয়া কারণ এটি পেইড হয়ে যাচ্ছে)
+        // অথবা আপনি চাইলে pendingAmount এ ০ সেভ করতে পারেন যাতে আর পেন্ডিং না দেখায়
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
-            { pendingAmount: amountToAdd, status }, 
+            { pendingAmount: 0, status: 'COMPLETED' }, // স্ট্যাটাস কমপ্লিট করে দেওয়া হলো
             { new: true }
         );
 
-        // ৩. সরাসরি পার্টনারের মেইন ওয়ালেটে এই টাকা যোগ করা (কোনো স্ট্যাটাস চেক ছাড়াই)
-        if (amountToAdd > 0) {
+        // ৩. পার্টনারের মেইন ওয়ালেট আপডেট লজিক:
+        if (finalAmount > 0) {
             await User.findOneAndUpdate(
                 { email: appData.partnerEmail }, 
-                { $inc: { walletBalance: amountToAdd } } // ইউজারের আগের ব্যালেন্সের সাথে যোগ হবে
+                { 
+                    $inc: { walletBalance: finalAmount } // মেইন ওয়ালেটে টাকা যোগ হচ্ছে
+                }
             );
         }
 
-        res.json({ msg: "Success! Wallet balance updated for partner.", data: updatedApp });
+        res.json({ 
+            msg: `Successfully transferred ${finalAmount} to available wallet.`, 
+            data: updatedApp 
+        });
     } catch (e) { 
         res.status(500).json({ error: e.message }); 
     }
 });
+
 
 
 // ১. প্রোফাইল আপডেট
