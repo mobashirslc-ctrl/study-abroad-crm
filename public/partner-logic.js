@@ -37,26 +37,28 @@ window.onload = () => {
 // 3. Core Logic: Dashboard, Tracking & Wallet (FIXED)
 // ---------------------------------------------------------
 async function initRealtimeData() {
+async function initRealtimeData() {
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
         
-        // Filter applications for this specific partner
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
         let finalBalance = 0;   
-        let combinedHtml = ""; // ড্যাশবোর্ড এবং ট্র্যাকিং টেবিল দুটোর জন্যই
+        let combinedHtml = ""; 
 
         myApps.forEach(data => {
-            const status = data.status || 'PENDING';
+            // স্ট্যাটাসকে বড় হাতের অক্ষরে রূপান্তর করে চেক করা (নিরাপত্তার জন্য)
+            const status = (data.status || 'PENDING').toUpperCase();
             const comm = Number(data.commissionBDT || 0);
 
-            // FIX: DOC_VERIFIED এবং VERIFIED হলে পেন্ডিং ব্যালেন্সে যোগ হবে
-            if (status === 'VERIFIED' || status === 'DOC_VERIFIED') {
+            // ১. পেন্ডিং ব্যালেন্স: যা এখনো পেইড হয়নি (PENDING, DOC_VERIFIED, VERIFIED সব এখানে আসবে)
+            if (status !== 'PAID' && status !== 'REJECTED') {
                 pendingBalance += comm;
             }
-            // PAID হলে মেইন/উইথড্রয়েবল ব্যালেন্সে আসবে
+            
+            // ২. ফাইনাল ব্যালেন্স: যা এডমিন অলরেডি পে করে দিয়েছে
             if (status === 'PAID') {
                 finalBalance += comm;
             }
@@ -64,11 +66,34 @@ async function initRealtimeData() {
             combinedHtml += `<tr>
                 <td><b>${data.studentName}</b></td>
                 <td>${data.passportNo}</td>
-                <td><span class="badge" style="background:#252545; color:var(--gold)">${status.replace(/_/g, ' ')}</span></td>
                 <td>${data.university || 'N/A'}</td>
+                <td><span class="badge" style="background:#252545; color:var(--gold); border: 1px solid var(--gold); padding: 5px 10px;">${status.replace(/_/g, ' ')}</span></td>
                 <td>${new Date(data.timestamp).toLocaleDateString()}</td>
             </tr>`;
         });
+
+        // UI Updates
+        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('totalStudents').innerText = myApps.length;
+
+        // ড্যাশবোর্ড টেবিল আপডেট
+        const homeTable = document.getElementById('homeTrackingBody');
+        if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
+
+        // ট্র্যাকিং টেবিল আপডেট (ID সংশোধিত: fullTrackingBody)
+        const trackTable = document.getElementById('fullTrackingBody');
+        if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
+        
+        // Withdraw Button Logic
+        const btnW = document.getElementById('btnWithdraw');
+        if(btnW) {
+            btnW.disabled = finalBalance < 5000;
+            btnW.style.background = finalBalance >= 5000 ? "#2ecc71" : "#444";
+        }
+    } catch (e) { console.error("Data Fetch Error:", e); }
+}
 
         // UI Updates - Stats
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
