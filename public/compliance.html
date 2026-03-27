@@ -6,31 +6,46 @@
     <title>SCC | Compliance Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); }
+        :root { --primary: #2b0054; --bg: #070014; --gold: #f1c40f; --border: rgba(255,255,255,0.1); --success: #2ecc71; --danger: #ff4757; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; }
+        
+        /* Sidebar Styles */
         .sidebar { width: 260px; height: 100vh; background: rgba(255,255,255,0.03); border-right: 1px solid var(--border); padding: 25px; position: fixed; }
-        .nav-item { padding: 15px; cursor: pointer; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; color: #ccc; }
+        .nav-item { padding: 15px; cursor: pointer; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; color: #ccc; display: flex; align-items: center; gap: 12px; }
         .nav-item:hover, .nav-item.active { background: var(--primary); color: white; border-left: 4px solid var(--gold); }
+        
+        /* Main Content */
         .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; }
-        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; padding: 12px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 15px; color: var(--gold); border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; color: #eee; }
         
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid var(--gold); color: var(--gold); text-transform: uppercase; }
-        .btn-action { background: var(--gold); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; color: black; transition: 0.3s; }
-        .btn-action:hover { transform: scale(1.05); background: #d4ac0d; }
+        /* Dynamic Status Pills */
+        .status-pill { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2); }
+        .status-verified, .status-visa_granted, .status-enrolled { color: var(--success); border-color: var(--success); background: rgba(46, 204, 113, 0.1); }
+        .status-missing_docs, .status-visa_rejected { color: var(--danger); border-color: var(--danger); background: rgba(255, 71, 87, 0.1); }
+        .status-under_review { color: var(--gold); border-color: var(--gold); background: rgba(241, 196, 15, 0.1); }
+
+        /* Review Button & Locking */
+        .btn-action { background: var(--gold); border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; color: black; transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+        .btn-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); }
+        .btn-action:disabled { background: #444; color: #888; cursor: not-allowed; opacity: 0.7; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .modal-content { background: #0f0f1e; padding: 35px; border-radius: 20px; border: 1px solid var(--border); width: 100%; max-width: 580px; position: relative; }
         
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
-        .modal-content { background: #1a1a2e; padding: 30px; border-radius: 15px; border: 1px solid var(--gold); width: 550px; max-height: 90vh; overflow-y: auto; }
-        .doc-link { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 12px; margin: 10px 0; color: var(--gold); text-decoration: none; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
-        .doc-link:hover { background: rgba(241, 196, 15, 0.1); border-color: var(--gold); }
+        /* Input & Controls */
+        select, textarea { width: 100%; background: #1a1a2e; border: 1px solid var(--border); color: white; padding: 14px; border-radius: 10px; margin: 12px 0; font-size: 14px; }
+        select:focus, textarea:focus { border-color: var(--gold); outline: none; }
         
-        select, textarea { width: 100%; background: #070014; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin: 10px 0; box-sizing: border-box; font-family: inherit; }
-        
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
+        .doc-link { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; color: #ddd; text-decoration: none; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; transition: 0.2s; }
+        .doc-link:hover { border-color: var(--gold); color: var(--gold); background: rgba(241, 196, 15, 0.05); }
+
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
     </style>
 </head>
@@ -38,56 +53,61 @@
 
     <div class="sidebar">
         <div style="text-align: center; margin-bottom: 40px;">
-            <img src="logo.jpeg" width="140" style="border-radius: 8px; border: 1px solid var(--border);">
-            <h4 style="color: var(--gold); margin-top: 10px; font-size: 12px; letter-spacing: 2px;">COMPLIANCE UNIT</h4>
+            <img src="logo.jpeg" width="130" style="border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <h4 style="color: var(--gold); margin-top: 15px; font-size: 11px; letter-spacing: 3px; font-weight: 800;">COMPLIANCE UNIT</h4>
         </div>
 
         <div class="nav-item active" onclick="switchTab('queue', this)">
-            <i class="fas fa-file-import"></i> Incoming Files
+            <i class="fas fa-layer-group"></i> Incoming Queue
         </div>
         <div class="nav-item" onclick="switchTab('history', this)">
-            <i class="fas fa-clipboard-check"></i> Verified History
+            <i class="fas fa-check-double"></i> Processed History
         </div>
         
         <div style="position: absolute; bottom: 30px; width: 210px; padding-top: 20px; border-top: 1px solid var(--border);">
-            <p style="font-size: 10px; color: var(--gold); margin: 0 0 5px 5px; opacity: 0.7;">STAFF MEMBER:</p>
-            <p id="staffNameDisplay" style="font-size: 15px; margin: 0 0 15px 5px; font-weight: bold; color: white;">Loading...</p>
-            <button id="logoutBtn" style="width: 100%; padding: 12px; background: rgba(255, 71, 87, 0.1); border: 1px solid #ff4757; color: #ff4757; cursor: pointer; border-radius: 8px; font-weight: bold;">
-                <i class="fas fa-sign-out-alt"></i> LOGOUT
+            <p style="font-size: 10px; color: var(--gold); margin: 0 0 5px 0; opacity: 0.6; letter-spacing: 1px;">ACTIVE AGENT:</p>
+            <p id="staffNameDisplay" style="font-size: 14px; margin: 0 0 20px 0; font-weight: bold; color: white; text-transform: uppercase;">STAFF_NAME</p>
+            <button id="logoutBtn" style="width: 100%; padding: 14px; background: rgba(255, 71, 87, 0.15); border: 1px solid var(--danger); color: var(--danger); cursor: pointer; border-radius: 10px; font-weight: bold; transition: 0.3s;">
+                <i class="fas fa-power-off"></i> SIGN OUT
             </button>
         </div>
     </div>
 
     <div class="main-content">
         <div id="queueSection" class="card tab-content">
-            <h3 style="margin-top: 0;"><i class="fas fa-hourglass-half" style="color:var(--gold); margin-right: 10px;"></i> Pending Review Queue</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;"><i class="fas fa-folder-open" style="color:var(--gold); margin-right: 12px;"></i> Verification Queue</h3>
+                <span style="font-size: 12px; color: #888;">Real-time Secure Connection <i class="fas fa-circle" style="color: #2ecc71; font-size: 8px; margin-left: 5px;"></i></span>
+            </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Student Name</th>
-                        <th>Passport No</th>
-                        <th>University</th>
-                        <th>Status</th>
-                        <th>Current Handler</th>
+                        <th>Student Details</th>
+                        <th>Passport</th>
+                        <th>Target University</th>
+                        <th>Current Status</th>
+                        <th>Handled By</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="complianceTableBody">
-                    <tr><td colspan="6" style="text-align:center; padding: 40px; color: gray;">Connecting to Secure Server...</td></tr>
+                    <tr><td colspan="6" style="text-align:center; padding: 60px; color: #666;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 15px;"></i><br>Fetching student records...
+                    </td></tr>
                 </tbody>
             </table>
         </div>
 
         <div id="historySection" class="card tab-content" style="display:none;">
-            <h3 style="margin-top: 0;"><i class="fas fa-history" style="color:#2ecc71; margin-right: 10px;"></i> Verified History</h3>
+            <h3 style="margin-top: 0;"><i class="fas fa-clipboard-list" style="color:var(--success); margin-right: 12px;"></i> Processed Records</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Student</th>
                         <th>Passport</th>
                         <th>University</th>
-                        <th>Status</th>
-                        <th>Handler</th>
+                        <th>Final Status</th>
+                        <th>Verified By</th>
                         <th>Action</th> 
                     </tr>
                 </thead>
@@ -98,41 +118,53 @@
 
     <div id="reviewModal" class="modal">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <h3 id="revStudentName" style="color:var(--gold); margin: 0;">Review Application</h3>
-                <button onclick="closeModal()" style="background: none; border: none; color: gray; cursor: pointer; font-size: 20px;"><i class="fas fa-times"></i></button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <div>
+                    <h3 id="revStudentName" style="color:var(--gold); margin: 0; font-size: 22px;">Review Application</h3>
+                    <p id="targetComm" style="font-size: 12px; color: #888; margin-top: 5px;"></p>
+                </div>
+                <button onclick="closeModal()" style="background: #1a1a2e; border: 1px solid #333; color: white; cursor: pointer; padding: 8px 12px; border-radius: 50%;"><i class="fas fa-times"></i></button>
             </div>
             
-            <p id="targetComm" style="font-size: 13px; color: #bbb; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; border-left: 3px solid var(--gold);"></p>
-            
-            <p style="font-size: 12px; color: var(--gold); margin-bottom: 5px; font-weight: bold;">ATTACHED DOCUMENTS:</p>
-            <div id="docLinksArea" style="margin-bottom: 25px;"></div>
+            <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border);">
+                <p style="font-size: 11px; color: var(--gold); margin: 0 0 10px 0; font-weight: bold; letter-spacing: 1px;">VERIFICATION DOCUMENTS</p>
+                <div id="docLinksArea"></div>
+            </div>
 
-            <label style="font-size: 12px; color: var(--gold); font-weight: bold;">SET NEW STATUS:</label>
-            <select id="statusSelect" class="form-control">
-    <option value="UNDER_REVIEW">Under Review</option>
-    <option value="MISSING_DOCS">Missing Documents</option>
-    <option value="DOCS_VERIFIED">Documents Verified</option>
-    <option value="OFFER_AWAITING">Offer Letter Awaiting</option>
-    <option value="OFFER_ISSUED">Offer Letter Issued</option>
-    <option value="TUITION_PAID">Tuition Fee Paid</option>
-    <option value="CAS_GS_READY">CAS / GS Ready</option>
-    <option value="VISA_APPLIED">Visa Applied</option>
-    <option value="VISA_GRANTED">Visa Granted ✅</option>
-    <option value="VISA_REJECTED">Visa Rejected ❌</option>
-    <option value="FLYING_SOON">Flying Soon</option>
-    <option value="ENROLLED">Success & Enrolled</option>
-</select>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label style="font-size: 11px; color: var(--gold); font-weight: bold; letter-spacing: 1px;">SET STATUS</label>
+                    <select id="statusSelect">
+                        <option value="UNDER_REVIEW">Under Review</option>
+                        <option value="MISSING_DOCS">Missing Documents</option>
+                        <option value="DOCS_VERIFIED">Documents Verified</option>
+                        <option value="OFFER_AWAITING">Offer Letter Awaiting</option>
+                        <option value="OFFER_ISSUED">Offer Letter Issued</option>
+                        <option value="TUITION_PAID">Tuition Fee Paid</option>
+                        <option value="CAS_GS_READY">CAS / GS Ready</option>
+                        <option value="VISA_APPLIED">Visa Applied</option>
+                        <option value="VISA_GRANTED">Visa Granted ✅</option>
+                        <option value="VISA_REJECTED">Visa Rejected ❌</option>
+                        <option value="FLYING_SOON">Flying Soon</option>
+                        <option value="ENROLLED">Success & Enrolled</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 11px; color: #888; font-weight: bold; letter-spacing: 1px;">WALLET SYNC</label>
+                    <div style="padding: 14px; background: #070014; border: 1px solid #333; border-radius: 10px; font-size: 12px; color: #2ecc71;">
+                        <i class="fas fa-wallet"></i> Auto-Commission Ready
+                    </div>
+                </div>
+            </div>
 
+            <label style="font-size: 11px; color: var(--gold); font-weight: bold; letter-spacing: 1px;">INTERNAL NOTES (Required)</label>
+            <textarea id="complianceNote" placeholder="Explain the decision or list missing files..." rows="3"></textarea>
 
-            <label style="font-size: 12px; color: var(--gold); font-weight: bold;">COMPLIANCE NOTES:</label>
-            <textarea id="complianceNote" placeholder="Write review notes or missing doc details here..." rows="4"></textarea>
-
-            <div style="display: flex; gap: 15px; margin-top: 20px;">
-                <button id="applyStatusBtn" style="flex:2; background:#2ecc71; color:white; border:none; padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 14px;">
-                    <i class="fas fa-cloud-upload-alt"></i> SYNC & UPDATE
+            <div style="display: flex; gap: 15px; margin-top: 15px;">
+                <button id="applyStatusBtn" style="flex:2; background:var(--success); color:white; border:none; padding:16px; border-radius:12px; cursor:pointer; font-weight:bold; font-size: 15px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);">
+                    <i class="fas fa-shield-alt"></i> SYNC & AUTHORIZE
                 </button>
-                <button onclick="closeModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; border-radius:8px; cursor:pointer;">CANCEL</button>
+                <button onclick="closeModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; border-radius:12px; cursor:pointer; font-weight:bold;">DISCARD</button>
             </div>
         </div>
     </div>
