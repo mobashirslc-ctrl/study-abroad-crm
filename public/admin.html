@@ -155,6 +155,62 @@
     </div>
 
     <script type="module">
+        // ---  Withdrawal Management (NEW & FIXED) ---
+
+async function fetchWithdrawals() {
+    try {
+        const res = await fetch('/api/withdrawals');
+        const withdrawals = await res.json();
+        const tbody = document.getElementById('adminWithdrawTable');
+        
+        // শুধু PENDING রিকোয়েস্টগুলো উপরে দেখানোর জন্য সর্ট করা যেতে পারে
+        tbody.innerHTML = withdrawals.map(w => `
+            <tr>
+                <td>${w.partnerEmail}<br><small>${w.partnerName || ''}</small></td>
+                <td style="color:var(--gold); font-weight:bold;">৳${w.amount.toLocaleString()}</td>
+                <td>${new Date(w.timestamp).toLocaleDateString()}</td>
+                <td><span class="badge ${w.status === 'COMPLETED' ? 'status-active' : 'status-pending'}">${w.status}</span></td>
+                <td>
+                    ${w.status === 'PENDING' ? 
+                        `<button class="action-btn" style="background:var(--green)" onclick="approveWithdraw('${w._id}', '${w.partnerEmail}', ${w.amount})">Approve & Pay</button>
+                         <button class="action-btn" style="background:var(--red)" onclick="rejectWithdraw('${w._id}')">Reject</button>` 
+                        : `<span style="color:#666">Processed</span>`
+                    }
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) { console.error("Withdrawal fetch error:", e); }
+}
+
+window.approveWithdraw = async (id, email, amount) => {
+    if(!confirm(`Confirm payment of ৳${amount}? This will deduct amount from partner wallet.`)) return;
+
+    try {
+        // এই কলটি ব্যাকএন্ডে গিয়ে ইউজারের ব্যালেন্স মাইনাস করবে এবং স্ট্যাটাস আপডেট করবে
+        const res = await fetch(`/api/admin/approve-withdrawal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ withdrawId: id, partnerEmail: email, amount: amount })
+        });
+
+        if(res.ok) {
+            alert("✅ Withdrawal Approved & Balance Deducted!");
+            fetchWithdrawals(); // লিস্ট আপডেট
+            fetchUsers();       // ইউজার লিস্টে নতুন ব্যালেন্স দেখার জন্য আপডেট
+        }
+    } catch (e) { alert("Error approving withdrawal"); }
+};
+
+window.rejectWithdraw = async (id) => {
+    if(!confirm("Are you sure to reject this request?")) return;
+    await fetch(`/api/withdrawals/${id}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ status: 'REJECTED' })
+    });
+    fetchWithdrawals();
+};
+
         // --- ১. ট্যাব নেভিগেশন ---
         window.showTab = (event, tabId) => {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
