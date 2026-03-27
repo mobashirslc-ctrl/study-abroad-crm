@@ -118,7 +118,6 @@ async function uploadFile(file) {
     return data.secure_url;
 }
 
-// ৫. অ্যাপ্লিকেশন সাবমিট
 async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
@@ -126,24 +125,37 @@ async function submitApplication() {
 
     if(!sName || !sPass) return alert("Please enter Student Name and Passport No.");
 
+    // ইনপুট ফাইল এলিমেন্টগুলো ধরা
+    const fileInput1 = document.getElementById('file1');
+    const fileInput2 = document.getElementById('file2');
+
+    // ফাইল সিলেক্ট করা হয়েছে কি না নিশ্চিত করা
+    if (!fileInput1.files[0] || !fileInput2.files[0]) {
+        return alert("Please select both Passport and Academic documents.");
+    }
+
     try {
         btn.innerText = "Uploading Documents...";
         btn.disabled = true;
 
-        // ফাইলগুলো আপলোড করা
-        const f1 = document.getElementById('file1').files[0];
-        const f2 = document.getElementById('file2').files[0];
-        
-        const url1 = await uploadFile(f1);
-        const url2 = await uploadFile(f2);
+        // ফাইলগুলো আলাদাভাবে আপলোড করা এবং লিঙ্ক পাওয়া
+        const url1 = await uploadFile(fileInput1.files[0]);
+        const url2 = await uploadFile(fileInput2.files[0]);
+
+        // যদি কোনো কারণে আপলোড ফেইল করে
+        if(!url1 || !url2) {
+            throw new Error("Could not get file links from Cloudinary.");
+        }
+
+        console.log("Uploaded URLs:", url1, url2); // কনসোলে লিঙ্ক চেক করার জন্য
 
         const payload = {
             studentName: sName,
             passportNo: sPass,
-            university: selectedUniversity,
+            university: selectedUniversity, 
             partnerEmail: partnerEmail,
             commissionBDT: currentUniCommission,
-            pdf1: url1,
+            pdf1: url1, // এখানে এখন সরাসরি লিঙ্ক যাবে
             pdf2: url2,
             status: 'PENDING',
             timestamp: new Date().toISOString()
@@ -156,19 +168,20 @@ async function submitApplication() {
         });
 
         if(res.ok) {
-            alert("✅ Application Submitted Successfully!");
+            alert("✅ Application Submitted with Documents!");
             location.reload();
         } else {
-            alert("❌ Submission Failed.");
+            alert("❌ Server rejected the application.");
         }
     } catch (e) {
-        console.error(e);
-        alert("Error connecting to server.");
+        console.error("Upload Error:", e);
+        alert("❌ Error: " + e.message);
     } finally {
         btn.innerText = "Submit Application";
         btn.disabled = false;
     }
 }
+
 
 // ৬. প্রোফাইল আপডেট
 async function updateProfile() {
