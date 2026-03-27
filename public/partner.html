@@ -40,21 +40,12 @@
         td { padding: 15px; border-bottom: 1px solid #222; font-size: 13px; vertical-align: middle; }
         
         .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-        .eligible { background: rgba(46, 204, 113, 0.15); color: var(--green); border: 1px solid var(--green); }
-        .not-eligible { background: rgba(231, 76, 60, 0.15); color: var(--red); border: 1px solid var(--red); }
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 2000; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: var(--dark); padding: 30px; border: 1px solid var(--gold); width: 100%; max-width: 500px; border-radius: 15px; max-height: 90vh; overflow-y: auto; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        // initRealtimeData ফাংশনের শেষে এটি যোগ করুন
-document.getElementById('homeTrackingBody').innerHTML = html || "<tr><td colspan='4'>No records found</td></tr>";
-
-// এই নিচের লাইনটি যোগ করুন যাতে ট্র্যাকিং টেবিল ব্ল্যাঙ্ক না থাকে
-const trackTable = document.getElementById('trackingTableBody');
-if(trackTable) trackTable.innerHTML = html; 
-
     </style>
 </head>
 <body>
@@ -139,24 +130,21 @@ if(trackTable) trackTable.innerHTML = html;
         </div>
 
         <div id="profile" class="tab-content">
-    <h3>Agency Profile Settings</h3>
-    <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
-        
-        <div style="grid-column: span 2; text-align: center;">
-            <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
-            <br>
-            <input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px; background:none; border:none; color: #ccc; cursor: pointer;">
+            <h3>Agency Profile Settings</h3>
+            <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+                <div style="grid-column: span 2; text-align: center;">
+                    <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
+                    <br>
+                    <input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px; background:none; border:none; color: #ccc; cursor: pointer;">
+                </div>
+                <div><label>Organisation Name</label><input type="text" id="pOrg"></div>
+                <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
+                <div><label>Contact Number</label><input type="text" id="pPhone"></div>
+                <div><label>Email Address</label><input type="text" id="pEmail" readonly></div>
+                <div style="grid-column: span 2;"><label>Company Address</label><textarea id="pAddr"></textarea></div>
+                <button class="btn-gold" style="grid-column: span 2;" onclick="saveProfile()">Save Profile</button>
+            </div>
         </div>
-
-        <div><label>Organisation Name</label><input type="text" id="pOrg"></div>
-        <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
-        <div><label>Contact Number</label><input type="text" id="pPhone"></div>
-        <div><label>Email Address</label><input type="text" id="pEmail" readonly></div>
-        <div style="grid-column: span 2;"><label>Company Address</label><textarea id="pAddr"></textarea></div>
-        <button class="btn-gold" style="grid-column: span 2;" onclick="saveProfile()">Save Profile</button>
-    </div>
-</div>
-
 
         <footer style="text-align: center; padding: 20px; border-top: 1px solid #333; margin-top: auto; font-size: 12px; color: #666;">
             2026 @ Rights & Reserved GORUN LTD.
@@ -191,25 +179,28 @@ if(trackTable) trackTable.innerHTML = html;
             const menu = document.getElementById('menu-' + id);
             if(menu) menu.classList.add('active');
             
-            if(id === 'dashboard') initRealtimeData();
-            if(id === 'tracking') initTracking();
+            if(typeof initRealtimeData === 'function' && (id === 'dashboard' || id === 'tracking')) {
+                initRealtimeData();
+            }
         }
 
         function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
         function logout() { localStorage.clear(); window.location.href='index.html'; }
 
         window.onload = () => {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if(!user) return window.location.href='index.html';
+            const userStr = localStorage.getItem('user');
+            if(!userStr) return window.location.href='index.html';
             
+            const user = JSON.parse(userStr);
             document.getElementById('welcomeName').innerText = user.name || "Partner";
             document.getElementById('pEmail').value = user.email || "";
             document.getElementById('pOrg').value = user.orgName || user.name || "";
+            
             if(user.logoUrl) {
                 document.getElementById('currentLogo').src = user.logoUrl;
                 document.getElementById('sidebarLogo').src = user.logoUrl;
             }
-            initRealtimeData();
+            if(typeof initRealtimeData === 'function') initRealtimeData();
         };
     </script>
 </body>
