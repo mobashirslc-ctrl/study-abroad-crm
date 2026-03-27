@@ -112,42 +112,51 @@ app.patch('/api/admin/users/:id/expiry', async (req, res) => {
 });
 
 // ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইনপুট অ্যামাউন্ট অনুযায়ী আপডেট)
-// ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইনপুট অনুযায়ী গাণিতিক নির্ভুলতা)
+// ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইমেইল ট্রিম এবং লোয়ারকেস ফিক্সড)
 app.patch('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
         const { pendingAmount, status } = req.body; 
-        const amountFromAdmin = Number(pendingAmount) || 0; // অ্যাডমিনের দেওয়া ১২০০০ টাকা
+        const amountFromAdmin = Number(pendingAmount) || 0; 
 
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ১. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে ১২০০০ মাইনাস করা
+        // ১. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে মাইনাস
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
             { 
-                $inc: { pendingAmount: -amountFromAdmin }, // ১৮০০০ - ১২০০০ = ৬০০০ হবে
+                $inc: { pendingAmount: -amountFromAdmin }, 
                 status: status || 'PARTIAL_PAID' 
             }, 
             { new: true }
         );
 
-        // ২. পার্টনারের মেইন (Available) ওয়ালেটে টাকা যোগ করা
-        if (amountFromAdmin > 0) {
-            const updatedPartner = await User.findOneAndUpdate(
-                { email: appData.partnerEmail }, 
-                { $inc: { walletBalance: amountFromAdmin } }, // মেইন ব্যালেন্সে ১২০০০ যোগ হবে
+        // ২. পার্টনারের মেইন ওয়ালেটে টাকা যোগ করা (ইমেইল ফরম্যাট ফিক্সড)
+        if (amountFromAdmin > 0 && appData.partnerEmail) {
+            const partnerEmailClean = appData.partnerEmail.toLowerCase().trim(); // ইমেইল পরিষ্কার করা
+            
+            const updatedUser = await User.findOneAndUpdate(
+                { email: partnerEmailClean }, 
+                { $inc: { walletBalance: amountFromAdmin } }, 
                 { new: true }
             );
-            console.log("✅ New Wallet Balance:", updatedPartner.walletBalance);
+
+            if (!updatedUser) {
+                console.log("❌ User not found with email:", partnerEmailClean);
+                return res.status(404).json({ error: "Partner User not found to update wallet" });
+            }
+            
+            console.log("✅ Wallet Updated! New Balance:", updatedUser.walletBalance);
         }
 
         res.json({ 
-            msg: `Successfully transferred ${amountFromAdmin} to wallet. Remaining pending: ${updatedApp.pendingAmount}`, 
+            msg: `Success! ${amountFromAdmin} added to available wallet.`, 
             data: updatedApp 
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 
 
 
