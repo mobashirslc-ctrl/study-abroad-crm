@@ -130,11 +130,14 @@ app.patch('/api/update-compliance', async (req, res) => {
         };
 
         // এই লাইনটিই আসল পরিবর্তন:
-        if (status === 'VERIFIED' || status === 'DOC_VERIFIED') {
-            updateData.pendingAmount = Number(commission) || 0;
-        } else if (status === 'REJECTED') {
-            updateData.pendingAmount = 0;
-        }
+        // ৪. কমপ্লায়েন্স আপডেট - সংশোধিত ভার্সন
+if (status === 'VERIFIED' || status === 'DOCS_VERIFIED' || status === 'DOC_VERIFIED') {
+    updateData.pendingAmount = Number(commission) || 0;
+} else {
+    // অন্য যেকোনো স্ট্যাটাসে (যেমন: PENDING, MISSING_DOCS) টাকা ০ থাকবে
+    updateData.pendingAmount = 0;
+}
+
 
         const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
         res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
