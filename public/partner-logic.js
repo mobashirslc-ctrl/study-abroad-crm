@@ -79,9 +79,11 @@ async function initTracking() {
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase().trim();
     const userGPA = parseFloat(document.getElementById('userGPA').value) || 0;
-    const container = document.getElementById('uniListContainer');
+    const userScore = parseFloat(document.getElementById('userScore').value) || 0;
+    const userGap = parseFloat(document.getElementById('userGap').value) || 0;
     
-    container.innerHTML = "<tr><td colspan='4'>Searching...</td></tr>";
+    const container = document.getElementById('uniListContainer');
+    container.innerHTML = "<tr><td colspan='5'>Searching...</td></tr>";
     
     try {
         const res = await fetch('/api/universities');
@@ -89,19 +91,52 @@ async function searchUni() {
         let html = "";
 
         unis.forEach(u => {
+            // ১. কান্ট্রি ফিল্টার
             if (!country || u.country.toLowerCase().includes(country)) {
+                
+                // শর্তসমূহ (Eligibility Logic)
+                const isGpaOk = userGPA >= (parseFloat(u.minGPA) || 0);
+                const isScoreOk = userScore >= (parseFloat(u.ieltsReq) || 0);
+                const isGapOk = userGap <= (parseFloat(u.gap) || 99); // গ্যাপ এডমিনের লিমিটের সমান বা কম হতে হবে
+
+                const isEligible = isGpaOk && isScoreOk && isGapOk;
+
+                // কমিশন ক্যালকুলেশন
                 const totalFee = (Number(u.semesterFee) || 0) * 120;
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
-                const isEligible = userGPA >= (parseFloat(u.minGPA) || 0);
+
+                // বাটন এবং স্ট্যাটাস ডিজাইন
+                const statusText = isEligible ? 
+                    `<b style="color:#2ecc71">✅ ELIGIBLE</b>` : 
+                    `<b style="color:#ff4757">❌ NOT ELIGIBLE</b>`;
+                
+                const applyButton = isEligible ? 
+                    `<button class="btn-gold" style="width:auto; padding:5px 10px;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply Now</button>` : 
+                    `<button class="btn-gold" style="width:auto; padding:5px 10px; background:#444; cursor:not-allowed;" disabled>Locked</button>`;
 
                 html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                    <td><b style="color:${isEligible ? '#2ecc71':'#ff4757'}">${isEligible ? '✅ YES':'❌ LOW GPA'}</b></td>
-                    <td style="color:#f1c40f">৳${comm.toLocaleString()}</td>
-                    <td><button class="btn-gold" style="width:auto; padding:5px 10px;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
+                    <td>
+                        <b>${u.universityName}</b><br>
+                        <small>${u.country} | ${u.degree || 'Bachelor'}</small>
+                    </td>
+                    <td>
+                        <small>Min GPA: ${u.minGPA || 'N/A'}</small><br>
+                        <small>Language: ${u.ieltsReq || 'N/A'}</small><br>
+                        <small>Max Gap: ${u.gap || 'N/A'} yrs</small>
+                    </td>
+                    <td>${statusText}</td>
+                    <td style="color:var(--gold)">৳${comm.toLocaleString()}</td>
+                    <td>${applyButton}</td>
                 </tr>`;
             }
         });
+        container.innerHTML = html || "<tr><td colspan='5'>No Universities Found for this country.</td></tr>";
+    } catch (e) { 
+        console.error("Search Error:", e);
+        container.innerHTML = "<tr><td colspan='5'>Error loading data.</td></tr>";
+    }
+}
+
         container.innerHTML = html || "<tr><td colspan='4'>No Universities Found</td></tr>";
     } catch (e) { console.error("Search Error:", e); }
 }
