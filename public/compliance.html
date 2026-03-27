@@ -136,14 +136,29 @@
                 <div>
                     <label style="font-size: 11px; color: var(--gold); font-weight: bold; letter-spacing: 1px;">UPDATE STATUS</label>
                     <select id="statusSelect">
-                        <option value="UNDER_REVIEW">Under Review</option>
-                        <option value="MISSING_DOCS">Missing Documents</option>
-                        <option value="DOCS_VERIFIED">Documents Verified</option>
-                        <option value="OFFER_ISSUED">Offer Letter Issued</option>
-                        <option value="VISA_GRANTED">Visa Granted ✅</option>
-                        <option value="VISA_REJECTED">Visa Rejected ❌</option>
-                        <option value="PAID">Paid (Wallet Release)</option>
-                    </select>
+    <optgroup label="Initial Processing">
+        <option value="PENDING">Pending Review</option>
+        <option value="UNDER_REVIEW">Under Review</option>
+        <option value="MISSING_DOCS">Missing Documents</option>
+        <option value="DOCS_VERIFIED">Documents Verified (Sync Wallet)</option>
+    </optgroup>
+
+    <optgroup label="University Stage">
+        <option value="UNIVERSITY_APPLIED">University Applied</option>
+        <option value="OFFER_LETTER_PENDING">Offer Pending</option>
+        <option value="OFFER_ISSUED">Offer Letter Issued</option>
+        <option value="TUITION_FEE_PAID">Tuition Fee Paid</option>
+        <option value="CAS_COE_ISSUED">CAS/CoE Issued</option>
+    </optgroup>
+
+    <optgroup label="Embassy & Outcome">
+        <option value="VISA_APPLIED">Visa Applied</option>
+        <option value="VISA_GRANTED">Visa Granted ✅</option>
+        <option value="VISA_REJECTED">Visa Rejected ❌</option>
+        <option value="ENROLLED">Enrolled & Finalized</option>
+    </optgroup>
+</select>
+
                 </div>
                 <div>
                     <label style="font-size: 11px; color: #888; font-weight: bold; letter-spacing: 1px;">WALLET STATUS</label>
