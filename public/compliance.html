@@ -30,7 +30,6 @@
         select, textarea { width: 100%; background: #070014; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin: 10px 0; box-sizing: border-box; font-family: inherit; }
         textarea:focus, select:focus { border-color: var(--gold); outline: none; }
         
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
@@ -77,23 +76,22 @@
         </div>
 
         <div id="historySection" class="card tab-content" style="display:none;">
-        <div id="historySection" class="card tab-content" style="display:none;">
-    <h3><i class="fas fa-history" style="color:#2ecc71"></i> Verified History</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Student</th>
-                <th>Passport</th>
-                <th>University</th>
-                <th>Status</th>
-                <th>Handler</th>
-                <th>Action</th> </tr>
-        </thead>
-        <tbody id="historyTableBody"></tbody>
-    </table>
-</div>
-
-    <div id="reviewModal" class="modal">
+            <h3 style="margin-top: 0;"><i class="fas fa-history" style="color:#2ecc71; margin-right: 10px;"></i> Verified History</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Passport</th>
+                        <th>University</th>
+                        <th>Status</th>
+                        <th>Handler</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </div> <div id="reviewModal" class="modal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
                 <h3 id="revStudentName" style="color:var(--gold); margin: 0;">Review Application</h3>
@@ -109,18 +107,20 @@
             <select id="statusSelect">
                 <option value="UNDER_REVIEW">Keep Under Review</option>
                 <option value="VERIFIED">Verified (Send Commission to Partner)</option>
+                <option value="GS_READY">GS Ready</option>
+                <option value="VISA_APPLIED">Visa Applied</option>
                 <option value="FEES_PAID_PENDING_ADMIN">Fees Paid (Wait for Admin Confirmation)</option>
                 <option value="REJECTED">Reject File / Missing Docs</option>
             </select>
 
             <label style="font-size: 12px; color: var(--gold); font-weight: bold;">COMPLIANCE NOTES:</label>
-            <textarea id="complianceNote" placeholder="Write any missing document info or review notes here..." rows="4"></textarea>
+            <textarea id="complianceNote" placeholder="Write review notes or missing doc details here..." rows="4"></textarea>
 
             <div style="display: flex; gap: 15px; margin-top: 20px;">
-                <button id="applyStatusBtn" style="flex:2; background:#2ecc71; color:white; border:none; padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 14px; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);">
+                <button id="applyStatusBtn" style="flex:2; background:#2ecc71; color:white; border:none; padding:14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size: 14px;">
                     <i class="fas fa-cloud-upload-alt"></i> SYNC & UPDATE
                 </button>
-                <button onclick="closeModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; border-radius:8px; cursor:pointer; font-weight: bold;">CANCEL</button>
+                <button onclick="closeModal()" style="flex:1; background:transparent; color:white; border:1px solid #444; border-radius:8px; cursor:pointer;">CANCEL</button>
             </div>
         </div>
     </div>
