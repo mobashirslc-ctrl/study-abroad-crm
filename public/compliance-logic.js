@@ -146,12 +146,14 @@ document.getElementById('applyStatusBtn').onclick = async () => {
     // --- নতুন লজিক শেষ ---
 
     const payload = {
-        appId: currentActiveId,
-        status: selectedStatus,
-        complianceNote: note,
-        staffEmail: staffEmail,
-        commission: amountToSync // এটি এখন ডাইনামিক (০ অথবা কমিশন এমাউন্ট)
-    };
+    studentName: document.getElementById('sName').value,
+    passportNo: document.getElementById('pNo').value,
+    university: document.getElementById('uniSelect').value,
+    partnerEmail: localStorage.getItem('userEmail'),
+    // এখানে কোনো pendingAmount বা commission পাঠাবেন না। 
+    status: 'PENDING' 
+};
+
 
     try {
         btn.disabled = true;
