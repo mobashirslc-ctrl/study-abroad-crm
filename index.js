@@ -11,13 +11,12 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-// static file path fix for Vercel
+// Static file path fix for Vercel
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
 // --- 🗄️ MongoDB Connection ---
-// আপনার নতুন ইউজার GORUN এবং ডাটাবেস crm_db ব্যবহার করা হয়েছে
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
 mongoose.connect(MONGO_URI)
 .then(() => console.log('✅ Connected successfully to crm_db'))
@@ -62,7 +61,7 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
 
 // --- 🚀 API Routes ---
 
-// 1. Auth
+// Auth
 app.post('/api/register', async (req, res) => {
     try {
         const { fullName, email, password } = req.body;
@@ -83,7 +82,7 @@ app.post('/api/login', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 2. Application Actions
+// Application & Compliance
 app.get('/api/applications', async (req, res) => {
     try {
         const apps = await Application.find().sort({ timestamp: -1 });
@@ -91,49 +90,28 @@ app.get('/api/applications', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/submit-application', async (req, res) => {
-    try {
-        const newApp = new Application(req.body);
-        await newApp.save();
-        res.status(201).json({ msg: 'Submitted' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 3. Compliance Actions (Lock & Update)
 app.patch('/api/lock-application', async (req, res) => {
     try {
         const { appId, staff } = req.body;
-        const appData = await Application.findById(appId);
-        if (!appData) return res.status(404).json({ msg: "Not found" });
-
-        if (appData.status === 'UNDER_REVIEW' && appData.complianceMember !== staff) {
-            return res.status(403).json({ msg: "Already being reviewed by " + appData.complianceMember });
-        }
-
-        appData.status = 'UNDER_REVIEW';
-        appData.complianceMember = staff;
-        await appData.save();
-        res.json({ msg: "Locked for review", data: appData });
+        await Application.findByIdAndUpdate(appId, { status: 'UNDER_REVIEW', complianceMember: staff });
+        res.json({ msg: "Locked for review" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.patch('/api/update-compliance', async (req, res) => {
     try {
         const { appId, status, note, staff } = req.body;
-        const appData = await Application.findById(appId);
-        if (!appData) return res.status(404).json({ msg: "File not found" });
-
-        appData.status = status;
-        appData.complianceNote = note;
-        appData.complianceMember = staff;
-        appData.pendingAmount = (status === 'VERIFIED') ? appData.commissionBDT : 0;
-
-        await appData.save();
+        const update = { status, complianceNote: note, complianceMember: staff };
+        if (status === 'VERIFIED') {
+            const app = await Application.findById(appId);
+            update.pendingAmount = app.commissionBDT || 0;
+        }
+        await Application.findByIdAndUpdate(appId, update);
         res.json({ msg: `Application ${status} successfully` });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 4. University Actions
+// University APIs
 app.get('/api/universities', async (req, res) => {
     try {
         const unis = await University.find().sort({ timestamp: -1 });
@@ -145,29 +123,13 @@ app.post('/api/add-university', async (req, res) => {
     try {
         const newUni = new University(req.body);
         await newUni.save();
-        res.status(201).json({ msg: 'University Added' });
+        res.status(201).json({ msg: 'University Added Successfully' });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 5. Withdrawal Actions
-app.post('/api/withdrawals', async (req, res) => {
-    try {
-        const wd = new Withdrawal(req.body);
-        await wd.save();
-        res.status(201).json({ msg: 'Requested' });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Frontend Routing
+// Catch-all route for frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-// Export for Vercel
 module.exports = app;
-
-// Listen for local development
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 10000;
-    app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
-}
