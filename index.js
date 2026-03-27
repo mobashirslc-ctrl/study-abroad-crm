@@ -27,8 +27,7 @@ const connectDB = async () => {
     }
 };
 
-// --- 👤 Models (সব মডেল আগে ডিফাইন করা ভালো) ---
-
+// --- 👤 Models ---
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true, lowercase: true, trim: true },
@@ -86,18 +85,6 @@ app.patch('/api/user/profile', async (req, res) => {
         res.json(updatedUser);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// ৮. স্টুডেন্ট অ্যাপ্লিকেশন সাবমিট (এটি আপনার কোডে মিসিং ছিল)
-app.post('/api/submit-application', async (req, res) => {
-    await connectDB();
-    try {
-        const newApp = new Application(req.body); // ফ্রন্টএন্ড থেকে পাঠানো সব ডাটা এখানে আসবে
-        await newApp.save();
-        res.status(201).json({ msg: "Application saved successfully", data: newApp });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
 
 // ২. সিঙ্গেল অ্যাপ্লিকেশন ডিটেইলস (আইডি চেকসহ)
 app.get('/api/applications/:id', async (req, res) => {
@@ -165,6 +152,18 @@ app.get('/api/universities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- ⭐ নতুন রুট: স্টুডেন্ট অ্যাপ্লিকেশন সাবমিট ---
+app.post('/api/submit-application', async (req, res) => {
+    await connectDB();
+    try {
+        const newApp = new Application(req.body);
+        await newApp.save();
+        res.status(201).json({ msg: "Application saved successfully", data: newApp });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ৭. লগইন রুট
 app.post('/api/login', async (req, res) => {
     await connectDB();
@@ -178,7 +177,7 @@ app.post('/api/login', async (req, res) => {
             email: user.email, 
             name: user.fullName, 
             role: user.role,
-            orgName: user.orgName, // প্রোফাইলের জন্য এগুলো দরকার
+            orgName: user.orgName, 
             logoUrl: user.logoUrl 
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
