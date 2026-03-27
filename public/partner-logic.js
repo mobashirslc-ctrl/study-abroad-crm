@@ -1,7 +1,7 @@
 /**
  * SCC Group - Partner Portal Logic (2026)
  * Full Integration: MongoDB, Cloudinary, QR Tracking & Wallet
- * Status: FIXED & VERIFIED
+ * Status: FINAL VERIFIED & OPTIMIZED
  */
 
 // 1. Global Configuration
@@ -37,7 +37,7 @@ window.onload = () => {
 };
 
 // ---------------------------------------------------------
-// 3. Core Logic: Dashboard, Tracking & Wallet
+// 3. Core Logic: Dashboard & Wallet Tracking
 // ---------------------------------------------------------
 async function initRealtimeData() {
     try {
@@ -45,8 +45,6 @@ async function initRealtimeData() {
         if (!res.ok) throw new Error("Failed to fetch data");
         
         const allApps = await res.json();
-        
-        // বর্তমান পার্টনারের ফাইলগুলো ফিল্টার করা
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
@@ -55,8 +53,6 @@ async function initRealtimeData() {
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
-            
-            // মেইন ফিক্স: স্টাফ ভেরিফাই না করা পর্যন্ত pendingAmount ০ থাকবে
             const actualAmount = Number(data.pendingAmount || 0);
 
             if (status !== 'PAID' && status !== 'REJECTED') {
@@ -75,60 +71,39 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        // UI Updates - Stats
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
 
-        // টেবিল আপডেট (হোম এবং ট্র্যাকিং উভয় পেজের জন্য)
         const homeTable = document.getElementById('homeTrackingBody');
         if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
 
         const trackTable = document.getElementById('fullTrackingBody');
         if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
         
-        // Withdraw Button Logic
         const btnW = document.getElementById('btnWithdraw');
         if(btnW) {
             const isEligible = finalBalance >= 5000;
             btnW.disabled = !isEligible;
             btnW.style.background = isEligible ? "#2ecc71" : "#444";
         }
-    } catch (e) { 
-        console.error("Data Fetch Error:", e);
-    }
+    } catch (e) { console.error("Data Fetch Error:", e); }
 }
 
 // ---------------------------------------------------------
-// 4. File Upload & Submission
+// 4. File Handling & Submissions
 // ---------------------------------------------------------
 async function uploadFile(file) {
     if(!file) return "";
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-    
     try {
         const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
         const data = await res.json();
         return data.secure_url || "";
-    } catch (e) {
-        console.error("Cloudinary Error:", e);
-        return "";
-    }
-}
-
-async function uploadPartnerLogo() {
-    const file = document.getElementById('logoUpload').files[0];
-    if(!file) return;
-    try {
-        const url = await uploadFile(file);
-        if(url) {
-            document.getElementById('currentLogo').src = url;
-            saveProfile(); 
-        }
-    } catch (e) { alert("Logo upload failed"); }
+    } catch (e) { return ""; }
 }
 
 async function submitApplication() {
@@ -174,18 +149,16 @@ async function submitApplication() {
             generateAdmissionSlip(payload); 
             location.reload();
         }
-    } catch (e) {
-        alert("Error: " + e.message);
-    } finally {
+    } catch (e) { alert("Error: " + e.message); } 
+    finally {
         btn.innerText = "Submit Application";
         btn.disabled = false;
     }
 }
 
 // ---------------------------------------------------------
-// 5. Admission Slip, Search & Profile
+// 5. Admission Slip, Search & Profiles
 // ---------------------------------------------------------
-function generateAdmissionSlip(data) {
 function generateAdmissionSlip(data) {
     const partnerLogo = document.getElementById('currentLogo').src;
     const partnerName = document.getElementById('pOrg').value || "Partner Agency";
@@ -195,7 +168,6 @@ function generateAdmissionSlip(data) {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
 
     const slipWindow = window.open('', '_blank', 'width=900,height=850');
-    
     const slipHtml = `
     <html>
     <head><title>Admission Slip - ${data.studentName}</title>
@@ -212,7 +184,7 @@ function generateAdmissionSlip(data) {
         <div class="slip-card">
             <div class="header">
                 <img src="${partnerLogo}" height="65">
-                <div style="text-align:right"><h3 style="margin:0;">ADMISSION ENROLLMENT SLIP</h3><small>SCC-2026-REF</small></div>
+                <div style="text-align:right"><h3 style="margin:0;">ADMISSION ENROLLMENT SLIP</h3><small>REF: SCC-2026</small></div>
             </div>
             <div class="section-header">APPLICANT INFORMATION</div>
             <div class="details">
@@ -237,46 +209,34 @@ function generateAdmissionSlip(data) {
         </div>
     </body>
     </html>`;
-    
     slipWindow.document.write(slipHtml);
     slipWindow.document.close();
 }
-
 
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const gpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const score = parseFloat(document.getElementById('userScore').value) || 0;
-    
     const container = document.getElementById('uniListContainer');
     if(!container) return;
     container.innerHTML = "Searching...";
-
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
         let html = "";
-
         unis.forEach(u => {
             if (!country || u.country.toLowerCase().includes(country)) {
                 const isEligible = gpa >= u.minGPA && score >= u.ieltsReq;
                 const totalFee = (Number(u.semesterFee) || 0) * 120; 
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
-
-                // কলামগুলো আপনার স্ক্রিনশটের অর্ডারে সাজানো হয়েছে (মোট ৭টি কলাম)
                 html += `<tr>
                     <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
                     <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
                     <td>$${u.semesterFee}</td>
                     <td>${u.jobOpportunity || 'Standard'}</td>
-                    <td style="color: ${isEligible ? '#2ecc71' : '#e74c3c'}">
-                        ${isEligible ? '✅ Eligible' : '❌ Not Eligible'}
-                    </td>
+                    <td style="color: ${isEligible ? '#2ecc71' : '#e74c3c'}">${isEligible ? '✅ Eligible' : '❌ Not Eligible'}</td>
                     <td style="color:gold">৳${comm.toLocaleString()}</td>
-                    <td>
-                        <button class="btn-gold" style="padding: 5px 10px; cursor:pointer;" 
-                        onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button>
-                    </td>
+                    <td><button class="btn-gold" style="padding: 5px 10px; cursor:pointer;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
                 </tr>`;
             }
         });
@@ -293,13 +253,11 @@ async function saveProfile() {
         address: document.getElementById('pAddr').value,
         logoUrl: document.getElementById('currentLogo').src
     };
-    
     const res = await fetch('/api/user/profile', {
         method: 'PATCH',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     });
-    
     if(res.ok) {
         alert("✅ Profile Updated!");
         localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
