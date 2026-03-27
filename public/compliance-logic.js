@@ -1,12 +1,9 @@
 let currentActiveId = null;
 let currentCommission = 0;
-// ইউজারের ইমেইল লোকাল স্টোরেজ থেকে নিচ্ছি (লগইনের সময় সেট করা থাকতে হবে)
 const staffEmail = localStorage.getItem('userEmail') || "compliance@scc.com";
 
-// ১. স্টাফের নাম ডিসপ্লে
 document.getElementById('staffNameDisplay').innerText = staffEmail.split('@')[0].toUpperCase();
 
-// ২. ডাটা লোড করা (Real-time feel এর জন্য ১ মিনিট পর পর অটো রিফ্রেশ দিতে পারেন)
 async function loadApplications() {
     try {
         const res = await fetch('/api/applications'); 
@@ -16,19 +13,27 @@ async function loadApplications() {
         let historyHtml = "";
 
         apps.forEach(d => {
-            // লজিক: শুধু 'UNDER_REVIEW' থাকলে ইনকামিং কিউতে দেখাবে, বাকি সব হিস্ট্রিতে
-            const isFinished = d.status !== "UNDER_REVIEW";
+            // লজিক: শুধু 'UNDER_REVIEW' বা 'PENDING' থাকলে ইনকামিং কিউতে দেখাবে
+            const isFinished = !["UNDER_REVIEW", "PENDING"].includes(d.status);
             
+            // লকিং ইন্ডিকেটর: যদি অন্য কেউ লক করে রাখে
+            const isLockedByOther = d.lockBy && d.lockBy !== staffEmail && new Date(d.lockUntil) > new Date();
+            const lockStyle = isLockedByOther ? "opacity: 0.6; cursor: not-allowed;" : "";
+            const btnText = isLockedByOther ? `<i class="fas fa-lock"></i> LOCKED` : `<i class="fas fa-edit"></i> REVIEW`;
+
             const row = `
                 <tr>
                     <td><b>${d.studentName}</b></td>
                     <td>${d.passportNo || 'N/A'}</td>
                     <td>${d.university}</td>
-                    <td><span class="status-pill">${d.status.replace(/_/g, ' ')}</span></td>
+                    <td><span class="status-pill status-${d.status.toLowerCase()}">${d.status.replace(/_/g, ' ')}</span></td>
                     <td>${d.complianceMember || 'Pending'}</td>
                     <td>
-                        <button class="btn-action" onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}')">
-                            <i class="fas fa-edit"></i> REVIEW
+                        <button class="btn-action" 
+                                style="${lockStyle}" 
+                                onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}')"
+                                ${isLockedByOther ? 'disabled' : ''}>
+                            ${btnText}
                         </button>
                     </td>
                 </tr>`;
@@ -44,41 +49,50 @@ async function loadApplications() {
     }
 }
 
-// সংশোধিত রিভিউ মোডাল ওপেন ফাংশন (API কল ছাড়া)
+// ৪. হার্ড লকিং নিশ্চিত করে মোডাল ওপেন
 window.openReviewModal = async (id, name, commission, passport) => {
-    currentActiveId = id;
-    currentCommission = commission;
-    
-    document.getElementById('revStudentName').innerText = "Reviewing: " + name;
-    document.getElementById('targetComm').innerText = `Passport: ${passport} | Commission: ৳${commission.toLocaleString()}`;
-    
-    // ডাটা অলরেডি টেবিলে আছে, তাই আলাদা fetch করার দরকার নেই যদি ডাটা স্ট্রাকচার জানা থাকে।
-    // তবে যদি PDF লিংক গুলো ডাটাবেস থেকে আনতে হয়, তবে নিচের fetch টি ঠিক করতে হবে।
-    
     try {
+        // ১. হার্ড লকিং রিকোয়েস্ট পাঠানো
+        const lockRes = await fetch(`/api/lock-application/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staffEmail: staffEmail })
+        });
+        
+        const lockData = await lockRes.json();
+
+        if (lockRes.status === 403) {
+            alert(`⚠️ এই ফাইলটি বর্তমানে ${lockData.message}। অনুগ্রহ করে ৫ মিনিট পর চেষ্টা করুন।`);
+            return;
+        }
+
+        // ২. লক সফল হলে ডাটা ফেচ করা
+        currentActiveId = id;
+        currentCommission = commission;
+        
+        document.getElementById('revStudentName').innerText = "Reviewing: " + name;
+        document.getElementById('targetComm').innerText = `Passport: ${passport} | Commission: ৳${commission.toLocaleString()}`;
+        
         const res = await fetch(`/api/applications/${id}`);
-        if (!res.ok) throw new Error("API Route not found"); // চেক করার জন্য
         const d = await res.json();
         
         let docHtml = "";
-        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Passport Copy</a>`;
-        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Academic Records</a>`;
-        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Other Documents</a>`;
+        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> View Passport</a>`;
+        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Academic Records</a>`;
+        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> Other Docs</a>`;
 
-        document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange; font-size:12px;'>No PDF documents found.</p>";
+        document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
         
         if(d.status) document.getElementById('statusSelect').value = d.status;
         document.getElementById('complianceNote').value = d.complianceNote || "";
 
         document.getElementById('reviewModal').style.display = 'flex';
     } catch (e) {
-        console.error("Detail Fetch Error:", e);
-        alert("Could not load details. আপনার ব্যাকেন্ডে /api/applications/:id রাউটটি চেক করুন।");
+        alert("Error acquiring lock or loading details.");
     }
 };
 
-
-// ৪. স্ট্যাটাস আপডেট ও ওয়ালেট সিঙ্ক (PATCH Request)
+// ৫. স্ট্যাটাস আপডেট ও অটো-আনলক
 document.getElementById('applyStatusBtn').onclick = async () => {
     if (!currentActiveId) return;
     
@@ -88,15 +102,15 @@ document.getElementById('applyStatusBtn').onclick = async () => {
 
     const payload = {
         appId: currentActiveId,
-        status: selectedStatus, // e.g., "VERIFIED", "GS_READY", "APPLIED_VISA"
-        complianceNote: note || "No notes",
-        complianceMember: staffEmail.split('@')[0],
+        status: selectedStatus,
+        complianceNote: note || "Reviewed by compliance",
+        staffEmail: staffEmail,
         commission: currentCommission 
     };
 
     try {
         btn.disabled = true;
-        btn.innerText = "Syncing Data...";
+        btn.innerText = "Syncing...";
 
         const res = await fetch('/api/update-compliance', { 
             method: 'PATCH', 
@@ -105,22 +119,20 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         });
 
         if(res.ok) {
-            alert("✅ Success: Update Saved!");
+            alert("✅ Updated & Unlocked!");
             closeModal();
-            loadApplications(); // ডাটা রিফ্রেশ
+            loadApplications(); 
         } else {
-            const err = await res.json();
-            alert("❌ Update Failed: " + err.message);
+            alert("❌ Update Failed!");
         }
     } catch (e) {
-        alert("Network Error: Backend not reachable.");
+        alert("Network Error.");
     } finally {
         btn.disabled = false;
         btn.innerText = "SYNC & UPDATE";
     }
 };
 
-// ৫. অন্যান্য ইউটিলিটি ফাংশন
 window.closeModal = () => {
     document.getElementById('reviewModal').style.display = 'none';
 };
@@ -132,11 +144,4 @@ window.switchTab = (tabId, el) => {
     el.classList.add('active');
 };
 
-// লগআউট লজিক
-document.getElementById('logoutBtn').onclick = () => {
-    localStorage.clear();
-    window.location.replace("index.html");
-};
-
-// পেজ লোড হলে ডাটা আনা
 loadApplications();
