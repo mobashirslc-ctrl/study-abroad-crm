@@ -56,13 +56,54 @@
     <div class="sidebar">
         <div class="logo-container"><img src="logo.jpeg" alt="SCC Logo"></div>
         <ul>
-            <li id="menu-dashboard" class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
-            <li id="menu-universities" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
-            <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
-            <li id="menu-profile" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
-            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
-        </ul>
+    <li id="menu-dashboard" class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
+    <li id="menu-universities" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Search Assessment</li>
+    <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-satellite-dish"></i> Live Tracking</li>
+    <li id="menu-earnings" onclick="showTab('earnings')"><i class="fas fa-wallet"></i> Earnings & Withdraw</li>
+    <li id="menu-profile" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile Settings</li>
+    <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+</ul>
+
+<div id="earnings" class="tab-content">
+    <h3>Financial Overview</h3>
+    <div class="card-grid">
+        <div class="card"><h3>Total Earnings</h3><p id="totalEarned" style="color:var(--green);">৳0</p></div>
+        <div class="card"><h3>Available for Withdraw</h3><p id="withdrawableBal" style="color:var(--gold);">৳0</p></div>
     </div>
+    <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left;">
+        <h4>Request Withdrawal</h4>
+        <label>Amount (Min. 5000)</label><input type="number" id="wAmount" placeholder="Enter BDT Amount">
+        <label>Payment Method</label>
+        <select id="wMethod">
+            <option value="Bank">Bank Transfer</option>
+            <option value="bKash">bKash (Personal)</option>
+        </select>
+        <label>Account Details</label>
+        <textarea id="wDetails" placeholder="Bank Info (Name, A/C No, Branch) OR bKash No" style="width:100%; background:#252545; color:white; border-radius:6px; border:1px solid #444; padding:10px;"></textarea>
+        <button class="btn-gold" id="btnWithdraw" disabled onclick="handleWithdraw()" style="margin-top:15px;">Submit Request</button>
+    </div>
+</div>
+
+<div id="profile" class="tab-content">
+    <h3>Agency Profile Settings</h3>
+    <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+        <div style="grid-column: span 2; text-align: center;">
+            <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
+            <br><input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:12px;">
+        </div>
+        <div><label>Organisation Name</label><input type="text" id="pOrg"></div>
+        <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
+        <div><label>Contact Number</label><input type="text" id="pPhone"></div>
+        <div><label>Email Address</label><input type="text" id="pEmail" readonly></div>
+        <div style="grid-column: span 2;"><label>Company Address</label><textarea id="pAddr" style="width:100%; background:#252545; color:white; padding:10px;"></textarea></div>
+        <button class="btn-gold" style="grid-column: span 2;" onclick="saveProfile()">Save Profile</button>
+    </div>
+</div>
+
+<footer style="text-align: center; padding: 20px; border-top: 1px solid #333; margin-top: 50px; font-size: 12px; color: #666;">
+    2026 @ Rights & Reserved GORUN LTD.
+</footer>
+
 
     <div class="main-content">
         <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
