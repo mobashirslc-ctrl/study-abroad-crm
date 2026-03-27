@@ -67,42 +67,48 @@ const University = mongoose.models.University || mongoose.model('University', ne
 // --- 🚀 API Routes ---
 
 /**
- * ১. নতুন অ্যাপ্লিকেশন সাবমিট রুট (প্রয়োজনীয় রুট)
- * পার্টনার পোর্টাল থেকে আসা স্টুডেন্ট ডাটা এবং পিডিএফ লিঙ্ক সেভ করে।
+ * ১. একটি নির্দিষ্ট অ্যাপ্লিকেশনের ডিটেইলস দেখা (নতুন যোগ করা হয়েছে)
+ * এটি না থাকলে রিভিউ মোডাল ওপেন হবে না।
  */
-app.post('/api/submit-application', async (req, res) => {
+app.get('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
-        const newApp = new Application(req.body);
-        const savedApp = await newApp.save();
-        res.status(201).json({ msg: 'Application Saved Successfully', data: savedApp });
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "Not found" });
+        res.json(appData);
     } catch (e) {
-        console.error("Submission Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
 
-// ২. অ্যাপ্লিকেশন আপডেট / রিভিউ সেভ রুট
+/**
+ * ২. অ্যাপ্লিকেশন আপডেট / রিভিউ সেভ রুট (সংশোধিত)
+ * ফ্রন্টএন্ডের Payload এর সাথে মিলিয়ে আপডেট করা হয়েছে।
+ */
 app.patch('/api/update-compliance', async (req, res) => {
     await connectDB(); 
     try {
-        const { appId, status, note, staff } = req.body;
+        const { appId, status, complianceNote, staffEmail, commission } = req.body;
         
-        let update = { 
+        let updateData = { 
             status: status, 
-            complianceNote: note, 
-            complianceMember: staff,
-            handledBy: staff 
+            complianceNote: complianceNote, 
+            complianceMember: staffEmail, // ফ্রন্টএন্ড থেকে আসা staffEmail সেভ হবে
+            timestamp: new Date()
         };
 
-        if (status === 'DOC_VERIFIED' || status === 'VERIFIED') {
-            const appData = await Application.findById(appId);
-            if (appData) {
-                update.pendingAmount = appData.commissionBDT || 0;
-            }
+        // যদি ভেরিফাইড হয়, তবে পেন্ডিং এমাউন্টে কমিশন যোগ হবে
+        if (status === 'VERIFIED') {
+            updateData.pendingAmount = commission || 0;
+        } else if (status === 'REJECTED') {
+            updateData.pendingAmount = 0;
         }
 
-        const updatedApp = await Application.findByIdAndUpdate(appId, update, { new: true });
+        const updatedApp = await Application.findByIdAndUpdate(
+            appId, 
+            { $set: updateData }, 
+            { new: true }
+        );
         
         if(!updatedApp) return res.status(404).json({ error: "Application not found" });
         
@@ -113,7 +119,9 @@ app.patch('/api/update-compliance', async (req, res) => {
     }
 });
 
-// ৩. সকল অ্যাপ্লিকেশন রিট্রিভ
+/**
+ * ৩. সকল অ্যাপ্লিকেশন রিট্রিভ (সব ঠিক আছে)
+ */
 app.get('/api/applications', async (req, res) => {
     await connectDB();
     try {
