@@ -112,43 +112,41 @@ app.patch('/api/admin/users/:id/expiry', async (req, res) => {
 });
 
 // ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইনপুট অ্যামাউন্ট অনুযায়ী আপডেট)
+// ৫. ম্যানুয়াল ওয়ালেট আপডেট (সংশোধিত: ইনপুট অনুযায়ী গাণিতিক নির্ভুলতা)
 app.patch('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
-        // ফ্রন্টএন্ড থেকে আসা পেন্ডিং অ্যামাউন্ট (যেটা অ্যাডমিন বক্সে লিখেছে)
-        const { pendingAmount, status } = req.body;
-        const amountFromAdmin = Number(pendingAmount) || 0;
+        const { pendingAmount, status } = req.body; 
+        const amountFromAdmin = Number(pendingAmount) || 0; // অ্যাডমিনের দেওয়া ১২০০০ টাকা
 
-        // ১. অ্যাপ্লিকেশনটি খুঁজে বের করা
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ২. অ্যাপ্লিকেশন আপডেট: 
-        // পেন্ডিং থেকে এই অ্যামাউন্টটি মাইনাস করা (increment with negative value)
+        // ১. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে ১২০০০ মাইনাস করা
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
             { 
-                $inc: { pendingAmount: -amountFromAdmin }, // পেন্ডিং থেকে অত টাকা কমবে
+                $inc: { pendingAmount: -amountFromAdmin }, // ১৮০০০ - ১২০০০ = ৬০০০ হবে
                 status: status || 'PARTIAL_PAID' 
             }, 
             { new: true }
         );
 
-        // ৩. পার্টনারের মেইন (Available) ওয়ালেটে টাকা যোগ করা
+        // ২. পার্টনারের মেইন (Available) ওয়ালেটে টাকা যোগ করা
         if (amountFromAdmin > 0) {
-            await User.findOneAndUpdate(
+            const updatedPartner = await User.findOneAndUpdate(
                 { email: appData.partnerEmail }, 
-                { $inc: { walletBalance: amountFromAdmin } } // মেইন ব্যালেন্সে যোগ হবে
+                { $inc: { walletBalance: amountFromAdmin } }, // মেইন ব্যালেন্সে ১২০০০ যোগ হবে
+                { new: true }
             );
+            console.log("✅ New Wallet Balance:", updatedPartner.walletBalance);
         }
 
         res.json({ 
-            msg: `Successfully moved ${amountFromAdmin} to available wallet.`, 
+            msg: `Successfully transferred ${amountFromAdmin} to wallet. Remaining pending: ${updatedApp.pendingAmount}`, 
             data: updatedApp 
         });
-    } catch (e) { 
-        res.status(500).json({ error: e.message }); 
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 
@@ -256,21 +254,24 @@ app.post('/api/submit-application', async (req, res) => {
     }
 });
 
-// ৭. লগইন রুট
+// ৭. লগইন রুট (Wallet Balance সহ - সংশোধিত)
 app.post('/api/login', async (req, res) => {
     await connectDB();
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(password, user.password))){
+        
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
+
         res.json({ user: { 
             email: user.email, 
             name: user.fullName, 
             role: user.role,
             orgName: user.orgName, 
-            logoUrl: user.logoUrl 
+            logoUrl: user.logoUrl,
+            walletBalance: user.walletBalance || 0 // এটি নিশ্চিত করবে ফ্রন্টএন্ডে টাকা দেখা যাচ্ছে
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
