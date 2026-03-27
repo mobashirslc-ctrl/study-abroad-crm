@@ -111,19 +111,38 @@ app.patch('/api/admin/users/:id/expiry', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৫. ম্যানুয়াল ওয়ালেট/পেমেন্ট আপডেট (প্রম্পট বক্সের ডাটা সেভ করা)
+// ৫. ম্যানুয়াল ওয়ালেট আপডেট (অ্যাডমিন যা লিখবেন তা সরাসরি পার্টনারের ওয়ালেটে যোগ হবে)
 app.patch('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
         const { pendingAmount, status } = req.body;
+        const amountToAdd = Number(pendingAmount) || 0;
+
+        // ১. প্রথমে এই অ্যাপ্লিকেশন থেকে পার্টনারের ইমেইল খুঁজে বের করা
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "Application not found" });
+
+        // ২. অ্যাপ্লিকেশন ডাটা আপডেট করা (স্ট্যাটাস এবং পেন্ডিং অ্যামাউন্ট সেভ করা)
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
-            { pendingAmount, status }, 
+            { pendingAmount: amountToAdd, status }, 
             { new: true }
         );
-        res.json(updatedApp);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+
+        // ৩. সরাসরি পার্টনারের মেইন ওয়ালেটে এই টাকা যোগ করা (কোনো স্ট্যাটাস চেক ছাড়াই)
+        if (amountToAdd > 0) {
+            await User.findOneAndUpdate(
+                { email: appData.partnerEmail }, 
+                { $inc: { walletBalance: amountToAdd } } // ইউজারের আগের ব্যালেন্সের সাথে যোগ হবে
+            );
+        }
+
+        res.json({ msg: "Success! Wallet balance updated for partner.", data: updatedApp });
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
+
 
 // ১. প্রোফাইল আপডেট
 app.patch('/api/user/profile', async (req, res) => {
