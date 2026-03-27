@@ -107,22 +107,35 @@ async function initRealtimeData() {
 // ---------------------------------------------------------
 async function requestWithdraw() {
     if (currentAvailableBalance < 5000) return alert("Minimum 5,000 BDT required!");
-    if (!confirm(`Confirm withdraw request for ৳${currentAvailableBalance.toLocaleString()}?`)) return;
+    
+    const amount = currentAvailableBalance; // পুরো অ্যামাউন্ট রিকোয়েস্ট
+    if (!confirm(`Confirm withdraw request for ৳${amount.toLocaleString()}?`)) return;
 
     try {
-        const res = await fetch('/api/user/profile', {
-            method: 'PATCH',
+        // প্রোফাইল আপডেট করার বদলে সরাসরি একটি withdrawal রিকোয়েস্ট পাঠানো
+        const res = await fetch('/api/withdrawals', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email: partnerEmail,
-                withdrawRequest: true,
-                requestAmount: currentAvailableBalance,
-                requestDate: new Date().toISOString()
+                partnerEmail: partnerEmail,
+                partnerName: userData.orgName || userData.name,
+                amount: amount,
+                status: 'PENDING',
+                timestamp: new Date().toISOString()
             })
         });
-        if(res.ok) alert("✅ Request Sent! Admin will process it soon.");
-    } catch (e) { alert("Failed to send request."); }
+
+        if(res.ok) {
+            alert("✅ Request Sent Successfully! Wait for Admin Approval.");
+            location.reload(); // ড্যাশবোর্ড রিফ্রেশ
+        } else {
+            throw new Error("Failed to send request");
+        }
+    } catch (e) { 
+        alert("Error: " + e.message); 
+    }
 }
+
 
 async function uploadFile(file) {
     if(!file) return "";
