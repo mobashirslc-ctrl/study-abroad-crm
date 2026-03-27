@@ -99,18 +99,39 @@
             </div>
         </div>
     </div>
-<div id="applyModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle" style="color:var(--gold);">Apply Student</h3>
-        <input type="text" id="sName" placeholder="Student Full Name">
-        <input type="text" id="sPassport" placeholder="Passport Number">
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div><small>Passport Copy</small><input type="file" id="file1"></div>
-            <div><small>Academic Docs</small><input type="file" id="file2"></div>
-            <div><small>Language/IELTS</small><input type="file" id="file3"></div>
-            <div><small>CV/Experience</small><input type="file" id="file4"></div>
+    <div id="applyModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="color:var(--gold); margin-top:0;">Student Application</h3>
+            
+            <label style="font-size: 12px; color: #aaa;">Basic Info</label>
+            <input type="text" id="sName" placeholder="Student Full Name">
+            <input type="text" id="sPassport" placeholder="Passport Number">
+            
+            <label style="font-size: 12px; color: #aaa;">Required Documents (PDF/JPG)</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="file-input-group">
+                    <small style="color:var(--gold)">Passport Copy</small>
+                    <input type="file" id="file1">
+                </div>
+                <div class="file-input-group">
+                    <small style="color:var(--gold)">Academic Docs</small>
+                    <input type="file" id="file2">
+                </div>
+                <div class="file-input-group">
+                    <small style="color:var(--gold)">Language Score</small>
+                    <input type="file" id="file3">
+                </div>
+                <div class="file-input-group">
+                    <small style="color:var(--gold)">CV / Others</small>
+                    <input type="file" id="file4">
+                </div>
+            </div>
+
+            <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:20px;">Submit Application</button>
+            <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Cancel / Close</button>
         </div>
+    </div>
+
 
         <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:10px;">Submit Application</button>
         <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:10px;">Cancel</button>
