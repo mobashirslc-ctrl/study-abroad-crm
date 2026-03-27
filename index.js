@@ -166,27 +166,39 @@ app.patch('/api/applications/:id', async (req, res) => {
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনারের জন্য)
+// ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনার যখন টাকা তোলার রিকোয়েস্ট পাঠাবে)
 app.post('/api/withdrawals', async (req, res) => {
     await connectDB();
     try {
-        const { email, amount, partnerName } = req.body;
+        // এখানে method যুক্ত করা হয়েছে (বিকাশ নম্বর বা ব্যাংক ডিটেইলস এর জন্য)
+        const { email, amount, partnerName, method } = req.body;
         
         // চেক করা যে পার্টনারের ওয়ালেটে যথেষ্ট টাকা আছে কিনা
         const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (!user || user.walletBalance < amount) {
+        
+        if (!user) {
+            return res.status(404).json({ error: "User not found!" });
+        }
+
+        if (user.walletBalance < Number(amount)) {
             return res.status(400).json({ error: "Insufficient balance in wallet!" });
         }
 
         const newWithdraw = new Withdrawal({
             partnerEmail: email.toLowerCase().trim(),
-            partnerName,
-            amount: Number(amount)
+            partnerName: partnerName,
+            amount: Number(amount),
+            method: method || 'Not Specified', // এখান থেকে পেমেন্ট মেথড সেভ হবে
+            status: 'PENDING'
         });
+
         await newWithdraw.save();
         res.status(201).json({ msg: "Withdrawal request submitted successfully!" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { 
+        res.status(500).json({ error: e.message }); 
+    }
 });
+
 // ২. সব উইথড্রয়াল লিস্ট দেখা (এডমিনের জন্য)
 app.get('/api/withdrawals', async (req, res) => {
     await connectDB();
