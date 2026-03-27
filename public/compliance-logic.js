@@ -23,22 +23,21 @@ async function loadApplications() {
             const lockStyle = isLockedByOther ? "opacity: 0.6; cursor: not-allowed;" : "";
             const btnText = isLockedByOther ? `<i class="fas fa-lock"></i> LOCKED` : `<i class="fas fa-edit"></i> REVIEW`;
 
-            const row = `
-                <tr>
-                    <td><b>${d.studentName}</b></td>
-                    <td>${d.passportNo || 'N/A'}</td>
-                    <td>${d.university}</td>
-                    <td><span class="status-pill status-${d.status.toLowerCase()}">${d.status.replace(/_/g, ' ')}</span></td>
-                    <td>${d.complianceMember || 'Pending'}</td>
-                    <td>
-                        <button class="btn-action" 
-                                style="${lockStyle}" 
-                                onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}', '${d.university}')"
-                                ${isLockedByOther ? 'disabled' : ''}>
-                            ${btnText}
-                        </button>
-                    </td>
-                </tr>`;
+            // আপনার জাভাস্ক্রিপ্ট লজিকের এই অংশটুকু আপডেট করুন
+const row = `
+    <tr>
+        <td><b>${d.studentName}</b></td>
+        <td>${d.passportNo || 'N/A'}</td>
+        <td>${d.university}</td>
+        <td><span class="status-pill status-${d.status.toLowerCase()}">${d.status.replace(/_/g, ' ')}</span></td>
+        <td>
+            <button class="btn-action" 
+                    onclick="openReviewModal('${d._id}', '${d.studentName}', ${d.commissionBDT || 0}, '${d.passportNo || ''}', '${d.university}')">
+                <i class="fas fa-eye"></i> REVIEW
+            </button>
+        </td>
+    </tr>`;
+
 
             if (isFinished) historyHtml += row;
             else queueHtml += row;
