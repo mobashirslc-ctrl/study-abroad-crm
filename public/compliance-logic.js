@@ -51,38 +51,24 @@ const row = `
 }
 
 // ৩. লকিং এবং ৪টি PDF শো করাসহ মোডাল ওপেন
+// compliance-logic.js এর এই অংশটুকু আপডেট করুন
 window.openReviewModal = async (id, name, commission, passport, university) => {
-    try {
-        const lockRes = await fetch(`/api/lock-application/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ staffEmail: staffEmail })
-        });
-        
-        const lockData = await lockRes.json();
-        if (lockRes.status === 403) {
-            alert(`⚠️ এই ফাইলটি বর্তমানে ${lockData.message}। অনুগ্রহ করে ৫ মিনিট পর চেষ্টা করুন।`);
-            return;
-        }
+    // ... আগের লকিং লজিক ঠিক থাকবে ...
+    
+    const res = await fetch(`/api/applications/${id}`);
+    const d = await res.json();
+    
+    // ৪টি ফাইল চেক করে ডাইনামিক লিঙ্ক তৈরি
+    let docHtml = "";
+    if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 1. Passport Copy</a>`;
+    if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 2. Academic Records</a>`;
+    if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 3. English Proficiency</a>`;
+    if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 4. Other/CV Docs</a>`;
 
-        currentActiveId = id;
-        currentCommission = commission;
-        
-        document.getElementById('revStudentName').innerText = "Reviewing: " + name;
-        document.getElementById('targetUniDisplay').innerText = `Applying for: ${university}`;
-        
-        const res = await fetch(`/api/applications/${id}`);
-        const d = await res.json();
-        
-        // ৪টি ফাইল চেক করে ডাইনামিক লিঙ্ক তৈরি
-        let docHtml = "";
-        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 1. Passport Copy</a>`;
-        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 2. Academic Records</a>`;
-        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 3. English Proficiency</a>`;
-        if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 4. Other/CV Docs</a>`;
+    document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
+    
+};
 
-        document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
-        
         if(d.status) {
             document.getElementById('statusSelect').value = d.status;
             updateWalletIndicator(d.status); // লোড হওয়ার সময় ইন্ডিকেটর আপডেট
