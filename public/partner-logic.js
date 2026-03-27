@@ -186,6 +186,7 @@ async function submitApplication() {
 // 5. Admission Slip, Search & Profile
 // ---------------------------------------------------------
 function generateAdmissionSlip(data) {
+function generateAdmissionSlip(data) {
     const partnerLogo = document.getElementById('currentLogo').src;
     const partnerName = document.getElementById('pOrg').value || "Partner Agency";
     const authPerson = document.getElementById('pAuth').value || "Authorized Staff";
@@ -200,10 +201,10 @@ function generateAdmissionSlip(data) {
     <head><title>Admission Slip - ${data.studentName}</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 30px; background: #f0f2f5; }
-        .slip-card { background: white; border: 4px solid #2b0054; border-radius: 15px; max-width: 800px; margin: auto; overflow: hidden; }
+        .slip-card { background: white; border: 4px solid #2b0054; border-radius: 15px; max-width: 800px; margin: auto; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 25px; border-bottom: 2px solid #eee; }
-        .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; }
-        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px; }
+        .section-header { background: #2ecc71; color: white; padding: 10px 20px; font-weight: bold; margin-top:15px; }
+        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 25px; font-size: 14px; }
         .footer { background: #2b0054; color: white; text-align: center; padding: 15px; font-size: 11px; }
     </style>
     </head>
@@ -211,16 +212,28 @@ function generateAdmissionSlip(data) {
         <div class="slip-card">
             <div class="header">
                 <img src="${partnerLogo}" height="65">
-                <div style="text-align:right"><h3>ADMISSION ENROLLMENT SLIP</h3></div>
+                <div style="text-align:right"><h3 style="margin:0;">ADMISSION ENROLLMENT SLIP</h3><small>SCC-2026-REF</small></div>
             </div>
             <div class="section-header">APPLICANT INFORMATION</div>
             <div class="details">
                 <div><b>Student:</b> ${data.studentName}</div>
                 <div><b>Passport:</b> ${data.passportNo}</div>
                 <div><b>University:</b> ${data.university}</div>
+                <div><b>Country:</b> UK / Europe</div>
             </div>
-            <div style="text-align:center; padding: 20px;"><img src="${qrUrl}" width="120"></div>
-            <div class="footer">SCC Group B2B System - 2026</div>
+            <div class="section-header">PARTNER AGENCY</div>
+            <div class="details">
+                <div><b>Agency:</b> ${partnerName}</div>
+                <div><b>Authorized:</b> ${authPerson}</div>
+            </div>
+            <div style="text-align:center; padding: 20px;">
+                <img src="${qrUrl}" width="120">
+                <p style="font-size:10px; color:#2b0054;">SCAN TO TRACK STATUS</p>
+            </div>
+            <div style="text-align:center; color:#2ecc71; padding-bottom: 20px;">
+                <h3>🎉 Congratulations on your successful admission!</h3>
+            </div>
+            <div class="footer">2026 @ GORUN LTD. B2B System | study-abroad-crm-nine.vercel.app</div>
         </div>
     </body>
     </html>`;
@@ -228,6 +241,7 @@ function generateAdmissionSlip(data) {
     slipWindow.document.write(slipHtml);
     slipWindow.document.close();
 }
+
 
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
@@ -249,17 +263,24 @@ async function searchUni() {
                 const totalFee = (Number(u.semesterFee) || 0) * 120; 
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
 
+                // কলামগুলো আপনার স্ক্রিনশটের অর্ডারে সাজানো হয়েছে (মোট ৭টি কলাম)
                 html += `<tr>
-                    <td><b>${u.universityName}</b></td>
-                    <td>GPA: ${u.minGPA}+</td>
+                    <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
+                    <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
                     <td>$${u.semesterFee}</td>
-                    <td>${isEligible ? '✅ Eligible' : '❌ Not Eligible'}</td>
+                    <td>${u.jobOpportunity || 'Standard'}</td>
+                    <td style="color: ${isEligible ? '#2ecc71' : '#e74c3c'}">
+                        ${isEligible ? '✅ Eligible' : '❌ Not Eligible'}
+                    </td>
                     <td style="color:gold">৳${comm.toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
+                    <td>
+                        <button class="btn-gold" style="padding: 5px 10px; cursor:pointer;" 
+                        onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button>
+                    </td>
                 </tr>`;
             }
         });
-        container.innerHTML = html;
+        container.innerHTML = html || "<tr><td colspan='7'>No data found</td></tr>";
     } catch (e) { console.error(e); }
 }
 
