@@ -14,7 +14,6 @@ app.use(express.json());
 const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
-// --- 🗄️ MongoDB Connection Utility (Serverless Friendly) ---
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
 const connectDB = async () => {
@@ -37,6 +36,7 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     contact: String
 }, { collection: 'users' }));
 
+// স্কিমার ভেতরে lockBy এবং lockUntil ঢুকিয়ে দিয়েছি
 const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
     studentName: String, 
     passportNo: String, 
@@ -49,6 +49,8 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     complianceNote: String, 
     pendingAmount: { type: Number, default: 0 },
     handledBy: String, 
+    lockBy: { type: String, default: null }, // Hard locking field
+    lockUntil: { type: Date, default: null }, // Hard locking field
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
 
@@ -59,17 +61,13 @@ const University = mongoose.models.University || mongoose.model('University', ne
     degree: String,
     semesterFee: Number,
     partnerComm: Number,
-    minGPA: Number,   // String থেকে Number করা হয়েছে (গাণিতিক তুলনার জন্য)
-    ieltsReq: Number, // Language Score (Number)
-    gap: Number       // Study Gap Years (Number)
+    minGPA: Number,   
+    ieltsReq: Number, 
+    gap: Number       
 }, { collection: 'universities' }));
 
 // --- 🚀 API Routes ---
 
-/**
- * ১. একটি নির্দিষ্ট অ্যাপ্লিকেশনের ডিটেইলস দেখা (নতুন যোগ করা হয়েছে)
- * এটি না থাকলে রিভিউ মোডাল ওপেন হবে না।
- */
 app.get('/api/applications/:id', async (req, res) => {
     await connectDB();
     try {
@@ -81,10 +79,36 @@ app.get('/api/applications/:id', async (req, res) => {
     }
 });
 
-/**
- * ২. অ্যাপ্লিকেশন আপডেট / রিভিউ সেভ রুট (সংশোধিত)
- * ফ্রন্টএন্ডের Payload এর সাথে মিলিয়ে আপডেট করা হয়েছে।
- */
+// লকিং রুট: ফাইল রিভিউ করার আগে এটি কল হবে
+app.patch('/api/lock-application/:id', async (req, res) => {
+    await connectDB();
+    try {
+        const { staffEmail } = req.body;
+        const appData = await Application.findById(req.params.id);
+        
+        if (!appData) return res.status(404).json({ error: "Application not found" });
+
+        // চেক: যদি অন্য কেউ ৫ মিনিটের মধ্যে লক করে থাকে
+        if (appData.lockBy && appData.lockBy !== staffEmail && appData.lockUntil > new Date()) {
+            return res.status(403).json({ 
+                locked: true, 
+                message: `Locked by ${appData.lockBy}` 
+            });
+        }
+
+        // ৫ মিনিটের জন্য লক সেট করা
+        const lockTime = new Date(Date.now() + 5 * 60000); 
+        await Application.findByIdAndUpdate(req.params.id, {
+            lockBy: staffEmail,
+            lockUntil: lockTime
+        });
+
+        res.json({ locked: false, message: "Lock acquired" });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.patch('/api/update-compliance', async (req, res) => {
     await connectDB(); 
     try {
@@ -93,11 +117,12 @@ app.patch('/api/update-compliance', async (req, res) => {
         let updateData = { 
             status: status, 
             complianceNote: complianceNote, 
-            complianceMember: staffEmail, // ফ্রন্টএন্ড থেকে আসা staffEmail সেভ হবে
+            complianceMember: staffEmail,
+            lockBy: null,     // ফাইল সেভ হলে লক খুলে যাবে
+            lockUntil: null,  // ফাইল সেভ হলে লক খুলে যাবে
             timestamp: new Date()
         };
 
-        // যদি ভেরিফাইড হয়, তবে পেন্ডিং এমাউন্টে কমিশন যোগ হবে
         if (status === 'VERIFIED') {
             updateData.pendingAmount = commission || 0;
         } else if (status === 'REJECTED') {
@@ -110,20 +135,12 @@ app.patch('/api/update-compliance', async (req, res) => {
             { new: true }
         );
         
-        if(!updatedApp) return res.status(404).json({ error: "Application not found" });
-        
         res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
     } catch (e) { 
-        console.error("Update Error:", e);
         res.status(500).json({ error: e.message }); 
     }
 });
-lockBy: { type: String, default: null },
-lockUntil: { type: Date, default: null }
 
-/**
- * ৩. সকল অ্যাপ্লিকেশন রিট্রিভ (সব ঠিক আছে)
- */
 app.get('/api/applications', async (req, res) => {
     await connectDB();
     try {
@@ -132,30 +149,6 @@ app.get('/api/applications', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.patch('/api/lock-application/:id', async (req, res) => {
-    await connectDB();
-    const { staffEmail } = req.body;
-    const app = await Application.findById(req.params.id);
-    
-    // চেক: ফাইলটি কি অন্য কেউ লক করে রেখেছে এবং সময় কি এখনও আছে?
-    if (app.lockBy && app.lockBy !== staffEmail && app.lockUntil > new Date()) {
-        return res.status(403).json({ 
-            locked: true, 
-            message: `Locked by ${app.lockBy}` 
-        });
-    }
-
-    // ৫ মিনিটের জন্য লক সেট করা
-    const lockTime = new Date(Date.now() + 5 * 60000); 
-    await Application.findByIdAndUpdate(req.params.id, {
-        lockBy: staffEmail,
-        lockUntil: lockTime
-    });
-
-    res.json({ locked: false, message: "Lock acquired" });
-});
-
-// ৪. ইউনিভার্সিটি লিস্ট
 app.get('/api/universities', async (req, res) => {
     await connectDB();
     try {
@@ -164,7 +157,6 @@ app.get('/api/universities', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৫. লগইন রুট
 app.post('/api/login', async (req, res) => {
     await connectDB();
     try {
