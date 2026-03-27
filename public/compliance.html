@@ -76,21 +76,22 @@
         </div>
 
         <div id="historySection" class="card tab-content" style="display:none;">
-            <h3 style="margin-top: 0;"><i class="fas fa-history" style="color:#2ecc71; margin-right: 10px;"></i> Verified History</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Passport</th>
-                        <th>University</th>
-                        <th>Status</th>
-                        <th>Handler</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody"></tbody>
-            </table>
-        </div>
+        <div id="historySection" class="card tab-content" style="display:none;">
+    <h3><i class="fas fa-history" style="color:#2ecc71"></i> Verified History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Passport</th>
+                <th>University</th>
+                <th>Status</th>
+                <th>Handler</th>
+                <th>Action</th> 
+            </tr>
+        </thead>
+        <tbody id="historyTableBody"></tbody>
+    </table>
+</div> </div>
     </div> <div id="reviewModal" class="modal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
@@ -105,13 +106,13 @@
 
             <label style="font-size: 12px; color: var(--gold); font-weight: bold;">SET NEW STATUS:</label>
             <select id="statusSelect">
-                <option value="UNDER_REVIEW">Keep Under Review</option>
-                <option value="VERIFIED">Verified (Send Commission to Partner)</option>
-                <option value="GS_READY">GS Ready</option>
-                <option value="VISA_APPLIED">Visa Applied</option>
-                <option value="FEES_PAID_PENDING_ADMIN">Fees Paid (Wait for Admin Confirmation)</option>
-                <option value="REJECTED">Reject File / Missing Docs</option>
-            </select>
+    <option value="UNDER_REVIEW">Under Review</option>
+    <option value="VERIFIED">Verified (Commission Add)</option>
+    <option value="GS_READY">GS Ready</option>
+    <option value="APPLIED_VISA">Applied Visa</option>
+    <option value="REJECTED">Rejected / Missing Docs</option>
+</select>
+
 
             <label style="font-size: 12px; color: var(--gold); font-weight: bold;">COMPLIANCE NOTES:</label>
             <textarea id="complianceNote" placeholder="Write review notes or missing doc details here..." rows="4"></textarea>
