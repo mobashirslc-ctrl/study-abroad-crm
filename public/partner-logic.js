@@ -68,6 +68,76 @@ async function initRealtimeData() {
                 <td>${data.university || 'N/A'}</td>
             </tr>`;
         });
+        
+async function initRealtimeData() {
+    try {
+        const res = await fetch('/api/applications');
+        const allApps = await res.json();
+        
+        // ফিল্টার: শুধু এই পার্টনারের ইমেইল অনুযায়ী ডাটা
+        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
+
+        let pendingBalance = 0; 
+        let finalBalance = 0;   
+        let homeHtml = "";
+        let trackHtml = "";
+
+        myApps.forEach(data => {
+            const status = data.status || 'PENDING';
+            const comm = Number(data.commissionBDT || 0);
+
+            // ওয়ালেট লজিক: DOC_VERIFIED বা VERIFIED হলে পেন্ডিংয়ে যোগ হবে
+            if (status === 'VERIFIED' || status === 'DOC_VERIFIED') {
+                pendingBalance += comm;
+            }
+            // PAID হলে মেইন ব্যালেন্সে আসবে
+            if (status === 'PAID') {
+                finalBalance += comm;
+            }
+
+            // টেবিল রো জেনারেশন
+            const row = `<tr>
+                <td><b>${data.studentName}</b></td>
+                <td>${data.passportNo}</td>
+                <td><span class="badge" style="background:#252545; color:var(--gold)">${status.replace(/_/g, ' ')}</span></td>
+                <td>${data.university || 'N/A'}</td>
+                <td>${new Date(data.timestamp).toLocaleDateString()}</td>
+            </tr>`;
+
+            homeHtml += row;
+            trackHtml += row; // ট্র্যাকিং ট্যাবের জন্যও একই রো
+        });
+
+        // ১. ড্যাশবোর্ড স্ট্যাটস আপডেট
+        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
+        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
+        document.getElementById('totalStudents').innerText = myApps.length;
+
+        // ২. হোম ড্যাশবোর্ড টেবিল আপডেট
+        const homeTable = document.getElementById('homeTrackingBody');
+        if(homeTable) homeTable.innerHTML = homeHtml || "<tr><td colspan='4'>No records found</td></tr>";
+
+        // ৩. ট্র্যাকিং ট্যাব টেবিল আপডেট (যা আপনার ব্ল্যাঙ্ক আসছিল)
+        const trackTable = document.getElementById('trackingTableBody');
+        if(trackTable) trackTable.innerHTML = trackHtml || "<tr><td colspan='5'>No tracking history found</td></tr>";
+        
+        // ৪. উইথড্র বাটন লজিক (৫০০০ টাকার উপরে হলে)
+        const btnW = document.getElementById('btnWithdraw');
+        if(btnW) {
+            if(finalBalance >= 5000) {
+                btnW.disabled = false;
+                btnW.style.background = "#2ecc71"; // Green
+                btnW.style.cursor = "pointer";
+            } else {
+                btnW.disabled = true;
+                btnW.style.background = "#ccc";
+            }
+        }
+    } catch (e) { 
+        console.error("Data Fetch Error:", e); 
+    }
+}
 
         // UI Updates
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
