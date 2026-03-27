@@ -91,6 +91,30 @@
                 <tbody id="fullTrackingBody"></tbody>
             </table>
         </div>
+        <div class="admin-card">
+    <h3><i class="fas fa-plus-circle"></i> Add New University</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+        <input type="text" id="uName" placeholder="University Name">
+        <input type="text" id="uCountry" placeholder="Country">
+        
+        <select id="uDegree">
+            <option value="Bachelor">Bachelor</option>
+            <option value="Masters">Masters</option>
+            <option value="Foundation">Foundation</option>
+            <option value="Diploma">Diploma</option>
+        </select>
+
+        <input type="number" id="uFee" placeholder="Semester Fee ($)">
+        <input type="number" id="uComm" placeholder="Partner Comm (%)">
+        
+        <input type="number" id="uGpa" step="0.01" placeholder="Min. GPA Req.">
+        <input type="number" id="uIelts" step="0.1" placeholder="Min. IELTS/Score Req.">
+        <input type="number" id="uGap" placeholder="Max Study Gap (Years)">
+        
+    </div>
+    <button class="btn-gold" onclick="addUniversity()" style="margin-top:15px; width: 200px;">Save to Database</button>
+</div>
+
 
         <div id="universities" class="tab-content">
             <h3>Find Universities & Eligibility</h3>
@@ -117,7 +141,8 @@
                 <thead>
                     <tr><th>University</th><th>Min. Req.</th><th>Eligibility</th><th>Fee</th><th>Commission</th><th>Action</th></tr>
                 </thead>
-                <tbody id="uniListContainer"></tbody>
+                <
+                    id="uniListContainer"></tbody>
             </table>
         </div>
 
