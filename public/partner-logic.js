@@ -1,6 +1,7 @@
 /**
  * SCC Group - Partner Portal Logic (2026)
  * Full Integration: MongoDB, Cloudinary, QR Tracking & Wallet
+ * Status: Fixed & Optimized
  */
 
 // 1. Global Configuration
@@ -28,6 +29,8 @@ window.onload = () => {
     
     if(userData.logoUrl) {
         document.getElementById('currentLogo').src = userData.logoUrl;
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        if(sidebarLogo) sidebarLogo.src = userData.logoUrl;
     }
 
     initRealtimeData(); 
@@ -37,11 +40,11 @@ window.onload = () => {
 // 3. Core Logic: Dashboard, Tracking & Wallet (FIXED)
 // ---------------------------------------------------------
 async function initRealtimeData() {
-async function initRealtimeData() {
     try {
         const res = await fetch('/api/applications');
         const allApps = await res.json();
         
+        // Filter applications for this specific partner
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
         let pendingBalance = 0; 
@@ -49,16 +52,14 @@ async function initRealtimeData() {
         let combinedHtml = ""; 
 
         myApps.forEach(data => {
-            // স্ট্যাটাসকে বড় হাতের অক্ষরে রূপান্তর করে চেক করা (নিরাপত্তার জন্য)
             const status = (data.status || 'PENDING').toUpperCase();
             const comm = Number(data.commissionBDT || 0);
 
-            // ১. পেন্ডিং ব্যালেন্স: যা এখনো পেইড হয়নি (PENDING, DOC_VERIFIED, VERIFIED সব এখানে আসবে)
+            // ব্যালেন্স লজিক: PAID ছাড়া বাকি সব পজিটিভ স্ট্যাটাস পেন্ডিংয়ে দেখাবে
             if (status !== 'PAID' && status !== 'REJECTED') {
                 pendingBalance += comm;
             }
-            
-            // ২. ফাইনাল ব্যালেন্স: যা এডমিন অলরেডি পে করে দিয়েছে
+            // PAID হলে উইথড্রয়েবল ব্যালেন্সে আসবে
             if (status === 'PAID') {
                 finalBalance += comm;
             }
@@ -72,53 +73,25 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        // UI Updates
-        document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
-        document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
-        document.getElementById('totalStudents').innerText = myApps.length;
-
-        // ড্যাশবোর্ড টেবিল আপডেট
-        const homeTable = document.getElementById('homeTrackingBody');
-        if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
-
-        // ট্র্যাকিং টেবিল আপডেট (ID সংশোধিত: fullTrackingBody)
-        const trackTable = document.getElementById('fullTrackingBody');
-        if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
-        
-        // Withdraw Button Logic
-        const btnW = document.getElementById('btnWithdraw');
-        if(btnW) {
-            btnW.disabled = finalBalance < 5000;
-            btnW.style.background = finalBalance >= 5000 ? "#2ecc71" : "#444";
-        }
-    } catch (e) { console.error("Data Fetch Error:", e); }
-}
-
         // UI Updates - Stats
         document.getElementById('topPending').innerText = `৳${pendingBalance.toLocaleString()}`;
         document.getElementById('topFinal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('withdrawableBal').innerText = `৳${finalBalance.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
 
-        // FIX: হোম ড্যাশবোর্ড টেবিল আপডেট
+        // টেবিল আপডেট (উভয় টেবিল আইডি হ্যান্ডেল করা হয়েছে)
         const homeTable = document.getElementById('homeTrackingBody');
         if(homeTable) homeTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
 
-        // FIX: ট্র্যাকিং ট্যাব টেবিল আপডেট (যা আগে ব্ল্যাঙ্ক ছিল)
-        const trackTable = document.getElementById('trackingTableBody');
+        const trackTable = document.getElementById('fullTrackingBody');
         if(trackTable) trackTable.innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
         
-        // Withdraw Button Activation (Min 5000 BDT)
+        // Withdraw Button Logic
         const btnW = document.getElementById('btnWithdraw');
         if(btnW) {
-            if(finalBalance >= 5000) {
-                btnW.disabled = false;
-                btnW.style.background = "#2ecc71"; // Green
-            } else {
-                btnW.disabled = true;
-                btnW.style.background = "#ccc";
-            }
+            const isEligible = finalBalance >= 5000;
+            btnW.disabled = !isEligible;
+            btnW.style.background = isEligible ? "#2ecc71" : "#444";
         }
     } catch (e) { console.error("Data Fetch Error:", e); }
 }
@@ -140,6 +113,18 @@ async function uploadFile(file) {
         console.error("Cloudinary Error:", e);
         return "";
     }
+}
+
+async function uploadPartnerLogo() {
+    const file = document.getElementById('logoUpload').files[0];
+    if(!file) return;
+    try {
+        const url = await uploadFile(file);
+        if(url) {
+            document.getElementById('currentLogo').src = url;
+            saveProfile(); // লোগো আপলোড হলে অটো প্রোফাইল সেভ হবে
+        }
+    } catch (e) { alert("Logo upload failed"); }
 }
 
 async function submitApplication() {
@@ -269,6 +254,7 @@ async function searchUni() {
     const score = parseFloat(document.getElementById('userScore').value) || 0;
     
     const container = document.getElementById('uniListContainer');
+    if(!container) return;
     container.innerHTML = "Searching...";
 
     try {
@@ -313,7 +299,11 @@ async function saveProfile() {
         body: JSON.stringify(payload)
     });
     
-    if(res.ok) alert("✅ Profile Updated Successfully!");
+    if(res.ok) {
+        alert("✅ Profile Updated!");
+        // LocalStorage আপডেট যাতে রিলোডে ডাটা না হারায়
+        localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
+    }
 }
 
 function openApplyModal(name, comm) {
