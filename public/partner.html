@@ -139,20 +139,24 @@ if(trackTable) trackTable.innerHTML = html;
         </div>
 
         <div id="profile" class="tab-content">
-            <h3>Agency Profile Settings</h3>
-            <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
-                <div style="grid-column: span 2; text-align: center;">
-                    <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
-                    <br><input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px; background:none; border:none;">
-                </div>
-                <div><label>Organisation Name</label><input type="text" id="pOrg"></div>
-                <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
-                <div><label>Contact Number</label><input type="text" id="pPhone"></div>
-                <div><label>Email Address</label><input type="text" id="pEmail" readonly></div>
-                <div style="grid-column: span 2;"><label>Company Address</label><textarea id="pAddr"></textarea></div>
-                <button class="btn-gold" style="grid-column: span 2;" onclick="saveProfile()">Save Profile</button>
-            </div>
+    <h3>Agency Profile Settings</h3>
+    <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+        
+        <div style="grid-column: span 2; text-align: center;">
+            <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
+            <br>
+            <input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px; background:none; border:none; color: #ccc; cursor: pointer;">
         </div>
+
+        <div><label>Organisation Name</label><input type="text" id="pOrg"></div>
+        <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
+        <div><label>Contact Number</label><input type="text" id="pPhone"></div>
+        <div><label>Email Address</label><input type="text" id="pEmail" readonly></div>
+        <div style="grid-column: span 2;"><label>Company Address</label><textarea id="pAddr"></textarea></div>
+        <button class="btn-gold" style="grid-column: span 2;" onclick="saveProfile()">Save Profile</button>
+    </div>
+</div>
+
 
         <footer style="text-align: center; padding: 20px; border-top: 1px solid #333; margin-top: auto; font-size: 12px; color: #666;">
             2026 @ Rights & Reserved GORUN LTD.
