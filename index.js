@@ -35,9 +35,8 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     role: { type: String, default: 'partner' },
     contact: String,
     orgName: String,
-    authorisedPerson: String,
-    address: String,
-    logoUrl: String,
+    status: { type: String, default: 'pending' }, // নতুন ইউজারদের জন্য 'pending' থাকবে
+    expiryDate: { type: Date, default: null },   // এডমিন এখান থেকে ডেট সেট করবে
     walletBalance: { type: Number, default: 0 }
 }, { collection: 'users' }));
 
@@ -61,16 +60,70 @@ const Application = mongoose.models.Application || mongoose.model('Application',
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
     universityName: String,
     country: String,
-    courseName: String,
+    location: String,
     degree: String,
+    duration: String,
     semesterFee: Number,
+    livingCost: Number,
+    jobOpportunity: String,
     partnerComm: Number,
-    minGPA: Number,   
-    ieltsReq: Number, 
-    gap: Number       
+    minGPA: Number,   // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
+    ieltsReq: Number, // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
+    gap: Number       // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
 }, { collection: 'universities' }));
-
 // --- 🚀 API Routes ---
+// --- 👑 Admin Master Routes ---
+
+// ১. নতুন ইউনিভার্সিটি সেভ করা
+app.post('/api/add-university', async (req, res) => {
+    await connectDB();
+    try {
+        const newUni = new University(req.body);
+        await newUni.save();
+        res.status(201).json({ msg: "University Added!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ২. সব ইউজার লিস্ট দেখা (Admin UI এর জন্য)
+app.get('/api/admin/users', async (req, res) => {
+    await connectDB();
+    try {
+        const users = await User.find({ role: { $ne: 'admin' } });
+        res.json(users);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ৩. ইউজার এপ্রুভাল বা সাসপেন্ড করা
+app.patch('/api/admin/users/:id/status', async (req, res) => {
+    await connectDB();
+    try {
+        await User.findByIdAndUpdate(req.params.id, { status: req.body.status });
+        res.json({ msg: "Status Updated" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ৪. এক্সপায়ারি ডেট আপডেট
+app.patch('/api/admin/users/:id/expiry', async (req, res) => {
+    await connectDB();
+    try {
+        await User.findByIdAndUpdate(req.params.id, { expiryDate: req.body.expiryDate });
+        res.json({ msg: "Expiry Updated" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ৫. ম্যানুয়াল ওয়ালেট/পেমেন্ট আপডেট (প্রম্পট বক্সের ডাটা সেভ করা)
+app.patch('/api/applications/:id', async (req, res) => {
+    await connectDB();
+    try {
+        const { pendingAmount, status } = req.body;
+        const updatedApp = await Application.findByIdAndUpdate(
+            req.params.id, 
+            { pendingAmount, status }, 
+            { new: true }
+        );
+        res.json(updatedApp);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 
 // ১. প্রোফাইল আপডেট
 app.patch('/api/user/profile', async (req, res) => {
@@ -99,12 +152,12 @@ app.get('/api/applications/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৩. অ্যাপ্লিকেশন লকিং রুট
+// ৩. অ্যাপ্লিকেশন লকিং রুট (সংশোধিত)
 app.patch('/api/lock-application/:id', async (req, res) => {
     await connectDB();
     try {
         const { staffEmail } = req.body;
-        const appData = await Application.findById(req.params.id);
+        const appData = await Application.findById(req.params.id); // এখানে findById হবে
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
         if (appData.lockBy && appData.lockBy !== staffEmail && appData.lockUntil > new Date()) {
@@ -116,6 +169,7 @@ app.patch('/api/lock-application/:id', async (req, res) => {
         res.json({ locked: false, message: "Lock acquired" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 
 // ৪. কমপ্লায়েন্স আপডেট
 // ৪. কমপ্লায়েন্স আপডেট (index.js ফাইলে গিয়ে এটি পরিবর্তন করুন)
@@ -180,7 +234,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email: email.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        if (!user || !(awaawaitrypt.compare(password, user.password))) {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
         res.json({ user: { 
