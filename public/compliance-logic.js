@@ -124,6 +124,7 @@ document.getElementById('statusSelect').addEventListener('change', (e) => {
 
 // ৫. ডাটা সেভ করা (With Confirmation & Targeted Wallet Sync)
 // ৫. ডাটা সেভ করা (With Confirmation & Targeted Wallet Sync)
+// ৫. ডাটা সেভ করা (With Confirmation & Targeted Wallet Sync)
 document.getElementById('applyStatusBtn').onclick = async () => {
     if (!currentActiveId) return;
     
@@ -133,27 +134,22 @@ document.getElementById('applyStatusBtn').onclick = async () => {
 
     if(!note) return alert("Please add a note before authorizing!");
 
-    // --- নতুন লজিক শুরু ---
-    let amountToSync = 0; // ডিফল্টভাবে ০ থাকবে
+    // --- ওয়ালেট সিঙ্ক লজিক ---
+    let amountToSync = 0; 
 
     if(selectedStatus === 'DOCS_VERIFIED') {
-        // কনফার্মেশন নিচ্ছি
         if(!confirm("Are you sure? This will verify documents and sync BDT " + currentCommission + " to wallet (Pending).")) return;
-        
-        // শুধুমাত্র 'DOCS_VERIFIED' হলেই অংকটি সেট হবে
         amountToSync = currentCommission; 
     }
-    // --- নতুন লজিক শেষ ---
 
+    // --- সঠিক PAYLOAD (Compliance এর জন্য) ---
     const payload = {
-    studentName: document.getElementById('sName').value,
-    passportNo: document.getElementById('pNo').value,
-    university: document.getElementById('uniSelect').value,
-    partnerEmail: localStorage.getItem('userEmail'),
-    // এখানে কোনো pendingAmount বা commission পাঠাবেন না। 
-    status: 'PENDING' 
-};
-
+        appId: currentActiveId,         // কোন স্টুডেন্ট
+        status: selectedStatus,         // নতুন স্ট্যাটাস (যেমন: DOCS_VERIFIED)
+        complianceNote: note,           // স্টাফের নোট
+        staffEmail: staffEmail,         // কোন স্টাফ আপডেট করছে
+        commission: amountToSync        // ওয়ালেটে কত টাকা যাবে (০ অথবা কমিশন)
+    };
 
     try {
         btn.disabled = true;
@@ -168,16 +164,20 @@ document.getElementById('applyStatusBtn').onclick = async () => {
         if(res.ok) {
             alert("✅ Updated Successfully!");
             currentActiveId = null; 
-            closeModal(); // এটি কল করলে অটোমেটিক আনলক এপিআই কল হবে
+            closeModal(); 
             loadApplications(); 
+        } else {
+            const errorData = await res.json();
+            alert("Error: " + errorData.error);
         }
     } catch (e) { 
-        alert("Network Error.");
+        alert("Network Error. Check your server connection.");
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fas fa-shield-alt"></i> SYNC & AUTHORIZE`;
     }
 };
+
 
 
 
