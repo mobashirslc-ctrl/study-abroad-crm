@@ -13,6 +13,7 @@ const partnerEmail = (userData.email || "").toLowerCase().trim();
 
 let currentUniCommission = 0;
 let selectedUniversity = "";
+let currentAvailableBalance = 0; 
 
 // ---------------------------------------------------------
 // 2. Initialization on Load
@@ -37,20 +38,18 @@ window.onload = () => {
 };
 
 // ---------------------------------------------------------
-// 3. Core Logic: Dashboard & Wallet Tracking (FINAL FIXED)
+// 3. Core Logic: Dashboard & Wallet Tracking
 // ---------------------------------------------------------
 async function initRealtimeData() {
     try {
-        // ১. লেটেস্ট ইউজার ডাটা (ব্যালেন্স) সার্ভার থেকে নিয়ে আসা
-        // লগইন করার পর ডাটাবেস থেকে ফ্রেশ ব্যালেন্স নিতে এই কলটি জরুরি
-        const userRes = await fetch('/api/admin/users'); // অথবা প্রোফাইল দেখার নির্দিষ্ট API
+        // ১. লেটেস্ট ব্যালেন্স সরাসরি ডাটাবেস থেকে আনা
+        const userRes = await fetch('/api/admin/users'); 
         const allUsers = await userRes.json();
         const currentMe = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
         
-        // যদি ডাটাবেসে ইউজার পাওয়া যায়, তবে ব্যালেন্স আপডেট করুন
-        const currentAvailable = currentMe ? (currentMe.walletBalance || 0) : 0;
+        currentAvailableBalance = currentMe ? (currentMe.walletBalance || 0) : 0;
 
-        // ২. অ্যাপ্লিকেশন ডাটা নিয়ে আসা (পেন্ডিং ব্যালেন্সের জন্য)
+        // ২. অ্যাপ্লিকেশন ডাটা ও পেন্ডিং ক্যালকুলেশন
         const res = await fetch('/api/applications');
         if (!res.ok) throw new Error("Failed to fetch applications");
         
@@ -63,8 +62,7 @@ async function initRealtimeData() {
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
             const pAmount = Number(data.pendingAmount || 0);
-            
-            pendingTotal += pAmount; // শুধু pendingAmount ফিল্ড থেকে যোগ হবে
+            pendingTotal += pAmount;
 
             combinedHtml += `<tr>
                 <td><b>${data.studentName}</b></td>
@@ -75,10 +73,17 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        // ৩. UI আপডেট (Available Balance এখন ডাটাবেস থেকে আসছে)
-        document.getElementById('topPending').innerText = `৳${pendingTotal.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${currentAvailable.toLocaleString()}`;
-        document.getElementById('withdrawableBal').innerText = `৳${currentAvailable.toLocaleString()}`;
+        // ৩. UI আপডেট (স্মার্ট কন্ডিশনসহ)
+        document.getElementById('topPending').innerHTML = `
+            <small style="font-size:10px; display:block; color:#aaa; letter-spacing: 1px;">ESTIMATED EARNINGS</small>
+            ৳${pendingTotal.toLocaleString()}
+            <p style="font-size:10px; margin-top:8px; color:var(--gold); line-height:1.4; font-style: italic; border-top: 1px dashed #444; padding-top: 5px;">
+                *Final settlement is subject to the completion of university tuition fee payments by the student.
+            </p>
+        `;
+
+        document.getElementById('topFinal').innerText = `৳${currentAvailableBalance.toLocaleString()}`;
+        document.getElementById('withdrawableBal').innerText = `৳${currentAvailableBalance.toLocaleString()}`;
         document.getElementById('totalStudents').innerText = myApps.length;
 
         const homeTable = document.getElementById('homeTrackingBody');
@@ -89,18 +94,36 @@ async function initRealtimeData() {
         
         const btnW = document.getElementById('btnWithdraw');
         if(btnW) {
-            const isEligible = currentAvailable >= 5000;
+            const isEligible = currentAvailableBalance >= 5000;
             btnW.disabled = !isEligible;
             btnW.style.background = isEligible ? "#2ecc71" : "#444";
+            btnW.onclick = requestWithdraw; 
         }
     } catch (e) { console.error("Data Fetch Error:", e); }
 }
 
-
-
 // ---------------------------------------------------------
-// 4. File Handling & Submissions
+// 4. Withdraw, File Handling & Submissions
 // ---------------------------------------------------------
+async function requestWithdraw() {
+    if (currentAvailableBalance < 5000) return alert("Minimum 5,000 BDT required!");
+    if (!confirm(`Confirm withdraw request for ৳${currentAvailableBalance.toLocaleString()}?`)) return;
+
+    try {
+        const res = await fetch('/api/user/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: partnerEmail,
+                withdrawRequest: true,
+                requestAmount: currentAvailableBalance,
+                requestDate: new Date().toISOString()
+            })
+        });
+        if(res.ok) alert("✅ Request Sent! Admin will process it soon.");
+    } catch (e) { alert("Failed to send request."); }
+}
+
 async function uploadFile(file) {
     if(!file) return "";
     const formData = new FormData();
@@ -166,8 +189,6 @@ async function submitApplication() {
 // ---------------------------------------------------------
 // 5. Admission Slip, Search & Profiles
 // ---------------------------------------------------------
-// 5. Admission Slip (Fixed with Auto-Print & PDF Support)
-// ---------------------------------------------------------
 function generateAdmissionSlip(data) {
     const partnerLogo = document.getElementById('currentLogo').src;
     const partnerName = document.getElementById('pOrg').value || "Partner Agency";
@@ -192,58 +213,30 @@ function generateAdmissionSlip(data) {
             .details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; font-size: 14px; }
             .qr-area { text-align: center; padding: 15px; background: #f9f9f9; border-top: 1px solid #eee; }
             .footer { background: #2b0054; color: white; text-align: center; padding: 10px; font-size: 11px; }
-            
-            /* Print Optimization */
-            @media print {
-                .no-print { display: none; }
-                body { padding: 0; }
-                .slip-card { border: 1px solid #2b0054; box-shadow: none; width: 100%; margin: 0; }
-                @page { margin: 0.5cm; }
-            }
+            @media print { .no-print { display: none; } body { padding: 0; } .slip-card { border: 1px solid #2b0054; box-shadow: none; width: 100%; margin: 0; } }
         </style>
     </head>
     <body onload="setTimeout(() => { window.print(); }, 500)">
-        <div class="no-print">
-            <button class="btn-print" onclick="window.print()">SAVE AS PDF / PRINT</button>
-            <p style="font-size: 12px; color: #666;">If the print window doesn't open, click the button above.</p>
-        </div>
-        
+        <div class="no-print"><button class="btn-print" onclick="window.print()">SAVE AS PDF / PRINT</button></div>
         <div class="slip-card">
             <div class="header">
                 <img src="${partnerLogo}" height="60">
                 <div style="text-align:right">
                     <h3 style="margin:0; color:#2b0054;">ADMISSION ENROLLMENT SLIP</h3>
-                    <small style="color: #666;">REF: SCC-2026-${Math.floor(Math.random()*90000)}</small>
+                    <small>REF: SCC-2026-${Math.floor(Math.random()*90000)}</small>
                 </div>
             </div>
-
             <div class="section-header">STUDENT INFORMATION</div>
             <div class="details">
-                <div><b>Student Name:</b> ${data.studentName}</div>
-                <div><b>Passport No:</b> ${data.passportNo}</div>
-                <div><b>Target Country:</b> United Kingdom (UK)</div>
+                <div><b>Student:</b> ${data.studentName}</div>
+                <div><b>Passport:</b> ${data.passportNo}</div>
                 <div><b>University:</b> ${data.university}</div>
             </div>
-
-            <div class="section-header">PARTNER AGENCY DETAILS</div>
-            <div class="details">
-                <div><b>Agency Name:</b> ${partnerName}</div>
-                <div><b>Authorized Person:</b> ${authPerson}</div>
-                <div><b>Partner Email:</b> ${partnerEmail}</div>
-            </div>
-
             <div class="qr-area">
                 <img src="${qrUrl}" width="100">
-                <p style="font-size:10px; margin-top:5px; color:#2b0054; font-weight: bold;">SCAN TO TRACK STUDENT STATUS</p>
-                <div style="margin-top: 10px; color: #2ecc71;">
-                    <h3 style="margin: 0;">🎉 Congratulations!</h3>
-                    <p style="font-size: 11px; color: #666; margin: 2px 0;">We wish you a successful journey ahead.</p>
-                </div>
+                <p>SCAN TO TRACK STATUS</p>
             </div>
-
-            <div class="footer">
-                2026 @ GORUN LTD. | Study Abroad B2B Division | Powered by SCC Group
-            </div>
+            <div class="footer">2026 @ SCC Group | Powered by GORUN LTD.</div>
         </div>
     </body>
     </html>`;
@@ -251,7 +244,6 @@ function generateAdmissionSlip(data) {
     slipWindow.document.write(slipHtml);
     slipWindow.document.close();
 }
-
 
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
@@ -270,17 +262,16 @@ async function searchUni() {
                 const totalFee = (Number(u.semesterFee) || 0) * 120; 
                 const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
                 html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
-                    <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
+                    <td><b>${u.universityName}</b></td>
+                    <td>GPA: ${u.minGPA}+</td>
                     <td>$${u.semesterFee}</td>
-                    <td>${u.jobOpportunity || 'Standard'}</td>
                     <td style="color: ${isEligible ? '#2ecc71' : '#e74c3c'}">${isEligible ? '✅ Eligible' : '❌ Not Eligible'}</td>
                     <td style="color:gold">৳${comm.toLocaleString()}</td>
-                    <td><button class="btn-gold" style="padding: 5px 10px; cursor:pointer;" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
+                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='7'>No data found</td></tr>";
+        container.innerHTML = html || "<tr><td colspan='6'>No data found</td></tr>";
     } catch (e) { console.error(e); }
 }
 
