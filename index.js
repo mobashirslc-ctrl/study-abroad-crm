@@ -118,6 +118,8 @@ app.patch('/api/update-compliance', async (req, res) => {
         res.status(500).json({ error: e.message }); 
     }
 });
+lockBy: { type: String, default: null },
+lockUntil: { type: Date, default: null }
 
 /**
  * ৩. সকল অ্যাপ্লিকেশন রিট্রিভ (সব ঠিক আছে)
@@ -128,6 +130,29 @@ app.get('/api/applications', async (req, res) => {
         const apps = await Application.find().sort({ timestamp: -1 });
         res.json(apps);
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/lock-application/:id', async (req, res) => {
+    await connectDB();
+    const { staffEmail } = req.body;
+    const app = await Application.findById(req.params.id);
+    
+    // চেক: ফাইলটি কি অন্য কেউ লক করে রেখেছে এবং সময় কি এখনও আছে?
+    if (app.lockBy && app.lockBy !== staffEmail && app.lockUntil > new Date()) {
+        return res.status(403).json({ 
+            locked: true, 
+            message: `Locked by ${app.lockBy}` 
+        });
+    }
+
+    // ৫ মিনিটের জন্য লক সেট করা
+    const lockTime = new Date(Date.now() + 5 * 60000); 
+    await Application.findByIdAndUpdate(req.params.id, {
+        lockBy: staffEmail,
+        lockUntil: lockTime
+    });
+
+    res.json({ locked: false, message: "Lock acquired" });
 });
 
 // ৪. ইউনিভার্সিটি লিস্ট
