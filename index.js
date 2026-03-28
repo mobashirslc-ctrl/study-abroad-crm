@@ -107,27 +107,39 @@ const University = mongoose.models.University || mongoose.model('University', ne
 }, { collection: 'universities' }));
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
-// --- 📝 New Registration Route (সংশোধিত) ---
+// --- 📝 New Registration Route (সংশোধিত ও ফিক্সড) ---
 app.post('/api/register', async (req, res) => { 
-    await connectDB();
     try {
+        // ১. নিশ্চিত করা যে ডাটাবেস কানেক্টেড
+        await connectDB();
+
         const { 
             role, fullName, email, password, contact, 
             orgName, authorisedPerson, address, 
             expertCountries, experience, website 
         } = req.body;
 
-        // চেক করুন ইউজার অলরেডি আছে কি না
-        const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-        if (existingUser) return res.status(400).json({ message: "Email already exists!" });
+        // ২. ইমেইল ভ্যালিডেশন
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and Password are required!" });
+        }
 
-        // পাসওয়ার্ড হ্যাশ করা
+        const cleanEmail = email.toLowerCase().trim();
+
+        // ৩. চেক করুন ইউজার অলরেডি আছে কি না
+        const existingUser = await User.findOne({ email: cleanEmail });
+        if (existingUser) {
+            return res.status(400).json({ message: "Email already exists!" });
+        }
+
+        // ৪. পাসওয়ার্ড হ্যাশ করা
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // ৫. নতুন ইউজার অবজেক্ট তৈরি (সবগুলো ফিল্ড ম্যাপ করা হয়েছে)
         const newUser = new User({
-            role: role || 'partner', // ✅ এখানে userType এর বদলে role হবে
+            role: role || 'partner',
             fullName,
-            email: email.toLowerCase().trim(),
+            email: cleanEmail,
             password: hashedPassword,
             contact,
             orgName,
@@ -136,14 +148,24 @@ app.post('/api/register', async (req, res) => {
             expertCountries,
             experience,
             website,
-            status: 'pending' 
+            status: 'pending',
+            walletBalance: 0
         });
 
+        // ৬. ডাটা সেভ করা
         await newUser.save();
-        res.status(201).json({ message: "Registration successful! Waiting for Admin Approval." });
+        
+        res.status(201).json({ 
+            success: true,
+            message: "Registration successful! Waiting for Admin Approval." 
+        });
+
     } catch (e) {
-        console.error("Reg Error:", e.message); // এররটি কনসোলে দেখার জন্য
-        res.status(500).json({ error: e.message });
+        console.error("❌ Registration Server Error:", e.message);
+        res.status(500).json({ 
+            success: false,
+            error: "Server Error: " + e.message 
+        });
     }
 });
 
