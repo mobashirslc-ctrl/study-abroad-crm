@@ -122,6 +122,7 @@ const University = mongoose.models.University || mongoose.model('University', ne
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
 // --- 📝 New Registration Route (সংশোধিত ও ফিক্সড) ---
+
 app.post(['/api/register', '/api/auth/register'], async (req, res) => {
     try {
         // ১. নিশ্চিত করা যে ডাটাবেস কানেক্টেড
@@ -191,6 +192,49 @@ app.post('/api/add-university', async (req, res) => {
         await newUni.save();
         res.status(201).json({ msg: "University Added!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// --- 🔍 Smart Assessment & Search API ---
+app.get('/api/smart-assessment', async (req, res) => {
+    await connectDB();
+    try {
+        const { country, degree, uniName, gpa, ielts, passingYear } = req.query;
+        let query = {};
+
+        // ১. বেসিক ফিল্টার (Country, Degree, Name)
+        if (country) query.country = { $regex: new RegExp(country, "i") };
+        if (degree) query.degreeType = { $regex: new RegExp(degree, "i") };
+        if (uniName) query.universityName = { $regex: new RegExp(uniName, "i") };
+
+        const universities = await University.find(query);
+
+        // ২. এলিজিবিলিটি ও আনলক লজিক ক্যালকুলেশন
+        const results = universities.map(uni => {
+            const studentGpa = Number(gpa) || 0;
+            const studentIelts = Number(ielts) || 0;
+            const currentYear = new Date().getFullYear();
+            const studentGap = passingYear ? (currentYear - Number(passingYear)) : 0;
+
+            // ৩টি শর্ত চেক করা
+            const isGpaMatch = studentGpa >= uni.minGPA;
+            const isIeltsMatch = studentIelts >= uni.ieltsReq;
+            const isGapMatch = studentGap <= uni.maxGapAllowed;
+
+            // যদি ৩টি রিকোয়ারমেন্ট ইনপুট দেওয়া থাকে তবেই আনলক চেক হবে
+            const hasInput = gpa && ielts && passingYear;
+            const isEligible = isGpaMatch && isIeltsMatch && isGapMatch;
+
+            return {
+                ...uni._doc,
+                isEligible: hasInput ? isEligible : false, // ৩টি ডাটা থাকলেই কেবল ট্রু হবে
+                unlockApply: hasInput && isEligible,      // বাটন আনলক হবে কি না
+                missingReason: !isGpaMatch ? "Low GPA" : (!isIeltsMatch ? "Low IELTS" : (!isGapMatch ? "High Study Gap" : ""))
+            };
+        });
+
+        res.json(results);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // ২. সব ইউজার লিস্ট দেখা (Admin UI এর জন্য)
