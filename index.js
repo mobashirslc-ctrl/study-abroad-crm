@@ -91,20 +91,34 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'withdrawals' }));
 
+// --- 🏫 Updated University Model with Smart Assessment Fields ---
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
-    universityName: String,
-    country: String,
+    universityName: { type: String, required: true },
+    country: { type: String, required: true },
     location: String,
-    degree: String,
+    degreeType: String,      // Bachelor, Master, Foundation
+    courseName: String,      // Matching Courses
     duration: String,
-    semesterFee: Number,
-    livingCost: Number,
-    jobOpportunity: String,
-    partnerComm: Number,
-    minGPA: Number,   // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
-    ieltsReq: Number, // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
-    gap: Number       // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
+    
+    // Financials
+    totalTuitionFee: Number, // মোট টিউশন ফি
+    initialDeposit: Number,  // অফার লেটার/CAS এর জন্য যা লাগবে (Fly Fee)
+    scholarshipMax: Number,  // সর্বোচ্চ কত স্কলারশিপ সম্ভব
+    othersFee: Number,       // Application/Admin Fee
+    
+    // Requirements (For Unlock Logic)
+    minGPA: { type: Number, default: 0 },       // রিকোয়ারমেন্ট ১
+    ieltsReq: { type: Number, default: 0 },     // রিকোয়ারমেন্ট ২
+    maxGapAllowed: { type: Number, default: 0 }, // রিকোয়ারমেন্ট ৩ (In Years)
+    
+    // Strategy & Insights
+    visaSuccessRate: { type: Number, default: 85 }, // ভিসা হওয়ার সম্ভাবনা (%)
+    processingTime: String,  // উদা: "7-10 Working Days"
+    intake: String,          // উদা: "Sept 2026"
+    
+    timestamp: { type: Date, default: Date.now }
 }, { collection: 'universities' }));
+ অ্যাসেসমেন্টের জন্য
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
 // --- 📝 New Registration Route (সংশোধিত ও ফিক্সড) ---
