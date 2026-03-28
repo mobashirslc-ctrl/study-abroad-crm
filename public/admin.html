@@ -168,8 +168,7 @@
         };
 
         // --- ২. ইউনিভার্সিটি ম্যানেজমেন্ট ---
-        window.saveUniversity = async () => {
-        
+window.saveUniversity = async () => {
     const data = {
         universityName: document.getElementById('uName').value,
         country: document.getElementById('uCountry').value,
@@ -187,11 +186,10 @@
         maxGapAllowed: Number(document.getElementById('uGap').value),
         
         visaSuccessRate: Number(document.getElementById('uVisaRate').value),
-        processingTime: document.getElementById('uProcTime').value,
-        commissionBDT: Number(document.getElementById('uComm').value) // ব্যাকএন্ডের সাথে নাম মিল রাখা হয়েছে
+        processingTime: document.getElementById('uProcTime').value, // এখানে ভুল ছিল, এখন ঠিক করা হয়েছে
+        commissionBDT: Number(document.getElementById('uComm').value) 
     };
 
-    // সব ফিল্ড পূরণ হয়েছে কি না চেক (Basic validation)
     if(!data.universityName || !data.country) return alert("Please fill Name and Country!");
 
     try {
@@ -201,11 +199,12 @@
             body: JSON.stringify(data)
         });
         if(res.ok) {
-            alert("✅ University Added with Smart Requirements!");
-            location.reload(); // টেবিল আপডেট করার জন্য
+            alert("✅ University Added Successfully!");
+            fetchUniversities(); // ডাটা অ্যাড হওয়ার পর টেবিল রিফ্রেশ করবে
         }
     } catch (e) { alert("Error connecting to server"); }
 };
+
 
 
         async function fetchUniversities() {
