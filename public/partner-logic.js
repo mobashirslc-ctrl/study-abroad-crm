@@ -269,33 +269,65 @@ function generateAdmissionSlip(data) {
 }
 
 async function searchUni() {
+// --- ৫. সংশোধিত সার্চ এবং এলিজিবিলিটি লজিক ---
+async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const gpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const score = parseFloat(document.getElementById('userScore').value) || 0;
+    const gap = parseInt(document.getElementById('userGap').value) || 0;
+    
     const container = document.getElementById('uniListContainer');
     if(!container) return;
-    container.innerHTML = "Searching...";
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
+        
         let html = "";
         unis.forEach(u => {
+            // কান্ট্রি ফিল্টার
             if (!country || u.country.toLowerCase().includes(country)) {
-                const isEligible = gpa >= u.minGPA && score >= u.ieltsReq;
-                const totalFee = (Number(u.semesterFee) || 0) * 120; 
-                const comm = (totalFee * (Number(u.partnerComm) || 0)) / 100;
-                html += `<tr>
-                    <td><b>${u.universityName}</b></td>
-                    <td>GPA: ${u.minGPA}+</td>
-                    <td>$${u.semesterFee}</td>
-                    <td style="color: ${isEligible ? '#2ecc71' : '#e74c3c'}">${isEligible ? '✅ Eligible' : '❌ Not Eligible'}</td>
-                    <td style="color:gold">৳${comm.toLocaleString()}</td>
-                    <td><button class="btn-gold" onclick="openApplyModal('${u.universityName}', ${comm})">Apply</button></td>
+                
+                // এলিজিবিলিটি চেক (GPA, IELTS, and GAP)
+                const isEligible = gpa >= (u.minGPA || 0) && 
+                                   score >= (u.ieltsReq || 0) && 
+                                   gap <= (u.maxGapAllowed || 10);
+
+                // এডমিন প্যানেলের পাঠানো 'commissionBDT' সরাসরি ব্যবহার করা হচ্ছে
+                const comm = u.commissionBDT || 0;
+
+                html += `
+                <tr>
+                    <td>
+                        <b>${u.universityName}</b><br>
+                        <small>${u.location}, ${u.country}</small>
+                    </td>
+                    <td>
+                        GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+ <br>
+                        Max Gap: ${u.maxGapAllowed}y
+                    </td>
+                    <td>$${(u.totalTuitionFee || 0).toLocaleString()}</td>
+                    <td>
+                        <span class="badge" style="background:${isEligible ? 'var(--green)' : 'var(--red)'}">
+                            ${isEligible ? '✅ Eligible' : '❌ Not Eligible'}
+                        </span>
+                    </td>
+                    <td style="color:var(--gold); font-weight:bold;">৳${comm.toLocaleString()}</td>
+                    <td>
+                        <button class="btn-gold" 
+                            ${!isEligible ? 'disabled style="background:#444; cursor:not-allowed;"' : ''} 
+                            onclick="openApplyModal('${u.universityName}', ${comm})">
+                            ${isEligible ? 'Apply Now' : 'Locked'}
+                        </button>
+                    </td>
                 </tr>`;
             }
         });
-        container.innerHTML = html || "<tr><td colspan='6'>No data found</td></tr>";
-    } catch (e) { console.error(e); }
+        container.innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No matching universities found.</td></tr>";
+    } catch (e) { 
+        console.error("Search Error:", e);
+        container.innerHTML = "<tr><td colspan='6'>Error loading data...</td></tr>";
+    }
 }
 
 async function saveProfile() {
