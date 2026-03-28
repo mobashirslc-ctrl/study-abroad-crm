@@ -209,23 +209,34 @@
 
 
         async function fetchUniversities() {
-            try {
-                const res = await fetch('/api/universities');
-                const unis = await res.json();
-                const tbody = document.getElementById('adminUniTable');
-                tbody.innerHTML = unis.map(u => `
-                    <tr>
-                        <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
-                        <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq} | Gap: ${u.gap}y</td>
-                        <td>Fee: $${u.semesterFee} <br> Comm: ${u.partnerComm}%</td>
-                        <td>
-                            <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')">Edit</button>
-                            <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button>
-                        </td>
-                    </tr>
-                `).join('');
-            } catch (e) { console.error("Fetch Unis error:", e); }
-        }
+    try {
+        const res = await fetch('/api/universities');
+        const unis = await res.json();
+        const tbody = document.getElementById('adminUniTable');
+        tbody.innerHTML = unis.map(u => `
+            <tr>
+                <td>
+                    <b>${u.universityName}</b><br>
+                    <small>${u.location}, ${u.country} | ${u.intake || ''}</small>
+                </td>
+                <td>
+                    GPA: ${u.minGPA || 0} | 
+                    IELTS: ${u.ieltsReq || 0} | 
+                    Gap: ${u.maxGapAllowed || 0}y
+                </td>
+                <td>
+                    Fee: $${u.totalTuitionFee || 0} <br> 
+                    Comm: ৳${u.commissionBDT || 0}
+                </td>
+                <td>
+                    <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')">Edit</button>
+                    <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) { console.error("Fetch Unis error:", e); }
+}
+
 
         window.deleteUni = async (id) => {
             if(!confirm("Are you sure?")) return;
