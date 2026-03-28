@@ -8,7 +8,7 @@
     <style>
         /* --- 🎨 DEEP PURPLE PREMIUM THEME --- */
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #090919;
             background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090919 70%);
             color: #fff;
@@ -23,119 +23,92 @@
         .container {
             background: rgba(25, 25, 50, 0.8);
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 60px 50px;
+            padding: 40px 30px;
             border-radius: 40px;
             border: 2px solid rgba(162, 155, 254, 0.5);
             box-shadow: 0 25px 100px rgba(0, 0, 0, 0.9);
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             text-align: center;
-            box-sizing: border-box;
         }
 
-        .logo-box { margin-bottom: 30px; }
         .logo-box img { 
-            width: 220px; 
-            height: auto; 
-            display: block; 
-            margin: 0 auto;
+            width: 180px; 
             background: white; 
             padding: 10px; 
             border-radius: 15px;
-            filter: drop-shadow(0 0 15px rgba(162, 155, 254, 0.6));
+            margin-bottom: 20px;
         }
 
         h2 { 
-            font-size: 18px; 
+            font-size: 16px; 
             text-transform: uppercase; 
-            letter-spacing: 5px; 
+            letter-spacing: 4px; 
             color: #a29bfe; 
-            margin-bottom: 40px;
-            font-weight: 800;
+            margin-bottom: 30px;
         }
 
         input {
             width: 100%;
-            padding: 22px;
-            margin-bottom: 20px;
-            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-radius: 15px;
             border: 1px solid rgba(162, 155, 254, 0.4);
             background: rgba(15, 15, 35, 0.9);
             color: white;
-            box-sizing: border-box;
-            font-size: 20px;
-            transition: 0.3s;
+            font-size: 18px;
             text-align: center;
-        }
-        input:focus {
-            border-color: #a29bfe;
-            box-shadow: 0 0 30px rgba(162, 155, 254, 0.3);
-            outline: none;
+            box-sizing: border-box;
         }
 
         button {
             width: 100%;
-            padding: 22px;
+            padding: 18px;
             background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
             border: none;
-            border-radius: 20px;
-            cursor: pointer;
+            border-radius: 15px;
             font-weight: 900;
-            font-size: 18px;
+            cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 15px 30px rgba(46, 204, 113, 0.4);
             transition: 0.3s;
         }
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(46, 204, 113, 0.5);
-        }
+
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         #result {
             display: none;
-            margin-top: 50px;
-            padding: 35px;
+            margin-top: 30px;
+            padding: 25px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 30px;
+            border-radius: 25px;
             border: 1px solid rgba(162, 155, 254, 0.2);
         }
 
-        .track-header {
-            position: relative;
-            height: 70px;
-            overflow: hidden;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(162, 155, 254, 0.2);
-        }
-
+        /* Plane Animation */
+        .track-header { position: relative; height: 50px; overflow: hidden; margin-bottom: 15px; }
         .plane-anim {
             position: absolute;
             left: -100px;
             color: #3498db; 
-            font-size: 40px;
-            animation: flyAcross 4s infinite linear;
+            font-size: 30px;
+            animation: flyAcross 3s infinite linear;
         }
-
         @keyframes flyAcross {
-            0% { left: -25%; opacity: 0; transform: translateY(0); }
-            15% { opacity: 1; }
-            50% { transform: translateY(-15px) rotate(5deg); }
-            85% { opacity: 1; }
-            100% { left: 125%; opacity: 0; }
+            0% { left: -20%; opacity: 0; }
+            50% { opacity: 1; transform: translateY(-5px); }
+            100% { left: 120%; opacity: 0; }
         }
 
         .info-row { 
             display: flex; 
             justify-content: space-between; 
-            font-size: 18px; 
-            margin: 20px 0; 
-            padding-bottom: 15px;
+            font-size: 15px; 
+            margin: 12px 0; 
+            padding-bottom: 8px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .label { color: #a29bfe; font-weight: 600; }
+        .label { color: #a29bfe; }
         .val { font-weight: bold; }
     </style>
 </head>
@@ -143,7 +116,7 @@
 
     <div class="container">
         <div class="logo-box">
-            <img src="logo.jpeg" alt="Student Career Consultancy">
+            <img src="logo.jpeg" alt="SSC Logo">
         </div>
         
         <h2>Live Tracker</h2>
@@ -159,73 +132,69 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDonKHMydghjn3nAwjtsvQFDyT-70DGqOk", 
-            authDomain: "ihp-portal-v3.firebaseapp.com", 
-            projectId: "ihp-portal-v3", 
-            storageBucket: "ihp-portal-v3.firebasestorage.app", 
-            messagingSenderId: "481157902534", 
-            appId: "1:481157902534:web:2d9784032fbf8f2f7fe7c7" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+    <script>
         const passportInput = document.getElementById('passportInput');
         const resultDiv = document.getElementById('result');
         const dataContent = document.getElementById('data-content');
+        const trackBtn = document.getElementById('trackBtn');
 
-        document.getElementById('trackBtn').addEventListener('click', async () => {
-            const inputVal = passportInput.value.trim();
-            if (!inputVal) { alert("Please enter a Passport Number!"); return; }
+        trackBtn.addEventListener('click', async () => {
+            const inputVal = passportInput.value.trim().toUpperCase();
+            if (!inputVal) { 
+                alert("Please enter a Passport Number!"); 
+                return; 
+            }
 
+            // UI Reset
             resultDiv.style.display = "block";
             dataContent.innerHTML = "<p style='text-align:center;'>Searching database...</p>";
+            trackBtn.disabled = true;
+            trackBtn.innerText = "Searching...";
 
             try {
-                // এখানে 'passportNo' ফিল্ডটি ব্যবহার করা হয়েছে
-                const q = query(
-                    collection(db, "applications"), 
-                    where("passportNo", "==", inputVal),
-                    limit(1)
-                );
+                // API কল (আপনার ব্যাকএন্ড রুট অনুযায়ী)
+                const response = await fetch(`/api/applications?passportNo=${inputVal}`);
                 
-                const snap = await getDocs(q);
+                if (!response.ok) throw new Error("Server connection error");
+                
+                const apps = await response.json();
 
-                if (snap.empty) {
-                    dataContent.innerHTML = "<div style='color:#ff4d4d; padding:20px;'>❌ No Record Found.</div>";
+                // ডেটা ফিল্টার করা
+                let appData = null;
+                if (Array.isArray(apps)) {
+                    appData = apps.find(app => app.passportNo.toUpperCase() === inputVal);
+                } else if (apps && apps.passportNo) {
+                    appData = apps;
+                }
+
+                if (!appData) {
+                    dataContent.innerHTML = "<div style='color:#ff4d4d; padding:10px;'>❌ No Record Found.</div>";
                 } else {
-                    snap.forEach(doc => {
-                        const d = doc.data();
-                        const rawStatus = (d.status || 'PENDING').toUpperCase();
+                    const rawStatus = (appData.status || 'PENDING').toUpperCase();
+                    const statusColor = (rawStatus === 'REJECTED' || rawStatus === 'CANCELLED') ? '#ff4d4d' : '#2ecc71';
 
-                        dataContent.innerHTML = `
-                            <div style="text-align: left;">
-                                <div class="info-row"><span class="label">STUDENT</span> <span class="val">${d.studentName || 'N/A'}</span></div>
-                                <div class="info-row"><span class="label">PASSPORT</span> <span class="val">${d.passportNo || 'N/A'}</span></div>
-                            </div>
-                            
-                            <div style="margin-top:20px; text-align:center; padding:20px; background:rgba(46, 204, 113, 0.1); border:1px solid #2ecc71; border-radius:20px;">
-                                <div style="font-size:11px; color:#2ecc71; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
-                                <div style="font-size:24px; font-weight:900; color:#2ecc71; margin-top:5px;">${rawStatus}</div>
-                            </div>
+                    dataContent.innerHTML = `
+                        <div style="text-align: left;">
+                            <div class="info-row"><span class="label">STUDENT</span> <span class="val">${appData.studentName || 'N/A'}</span></div>
+                            <div class="info-row"><span class="label">PASSPORT</span> <span class="val">${appData.passportNo}</span></div>
+                        </div>
+                        
+                        <div style="margin-top:20px; text-align:center; padding:15px; background:rgba(255,255,255,0.03); border:1px solid ${statusColor}; border-radius:20px;">
+                            <div style="font-size:10px; color:${statusColor}; font-weight:bold; letter-spacing:2px;">LIVE STATUS</div>
+                            <div style="font-size:22px; font-weight:900; color:${statusColor}; margin-top:5px;">${rawStatus}</div>
+                        </div>
 
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <div style="flex: 1; padding: 12px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
-                                    <div style="font-size: 9px; color: #3498db; font-weight: bold;">UNIVERSITY</div>
-                                    <div style="font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px;">${d.university || 'Under Review'}</div>
-                                </div>
-                            </div>
-                        `;
-                    });
+                        <div style="margin-top: 15px; padding: 12px; background: rgba(52, 152, 219, 0.1); border: 1px solid #3498db; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 9px; color: #3498db; font-weight: bold;">UNIVERSITY</div>
+                            <div style="font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px;">${appData.university || 'Processing...'}</div>
+                        </div>
+                    `;
                 }
             } catch (e) {
-                console.error(e);
-                dataContent.innerHTML = "Error loading data.";
+                dataContent.innerHTML = "<div style='color:#ff4d4d;'>❌ Error: Could not connect to server.</div>";
+            } finally {
+                trackBtn.disabled = false;
+                trackBtn.innerText = "Track Status Now";
             }
         });
     </script>

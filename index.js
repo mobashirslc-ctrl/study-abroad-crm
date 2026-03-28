@@ -28,15 +28,26 @@ const connectDB = async () => {
 };
 
 // --- 👤 Models ---
+// --- 👤 Updated User Model ---
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
-    role: { type: String, default: 'partner' },
+    role: { type: String, default: 'partner' }, // partner or staff
     contact: String,
     orgName: String,
-    status: { type: String, default: 'pending' }, // নতুন ইউজারদের জন্য 'pending' থাকবে
-    expiryDate: { type: Date, default: null },   // এডমিন এখান থেকে ডেট সেট করবে
+    
+    // --- New Fields for Registration ---
+    authorisedPerson: String,
+    address: String,
+    nidPdf: String,           // PDF URL/Path
+    tradeLicensePdf: String,  // PDF URL/Path
+    expertCountries: String,  // For Staff
+    experience: String,       // For Staff
+    website: String,
+    
+    status: { type: String, default: 'pending' }, 
+    expiryDate: { type: Date, default: null },   
     walletBalance: { type: Number, default: 0 }
 }, { collection: 'users' }));
 
@@ -83,6 +94,44 @@ const University = mongoose.models.University || mongoose.model('University', ne
 }, { collection: 'universities' }));
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
+// --- 📝 New Registration Route ---
+app.post('/api/auth/register', async (req, res) => {
+    await connectDB();
+    try {
+        const { 
+            userType, fullName, email, password, contact, 
+            orgName, authorisedPerson, address, 
+            expertCountries, experience, website 
+        } = req.body;
+
+        // চেক করুন ইউজার অলরেডি আছে কি না
+        const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+        if (existingUser) return res.status(400).json({ message: "Email already exists!" });
+
+        // পাসওয়ার্ড হ্যাশ করা
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const newUser = new User({
+            role: userType, // 'partner' or 'staff'
+            fullName,
+            email: email.toLowerCase().trim(),
+            password: hashedPassword,
+            contact,
+            orgName,
+            authorisedPerson,
+            address,
+            expertCountries,
+            experience,
+            website,
+            status: 'pending' // ডিফল্ট পেন্ডিং থাকবে, এডমিন এপ্রুভ করবে
+        });
+
+        await newUser.save();
+        res.status(201).json({ message: "Registration successful! Waiting for Admin Approval." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // ১. নতুন ইউনিভার্সিটি সেভ করা
 app.post('/api/add-university', async (req, res) => {
@@ -359,6 +408,33 @@ app.post('/api/login', async (req, res) => {
             walletBalance: user.walletBalance || 0 // এটি নিশ্চিত করবে ফ্রন্টএন্ডে টাকা দেখা যাচ্ছে
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
+});
+// --- 🔍 Public Tracking Route ---
+app.get('/api/track-status', async (req, res) => {
+    await connectDB();
+    try {
+        const { passportNo } = req.query;
+        if (!passportNo) return res.status(400).json({ error: "Passport number is required" });
+
+        // ডাটাবেস থেকে পাসপোর্ট অনুযায়ী অ্যাপ্লিকেশন খোঁজা
+        const appData = await Application.findOne({ 
+            passportNo: { $regex: new RegExp(passportNo, "i") } 
+        });
+
+        if (!appData) {
+            return res.status(404).json({ message: "No record found with this passport number." });
+        }
+
+        // সিকিউরিটির জন্য শুধু প্রয়োজনীয় তথ্য পাঠানো হচ্ছে
+        res.json({
+            studentName: appData.studentName,
+            passportNo: appData.passportNo,
+            status: appData.status,
+            university: appData.university
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.get('*', (req, res) => {
