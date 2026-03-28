@@ -108,7 +108,7 @@ const University = mongoose.models.University || mongoose.model('University', ne
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
 // --- 📝 New Registration Route (সংশোধিত ও ফিক্সড) ---
-app.post('/api/register', async (req, res) => { 
+app.post(['/api/register', '/api/auth/register'], async (req, res) => {
     try {
         // ১. নিশ্চিত করা যে ডাটাবেস কানেক্টেড
         await connectDB();
@@ -423,7 +423,7 @@ app.post('/api/submit-application', async (req, res) => {
 });
 
 // ৭. লগইন রুট (Wallet Balance সহ - সংশোধিত)
-app.post('/api/login', async (req, res) => {
+app.post(['/api/login', '/api/auth/login'], async (req, res) => {
     await connectDB();
     try {
         const { email, password } = req.body;
