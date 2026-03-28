@@ -11,8 +11,22 @@ const app = express();
 app.use(cors()); 
 app.use(express.json());
 
-const publicPath = path.join(__dirname, 'public');
+// ১. পাথ ঠিক করা (যদি ফাইলগুলো সরাসরি মেইন ফোল্ডারে থাকে তবে 'public' বাদ দিন)
+// যদি ফাইলগুলো public ফোল্ডারে থাকে তবে নিচেরটি ঠিক আছে:
+const publicPath = path.join(__dirname, 'public'); 
+
+// ২. স্ট্যাটিক ফাইল মিডলওয়্যার
 app.use(express.static(publicPath));
+
+// ৩. রুট পাথ এ সরাসরি index.html পাঠানো
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+// ৪. ট্র্যাকিং পেজের জন্য আলাদা পাথ (যদি সরাসরি /track.html কাজ না করে)
+app.get('/track', (req, res) => {
+    res.sendFile(path.join(publicPath, 'track.html'));
+});
 
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
