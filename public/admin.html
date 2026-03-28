@@ -61,33 +61,39 @@
 
         <div id="uni-manage" class="tab-content" style="display: block;">
             <div class="card">
-                <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
-                <div class="input-group">
-                    <input type="text" id="uName" placeholder="University Name">
-                    <input type="text" id="uCountry" placeholder="Country">
-                    <input type="text" id="uCity" placeholder="City/Location"> 
-                </div>
-                <div class="input-group">
-                    <input type="text" id="uDegree" placeholder="Degree (e.g. Bachelor)">
-                    <input type="text" id="uDuration" placeholder="Duration (e.g. 3 Years)"> 
-                    <input type="number" id="uFee" placeholder="Semester Fee ($)">
-                </div>
-                <div class="input-group">
-                    <input type="number" id="uLiving" placeholder="Est. Living Cost/Year ($)"> 
-                    <select id="uJob"> 
-                        <option value="High">High Job Opportunity</option>
-                        <option value="Medium">Medium Job Opportunity</option>
-                        <option value="Standard">Standard Opportunity</option>
-                    </select>
-                    <input type="number" id="uComm" placeholder="Partner Comm (%)">
-                </div>
-                <div class="input-group">
-                    <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
-                    <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS/Score">
-                    <input type="number" id="uGap" placeholder="Max Gap (Years)">
-                </div>
-                <button class="btn-gold" id="saveUniBtn" onclick="saveUniversity()">Add University to System</button>
-            </div>
+    <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+    <div class="input-group">
+        <input type="text" id="uName" placeholder="University Name">
+        <input type="text" id="uCountry" placeholder="Country">
+        <input type="text" id="uCity" placeholder="City/Location"> 
+    </div>
+    <div class="input-group">
+        <select id="uDegree">
+            <option value="Bachelor">Bachelor</option>
+            <option value="Master">Master</option>
+            <option value="Foundation">Foundation/Diploma</option>
+        </select>
+        <input type="text" id="uCourse" placeholder="Popular Course Name">
+        <input type="text" id="uIntake" placeholder="Intake (e.g. Sept 2026)"> 
+    </div>
+    <div class="input-group">
+        <input type="number" id="uTotalFee" placeholder="Total Tuition Fee ($)">
+        <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee ($)"> 
+        <input type="number" id="uScholarship" placeholder="Max Scholarship ($)">
+    </div>
+    <div class="input-group">
+        <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
+        <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
+        <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
+    </div>
+    <div class="input-group">
+        <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
+        <input type="text" id="uProcTime" placeholder="Processing Time (e.g. 10 Days)">
+        <input type="number" id="uComm" placeholder="Partner Commission (৳)">
+    </div>
+    <button class="btn-gold" onclick="saveUniversity()">Add University to System</button>
+</div>
+
 
             <h3>Existing Universities</h3>
             <table>
@@ -163,33 +169,44 @@
 
         // --- ২. ইউনিভার্সিটি ম্যানেজমেন্ট ---
         window.saveUniversity = async () => {
-            const data = {
-                universityName: document.getElementById('uName').value,
-                country: document.getElementById('uCountry').value,
-                location: document.getElementById('uCity').value,
-                degree: document.getElementById('uDegree').value,
-                duration: document.getElementById('uDuration').value,
-                semesterFee: Number(document.getElementById('uFee').value),
-                livingCost: Number(document.getElementById('uLiving').value),
-                jobOpportunity: document.getElementById('uJob').value,
-                partnerComm: Number(document.getElementById('uComm').value),
-                minGPA: Number(document.getElementById('uGpa').value),
-                ieltsReq: Number(document.getElementById('uIelts').value),
-                gap: Number(document.getElementById('uGap').value)
-            };
+        window.saveUniversity = async () => {
+    const data = {
+        universityName: document.getElementById('uName').value,
+        country: document.getElementById('uCountry').value,
+        location: document.getElementById('uCity').value,
+        degreeType: document.getElementById('uDegree').value,
+        courseName: document.getElementById('uCourse').value,
+        intake: document.getElementById('uIntake').value,
+        
+        totalTuitionFee: Number(document.getElementById('uTotalFee').value),
+        initialDeposit: Number(document.getElementById('uDeposit').value),
+        scholarshipMax: Number(document.getElementById('uScholarship').value),
+        
+        minGPA: Number(document.getElementById('uGpa').value),
+        ieltsReq: Number(document.getElementById('uIelts').value),
+        maxGapAllowed: Number(document.getElementById('uGap').value),
+        
+        visaSuccessRate: Number(document.getElementById('uVisaRate').value),
+        processingTime: document.getElementById('uProcTime').value,
+        commissionBDT: Number(document.getElementById('uComm').value) // ব্যাকএন্ডের সাথে নাম মিল রাখা হয়েছে
+    };
 
-            try {
-                const res = await fetch('/api/add-university', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                if(res.ok) {
-                    alert("✅ University Added!");
-                    fetchUniversities();
-                }
-            } catch (e) { alert("Error saving university"); }
-        };
+    // সব ফিল্ড পূরণ হয়েছে কি না চেক (Basic validation)
+    if(!data.universityName || !data.country) return alert("Please fill Name and Country!");
+
+    try {
+        const res = await fetch('/api/add-university', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(res.ok) {
+            alert("✅ University Added with Smart Requirements!");
+            location.reload(); // টেবিল আপডেট করার জন্য
+        }
+    } catch (e) { alert("Error connecting to server"); }
+};
+
 
         async function fetchUniversities() {
             try {
