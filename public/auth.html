@@ -81,125 +81,123 @@
         </div>
     </div>
 
-    <script>
-        function toggleFields() {
-            const type = document.getElementById('userType').value;
-            const regForm = document.getElementById('regForm');
-            const fields = document.getElementById('dynamicFields');
-            
-            if(!type) {
-                regForm.classList.add('hidden');
-                return;
-            }
-
-            regForm.classList.remove('hidden');
-            fields.innerHTML = ""; 
-
-            if(type === 'partner') {
-                fields.innerHTML = `
-                    <input type="text" id="regOrgName" placeholder="Organisation Name" required>
-                    <input type="text" id="regFullName" placeholder="Authorised Person Name" required>
-                    <input type="text" id="regContact" placeholder="Contact No" required>
-                    <textarea id="regAddress" placeholder="Full Address"></textarea>
-                    <input type="email" id="regEmail" placeholder="Email Address" required>
-                    <label class="file-input-label">Upload NID (PDF) <input type="file" id="regNid" class="hidden" accept=".pdf"></label>
-                    <label class="file-input-label">Trade License (PDF) <input type="file" id="regTrade" class="hidden" accept=".pdf"></label>
-                    <input type="text" id="regWebsite" placeholder="Website URL (Optional)">
-                `;
-            } else if(type === 'staff') {
-                fields.innerHTML = `
-                    <input type="text" id="regFullName" placeholder="Staff Full Name" required>
-                    <input type="text" id="regContact" placeholder="Contact No" required>
-                    <input type="text" id="regOrgName" placeholder="Organisation / Hub Name" required>
-                    <input type="text" id="regExpertCountries" placeholder="Expert Countries (e.g. UK, USA)" required>
-                    <input type="text" id="regExperience" placeholder="Experience Years" required>
-                    <input type="email" id="regEmail" placeholder="Personal Email Address" required>
-                    <label class="file-input-label">Upload CV/NID (PDF) <input type="file" id="regNid" class="hidden" accept=".pdf"></label>
-                `;
-            }
+   <script>
+    function toggleFields() {
+        const type = document.getElementById('userType').value;
+        const regForm = document.getElementById('regForm');
+        const fields = document.getElementById('dynamicFields');
+        
+        if(!type) {
+            regForm.classList.add('hidden');
+            return;
         }
 
-        // Registration Logic
-        document.getElementById('regForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('regBtn');
-            
-            // ফাইলসহ ডেটা পাঠাতে FormData ব্যবহার করা হয়েছে
-            const formData = new FormData();
-            formData.append('userType', document.getElementById('userType').value);
-            formData.append('fullName', document.getElementById('regFullName')?.value || '');
-            formData.append('email', document.getElementById('regEmail')?.value || '');
-            formData.append('password', document.getElementById('regPass').value);
-            formData.append('contact', document.getElementById('regContact')?.value || '');
-            formData.append('orgName', document.getElementById('regOrgName')?.value || '');
-            formData.append('address', document.getElementById('regAddress')?.value || '');
-            formData.append('expertCountries', document.getElementById('regExpertCountries')?.value || '');
-            formData.append('experience', document.getElementById('regExperience')?.value || '');
-            formData.append('website', document.getElementById('regWebsite')?.value || '');
+        regForm.classList.remove('hidden');
+        fields.innerHTML = ""; 
 
-            const nidFile = document.getElementById('regNid')?.files[0];
-            if(nidFile) formData.append('nid', nidFile);
-            
-            const tradeFile = document.getElementById('regTrade')?.files[0];
-            if(tradeFile) formData.append('tradeLicense', tradeFile);
+        if(type === 'partner') {
+            fields.innerHTML = `
+                <input type="text" id="regOrgName" placeholder="Organisation Name" required>
+                <input type="text" id="regFullName" placeholder="Authorised Person Name" required>
+                <input type="text" id="regContact" placeholder="Contact No" required>
+                <textarea id="regAddress" placeholder="Full Address"></textarea>
+                <input type="email" id="regEmail" placeholder="Email Address" required>
+                <label class="file-input-label">Upload NID (PDF) <input type="file" id="regNid" class="hidden" accept=".pdf"></label>
+                <label class="file-input-label">Trade License (PDF) <input type="file" id="regTrade" class="hidden" accept=".pdf"></label>
+                <input type="text" id="regWebsite" placeholder="Website URL (Optional)">
+            `;
+        } else if(type === 'staff') {
+            fields.innerHTML = `
+                <input type="text" id="regFullName" placeholder="Staff Full Name" required>
+                <input type="text" id="regContact" placeholder="Contact No" required>
+                <input type="text" id="regOrgName" placeholder="Organisation / Hub Name" required>
+                <input type="text" id="regExpertCountries" placeholder="Expert Countries (e.g. UK, USA)" required>
+                <input type="text" id="regExperience" placeholder="Experience Years" required>
+                <input type="email" id="regEmail" placeholder="Personal Email Address" required>
+                <label class="file-input-label">Upload CV/NID (PDF) <input type="file" id="regNid" class="hidden" accept=".pdf"></label>
+            `;
+        }
+    }
 
-            try {
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                btn.disabled = true;
+    // Registration Logic (Confirmed)
+    document.getElementById('regForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('regBtn');
+        
+      const payload = {
+    role: document.getElementById('userType').value,
+    fullName: document.getElementById('regFullName')?.value || '',
+    
+    // এখানে ভালো করে লক্ষ্য করুন:
+    email: document.getElementById('regEmail').value, // ID 'regEmail' থেকে ভ্যালু নিচ্ছে
+    password: document.getElementById('regPass').value, // ID 'regPass' থেকে ভ্যালু নিচ্ছে
+    
+    contact: document.getElementById('regContact')?.value || '',
+    orgName: document.getElementById('regOrgName')?.value || '',
+    address: document.getElementById('regAddress')?.value || '',
+    expertCountries: document.getElementById('regExpertCountries')?.value || '',
+    experience: document.getElementById('regExperience')?.value || '',
+    website: document.getElementById('regWebsite')?.value || ''
+};
 
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    body: formData // JSON নয়, সরাসরি FormData পাঠানো হচ্ছে
-                });
+        try {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
 
-                const result = await response.json();
-                if (response.ok) {
-                    alert("Registration successful! Your account is pending for Admin Approval.");
-                    location.reload();
-                } else {
-                    alert("Error: " + (result.message || result.msg));
-                }
-            } catch (err) {
-                alert("Server connection failed!");
-            } finally {
-                btn.innerHTML = 'Create Account';
-                btn.disabled = false;
+            const response = await fetch('/api/register', { // Corrected URL
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload) 
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert("Registration successful! Your account is pending for Admin Approval.");
+                location.reload();
+            } else {
+                alert("Error: " + (result.message || result.error || "Registration failed"));
             }
-        });
+        } catch (err) {
+            alert("Server connection failed! Make sure the backend is running.");
+        } finally {
+            btn.innerHTML = 'Create Account';
+            btn.disabled = false;
+        }
+    });
 
-        // Login Logic
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-            const btn = document.getElementById('loginBtn');
+    // Login Logic (Fixed URL)
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPass').value;
+        const btn = document.getElementById('loginBtn');
 
-            try {
-                btn.innerHTML = 'Checking...';
-                const response = await fetch('/api/auth/login', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+        try {
+            btn.innerHTML = 'Checking...';
+            const response = await fetch('/api/login', { // Changed from /api/auth/login to /api/login
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
 
-                const data = await response.json();
-                if (response.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+            const data = await response.json();
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
 
-                    const role = data.user.role;
-                    if (role === 'admin') window.location.href = 'admin.html';
-                    else if (role === 'staff') window.location.href = 'compliance.html';
-                    else window.location.href = 'partner.html';
-                } else {
-                    alert(data.msg || "Invalid Credentials or Account Not Approved");
-                }
-            } catch (err) {
-                alert("Login failed. Check server connection.");
-            } finally {
-                btn.innerHTML = 'Enter Dashboard';
+                const role = data.user.role;
+                if (role === 'admin') window.location.href = 'admin.html';
+                else if (role === 'staff') window.location.href = 'compliance.html';
+                else window.location.href = 'partner.html';
+            } else {
+                alert(data.msg || data.message || "Invalid Credentials or Account Not Approved");
             }
-        });
-    </script>
+        } catch (err) {
+            alert("Login failed. Check server connection.");
+        } finally {
+            btn.innerHTML = 'Enter Dashboard';
+        }
+    });
+</script>
 </body>
 </html>
