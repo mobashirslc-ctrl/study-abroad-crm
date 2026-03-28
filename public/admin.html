@@ -217,7 +217,7 @@
             <tr>
                 <td>
                     <b>${u.universityName}</b><br>
-                    <small>${u.location}, ${u.country} | ${u.intake || ''}</small>
+                    <small>${u.location}, ${u.country} | Intake: ${u.intake || 'N/A'}</small>
                 </td>
                 <td>
                     GPA: ${u.minGPA || 0} | 
@@ -236,6 +236,7 @@
         `).join('');
     } catch (e) { console.error("Fetch Unis error:", e); }
 }
+
 
 
         window.deleteUni = async (id) => {
