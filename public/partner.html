@@ -110,29 +110,52 @@
         </div>
 
         <div id="earnings" class="tab-content">
-            <h3>Financial Overview</h3>
-            <div class="card-grid">
-                <div class="card"><h3>Total Earnings</h3><p id="totalEarned" style="color:var(--green); font-size:26px;">৳0</p></div>
-                <div class="card"><h3>Available for Withdraw</h3><p id="withdrawableBal" style="color:var(--gold); font-size:26px;">৳0</p></div>
-            </div>
-            <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left;">
-                <h4>Request Withdrawal</h4>
-            <div class="card">
-    <h3>Request Withdrawal</h3>
-    <div class="input-group">
-        <input type="number" id="withdrawAmount" placeholder="Enter Amount (৳)">
+    <h3>Financial Overview</h3>
+    <div class="card-grid">
+        <div class="card"><h3>Total Earnings</h3><p id="totalEarned" style="color:var(--green); font-size:26px;">৳0</p></div>
+        <div class="card"><h3>Available for Withdraw</h3><p id="withdrawableBal" style="color:var(--gold); font-size:26px;">৳0</p></div>
+    </div>
+    
+    <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left; border: 1px solid var(--gold);">
+        <h3 style="text-align: center; color: var(--gold);">Request Withdrawal</h3>
+        
+        <label>Withdraw Amount (৳)</label>
+        <input type="number" id="withdrawAmount" placeholder="Enter Amount (Min. 500)">
+        
+        <label>Payment Method</label>
         <select id="withdrawMethod">
             <option value="">Select Payment Method</option>
             <option value="Bkash">Bkash</option>
             <option value="Nagad">Nagad</option>
             <option value="Bank Transfer">Bank Transfer</option>
         </select>
-    </div>
-    <div class="input-group">
+        
+        <label>Payment Details (Number/AC)</label>
         <input type="text" id="paymentDetails" placeholder="Enter Bkash No / Bank AC Details">
+        
+        <button class="btn-gold" id="btnWithdraw" onclick="requestWithdraw()" style="margin-top:10px;">Submit Request</button>
     </div>
-    <button class="btn-gold" onclick="submitWithdrawRequest()">Submit Request</button>
 </div>
+
+<div id="applyModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="color:var(--gold); margin-top:0;">Student Application</h3>
+        <input type="text" id="sName" placeholder="Student Full Name">
+        <input type="text" id="sPassport" placeholder="Passport Number">
+        <div style="margin-top:15px;">
+            <small style="color:var(--gold)">Upload Documents (Clear Scanned Copy)</small>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <div><small>Passport Copy</small><input type="file" id="file1"></div>
+                <div><small>Academic Docs</small><input type="file" id="file2"></div>
+                <div><small>English Proficiency</small><input type="file" id="file3"></div>
+                <div><small>CV / Other Docs</small><input type="file" id="file4"></div>
+            </div>
+        </div>
+        <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:25px;">Submit Now</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:gray; cursor:pointer; width:100%; margin-top:12px;">Close Window</button>
+    </div>
+</div>
+
 
         </div>
 
