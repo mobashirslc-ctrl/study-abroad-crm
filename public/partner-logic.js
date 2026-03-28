@@ -106,35 +106,45 @@ async function initRealtimeData() {
 // 4. Withdraw, File Handling & Submissions
 // ---------------------------------------------------------
 async function requestWithdraw() {
-    if (currentAvailableBalance < 5000) return alert("Minimum 5,000 BDT required!");
-    
-    const amount = currentAvailableBalance; // পুরো অ্যামাউন্ট রিকোয়েস্ট
-    if (!confirm(`Confirm withdraw request for ৳${amount.toLocaleString()}?`)) return;
+    const amountInput = document.getElementById('withdrawAmount').value;
+    const methodType = document.getElementById('withdrawMethod').value;
+    const details = document.getElementById('paymentDetails').value;
+
+    if (!amountInput || Number(amountInput) < 500) {
+        return alert("Minimum withdrawal amount is 500 BDT");
+    }
+    if (!methodType || !details) {
+        return alert("Please select a method and provide account details");
+    }
+
+    if (!confirm(`Confirm withdraw request for ৳${Number(amountInput).toLocaleString()}?`)) return;
 
     try {
-        // প্রোফাইল আপডেট করার বদলে সরাসরি একটি withdrawal রিকোয়েস্ট পাঠানো
         const res = await fetch('/api/withdrawals', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                partnerEmail: partnerEmail,
-                partnerName: userData.orgName || userData.name,
-                amount: amount,
-                status: 'PENDING',
-                timestamp: new Date().toISOString()
+                email: partnerEmail, // ব্যাকএন্ডে 'email' নামে ডাটা যাবে
+                amount: Number(amountInput),
+                partnerName: userData.orgName || userData.name || "Partner",
+                method: `${methodType}: ${details}` // পদ্ধতি এবং নম্বর একসাথে
             })
         });
 
-        if(res.ok) {
-            alert("✅ Request Sent Successfully! Wait for Admin Approval.");
-            location.reload(); // ড্যাশবোর্ড রিফ্রেশ
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("✅ Withdrawal request submitted successfully!");
+            location.reload(); 
         } else {
-            throw new Error("Failed to send request");
+            alert("❌ Error: " + data.error);
         }
-    } catch (e) { 
-        alert("Error: " + e.message); 
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        alert("Error: Failed to send request. Check your connection.");
     }
 }
+
 
 
 async function uploadFile(file) {
