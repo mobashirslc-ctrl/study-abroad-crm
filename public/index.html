@@ -43,12 +43,12 @@
                 <input type="password" id="regPass" placeholder="••••••••" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
             </div>
             <div>
-                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Join As</label>
-                <select id="regRole" class="w-full p-4 bg-[#1a0b45] border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
-                    <option value="partner">Partner (Agent)</option>
-                    <option value="compliance">Compliance Team</option>
-                </select>
-            </div>
+    <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Join As</label>
+    <select id="regRole" class="w-full p-4 bg-[#1a0b45] border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
+        <option value="partner">Partner (Agent)</option>
+        <option value="staff">Staff / Compliance</option> 
+    </select>
+</div>
             <button id="registerBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Submit Application</button>
             <p class="text-center text-gray-400 text-sm mt-4">
                 Already registered? <a href="javascript:void(0)" onclick="toggleForm('login')" class="text-[#ffcc00] font-bold hover:underline">Login here</a>
@@ -57,6 +57,8 @@
     </div>
 
     <script>
+    <script>
+    // ফর্ম টগল করার ফাংশন
     function toggleForm(type) {
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
@@ -76,6 +78,7 @@
         }
     }
 
+    // লগইন লজিক
     document.getElementById('loginBtn').onclick = async () => {
         const email = document.getElementById('logEmail').value;
         const password = document.getElementById('logPass').value;
@@ -94,29 +97,53 @@
             const data = await res.json();
             
             if (res.ok) {
-                // ডাটা সেভ করার আগে কনসোলে চেক করছি
-                console.log("Success! Data:", data);
-                
-                // CRITICAL: অবজেক্টটিকে স্ট্রিং বানিয়ে সেভ করা
                 localStorage.setItem('user', JSON.stringify(data.user));
-                
-                // রিডাইরেকশন লজিক
+                // রোল অনুযায়ী রিডাইরেক্ট
                 if(data.user.role === 'admin') window.location.href = 'admin.html';
-                else if(data.user.role === 'compliance') window.location.href = 'compliance.html';
+                else if(data.user.role === 'staff') window.location.href = 'compliance.html';
                 else window.location.href = 'partner.html';
-                
             } else {
                 alert(data.msg); 
-                btn.disabled = false; btn.innerText = "Login";
             }
         } catch (err) { 
             alert("Server Error!"); 
-            btn.disabled = false; 
-            btn.innerText = "Login";
+        } finally {
+            btn.disabled = false; btn.innerText = "Login";
         }
     };
 
-    // রেজিস্টার লজিক আগের মতোই থাকবে...
+    // রেজিস্টার লজিক (এটি নতুন যোগ করা হয়েছে)
+    document.getElementById('registerBtn').onclick = async () => {
+        const fullName = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPass').value;
+        const role = document.getElementById('regRole').value;
+        const btn = document.getElementById('registerBtn');
+
+        if (!fullName || !email || !password) return alert("All fields are required!");
+
+        try {
+            btn.disabled = true; btn.innerText = "Submitting...";
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, email, password, role })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("Application submitted successfully! Please login.");
+                toggleForm('login');
+            } else {
+                alert(data.message || "Registration failed");
+            }
+        } catch (err) {
+            alert("Server error during registration!");
+        } finally {
+            btn.disabled = false; btn.innerText = "Submit Application";
+        }
+    };
+</script>
 </script>
 </body>
 </html>
