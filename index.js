@@ -109,11 +109,11 @@ const University = mongoose.models.University || mongoose.model('University', ne
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
 // --- 📝 New Registration Route ---
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/register', async (req, res) => { 
     await connectDB();
     try {
         const { 
-            userType, fullName, email, password, contact, 
+            role, fullName, email, password, contact, 
             orgName, authorisedPerson, address, 
             expertCountries, experience, website 
         } = req.body;

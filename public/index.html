@@ -24,8 +24,10 @@
                 <input type="password" id="logPass" placeholder="••••••••" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
             </div>
             <button id="loginBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Login</button>
+            
             <p class="text-center text-gray-400 text-sm mt-4">
-                Don't have an account? <a href="javascript:void(0)" onclick="toggleForm('register')" class="text-[#ffcc00] font-bold hover:underline">Register here</a>
+                Don't have an account? 
+                <a href="javascript:void(0)" onclick="toggleForm('register')" class="text-[#ffcc00] font-bold hover:underline">Register here</a>
             </p>
         </div>
 
@@ -43,21 +45,22 @@
                 <input type="password" id="regPass" placeholder="••••••••" class="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
             </div>
             <div>
-    <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Join As</label>
-    <select id="regRole" class="w-full p-4 bg-[#1a0b45] border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
-        <option value="partner">Partner (Agent)</option>
-        <option value="staff">Staff / Compliance</option> 
-    </select>
-</div>
+                <label class="text-xs text-[#ffcc00] uppercase font-bold ml-1">Join As</label>
+                <select id="regRole" class="w-full p-4 bg-[#1a0b45] border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-[#ffcc00]">
+                    <option value="partner">Partner (Agent)</option>
+                    <option value="staff">Staff / Compliance</option> 
+                </select>
+            </div>
             <button id="registerBtn" class="w-full bg-[#ffcc00] text-black p-4 rounded-xl font-bold hover:bg-[#e6b800] transition transform active:scale-95">Submit Application</button>
+            
             <p class="text-center text-gray-400 text-sm mt-4">
-                Already registered? <a href="javascript:void(0)" onclick="toggleForm('login')" class="text-[#ffcc00] font-bold hover:underline">Login here</a>
+                Already registered? 
+                <a href="javascript:void(0)" onclick="toggleForm('login')" class="text-[#ffcc00] font-bold hover:underline">Login here</a>
             </p>
         </div>
     </div>
 
     <script>
-        // ফর্ম পরিবর্তন করার ফাংশন
         function toggleForm(type) {
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
@@ -77,11 +80,9 @@
             }
         }
 
-        // লগইন ফাংশন
         document.getElementById('loginBtn').onclick = async () => {
             const email = document.getElementById('logEmail').value;
             const password = document.getElementById('logPass').value;
-
             if (!email || !password) return alert("Please fill all fields!");
 
             try {
@@ -102,7 +103,6 @@
             }
         };
 
-        // রেজিস্ট্রেশন ফাংশন
         document.getElementById('registerBtn').onclick = async () => {
             const fullName = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
@@ -112,17 +112,17 @@
             if (!fullName || !email || !password) return alert("Fill all fields!");
 
             try {
-                const res = await fetch('/api/auth/register', {
+                const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fullName, email, password, role })
+                    body: JSON.stringify({ fullName, email, password, userType: role })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     alert("Registration successful! Please login.");
                     toggleForm('login');
                 } else {
-                    alert(data.message);
+                    alert(data.message || "Error during registration!");
                 }
             } catch (err) {
                 alert("Error during registration!");
