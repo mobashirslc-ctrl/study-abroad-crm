@@ -108,7 +108,7 @@ const University = mongoose.models.University || mongoose.model('University', ne
 }, { collection: 'universities' }));
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
-// --- 📝 New Registration Route ---
+// --- 📝 New Registration Route (সংশোধিত) ---
 app.post('/api/register', async (req, res) => { 
     await connectDB();
     try {
@@ -122,11 +122,11 @@ app.post('/api/register', async (req, res) => {
         const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
         if (existingUser) return res.status(400).json({ message: "Email already exists!" });
 
-        // পাসওয়ার্ড হ্যাশ করা
+        // পাসওয়ার্ড হ্যাশ করা
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = new User({
-            role: userType, // 'partner' or 'staff'
+            role: role || 'partner', // ✅ এখানে userType এর বদলে role হবে
             fullName,
             email: email.toLowerCase().trim(),
             password: hashedPassword,
@@ -137,12 +137,13 @@ app.post('/api/register', async (req, res) => {
             expertCountries,
             experience,
             website,
-            status: 'pending' // ডিফল্ট পেন্ডিং থাকবে, এডমিন এপ্রুভ করবে
+            status: 'pending' 
         });
 
         await newUser.save();
         res.status(201).json({ message: "Registration successful! Waiting for Admin Approval." });
     } catch (e) {
+        console.error("Reg Error:", e.message); // এররটি কনসোলে দেখার জন্য
         res.status(500).json({ error: e.message });
     }
 });
