@@ -91,7 +91,6 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'withdrawals' }));
 
-
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
     universityName: String,
     country: String,
@@ -345,7 +344,6 @@ app.patch('/api/lock-application/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-
 // ৪. কমপ্লায়েন্স আপডেট
 // ৪. কমপ্লায়েন্স আপডেট (index.js ফাইলে গিয়ে এটি পরিবর্তন করুন)
 app.patch('/api/update-compliance', async (req, res) => {
@@ -366,7 +364,6 @@ if (status === 'VERIFIED' || status === 'DOCS_VERIFIED' || status === 'DOC_VERIF
     // অন্য যেকোনো স্ট্যাটাসে (যেমন: PENDING, MISSING_DOCS) টাকা ০ থাকবে
     updateData.pendingAmount = 0;
 }
-
 
         const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
         res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
