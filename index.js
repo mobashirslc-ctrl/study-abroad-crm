@@ -20,7 +20,7 @@ app.use(express.static(publicPath));
 
 // ৩. রুট পাথ এ সরাসরি index.html পাঠানো
 app.get('/', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'));
+    res.sendFile(path.join(publicPath, 'auth.html')); // index এর জায়গায় auth লিখে দিন
 });
 
 // ৪. ট্র্যাকিং পেজের জন্য আলাদা পাথ (যদি সরাসরি /track.html কাজ না করে)
@@ -414,13 +414,21 @@ app.post('/api/login', async (req, res) => {
             return res.status(400).json({ msg: 'Invalid Credentials' });
         }
 
+        // ✅ এই চেকটি না থাকলে অ্যাপ্রুভাল সিস্টেম কাজ করবে না
+        if (user.status === 'pending') {
+            return res.status(403).json({ msg: 'Your account is pending admin approval!' });
+        }
+        if (user.status === 'suspended') {
+            return res.status(403).json({ msg: 'Your account has been suspended!' });
+        }
+
         res.json({ user: { 
             email: user.email, 
             name: user.fullName, 
             role: user.role,
             orgName: user.orgName, 
             logoUrl: user.logoUrl,
-            walletBalance: user.walletBalance || 0 // এটি নিশ্চিত করবে ফ্রন্টএন্ডে টাকা দেখা যাচ্ছে
+            walletBalance: user.walletBalance || 0 
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -453,7 +461,7 @@ app.get('/api/track-status', async (req, res) => {
 });
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(publicPath, 'index.html'));
+    res.sendFile(path.join(publicPath, 'auth.html'));
 });
 
 module.exports = app;
