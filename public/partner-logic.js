@@ -90,13 +90,17 @@ async function initRealtimeData() {
 }
 
 // --- 3. Search & Eligibility ---
+
 async function searchUni() {
+    // ১. ইনপুট ফিল্ড থেকে ভ্যালু নেওয়া
     const country = document.getElementById('fCountry').value.toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const sScore = parseFloat(document.getElementById('userScore').value) || 0;
     const sYear = parseInt(document.getElementById('userGap').value) || 0;
-    const studentGap = sYear ? (new Date().getFullYear() - sYear) : 0;
 
+    // --- এখানে অ্যাড করুন ---
+    const currentYear = new Date().getFullYear(); 
+    const studentGap = sYear ? (currentYear - sYear) : 0;
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
