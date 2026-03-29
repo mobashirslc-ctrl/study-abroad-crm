@@ -13,8 +13,40 @@ let currentUniCommission = 0;
 let selectedUniversity = "";
 let currentAvailableBalance = 0; 
 
-// --- PDF Report Function (Global) ---
-window.downloadPDFReport = () => {
+// --- 1. Initialization (Window Onload) ---
+window.onload = () => {
+    // Expose functions to window for HTML access
+    window.saveProfile = saveProfile;
+    window.uploadPartnerLogo = uploadPartnerLogo;
+    window.downloadAssessmentPDF = downloadAssessmentPDF;
+    window.searchUni = searchUni;
+    window.openApplyModal = openApplyModal;
+    window.submitApplication = submitApplication;
+    window.requestWithdraw = requestWithdraw;
+    window.logout = logout;
+    window.downloadPDFReport = downloadPDFReport;
+
+    // UI Initial Set
+    if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = userData.name || "Partner";
+    if(document.getElementById('pEmail')) document.getElementById('pEmail').value = partnerEmail;
+    if(document.getElementById('pOrg')) document.getElementById('pOrg').value = userData.orgName || userData.name || "";
+    if(document.getElementById('pAuth')) document.getElementById('pAuth').value = userData.authorisedPerson || "";
+    if(document.getElementById('pPhone')) document.getElementById('pPhone').value = userData.contact || "";
+    if(document.getElementById('pAddr')) document.getElementById('pAddr').value = userData.address || "";
+
+    // Logo Setup
+    if(userData.logoUrl) {
+        if(document.getElementById('currentLogo')) document.getElementById('currentLogo').src = userData.logoUrl;
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        if(sidebarLogo) sidebarLogo.src = userData.logoUrl;
+    }
+
+    initRealtimeData(); 
+    searchUni(); 
+};
+
+// --- 2. Reports & PDF ---
+function downloadPDFReport() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.text("Student Application Report - SCC Group", 14, 15);
@@ -25,74 +57,51 @@ window.downloadPDFReport = () => {
         headStyles: { fillColor: [26, 26, 46] }
     });
     doc.save("Student_Report.pdf");
-};
+}
 
-window.onload = () => {
-    // ... আপনার আগের কোড ...
-    window.saveProfile = saveProfile;
-    window.uploadPartnerLogo = uploadPartnerLogo;
-    window.downloadAssessmentPDF = downloadAssessmentPDF;
-
-    // Expose functions to window
-    window.searchUni = searchUni;
-    window.openApplyModal = openApplyModal;
-    window.submitApplication = submitApplication;
-    window.requestWithdraw = requestWithdraw;
-    window.logout = logout;
-    window.saveProfile = saveProfile;
-    window.uploadPartnerLogo = uploadPartnerLogo;
-
-    // UI Initial Set
-    document.getElementById('welcomeName').innerText = userData.name || "Partner";
-    document.getElementById('pEmail').value = partnerEmail;
-    document.getElementById('pOrg').value = userData.orgName || userData.name || "";
-    
-    if(document.getElementById('pAuth')) document.getElementById('pAuth').value = userData.authorisedPerson || "";
-    if(document.getElementById('pPhone')) document.getElementById('pPhone').value = userData.contact || "";
-    if(document.getElementById('pAddr')) document.getElementById('pAddr').value = userData.address || "";
-
-    if(userData.logoUrl) {
-        document.getElementById('currentLogo').src = userData.logoUrl;
-        const sidebarLogo = document.getElementById('sidebarLogo');
-        if(sidebarLogo) sidebarLogo.src = userData.logoUrl;
-    }
-
-    initRealtimeData(); 
-    searchUni(); // Initial load of universities
-};
 async function downloadAssessmentPDF(id) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    
+    const logoImg = document.getElementById('currentLogo');
+    if (logoImg && logoImg.src && !logoImg.src.includes('logo.jpeg')) {
+        try {
+            doc.addImage(logoImg.src, 'JPEG', 15, 10, 20, 20); 
+        } catch (e) { console.warn("Logo skipped"); }
+    }
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
         const u = unis.find(uni => uni._id === id);
         if(!u) return alert("Data not found");
-        doc.text(`University Assessment: ${u.universityName}`, 14, 20);
+
+        doc.setFontSize(16);
+        doc.text(`University Assessment: ${u.universityName}`, 14, 35);
         doc.autoTable({
-    startY: 30,
-    head: [['Field', 'Details']],
-    body: [
-        ['University', u.universityName],
-        ['Country', u.country],
-        ['Min GPA', u.minGPA],
-        ['IELTS Req', u.ieltsReq],
-        ['Tuition Fee', `$${u.totalTuitionFee}`],
-        ['Commission', `BDT ${u.commissionBDT}`]
-    ]
-});
-        doc.save(`${u.universityName}_Report.pdf`);
+            startY: 40,
+            head: [['Field', 'Details']],
+            body: [
+                ['University', u.universityName],
+                ['Country', u.country],
+                ['Min GPA', u.minGPA],
+                ['IELTS Req', u.ieltsReq],
+                ['Tuition Fee', `$${u.totalTuitionFee}`],
+                ['Commission', `BDT ${u.commissionBDT}`]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [241, 196, 15] }
+        });
+        doc.save(`${u.universityName}_Assessment.pdf`);
     } catch (e) { alert("Error generating report"); }
 }
-// ---------------------------------------------------------
-// 3. Core Logic: Dashboard & Wallet Tracking
-// ---------------------------------------------------------
+
+// --- 3. Dashboard Logic & Wallet ---
 async function initRealtimeData() {
     try {
         const userRes = await fetch('/api/admin/users'); 
         const allUsers = await userRes.json();
         const currentMe = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
-        
         currentAvailableBalance = currentMe ? (currentMe.walletBalance || 0) : 0;
 
         const res = await fetch('/api/applications');
@@ -105,7 +114,6 @@ async function initRealtimeData() {
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
             pendingTotal += Number(data.commissionBDT || 0);
-
             combinedHtml += `<tr>
                 <td><b>${data.studentName}</b></td>
                 <td>${data.passportNo}</td>
@@ -115,25 +123,115 @@ async function initRealtimeData() {
             </tr>`;
         });
 
-        // UI Updates
-        document.getElementById('topPending').innerHTML = `<small style="font-size:10px; display:block; color:#aaa;">ESTIMATED EARNINGS</small> ৳${pendingTotal.toLocaleString()}`;
-        document.getElementById('topFinal').innerText = `৳${currentAvailableBalance.toLocaleString()}`;
-        document.getElementById('withdrawableBal').innerText = `৳${currentAvailableBalance.toLocaleString()}`;
-        document.getElementById('totalStudents').innerText = myApps.length;
+        // UI Updates with Safe Check
+        const setUI = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+        
+        if(document.getElementById('topPending')) document.getElementById('topPending').innerHTML = `<small style="font-size:10px; display:block; color:#aaa;">ESTIMATED EARNINGS</small> ৳${pendingTotal.toLocaleString('en-IN')}`;
+        setUI('topFinal', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
+        setUI('withdrawableBal', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
+        setUI('totalStudents', myApps.length);
+        if(document.getElementById('topPendingE')) setUI('topPendingE', `৳${pendingTotal.toLocaleString('en-IN')}`);
+        if(document.getElementById('topFinalE')) setUI('topFinalE', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
 
-        // Earnings tab updates
-        if(document.getElementById('topPendingE')) document.getElementById('topPendingE').innerText = `৳${pendingTotal.toLocaleString()}`;
-        if(document.getElementById('topFinalE')) document.getElementById('topFinalE').innerText = `৳${currentAvailableBalance.toLocaleString()}`;
-
-        document.getElementById('homeTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
-        document.getElementById('fullTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
+        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
         
     } catch (e) { console.error("Data Fetch Error:", e); }
 }
 
-// ---------------------------------------------------------
-// 4. Withdraw & File Handling
-// ---------------------------------------------------------
+// --- 4. Search & Unlock Logic ---
+async function searchUni() {
+    const country = document.getElementById('fCountry').value.toLowerCase();
+    const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
+    const sScore = parseFloat(document.getElementById('userScore').value) || 0;
+    const sYear = parseInt(document.getElementById('userGap').value) || 0;
+    const studentGap = sYear ? (new Date().getFullYear() - sYear) : 0;
+    const hasInputs = sGpa > 0 && sScore > 0;
+
+    try {
+        const res = await fetch('/api/universities');
+        const unis = await res.json();
+        let html = "";
+
+        unis.forEach(u => {
+            if (!country || u.country.toLowerCase().includes(country)) {
+                const isEligible = hasInputs && sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
+
+                html += `
+                <tr style="border-bottom: 1px solid #333;">
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="background:var(--gold); width:40px; height:40px; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold;">${u.universityName.charAt(0)}</div>
+                            <div><b style="color:var(--gold);">${u.universityName}</b><br><small>${u.country}</small></div>
+                        </div>
+                    </td>
+                    <td><span class="badge" style="background:#252545;">${u.degreeType}</span><br><small>Intake: ${u.intake || 'N/A'}</small></td>
+                    <td><small>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</small><br><small>Gap: Max ${u.maxGapAllowed}Y</small></td>
+                    <td><b>$${(u.totalTuitionFee || 0).toLocaleString()}</b><br><small style="color:#2ecc71;">Dep: $${u.initialDeposit || 0}</small></td>
+                    <td><b style="color:var(--gold);">৳${(u.commissionBDT || 0).toLocaleString()}</b></td>
+                    <td style="text-align:center;">
+                        <button class="btn-gold" style="width:100px; background:${isEligible ? '' : '#444'}" ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
+                            ${isEligible ? 'Apply Now' : 'Locked'}
+                        </button><br>
+                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:2px 5px; margin-top:5px; border-radius:3px;">Report</button>
+                    </td>
+                </tr>`;
+            }
+        });
+        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No matches found.</td></tr>";
+    } catch (e) { console.error("Search Error:", e); }
+}
+
+// --- 5. Submission & Wallet Actions ---
+async function submitApplication() {
+    const sName = document.getElementById('sName').value;
+    const sPass = document.getElementById('sPassport').value;
+    const btn = document.getElementById('submitBtn');
+
+    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
+
+    try {
+        btn.innerText = "Uploading Files..."; btn.disabled = true;
+        const docs = await Promise.all([
+            uploadFile(document.getElementById('file1')?.files[0]),
+            uploadFile(document.getElementById('file2')?.files[0]),
+            uploadFile(document.getElementById('file3')?.files[0]),
+            uploadFile(document.getElementById('file4')?.files[0])
+        ]);
+
+        const res = await fetch('/api/submit-application', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentName: sName, passportNo: sPass,
+                university: selectedUniversity, partnerEmail: partnerEmail,
+                commissionBDT: currentUniCommission,
+                status: 'PENDING', timestamp: new Date().toISOString(),
+                pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
+            })
+        });
+        if(res.ok) { alert("Successfully Submitted!"); location.reload(); }
+    } catch (e) { alert("Submission failed"); } 
+    finally { btn.disabled = false; btn.innerText = "Submit Application"; }
+}
+
+async function requestWithdraw() {
+    const amount = Number(document.getElementById('withdrawAmount').value);
+    const method = document.getElementById('withdrawMethod').value;
+    const details = document.getElementById('paymentDetails').value;
+
+    if (amount < 500 || amount > currentAvailableBalance) return alert("Invalid amount or insufficient balance");
+
+    try {
+        const res = await fetch('/api/withdrawals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: partnerEmail, amount, method: `${method}: ${details}` })
+        });
+        if(res.ok) { alert("Withdrawal request sent!"); location.reload(); }
+    } catch (e) { alert("Error sending request"); }
+}
+
 async function uploadFile(file) {
     if(!file) return "";
     const formData = new FormData();
@@ -148,151 +246,9 @@ async function uploadFile(file) {
 
 async function uploadPartnerLogo() {
     const file = document.getElementById('logoUpload').files[0];
-    if(!file) return;
     const url = await uploadFile(file);
-    if(url) {
-        document.getElementById('currentLogo').src = url;
-        alert("Logo uploaded! Please save profile to confirm.");
-    }
+    if(url) { document.getElementById('currentLogo').src = url; alert("Logo uploaded! Save profile to confirm."); }
 }
-
-async function requestWithdraw() {
-    const amount = document.getElementById('withdrawAmount').value;
-    const method = document.getElementById('withdrawMethod').value;
-    const details = document.getElementById('paymentDetails').value;
-
-    if (amount < 500) return alert("Minimum 500 BDT required");
-    if (amount > currentAvailableBalance) return alert("Insufficient balance");
-
-    try {
-        const res = await fetch('/api/withdrawals', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: partnerEmail,
-                amount: Number(amount),
-                method: `${method}: ${details}`
-            })
-        });
-        if(res.ok) { alert("Withdrawal request sent!"); location.reload(); }
-    } catch (e) { alert("Error sending request"); }
-}
-
-// ---------------------------------------------------------
-// 5. Submit Application & Search
-// ---------------------------------------------------------
-async function submitApplication() {
-    const sName = document.getElementById('sName').value;
-    const sPass = document.getElementById('sPassport').value;
-    const btn = document.getElementById('submitBtn');
-
-    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
-
-    try {
-        btn.innerText = "Processing..."; btn.disabled = true;
-        const docs = await Promise.all([
-            uploadFile(document.getElementById('file1').files[0]),
-            uploadFile(document.getElementById('file2').files[0]),
-            uploadFile(document.getElementById('file3').files[0]),
-            uploadFile(document.getElementById('file4').files[0])
-        ]);
-
-        const res = await fetch('/api/submit-application', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentName: sName, passportNo: sPass,
-                university: selectedUniversity, partnerEmail: partnerEmail,
-                commissionBDT: currentUniCommission,
-                status: 'PENDING', timestamp: new Date().toISOString(),
-                pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
-            })
-        });
-
-        if(res.ok) { alert("Submitted!"); location.reload(); }
-    } catch (e) { alert("Submission failed"); } 
-    finally { btn.disabled = false; btn.innerText = "Submit Application"; }
-}
-
-// --- 🔍 Updated Mega Search Logic with Unlock Wall ---
-async function searchUni() {
-    const country = document.getElementById('fCountry').value.toLowerCase();
-    
-    // Eligibility Inputs
-    const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
-    const sScore = parseFloat(document.getElementById('userScore').value) || 0;
-    const sYear = parseInt(document.getElementById('userGap').value) || 0;
-    
-    // Calculate Study Gap
-    const currentYear = new Date().getFullYear();
-    const studentGap = sYear ? (currentYear - sYear) : 0;
-
-    // Check if basic inputs are provided to trigger unlock check
-    const hasInputs = sGpa > 0 && sScore > 0 && sYear > 0;
-
-    try {
-        const res = await fetch('/api/universities');
-        const unis = await res.json();
-        let html = "";
-
-        unis.forEach(u => {
-            if (!country || u.country.toLowerCase().includes(country)) {
-                
-                // --- Unlock Logic ---
-                const isGpaOk = sGpa >= (u.minGPA || 0);
-                const isIeltsOk = sScore >= (u.ieltsReq || 0);
-                const isGapOk = studentGap <= (u.maxGapAllowed || 5);
-                const isEligible = hasInputs && isGpaOk && isIeltsOk && isGapOk;
-
-                html += `
-                <tr style="border-bottom: 1px solid #333;">
-                    <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="background:var(--gold); width:40px; height:40px; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold;">${u.universityName.charAt(0)}</div>
-                            <div>
-                                <b style="color:var(--gold);">${u.universityName}</b><br>
-                                <small><i class="fas fa-map-marker-alt"></i> ${u.location || u.country}</small>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="badge" style="background:#252545;">${u.degreeType || 'Degree'}</span><br>
-                        <small style="color:#aaa;">Intake: ${u.intake || 'N/A'}</small><br>
-                        <small style="color:var(--gold); font-size:10px;">Courses: ${u.topCourses || 'General'}</small>
-                    </td>
-                    <td>
-                        <small>GPA: ${u.minGPA}+ | ${u.englishOptions || 'IELTS'}: ${u.ieltsReq}+</small><br>
-                        <small>Interview: ${u.interviewLevel}</small><br>
-                        <small>Gap: Max ${u.maxGapAllowed}Y</small>
-                    </td>
-                    <td>
-                        <b style="font-size:14px;">$${(u.totalTuitionFee || 0).toLocaleString()}</b><br>
-                        <small style="color:#2ecc71;">Deposit: $${(u.initialDeposit || 0).toLocaleString()}</small><br>
-                        <small style="color:#aaa;">Scholarship: $${(u.scholarshipMax || 0).toLocaleString()}</small>
-                    </td>
-                    <td>
-                        <small>Visa: ${u.visaSuccessRate}% | PSW: ${u.pswDuration || '2Y'}</small><br>
-                        <small>Time: ${u.processingTime || '1 Week'}</small><br>
-                        <b style="color:var(--gold);">Profit: ৳${(u.commissionBDT || 0).toLocaleString()}</b>
-                    </td>
-                    <td style="text-align:center;">
-                        <button class="btn-gold" 
-                            style="width:100px; margin-bottom:5px; background:${isEligible ? '' : '#444'}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
-                            ${!isEligible ? 'disabled' : ''} 
-                            onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
-                            ${isEligible ? 'Apply Now' : 'Locked'}
-                        </button><br>
-                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:2px 5px; border-radius:3px;">
-                            <i class="fas fa-file-pdf"></i> Report
-                        </button>
-                    </td>
-                </tr>`;
-            }
-        });
-        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No universities found match your criteria.</td></tr>";
-    } catch (e) { console.error("Search Error:", e); }
-}
-
 
 async function saveProfile() {
     const payload = {
@@ -308,10 +264,7 @@ async function saveProfile() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload)
     });
-    if(res.ok) {
-        alert("✅ Profile Updated!");
-        localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
-    }
+    if(res.ok) { alert("✅ Profile Updated!"); localStorage.setItem('user', JSON.stringify({...userData, ...payload})); }
 }
 
 function openApplyModal(name, comm) {

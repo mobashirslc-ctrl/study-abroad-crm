@@ -121,26 +121,38 @@ body {
 }
 
 /* Tables */
-table {
-    width: 100%;
-    border-collapse: collapse;
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    min-width: 1000px; /* টেবিল যাতে সংকুচিত না হয় */
+    table-layout: fixed; /* কলামের সাইজ ফিক্সড রাখবে */
 }
 
-th {
-    text-align: left;
-    padding: 15px;
+th, td { 
+    padding: 12px 15px; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: normal; /* কোর্স নেম যাতে নিচে নামে */
+    word-wrap: break-word;
+}
+
+/* নির্দিষ্ট কলামের উইডথ সেট করা */
+th:nth-child(1) { width: 25%; } /* University & Course */
+th:nth-child(2) { width: 20%; } /* Requirements */
+th:nth-child(3) { width: 20%; } /* Fees */
+th:nth-child(4) { width: 20%; } /* Visa & Profit */
+th:nth-child(5) { width: 15%; } /* Action */
+
+.course-badge {
+    display: inline-block;
+    background: #252545;
     color: var(--gold);
-    background: rgba(255,255,255,0.03);
-    font-size: 12px;
-    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-top: 5px;
+    border: 1px solid #333;
 }
-
-td {
-    padding: 15px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-}
-
 /* --- Status Badges (ব্রাউজারে দেখার জন্য) --- */
 .status-badge {
     padding: 5px 12px;
