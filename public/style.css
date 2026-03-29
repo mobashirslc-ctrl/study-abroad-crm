@@ -141,6 +141,17 @@ th:nth-child(6) { width: 12%; }
         padding: 20px;
     }
 }
+/* টেবিল হোভার ইফেক্ট এবং স্ক্রলবার */
+.table-wrapper::-webkit-scrollbar { height: 6px; }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+tr:hover { background: rgba(241, 196, 15, 0.05); transition: 0.3s; }
+
+/* মোবাইল ডিভাইসের জন্য সাইডবার ফিক্স */
+@media (max-width: 768px) {
+    .sidebar { width: 70px; }
+    .sidebar span, .logo-container img { display: none; }
+    .main-content { margin-left: 70px; padding: 15px; }
+}
 .text-gold { color: var(--gold); }
 .text-green { color: var(--success); }
 .text-red { color: var(--danger); }

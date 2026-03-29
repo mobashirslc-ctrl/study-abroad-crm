@@ -222,19 +222,27 @@
 
 <script src="partner-logic.js"></script>
 <script>
-    function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        document.getElementById('menu-' + id).classList.add('active');
-        
-        // এখানে পরিবর্তন: searchUni কল হবে যদি universities ট্যাব ওপেন হয়
-        if(id === 'universities') {
-            searchUni(); 
-        } else if(typeof initRealtimeData === 'function') {
-            initRealtimeData();
-        }
+   function showTab(id) {
+    // সব কন্টেন্ট হাইড করা
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    // সব মেনু আইটেম থেকে একটিভ ক্লাস সরানো
+    document.querySelectorAll('.nav-item').forEach(li => li.classList.remove('active'));
+    
+    // সিলেক্টেড ট্যাব দেখানো
+    const targetTab = document.getElementById(id);
+    if(targetTab) targetTab.style.display = 'block';
+    
+    // মেনু হাইলাইট করা
+    const menuIcon = document.getElementById('menu-' + id);
+    if(menuIcon) menuIcon.classList.add('active');
+    
+    // ট্যাব অনুযায়ী ডাটা রিফ্রেশ করা
+    if(id === 'universities') {
+        if(typeof searchUni === 'function') searchUni(); 
+    } else if(id === 'tracking' || id === 'dashboard' || id === 'earnings') {
+        if(typeof initRealtimeData === 'function') initRealtimeData();
     }
+}
 
     // searchUni ফাংশনটি এখন সরাসরি partner-logic.js থেকে কাজ করবে
     function closeModal() { document.getElementById('applyModal').style.display = 'none'; }

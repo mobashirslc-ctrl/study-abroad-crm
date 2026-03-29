@@ -1,6 +1,6 @@
 /**
  * Powered BY GORUN - Partner Portal Logic (2026)
- * Full Compatibility with provided HTML
+ * Full Compatibility with Admin Multi-Currency & Percentage Logic
  */
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
@@ -55,6 +55,7 @@ async function initRealtimeData() {
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
+            // নোট: কমিশন এখন অ্যাডমিন সেট করা ভ্যালু থেকে আসে
             if(status !== 'REJECTED') pendingTotal += Number(data.commissionBDT || 0);
 
             const row = `
@@ -82,195 +83,84 @@ async function initRealtimeData() {
     } catch (e) { console.error("Sync Error:", e); }
 }
 
-// --- 3. Search & Eligibility ---
+// --- ৩. Search & Eligibility (Multi-Currency & BDT Conversion) ---
 async function searchUni() {
-    const country = document.getElementById('fCountry').value.toLowerCase();
+    const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const sScore = parseFloat(document.getElementById('userScore').value) || 0;
     const sYearInput = parseInt(document.getElementById('userGap').value) || 0;
 
-    const currentYear = new Date().getFullYear(); 
-    let studentGap = 0;
-    if (sYearInput > 1900) { 
-        studentGap = currentYear - sYearInput; 
-    } else { 
-        studentGap = sYearInput; 
+    const container = document.getElementById('uniListContainer');
+
+    if (!countryInput) {
+        container.innerHTML = "<tr><td colspan='6' style='text-align:center; padding:20px; color:#777;'>Type a country name to start assessment...</td></tr>";
+        return;
     }
 
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
+        
+        const filteredUnis = unis.filter(u => u.country.toLowerCase().includes(countryInput));
+
+        if (filteredUnis.length === 0) {
+            container.innerHTML = "<tr><td colspan='6' style='text-align:center;'>No universities found.</td></tr>";
+            return;
+        }
+
+        const currentYear = new Date().getFullYear();
         let html = "";
 
-        unis.forEach(u => {
-            if (!country || u.country.toLowerCase().includes(country)) {
-                const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
-                
-                html += `
+        // এক্সচেঞ্জ রেট (এটি ডাইনামিক করা ভালো, আপাতত স্ট্যাটিক)
+        const rates = { 'USD': 120, 'AUD': 80, 'EUR': 130, 'CAD': 88, 'GBP': 152 };
+
+        filteredUnis.forEach(u => {
+            let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
+            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
+
+            const currencyMap = { 'USD': '$', 'AUD': 'A$', 'EUR': '€', 'CAD': 'C$', 'GBP': '£' };
+            const sym = currencyMap[u.uCurrency] || '$';
+
+            // কমিশন ক্যালকুলেশন
+            const commissionRate = parseFloat(u.adminCommPercentage || 10); 
+            const calculatedComm = (u.totalTuitionFee * (commissionRate / 100));
+            
+            // BDT তে কনভার্ট করা (অ্যাডমিন ওয়ালেটে দেখানোর জন্য)
+            const commInBDT = Math.round(calculatedComm * (rates[u.uCurrency] || 115));
+
+            html += `
                 <tr>
                     <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="background:var(--gold); color:black; padding:10px; border-radius:8px; font-weight:bold;">U</div>
+                        <div style="display:flex; align-items:start; gap:12px;">
+                            <div style="background:var(--gold); color:black; padding:10px; border-radius:8px; font-weight:bold;">${u.uCurrency}</div>
                             <div>
                                 <b class="text-gold" style="font-size:16px;">${u.universityName}</b><br>
-                                <small style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i> ${u.category || 'General'}</small>
+                                <small style="color:#bbb;">${u.location}, ${u.country}</small>
                             </div>
                         </div>
                     </td>
-                    <td>
-                        <b>GPA: ${u.minGPA}+ | ${u.englishOptions}: ${u.ieltsReq}+</b><br>
-                        <small style="color:#2ecc71;">Max Gap: ${u.maxGapAllowed} Years</small>
-                    </td>
-                    <td><span style="color:#2ecc71; font-weight:bold;">Up to $${u.scholarshipMax || '0'}</span></td>
-                    <td>
-                        Sem Fee: <b>$${u.totalSemesterFee}</b><br>
-                        <small style="color:var(--gold);">Flying: ৳${u.initialFlyingCost}</small>
-                    </td>
-                    <td>
-                        <div style="background:#2ecc71; color:white; font-size:10px; padding:2px 5px; border-radius:4px; display:inline-block;">Visa: ${u.visaSuccess || '85%'}</div><br>
-                        <b style="color:var(--gold);">Profit: ৳${u.commissionBDT.toLocaleString()}</b>
+                    <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
+                    <td><b>${sym}${u.totalTuitionFee.toLocaleString()}</b></td>
+                    <td style="text-align:center;">
+                        <div style="background:rgba(46,204,113,0.1); padding:5px; border-radius:6px; border:1px solid var(--green);">
+                            <small>Your Profit</small><br>
+                            <b style="color:var(--green);">৳${commInBDT.toLocaleString()}</b>
+                        </div>
                     </td>
                     <td>
-                        <button class="btn-gold" style="padding:5px; margin-bottom:5px; background:${isEligible ? '' : '#444'}" 
-                            ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
-                            ${isEligible ? 'Apply Now' : 'Not Eligible'}
-                        </button>
-                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid white; color:white; cursor:pointer; width:100%; font-size:11px; padding:3px; border-radius:4px;">
-                            <i class="fas fa-file-pdf"></i> Flyer
+                        <button class="btn-gold" style="width:100%; background:${isEligible ? '' : '#444'}" 
+                            ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${commInBDT})">
+                            ${isEligible ? 'Apply Now' : 'Ineligible'}
                         </button>
                     </td>
                 </tr>`;
-            }
         });
-        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6'>No universities found.</td></tr>";
+        container.innerHTML = html;
     } catch (e) { console.error(e); }
 }
 
-// --- 4. Submissions & Files ---
-async function submitApplication() {
-    const sName = document.getElementById('sName').value;
-    const sPass = document.getElementById('sPassport').value;
-    if(!sName || !sPass) return alert("Student Name & Passport are required!");
 
-    const btn = document.getElementById('submitBtn');
-    btn.innerText = "Uploading Files..."; btn.disabled = true;
-
-    try {
-        const fileIds = ['file1', 'file2', 'file3', 'file4'];
-        const uploadPromises = fileIds.map(id => {
-            const file = document.getElementById(id).files[0];
-            return file ? uploadFile(file) : Promise.resolve("");
-        });
-        
-        const docs = await Promise.all(uploadPromises);
-
-        const res = await fetch('/api/submit-application', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentName: sName, passportNo: sPass,
-                university: selectedUniversity, partnerEmail: partnerEmail,
-                commissionBDT: currentUniCommission, status: 'PENDING',
-                documents: docs.filter(url => url !== ""),
-                timestamp: new Date().toISOString()
-            })
-        });
-
-        if(res.ok) { alert("Application Submitted Successfully!"); location.reload(); }
-    } catch (e) { alert("Submission failed!"); }
-    finally { btn.innerText = "Submit File"; btn.disabled = false; }
-}
-
-async function uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-    const data = await res.json();
-    return data.secure_url || "";
-}
-
-// --- 5. QR Slip Logic ---
-function showSlip(data) {
-    const trackingId = `TRAK-${data.studentName.split(' ')[0].toUpperCase()}-${data.passportNo.slice(-4)}`;
-    
-    if(document.getElementById('slipName')) document.getElementById('slipName').innerText = data.studentName;
-    if(document.getElementById('slipPassport')) document.getElementById('slipPassport').innerText = data.passportNo;
-    if(document.getElementById('slipDest')) document.getElementById('slipDest').innerText = data.university;
-    if(document.getElementById('slipRef')) document.getElementById('slipRef').innerText = trackingId;
-    if(document.getElementById('slipCourse')) document.getElementById('slipCourse').innerText = data.course || 'Undergraduate';
-    const trackLink = `https://scc-ihp.com/track?id=${data.passportNo}`;
-    if(document.getElementById('slipQR')) {
-        document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
-    }
-    
-    if(document.getElementById('slipPartnerLogo')) {
-        document.getElementById('slipPartnerLogo').src = partnerLogoBase64 || 'logo.jpeg';
-    }
-
-    document.getElementById('slipModal').style.display = 'flex';
-}
-
-// --- 6. Withdrawal Request ---
-async function requestWithdraw() {
-    const amount = Number(document.getElementById('withdrawAmount').value);
-    const method = document.getElementById('withdrawMethod').value;
-    const details = document.getElementById('paymentDetails').value;
-
-    if(amount < 500) return alert("Minimum withdrawal is ৳500");
-    if(amount > currentAvailableBalance) return alert("Insufficient balance!");
-    if(!details) return alert("Please provide account details.");
-
-    const res = await fetch('/api/withdrawals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            partnerEmail, amount, method, details, status: 'PENDING', date: new Date().toISOString()
-        })
-    });
-
-    if(res.ok) { alert("Withdrawal request submitted!"); location.reload(); }
-}
-
-// --- Helper Functions ---
-function openApplyModal(name, comm) {
-    selectedUniversity = name; currentUniCommission = comm;
-    document.getElementById('modalTitle').innerText = name;
-    document.getElementById('applyModal').style.display = 'flex';
-}
-
-function uploadPartnerLogo() {
-    const file = document.getElementById('logoUpload').files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-        partnerLogoBase64 = reader.result;
-        document.getElementById('currentLogo').src = reader.result;
-        if(document.getElementById('slipPartnerLogo')) document.getElementById('slipPartnerLogo').src = reader.result;
-    };
-    if (file) reader.readAsDataURL(file);
-}
-
-async function saveProfile() {
-    const payload = {
-        email: partnerEmail,
-        contact: document.getElementById('pPhone').value,
-        orgName: document.getElementById('pOrg').value,
-        authorisedPerson: document.getElementById('pAuth').value,
-        address: document.getElementById('pAddr').value,
-        logoUrl: partnerLogoBase64 
-    };
-    const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-    if(res.ok) {
-        localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
-        alert("Profile Updated!");
-    }
-}
-
-// --- 7. Assessment PDF Generator ---
+// --- 7. Assessment PDF Generator (FIXED) ---
 async function downloadAssessmentPDF(uniId) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -278,44 +168,109 @@ async function downloadAssessmentPDF(uniId) {
     try {
         const res = await fetch(`/api/universities/${uniId}`);
         const u = await res.json();
+        
+        const currencyMap = { 'USD': '$', 'AUD': 'A$', 'EUR': '€', 'CAD': 'C$', 'GBP': '£' };
+        const sym = currencyMap[u.uCurrency] || '$';
 
+        // Header
         doc.setFillColor(26, 26, 46);
         doc.rect(0, 0, 210, 40, 'F');
         doc.setTextColor(241, 196, 15);
         doc.setFontSize(22);
-        doc.text(u.universityName || "University Flyer", 15, 25);
+        doc.text(u.universityName.toUpperCase(), 15, 25);
         
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.text(`Country: ${u.country}`, 15, 50);
-        doc.text(`Minimum GPA: ${u.minGPA}`, 15, 60);
-        doc.text(`English Req: ${u.ieltsReq}`, 15, 70);
-        doc.text(`Semester Fee: $${u.totalSemesterFee}`, 15, 80);
-        doc.text(`Estimated Profit: BDT ${u.commissionBDT}`, 15, 90);
+        // Body
+        doc.setTextColor(40, 40, 40);
+        doc.setFontSize(14);
+        doc.text("UNIVERSITY ASSESSMENT REPORT", 15, 55);
+        doc.line(15, 57, 100, 57);
 
+        doc.setFontSize(11);
+        doc.text(`Location: ${u.location}, ${u.country}`, 15, 65);
+        doc.text(`Course: ${u.courseName || 'N/A'}`, 15, 73);
+        doc.text(`Intake: ${u.intake || 'N/A'}`, 15, 81);
+        doc.text(`Scholarship: ${u.scholarshipName} (${u.scholarshipMax}%)`, 15, 89);
+
+        // Requirements Box
+        doc.setFillColor(245, 245, 245);
+        doc.rect(15, 100, 180, 30, 'F');
+        doc.text(`Academic GPA Required: ${u.minGPA}+`, 20, 110);
+        doc.text(`English (IELTS/PTE) Required: ${u.ieltsReq}+`, 20, 118);
+        doc.text(`Max Study Gap Allowed: ${u.maxGapAllowed} Years`, 20, 126);
+
+        // Fee Structure
+        doc.setFontSize(13);
+        doc.text("ESTIMATED FEE STRUCTURE", 15, 145);
+        doc.setFontSize(11);
+        doc.text(`- Application Fee: ${sym}${u.applicationFee || 0}`, 15, 155);
+        doc.text(`- Initial Deposit: ${sym}${u.initialDeposit || 0}`, 15, 163);
+        doc.text(`- Total Tuition Fee: ${sym}${u.totalTuitionFee}`, 15, 171);
+        doc.text(`- Visa Success Rate: ${u.visaSuccessRate}%`, 15, 179);
+
+        // Footer
         doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text("Generated by SCC IHP Partner Portal", 15, 280);
+        doc.setTextColor(150);
+        doc.text("Generated by SCC IHP Partner Portal - Official Assessment Flyer", 15, 280);
         
-        doc.save(`${u.universityName || 'Assessment'}.pdf`);
+        doc.save(`${u.universityName}_Flyer.pdf`);
     } catch (e) {
         console.error("PDF Error:", e);
-        alert("Could not generate flyer.");
+        alert("Flyer জেনারেট করতে সমস্যা হয়েছে। ডাটা চেক করুন।");
     }
-}
 
-// --- 8. Export Table Report ---
+}
+// --- ৮. Export Table Report (Final Fixed Version) ---
 async function downloadPDFReport() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("Live Student Status Report", 14, 15);
-    
-   doc.autoTable({
-    html: '#fullTrackingBody'.closest('table'), // শুধুমাত্র লাইভ ট্র্যাকিং টেবিলটি নিবে
-    startY: 20,
-    theme: 'grid',
-    headStyles: { fillColor: [241, 196, 15], textColor: [0, 0, 0] }
-});
-    
-    doc.save('Student_Status_Report.pdf');
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        // ১. টেবিল আইডি চেক করা
+        const tableId = '#fullTrackingTable';
+        const tableExists = document.querySelector(tableId);
+
+        if (!tableExists) {
+            alert("Table not found! Please check if #fullTrackingTable exists in your HTML.");
+            return;
+        }
+
+        // ২. হেডার ডিজাইন
+        doc.setFontSize(18);
+        doc.setTextColor(26, 26, 46); // Deep Blue
+        doc.text("SCC Group | Student Tracking Report", 14, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Partner: ${userData.orgName || partnerEmail}`, 14, 28);
+        doc.text(`Generated Date: ${new Date().toLocaleDateString()} | Time: ${new Date().toLocaleTimeString()}`, 14, 33);
+
+        // ৩. অটো টেবিল জেনারেশন
+        doc.autoTable({
+            html: tableId,
+            startY: 40,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [26, 26, 46], 
+                textColor: [241, 196, 15], // Gold Text
+                fontSize: 10,
+                halign: 'center'
+            },
+            styles: { 
+                fontSize: 8, 
+                cellPadding: 3,
+                overflow: 'linebreak'
+            },
+            columnStyles: {
+                3: { halign: 'center', fontStyle: 'bold' } // Status Column
+            }
+        });
+        
+        // ৪. ফাইল সেভ (ইউনিক টাইমস্ট্যাম্প সহ)
+        const fileName = `Student_Status_Report_${new Date().getTime()}.pdf`;
+        doc.save(fileName);
+
+    } catch (e) {
+        console.error("PDF Export Error:", e);
+        alert("Report ডাউনলোড করতে সমস্যা হয়েছে। কনসোল চেক করুন।");
+    }
 }

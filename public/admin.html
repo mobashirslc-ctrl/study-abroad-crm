@@ -87,6 +87,23 @@
         <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
     </div>
     <div class="input-group">
+    <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
+    <input type="text" id="uProcTime" placeholder="Processing Time (e.g. 10 Days)">
+    
+    <select id="uCurrency" style="background: #252545; color: var(--gold); font-weight: bold;">
+        <option value="USD">USD ($)</option>
+        <option value="AUD">AUD (A$)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="CAD">CAD (C$)</option>
+        <option value="GBP">GBP (£)</option>
+    </select>
+</div>
+
+<div class="input-group">
+    <input type="number" id="uCommPerc" placeholder="Partner Commission (%)" value="10">
+    <input type="text" id="uScholarshipName" placeholder="Scholarship Name (e.g. Merit Based)">
+</div>
+    <div class="input-group">
         <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
         <input type="text" id="uProcTime" placeholder="Processing Time (e.g. 10 Days)">
         <input type="number" id="uComm" placeholder="Partner Commission (৳)">
@@ -167,7 +184,7 @@
             if(event) event.currentTarget.classList.add('active');
         };
 
-        // --- ২. ইউনিভার্সিটি ম্যানেজমেন্ট ---
+        // --- ২. ইউনিভার্সিটি সেভ করার লজিক ---
 window.saveUniversity = async () => {
     const data = {
         universityName: document.getElementById('uName').value,
@@ -180,14 +197,18 @@ window.saveUniversity = async () => {
         totalTuitionFee: Number(document.getElementById('uTotalFee').value),
         initialDeposit: Number(document.getElementById('uDeposit').value),
         scholarshipMax: Number(document.getElementById('uScholarship').value),
+        scholarshipName: document.getElementById('uScholarshipName').value || "General",
         
         minGPA: Number(document.getElementById('uGpa').value),
         ieltsReq: Number(document.getElementById('uIelts').value),
         maxGapAllowed: Number(document.getElementById('uGap').value),
         
         visaSuccessRate: Number(document.getElementById('uVisaRate').value),
-        processingTime: document.getElementById('uProcTime').value, // এখানে ভুল ছিল, এখন ঠিক করা হয়েছে
-        commissionBDT: Number(document.getElementById('uComm').value) 
+        processingTime: document.getElementById('uProcTime').value,
+        
+        // নতুন ফিল্ডস
+        uCurrency: document.getElementById('uCurrency').value,
+        adminCommPercentage: Number(document.getElementById('uCommPerc').value)
     };
 
     if(!data.universityName || !data.country) return alert("Please fill Name and Country!");
@@ -199,44 +220,47 @@ window.saveUniversity = async () => {
             body: JSON.stringify(data)
         });
         if(res.ok) {
-            alert("✅ University Added Successfully!");
-            fetchUniversities(); // ডাটা অ্যাড হওয়ার পর টেবিল রিফ্রেশ করবে
+            alert("✅ University Added with " + data.adminCommPercentage + "% Commission!");
+            location.reload(); // ডাটা অ্যাড হওয়ার পর পেজ রিফ্রেশ করবে
         }
     } catch (e) { alert("Error connecting to server"); }
 };
 
-
-
-        async function fetchUniversities() {
+// --- ৩. টেবিল ভিউ আপডেট ---
+async function fetchUniversities() {
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
         const tbody = document.getElementById('adminUniTable');
-        tbody.innerHTML = unis.map(u => `
-            <tr>
-                <td>
-                    <b>${u.universityName}</b><br>
-                    <small>${u.location}, ${u.country} | Intake: ${u.intake || 'N/A'}</small>
-                </td>
-                <td>
-                    GPA: ${u.minGPA || 0} | 
-                    IELTS: ${u.ieltsReq || 0} | 
-                    Gap: ${u.maxGapAllowed || 0}y
-                </td>
-                <td>
-                    Fee: $${u.totalTuitionFee || 0} <br> 
-                    Comm: ৳${u.commissionBDT || 0}
-                </td>
-                <td>
-                    <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')">Edit</button>
-                    <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button>
-                </td>
-            </tr>
-        `).join('');
+        
+        const currencyMap = { 'USD': '$', 'AUD': 'A$', 'EUR': '€', 'CAD': 'C$', 'GBP': '£' };
+
+        tbody.innerHTML = unis.map(u => {
+            const sym = currencyMap[u.uCurrency] || '$';
+            return `
+                <tr>
+                    <td>
+                        <b style="color:var(--gold)">${u.universityName}</b><br>
+                        <small>${u.location}, ${u.country}</small><br>
+                        <small style="color:#2ecc71">Course: ${u.courseName || 'N/A'}</small>
+                    </td>
+                    <td>
+                        GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}<br>
+                        <small>Gap: ${u.maxGapAllowed}y | Intake: ${u.intake}</small>
+                    </td>
+                    <td>
+                        Fee: <b>${sym}${u.totalTuitionFee}</b><br>
+                        <span style="color:var(--gold)">Comm: ${u.adminCommPercentage || 10}%</span>
+                    </td>
+                    <td>
+                        <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     } catch (e) { console.error("Fetch Unis error:", e); }
 }
-
-
 
         window.deleteUni = async (id) => {
             if(!confirm("Are you sure?")) return;
