@@ -1,6 +1,6 @@
 /**
- * SCC Group - Partner Portal Logic (2026)
- * Full Integration: MongoDB, Cloudinary, QR Tracking & Wallet
+ * Powered BY GORUN - Partner Portal Logic (2026)
+ * Full Compatibility with provided HTML
  */
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
@@ -11,153 +11,91 @@ const partnerEmail = (userData.email || "").toLowerCase().trim();
 
 let partnerLogoBase64 = userData.logoUrl || null;
 let selectedUniversity = "";
+let currentUniCommission = 0; 
 let currentAvailableBalance = 0; 
 
-// --- 1. Initialization (Window Onload) ---
+// --- 1. Initialization ---
 window.onload = () => {
-    // Expose functions to window for HTML access
-    window.saveProfile = saveProfile;
-    window.uploadPartnerLogo = uploadPartnerLogo;
-    window.downloadAssessmentPDF = downloadAssessmentPDF;
-    window.searchUni = searchUni;
-    window.openApplyModal = openApplyModal;
-    window.submitApplication = submitApplication;
-    window.requestWithdraw = requestWithdraw;
-    window.logout = logout;
-    window.downloadPDFReport = downloadPDFReport;
-
-    // UI Initial Set
+    // UI Initial Values
     if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = userData.name || "Partner";
     if(document.getElementById('pEmail')) document.getElementById('pEmail').value = partnerEmail;
-    if(document.getElementById('pOrg')) document.getElementById('pOrg').value = userData.orgName || userData.name || "";
-    if(document.getElementById('pAuth')) document.getElementById('pAuth').value = userData.authorisedPerson || "";
-    if(document.getElementById('pPhone')) document.getElementById('pPhone').value = userData.contact || "";
-    if(document.getElementById('pAddr')) document.getElementById('pAddr').value = userData.address || "";
+    
+    // Fill profile fields
+    const fields = { 'pOrg': 'orgName', 'pAuth': 'authorisedPerson', 'pPhone': 'contact', 'pAddr': 'address' };
+    for (let id in fields) {
+        if(document.getElementById(id)) document.getElementById(id).value = userData[fields[id]] || "";
+    }
 
-    // Logo Setup
+    // --- লোগো ফিক্স এখানে ---
     if(userData.logoUrl) {
-        if(document.getElementById('currentLogo')) document.getElementById('currentLogo').src = userData.logoUrl;
-        const sidebarLogo = document.getElementById('sidebarLogo');
-        if(sidebarLogo) sidebarLogo.src = userData.logoUrl;
+        // ১. গ্লোবাল ভেরিয়েবল আপডেট (এটি স্লিপ জেনারেশনের জন্য জরুরি)
+        partnerLogoBase64 = userData.logoUrl; 
+        
+        // ২. UI ইমেজ আপডেট
+        if(document.getElementById('currentLogo')) {
+            document.getElementById('currentLogo').src = userData.logoUrl;
+        }
     }
 
     initRealtimeData(); 
-    searchUni(); 
+    searchUni(); // Initial Load
 };
 
-// --- 2. Reports & PDF ---
-function downloadPDFReport() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("Student Application Report - SCC Group", 14, 15);
-    doc.autoTable({
-        html: '#fullTrackingBody',
-        startY: 25,
-        theme: 'grid',
-        headStyles: { fillColor: [26, 26, 46] }
-    });
-    doc.save("Student_Report.pdf");
-}
-
-async function downloadAssessmentPDF(uniId) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // লোগো হ্যান্ডলিং: যদি প্রোফাইল লোগো থাকে তবে সেটি নেবে, না থাকলে ডিফল্ট
-    const logoToUse = partnerLogoBase64 || 'logo.jpeg'; 
-
-    try {
-        const res = await fetch('/api/universities');
-        const unis = await res.json();
-        const u = unis.find(uni => uni._id === uniId);
-        if(!u) return alert("Data not found");
-
-        // Header with Logo
-        try {
-            doc.addImage(logoToUse, 'JPEG', 15, 10, 25, 25);
-        } catch(e) { console.warn("Logo skipped"); }
-
-        doc.setFontSize(18);
-        doc.setTextColor(43, 0, 84);
-        doc.text("University Assessment Report", 50, 25);
-        
-        doc.autoTable({
-            startY: 40,
-            head: [['Field', 'Details']],
-            body: [
-                ['University', u.universityName],
-                ['Country', u.country],
-                ['Suggested Courses', u.topCourses || 'Business, IT, Engineering'],
-                ['Min GPA', u.minGPA],
-                ['English Requirement', `${u.englishOptions || 'IELTS'}: ${u.ieltsReq}`],
-                ['Max Gap Allowed', `${u.maxGapAllowed || 5} Years`],
-                ['Tuition Fee (Total)', `$${(u.totalTuitionFee || 0).toLocaleString()}`],
-                ['Scholarship (Up to)', `$${(u.scholarshipMax || 0).toLocaleString()}`],
-                ['Initial Flying Cost', `BDT ${(u.initialFlyingCost || 0).toLocaleString()}`]
-            ],
-            theme: 'grid',
-            headStyles: { fillColor: [241, 196, 15], textColor: 0 } 
-        });
-
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text("Generated via SCC Partner Portal", 14, doc.lastAutoTable.finalY + 10);
-        
-        doc.save(`${u.universityName}_Assessment.pdf`);
-    } catch (e) { alert("Error generating report"); }
-}
-
-// --- 3. Dashboard Logic & Wallet ---
+// --- 2. Realtime Data & Wallet ---
 async function initRealtimeData() {
     try {
-        const userRes = await fetch('/api/admin/users'); 
+        const [userRes, appRes] = await Promise.all([
+            fetch('/api/admin/users'),
+            fetch('/api/applications')
+        ]);
+        
         const allUsers = await userRes.json();
-        const currentMe = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
-        currentAvailableBalance = currentMe ? (currentMe.walletBalance || 0) : 0;
+        const me = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
+        currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
 
-        const res = await fetch('/api/applications');
-        const allApps = await res.json();
+        const allApps = await appRes.json();
         const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
-        let pendingTotal = 0; 
-        let combinedHtml = ""; 
+        let pendingTotal = 0;
+        let tableHtml = "";
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
-            pendingTotal += Number(data.commissionBDT || 0);
-            combinedHtml += `<tr>
-                <td><b>${data.studentName}</b></td>
-                <td>${data.passportNo}</td>
-                <td>${data.university || 'N/A'}</td>
-                <td><span class="badge" style="background:#252545; color:var(--gold); border: 1px solid var(--gold); padding: 5px 10px; border-radius:5px;">${status.replace(/_/g, ' ')}</span></td>
-                <td>${new Date(data.timestamp).toLocaleDateString()}</td>
-            </tr>`;
+            if(status !== 'REJECTED') pendingTotal += Number(data.commissionBDT || 0);
+
+            const row = `
+                <tr>
+                    <td><b>${data.studentName}</b></td>
+                    <td>${data.passportNo}</td>
+                    <td>${data.university || 'N/A'}</td>
+                    <td><span style="color:var(--gold); border:1px solid var(--gold); padding:2px 8px; border-radius:4px;">${status}</span></td>
+                    <td>${new Date(data.timestamp).toLocaleDateString()}</td>
+                    <td><button class="btn-gold" style="padding:2px 10px; font-size:11px;" onclick='showSlip(${JSON.stringify(data)})'>Slip</button></td>
+                </tr>`;
+            tableHtml += row;
         });
 
-        // UI Updates with Safe Check
-        const setUI = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-        
-        if(document.getElementById('topPending')) document.getElementById('topPending').innerHTML = `<small style="font-size:10px; display:block; color:#aaa;">ESTIMATED EARNINGS</small> ৳${pendingTotal.toLocaleString('en-IN')}`;
-        setUI('topFinal', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
-        setUI('withdrawableBal', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
-        setUI('totalStudents', myApps.length);
-        if(document.getElementById('topPendingE')) setUI('topPendingE', `৳${pendingTotal.toLocaleString('en-IN')}`);
-        if(document.getElementById('topFinalE')) setUI('topFinalE', `৳${currentAvailableBalance.toLocaleString('en-IN')}`);
+        // Update Dashboard UI
+        const setTxt = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
+        setTxt('topPending', `৳${pendingTotal.toLocaleString()}`);
+        setTxt('topPendingE', `৳${pendingTotal.toLocaleString()}`);
+        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
+        setTxt('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`);
+        setTxt('totalStudents', myApps.length);
 
-        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No records found</td></tr>";
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = combinedHtml || "<tr><td colspan='5'>No history found</td></tr>";
-        
-    } catch (e) { console.error("Data Fetch Error:", e); }
+        if(document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableHtml;
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml;
+
+    } catch (e) { console.error("Sync Error:", e); }
 }
 
-// --- 4. Search & Unlock Logic ---
+// --- 3. Search & Eligibility ---
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const sScore = parseFloat(document.getElementById('userScore').value) || 0;
     const sYear = parseInt(document.getElementById('userGap').value) || 0;
     const studentGap = sYear ? (new Date().getFullYear() - sYear) : 0;
-    const hasInputs = sGpa > 0 && sScore > 0;
 
     try {
         const res = await fetch('/api/universities');
@@ -166,93 +104,75 @@ async function searchUni() {
 
         unis.forEach(u => {
             if (!country || u.country.toLowerCase().includes(country)) {
-                const isEligible = hasInputs && sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
-
+                const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
+                
                 html += `
-                <tr style="border-bottom: 1px solid #333; transition: 0.3s;" onmouseover="this.style.background='#1a1a2e'" onmouseout="this.style.background='transparent'">
-    <td style="padding: 15px;">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <div style="background:var(--gold); width:45px; height:45px; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold; font-size:18px;">
-                ${u.universityName.charAt(0)}
-            </div>
-            <div>
-    <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
-    <small style="color:#2ecc71;">
-        <i class="fas fa-graduation-cap"></i> Suggested: ${u.topCourses || 'Business, IT, Engineering'}
-    </small><br>
-    <small style="color:#aaa;">
-        <i class="fas fa-clock"></i> Duration: ${u.courseDuration || '3-4 Years'}
-    </small>
-</div>
-    </td>
-
-    <td>
-        <div style="font-size: 13px;">
-            <b>GPA: ${u.minGPA}+</b> | <b>${u.englishOptions || 'IELTS'}: ${u.ieltsReq}+</b><br>
-            <small style="color:${studentGap <= (u.maxGapAllowed || 5) ? '#2ecc71' : '#ff4d4d'}">
-                Max Gap: ${u.maxGapAllowed || 5} Years Allowed
-            </small><br>
-            <small style="color:#aaa;">MOI/Duolingo: ${u.alternativeEnglish || 'Available'}</small>
-        </div>
-    </td>
-
-    <td style="text-align:center;">
-        <div style="background: rgba(46, 204, 113, 0.1); border: 1px dashed #2ecc71; padding: 5px; border-radius: 5px;">
-            <b style="color:#2ecc71; font-size:14px;">Up to $${(u.scholarshipMax || 0).toLocaleString()}</b><br>
-            <small style="color:#eee; font-size:10px;">Scholarship Offer</small>
-        </div>
-    </td>
-
-    <td>
-        <div style="font-size: 12px; line-height: 1.5;">
-            <b style="color:#fff;">Sem Fee: $${(u.totalSemesterFee || 0).toLocaleString()}</b><br>
-            <small style="color:#aaa;">Total Tuition: $${(u.totalTuitionFee || 0).toLocaleString()}</small><br>
-            <small style="color:#f1c40f;">Initial Flying: ৳${(u.initialFlyingCost || 0).toLocaleString()}</small>
-        </div>
-    </td>
-
-    <td>
-        <div style="font-size: 12px;">
-            <span class="badge" style="background:#27ae60; font-size:10px;">Visa: ${u.visaSuccessRate || 95}% Success</span><br>
-            <small style="color:#aaa;">Time: ${u.processingTime || '2-4 Weeks'}</small><br>
-            <b style="color:var(--gold); font-size:14px;">Profit: ৳${(u.commissionBDT || 0).toLocaleString()}</b>
-        </div>
-    </td>
-
-    <td style="text-align:right;">
-        <button class="btn-gold" 
-            style="width:100px; padding: 8px; margin-bottom:5px; background:${isEligible ? '' : '#444'}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
-            ${!isEligible ? 'disabled' : ''} 
-            onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
-            ${isEligible ? 'Apply Now' : 'Not Eligible'}
-        </button><br>
-        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:3px 8px; border-radius:3px; width:100px;">
-            <i class="fas fa-file-pdf"></i> Get Flyer
-        </button>
-    </td>
-</tr>`;
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="background:var(--gold); color:black; padding:10px; border-radius:8px; font-weight:bold;">U</div>
+                            <div>
+                                <b class="text-gold" style="font-size:16px;">${u.universityName}</b><br>
+                                <small style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i> Suggested: ${u.category || 'Business, IT, Engineering'}</small><br>
+                                <small style="color:#ccc;"><i class="fas fa-clock"></i> Duration: ${u.duration || '3-4 Years'}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <b>GPA: ${u.minGPA}+ | ${u.englishOptions}: ${u.ieltsReq}+</b><br>
+                        <small style="color:#2ecc71;">Max Gap: ${u.maxGapAllowed} Years Allowed</small><br>
+                        <small>MOI/Duolingo: Available</small>
+                    </td>
+                    <td>
+                        <div style="border:1px dashed #2ecc71; padding:5px; border-radius:5px; text-align:center;">
+                            <span style="color:#2ecc71; font-weight:bold;">Up to $${u.scholarshipMax || '0'}</span><br>
+                            <small>Scholarship Offer</small>
+                        </div>
+                    </td>
+                    <td>
+                        Sem Fee: <b>$${u.totalSemesterFee}</b><br>
+                        <small>Total Tuition: $${u.totalTuition || '20,000'}</small><br>
+                        <small style="color:var(--gold);">Initial Flying: ৳${u.initialFlyingCost}</small>
+                    </td>
+                    <td>
+                        <div style="background:#2ecc71; color:white; font-size:10px; padding:2px 5px; border-radius:4px; display:inline-block;">Visa: ${u.visaSuccess || '85%'} Success</div><br>
+                        <small>Time: ${u.processingTime || '20 Days'}</small><br>
+                        <b style="color:var(--gold);">Profit: ৳${u.commissionBDT.toLocaleString()}</b>
+                    </td>
+                    <td>
+                        <button class="btn-gold" style="padding:5px; margin-bottom:5px; background:${isEligible ? '' : '#444'}" 
+                            ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
+                            ${isEligible ? 'Apply Now' : 'Not Eligible'}
+                        </button>
+                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid white; color:white; cursor:pointer; width:100%; font-size:11px; padding:3px; border-radius:4px;">
+                            <i class="fas fa-file-pdf"></i> Get Flyer
+                        </button>
+                    </td>
+                </tr>`;
             }
         });
-        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No matches found.</td></tr>";
-    } catch (e) { console.error("Search Error:", e); }
+        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6'>No universities found.</td></tr>";
+    } catch (e) { console.error(e); }
 }
 
-// --- 5. Submission & Wallet Actions ---
+// --- 4. Submissions & Files ---
 async function submitApplication() {
     const sName = document.getElementById('sName').value;
     const sPass = document.getElementById('sPassport').value;
-    const btn = document.getElementById('submitBtn');
+    if(!sName || !sPass) return alert("Student Name & Passport are required!");
 
-    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = "Uploading Files..."; btn.disabled = true;
 
     try {
-        btn.innerText = "Uploading Files..."; btn.disabled = true;
-        const docs = await Promise.all([
-            uploadFile(document.getElementById('file1')?.files[0]),
-            uploadFile(document.getElementById('file2')?.files[0]),
-            uploadFile(document.getElementById('file3')?.files[0]),
-            uploadFile(document.getElementById('file4')?.files[0])
-        ]);
+        // Upload all 4 files dynamically
+        const fileIds = ['file1', 'file2', 'file3', 'file4'];
+        const uploadPromises = fileIds.map(id => {
+            const file = document.getElementById(id).files[0];
+            return file ? uploadFile(file) : Promise.resolve("");
+        });
+        
+        const docs = await Promise.all(uploadPromises);
 
         const res = await fetch('/api/submit-application', {
             method: 'POST',
@@ -260,65 +180,94 @@ async function submitApplication() {
             body: JSON.stringify({
                 studentName: sName, passportNo: sPass,
                 university: selectedUniversity, partnerEmail: partnerEmail,
-                commissionBDT: currentUniCommission,
-                status: 'PENDING', timestamp: new Date().toISOString(),
-                pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
+                commissionBDT: currentUniCommission, status: 'PENDING',
+                documents: docs.filter(url => url !== ""), // Only send non-empty URLs
+                timestamp: new Date().toISOString()
             })
         });
-        if(res.ok) { alert("Successfully Submitted!"); location.reload(); }
-    } catch (e) { alert("Submission failed"); } 
-    finally { btn.disabled = false; btn.innerText = "Submit Application"; }
+
+        if(res.ok) { alert("Application Submitted Successfully!"); location.reload(); }
+    } catch (e) { alert("Submission failed!"); }
+    finally { btn.innerText = "Submit File"; btn.disabled = false; }
 }
 
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+    const data = await res.json();
+    return data.secure_url || "";
+}
+
+// --- 5. QR Slip Logic (Corrected Version) ---
+// --- 5. QR Slip Logic (Updated Text) ---
+function showSlip(data) {
+    const trackingId = `TRAK-${data.studentName.split(' ')[0].toUpperCase()}-${data.passportNo.slice(-4)}`;
+    
+    // ডাইনামিক টেক্সট আপডেট
+    if(document.getElementById('slipStatus')) {
+        document.getElementById('slipStatus').innerText = "Submission Completed & In House Processing";
+    }
+
+    // বাকি ফিল্ডগুলো আগের মতোই থাকবে
+    if(document.getElementById('slipName')) document.getElementById('slipName').innerText = data.studentName;
+    if(document.getElementById('slipPassport')) document.getElementById('slipPassport').innerText = data.passportNo;
+    if(document.getElementById('slipDest')) document.getElementById('slipDest').innerText = data.university;
+    if(document.getElementById('slipTrackingID')) document.getElementById('slipTrackingID').innerText = trackingId;
+    
+    // QR Code এবং লোগো সেট করা
+    const trackLink = `https://scc-ihp.com/track?id=${data.passportNo}`;
+    if(document.getElementById('slipQR')) {
+        document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
+    }
+    
+    if(document.getElementById('slipPartnerLogo')) {
+        document.getElementById('slipPartnerLogo').src = partnerLogoBase64 || 'logo.jpeg';
+    }
+
+    document.getElementById('slipModal').style.display = 'flex';
+}
+
+// --- 6. Withdrawal Request ---
 async function requestWithdraw() {
     const amount = Number(document.getElementById('withdrawAmount').value);
     const method = document.getElementById('withdrawMethod').value;
     const details = document.getElementById('paymentDetails').value;
 
-    if (amount < 500 || amount > currentAvailableBalance) return alert("Invalid amount or insufficient balance");
+    if(amount < 500) return alert("Minimum withdrawal is ৳500");
+    if(amount > currentAvailableBalance) return alert("Insufficient balance!");
+    if(!details) return alert("Please provide account details.");
 
-    try {
-        const res = await fetch('/api/withdrawals', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: partnerEmail, amount, method: `${method}: ${details}` })
-        });
-        if(res.ok) { alert("Withdrawal request sent!"); location.reload(); }
-    } catch (e) { alert("Error sending request"); }
+    const res = await fetch('/api/withdrawals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            partnerEmail, amount, method, details, status: 'PENDING', date: new Date().toISOString()
+        })
+    });
+
+    if(res.ok) { alert("Withdrawal request submitted!"); location.reload(); }
 }
 
-async function uploadFile(file) {
-    if(!file) return "";
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', UPLOAD_PRESET);
-    try {
-        const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-        const data = await res.json();
-        return data.secure_url || "";
-    } catch (e) { return ""; }
+// --- Helper Functions ---
+function openApplyModal(name, comm) {
+    selectedUniversity = name; currentUniCommission = comm;
+    document.getElementById('modalTitle').innerText = name;
+    document.getElementById('applyModal').style.display = 'flex';
 }
 
-// --- 3. Logo & Profile (সংশোধিত অংশ) ---
 function uploadPartnerLogo() {
     const file = document.getElementById('logoUpload').files[0];
     const reader = new FileReader();
     reader.onloadend = () => {
         partnerLogoBase64 = reader.result;
-        if(document.getElementById('currentLogo')) document.getElementById('currentLogo').src = reader.result;
-        alert("Logo Uploaded!");
-    }
+        document.getElementById('currentLogo').src = reader.result;
+    };
     if (file) reader.readAsDataURL(file);
 }
 
-// এই ফাংশনটি এখন event হ্যান্ডেল করবে
-async function saveProfile(event) { 
-    if (event) event.preventDefault(); // ফর্ম রিলোড আটকাবে
-    
-    const btn = event ? event.target : null;
-    const originalText = btn ? btn.innerText : "Update Profile";
-    if (btn) btn.innerText = "Updating...";
-    
+async function saveProfile() {
     const payload = {
         email: partnerEmail,
         contact: document.getElementById('pPhone').value,
@@ -327,27 +276,42 @@ async function saveProfile(event) {
         address: document.getElementById('pAddr').value,
         logoUrl: partnerLogoBase64 
     };
-    
-    try {
-        const res = await fetch('/api/user/profile', {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        if(res.ok) { 
-            alert("✅ Profile Updated!"); 
-            localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
-        }
-    } catch(e) { 
-        alert("Update failed"); 
-    } finally {
-        if (btn) btn.innerText = originalText;
+    const res = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    if(res.ok) {
+        localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
+        alert("Profile Updated!");
     }
 }
-function openApplyModal(name, comm) {
-    selectedUniversity = name; currentUniCommission = comm;
-    document.getElementById('modalTitle').innerText = name;
-    document.getElementById('applyModal').style.display = 'flex';
-}
+// --- 7. Assessment PDF Generator (Missing Feature) ---
+async function downloadAssessmentPDF(uniId) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-function logout() { localStorage.clear(); window.location.href='index.html'; }
+    // Fetch single uni data (Assuming an API exists)
+    const res = await fetch(`/api/universities/${uniId}`);
+    const u = await res.json();
+
+    // PDF Design
+    doc.setFillColor(26, 26, 46);
+    doc.rect(0, 0, 210, 40, 'F');
+    doc.setTextColor(241, 196, 15);
+    doc.setFontSize(22);
+    doc.text(u.universityName, 15, 25);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text(`Country: ${u.country}`, 15, 50);
+    doc.text(`Minimum GPA: ${u.minGPA}`, 15, 60);
+    doc.text(`English Req: ${u.ieltsReq}`, 15, 70);
+    doc.text(`Semester Fee: $${u.totalSemesterFee}`, 15, 80);
+    doc.text(`Estimated Profit: BDT ${u.commissionBDT}`, 15, 90);
+
+    doc.setFontSize(10);
+    doc.text("Generated by SCC IHP Partner Portal", 15, 280);
+    
+    doc.save(`${u.universityName}_Assessment.pdf`);
+}

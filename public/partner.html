@@ -1,19 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal | SCC Group</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <script>
+        if (!localStorage.getItem('token')) { 
+            window.location.href = 'auth.html'; 
+        }
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
         :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; min-height: 100vh; }
         
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; z-index: 1000; }
         .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; }
-        .logo-container img { max-width: 150px; border-radius: 8px; }
+        .logo-container img { max-width: 150px; border-radius: 8px; background: white; padding: 5px; }
         
         .sidebar ul { list-style: none; padding: 0; }
         .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; transition: 0.3s; }
@@ -29,184 +38,206 @@
         input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
         label { display: block; margin-bottom: 5px; font-size: 13px; color: var(--gold); }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-gold:disabled { background: #444; color: #777; cursor: not-allowed; }
+        .btn-gold:hover { background: #d4ac0d; }
         
         .table-wrapper { overflow-x: auto; background: var(--dark); border-radius: 10px; border: 1px solid #333; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #252545; color: var(--gold); text-transform: uppercase; font-size: 11px; }
 
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .modal-content { background: var(--dark); padding: 30px; border-radius: 15px; width: 100%; max-width: 500px; border: 1px solid var(--gold); max-height: 90vh; overflow-y: auto; }
         
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .text-gold { color: var(--gold); }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
-    <div class="logo-container" style="text-align: center; padding: 20px; border-bottom: 1px solid #222;">
-        <img src="logo.jpeg" alt="SCC Group Logo" style="max-width: 150px; border-radius: 8px; background: white; padding: 5px;">
+<div class="sidebar">
+    <div class="logo-container">
+        <img src="logo.jpeg" alt="SCC Group Logo">
     </div>
     <ul>
-    <li id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')">
-        <i class="fas fa-home"></i> <span>Dashboard</span>
-    </li>
-    <li id="menu-universities" class="nav-item" onclick="showTab('universities')">
-        <i class="fas fa-search-plus"></i> <span>Assessment</span>
-    </li>
-    <li id="menu-tracking" class="nav-item" onclick="showTab('tracking')">
-        <i class="fas fa-tasks"></i> <span>Live Tracking</span>
-    </li>
-    <li id="menu-earnings" class="nav-item" onclick="showTab('earnings')">
-        <i class="fas fa-wallet"></i> <span>Earnings & Wallet</span>
-    </li>
-    <li id="menu-profile" class="nav-item" onclick="showTab('profile')">
-        <i class="fas fa-user-cog"></i> <span>Profile</span>
-    </li>
-    <li class="nav-item" onclick="logout()">
-        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-    </li>
-</ul>
+        <li id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> <span>Dashboard</span></li>
+        <li id="menu-universities" class="nav-item" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> <span>Assessment</span></li>
+        <li id="menu-tracking" class="nav-item" onclick="showTab('tracking')"><i class="fas fa-tasks"></i> <span>Live Tracking</span></li>
+        <li id="menu-earnings" class="nav-item" onclick="showTab('earnings')"><i class="fas fa-wallet"></i> <span>Earnings & Wallet</span></li>
+        <li id="menu-profile" class="nav-item" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> <span>Profile</span></li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></li>
+    </ul>
 </div>
 
-    <div class="main-content">
-        <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
+<div class="main-content">
+    <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" class="text-gold">Partner</span></h2>
 
-        <div id="dashboard" class="tab-content" style="display: block;">
-            <div class="card-grid">
-                <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
-                <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:24px; color:var(--green);">৳0</p></div>
-                <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:24px; color:#3498db;">0</p></div>
-            </div>
-            <h3 style="color:var(--gold);">Quick View (Recent)</h3>
-            <div class="table-wrapper">
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 25%;">University & Courses</th> <th style="width: 20%;">Requirements</th>
-                <th style="width: 15%;">Scholarship Offer</th> <th style="width: 15%;">Fees & Costing</th>    <th style="width: 15%;">Visa & Profit</th>
-                <th style="width: 10%;">Action</th>
-            </tr>
-        </thead>
-        <tbody id="uniListContainer"></tbody>
-    </table>
-</div>
+    <div id="dashboard" class="tab-content" style="display: block;">
+        <div class="card-grid">
+            <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
+            <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:24px; color:var(--green);">৳0</p></div>
+            <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:24px; color:#3498db;">0</p></div>
         </div>
+        <h3 class="text-gold">Quick View (Recent Activity)</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Profit</th></tr>
+                </thead>
+                <tbody id="quickStatsBody"></tbody>
+            </table>
+        </div>
+    </div>
 
-        <div id="universities" class="tab-content">
-    <h3>Find Universities & Eligibility</h3>
+    <div id="universities" class="tab-content">
+        <h3>Find Universities & Eligibility</h3>
+        <div class="card-grid" style="margin-bottom: 20px;">
+            <div class="card" style="text-align: left; padding: 15px;">
+                <label>Country</label>
+                <input type="text" id="fCountry" placeholder="e.g. UK" onkeyup="searchUni()">
+            </div>
+            <div class="card" style="text-align: left; padding: 15px;">
+                <label>Your GPA</label>
+                <input type="number" id="userGPA" step="0.01" placeholder="e.g. 4.50" onkeyup="searchUni()">
+            </div>
+            <div class="card" style="text-align: left; padding: 15px;">
+                <label>English Score</label>
+                <input type="number" id="userScore" step="0.5" placeholder="e.g. 6.5" onkeyup="searchUni()">
+            </div>
+            <div class="card" style="text-align: left; padding: 15px;">
+                <label>Graduation Year</label>
+                <input type="number" id="userGap" placeholder="e.g. 2023" onkeyup="searchUni()">
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>University</th><th>Requirements</th><th>Fees & Deposit</th><th>Visa & Profit</th><th>Action</th></tr>
+                </thead>
+                <tbody id="uniListContainer"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tracking" class="tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3><i class="fas fa-satellite"></i> Live Student Status</h3>
+            <button class="btn-gold" onclick="downloadPDFReport()" style="width:auto; padding:8px 20px;"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Update Date</th><th>Slip</th></tr>
+                </thead>
+                <tbody id="fullTrackingBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="earnings" class="tab-content">
+        <div class="card-grid">
+            <div class="card"><h3>Total Earnings</h3><p id="topPendingE" style="color:var(--gold); font-size:24px;">৳0</p></div>
+            <div class="card"><h3>Withdrawable</h3><p id="withdrawableBal" style="color:var(--green); font-size:24px;">৳0</p></div>
+        </div>
+        <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left; border: 1px solid var(--gold);">
+            <h3 style="text-align: center; color: var(--gold);">Request Withdrawal</h3>
+            <label>Amount (৳)</label><input type="number" id="withdrawAmount" placeholder="Min. 500">
+            <label>Method</label>
+            <select id="withdrawMethod">
+                <option value="Bkash">Bkash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+            <label>Account Details</label><input type="text" id="paymentDetails" placeholder="Number or Bank Info">
+            <button class="btn-gold" id="btnWithdraw" onclick="requestWithdraw()">Submit Request</button>
+        </div>
+    </div>
+
+    <div id="profile" class="tab-content">
+        <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+            <div style="grid-column: span 2; text-align: center;">
+                <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; background: white;">
+                <input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px;">
+            </div>
+            <div><label>Org Name</label><input type="text" id="pOrg"></div>
+            <div><label>Authorised Person</label><input type="text" id="pAuth"></div>
+            <div><label>Phone</label><input type="text" id="pPhone"></div>
+            <div><label>Email</label><input type="text" id="pEmail" readonly></div>
+            <div style="grid-column: span 2;"><label>Address</label><textarea id="pAddr"></textarea></div>
+            <div style="grid-column: span 2;"><button class="btn-gold" onclick="saveProfile()">Update Profile</button></div>
+        </div>
+    </div>
+
+    <footer style="margin-top: auto; padding: 20px; text-align: center; border-top: 1px solid #333; font-size: 12px; color: #777;">
+        2026 @ Rights and Reserved Gorun Ltd. | <span class="text-gold">Powered by SCC IHP Portal</span>
+    </footer>
+</div>
+
+<div id="applyModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" class="text-gold">Student Application</h3>
+        <input type="text" id="sName" placeholder="Student Full Name">
+        <input type="text" id="sPassport" placeholder="Passport Number">
+        <div style="margin:15px 0 10px; font-size:13px; color:var(--gold);">Upload Documents:</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input type="file" id="file1"> <input type="file" id="file2">
+            <input type="file" id="file3"> <input type="file" id="file4">
+        </div>
+        <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:20px;">Submit File</button>
+        <button onclick="closeModal()" style="background:none; border:none; color:gray; width:100%; margin-top:10px; cursor:pointer;">Close</button>
+    </div>
+</div>
+
+<div id="slipModal" class="modal">
+    <div class="modal-content" style="max-width: 800px; background: white; color: black; padding: 0; overflow: hidden;">
+        <div style="background: #2b0054; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <img id="slipPartnerLogo" src="logo.jpeg" style="max-height: 60px; background: white; border-radius: 5px; padding: 5px;">
+            <div style="text-align: right;">
+                <h2 style="margin: 0; font-size: 18px;">OFFICIAL ACKNOWLEDGEMENT</h2>
+                <p style="margin: 0; font-size: 12px;">Ref: <span id="slipRef">SCC-2026-X</span></p>
+            </div>
+        </div>
+        <div style="padding: 30px;">
+            <h4 style="background: #eee; padding: 10px; border-radius: 5px;">APPLICANT INFORMATION</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px;">
+                <p><strong>Full Name:</strong> <span id="slipName"></span></p>
+                <p><strong>Passport:</strong> <span id="slipPassport"></span></p>
+                <p><strong>Destination:</strong> <span id="slipDest"></span></p>
+                <p><strong>Course:</strong> <span id="slipCourse"></span></p>
+            </div>
+            <div style="margin-top: 30px; text-align: center; border: 2px dashed #2ecc71; padding: 20px; border-radius: 10px;">
+                <h3 style="color: #27ae60; margin-top: 0;"><i class="fas fa-check-circle"></i> VERIFIED BY IHP TEAM</h3>
+                <img id="slipQR" src="" style="width: 120px; margin: 10px 0;">
+                <p style="font-size: 11px; color: #666;">Scan QR to track application status live.</p>
+            </div>
+            <p style="margin-top: 20px; font-style: italic; color: #555; text-align: center;">"Wishing you a successful journey towards your global education dream!"</p>
+        </div>
+        <div style="padding: 15px; background: #f9f9f9; text-align: center; border-top: 1px solid #ddd;">
+            <button class="btn-gold" onclick="window.print()" style="width: auto; padding: 10px 30px;">Print Slip</button>
+            <button onclick="closeSlip()" style="background: none; border: none; color: red; margin-left: 20px; cursor: pointer; font-weight: bold;">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="partner-logic.js"></script>
+<script>
+    function showTab(id) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        document.getElementById('menu-' + id).classList.add('active');
+        if(typeof initRealtimeData === 'function') initRealtimeData();
+    }
+
+    function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
+    function closeSlip() { document.getElementById('slipModal').style.display = 'none'; }
+    function searchUni() { if(typeof filterUniversities === 'function') filterUniversities(); }
     
-    <div class="card-grid" style="margin-bottom: 20px;">
-        <div class="card" style="text-align: left; padding: 15px;">
-            <label>Country</label>
-            <input type="text" id="fCountry" placeholder="e.g. UK" onkeyup="searchUni()">
-        </div>
-        <div class="card" style="text-align: left; padding: 15px;">
-            <label>Your GPA</label>
-            <input type="number" id="userGPA" step="0.01" placeholder="e.g. 4.50" onkeyup="searchUni()">
-        </div>
-        <div class="card" style="text-align: left; padding: 15px;">
-            <label>IELTS/English Score</label>
-            <input type="number" id="userScore" step="0.5" placeholder="e.g. 6.5" onkeyup="searchUni()">
-        </div>
-        <div class="card" style="text-align: left; padding: 15px;">
-            <label>HSC/Graduation Year</label>
-            <input type="number" id="userGap" placeholder="e.g. 2023" onkeyup="searchUni()">
-        </div>
-    </div>
-
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>University</th>
-                    <th>Requirements</th>
-                    <th>Fees & Deposit</th> 
-                    <th>Visa & Profit</th> <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="uniListContainer"></tbody>
-        </table>
-    </div>
-</div>
-        <div id="tracking" class="tab-content">
-            <h3>Full Student History</h3><button class="btn-gold" onclick="downloadPDFReport()" style="width:auto; float:right; padding:5px 15px;">
-    <i class="fas fa-file-pdf"></i> Download PDF
-</button>
-            <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                    <tbody id="fullTrackingBody"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="earnings" class="tab-content">
-            <div class="card-grid">
-                <div class="card"><h3>Total Earnings</h3><p id="topPendingE" style="color:var(--gold); font-size:24px;">৳0</p></div>
-                <div class="card"><h3>Withdrawable</h3><p id="withdrawableBal" style="color:var(--green); font-size:24px;">৳0</p></div>
-            </div>
-            <div class="card" style="max-width: 500px; margin: 20px auto; text-align: left; border: 1px solid var(--gold);">
-                <h3 style="text-align: center; color: var(--gold);">Request Withdrawal</h3>
-                <label>Amount (৳)</label><input type="number" id="withdrawAmount" placeholder="Min. 500">
-                <label>Method</label>
-                <select id="withdrawMethod">
-                    <option value="Bkash">Bkash</option>
-                    <option value="Nagad">Nagad</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-                <label>Account Details</label><input type="text" id="paymentDetails" placeholder="Number or Bank Info">
-                <button class="btn-gold" id="btnWithdraw" onclick="requestWithdraw()">Submit Request</button>
-            </div>
-        </div>
-
-        <div id="profile" class="tab-content">
-    <div class="card" style="max-width: 600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
-        <div style="grid-column: span 2; text-align: center;">
-            <img id="currentLogo" src="logo.jpeg" style="width: 100px; height:100px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover;">
-            <input type="file" id="logoUpload" onchange="uploadPartnerLogo()" style="margin-top:10px; font-size:11px;">
-        </div>
-        <div><label>Org Name</label><input type="text" id="pOrg"></div>
-        <div><label>Authorised Person</label><input type="text" id="pAuth"></div> <div><label>Phone</label><input type="text" id="pPhone"></div>
-        <div><label>Email</label><input type="text" id="pEmail" readonly></div>
-        <div style="grid-column: span 2;"><label>Address</label><textarea id="pAddr"></textarea></div> <div style="grid-column: span 2;"><button class="btn-gold" onclick="saveProfile()">Update Profile</button></div>
-    </div>
-</div>
-
-
-    <div id="applyModal" class="modal">
-        <div class="modal-content">
-            <h3 id="modalTitle" style="color:var(--gold);">Student Application</h3>
-            <input type="text" id="sName" placeholder="Student Full Name">
-            <input type="text" id="sPassport" placeholder="Passport Number">
-            <div style="margin:15px 0 10px; font-size:13px; color:var(--gold);">Upload Documents:</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <input type="file" id="file1"> <input type="file" id="file2">
-                <input type="file" id="file3"> <input type="file" id="file4">
-            </div>
-            <button class="btn-gold" id="submitBtn" onclick="submitApplication()" style="margin-top:20px;">Submit File</button>
-            <button onclick="closeModal()" style="background:none; border:none; color:gray; width:100%; margin-top:10px; cursor:pointer;">Close</button>
-        </div>
-    </div>
-
-    <script src="partner-logic.js"></script>
-    <script>
-        // বাটন যাতে কাজ করে সেজন্য লজিক ফাইলের ফাংশনগুলোকে গ্লোবাল করা হলো
-        function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-            document.getElementById(id).style.display = 'block';
-            document.getElementById('menu-' + id).classList.add('active');
-            if(typeof initRealtimeData === 'function') initRealtimeData();
+    function logout() {
+        if(confirm("Logout from SCC IHP Portal?")) {
+            localStorage.clear();
+            window.location.href = 'auth.html';
         }
-
-        function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
-        // সাইডবার টগল করার জন্য (মোবাইলে)
-function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('active');
-}
-    </script>
+    }
+</script>
 </body>
 </html>
