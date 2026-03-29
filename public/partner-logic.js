@@ -1,10 +1,8 @@
 /**
  * SCC Group - Partner Portal Logic (2026)
  * Full Integration: MongoDB, Cloudinary, QR Tracking & Wallet
- * Status: FINAL VERIFIED & OPTIMIZED
  */
 
-// 1. Global Configuration
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
@@ -15,29 +13,40 @@ let currentUniCommission = 0;
 let selectedUniversity = "";
 let currentAvailableBalance = 0; 
 
-// ---------------------------------------------------------
-// 2. Initialization on Load
-// ---------------------------------------------------------
-window.onload = () => {
-    if(!partnerEmail) {
-        window.location.href = 'index.html';
-        return;
-    }
+// --- PDF Report Function (Global) ---
+window.downloadPDFReport = () => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Student Application Report - SCC Group", 14, 15);
+    doc.autoTable({
+        html: '#fullTrackingBody',
+        startY: 25,
+        theme: 'grid',
+        headStyles: { fillColor: [26, 26, 46] }
+    });
+    doc.save("Student_Report.pdf");
+};
 
-    // ফাংশনগুলোকে গ্লোবাল উইন্ডোতে এক্সপোজ করা (HTML থেকে কল করার জন্য)
+window.onload = () => {
+    // ... আপনার আগের কোড ...
+    window.saveProfile = saveProfile;
+    window.uploadPartnerLogo = uploadPartnerLogo;
+    window.downloadAssessmentPDF = downloadAssessmentPDF;
+
+    // Expose functions to window
     window.searchUni = searchUni;
     window.openApplyModal = openApplyModal;
     window.submitApplication = submitApplication;
     window.requestWithdraw = requestWithdraw;
     window.logout = logout;
     window.saveProfile = saveProfile;
-    window.uploadPartnerLogo = uploadPartnerLogo; // নতুন যোগ করা হয়েছে
+    window.uploadPartnerLogo = uploadPartnerLogo;
 
+    // UI Initial Set
     document.getElementById('welcomeName').innerText = userData.name || "Partner";
     document.getElementById('pEmail').value = partnerEmail;
     document.getElementById('pOrg').value = userData.orgName || userData.name || "";
     
-    // প্রোফাইল ফিল্ডগুলো রেন্ডার করা
     if(document.getElementById('pAuth')) document.getElementById('pAuth').value = userData.authorisedPerson || "";
     if(document.getElementById('pPhone')) document.getElementById('pPhone').value = userData.contact || "";
     if(document.getElementById('pAddr')) document.getElementById('pAddr').value = userData.address || "";
@@ -49,8 +58,32 @@ window.onload = () => {
     }
 
     initRealtimeData(); 
+    searchUni(); // Initial load of universities
 };
-
+async function downloadAssessmentPDF(id) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    try {
+        const res = await fetch('/api/universities');
+        const unis = await res.json();
+        const u = unis.find(uni => uni._id === id);
+        if(!u) return alert("Data not found");
+        doc.text(`University Assessment: ${u.universityName}`, 14, 20);
+        doc.autoTable({
+    startY: 30,
+    head: [['Field', 'Details']],
+    body: [
+        ['University', u.universityName],
+        ['Country', u.country],
+        ['Min GPA', u.minGPA],
+        ['IELTS Req', u.ieltsReq],
+        ['Tuition Fee', `$${u.totalTuitionFee}`],
+        ['Commission', `BDT ${u.commissionBDT}`]
+    ]
+});
+        doc.save(`${u.universityName}_Report.pdf`);
+    } catch (e) { alert("Error generating report"); }
+}
 // ---------------------------------------------------------
 // 3. Core Logic: Dashboard & Wallet Tracking
 // ---------------------------------------------------------

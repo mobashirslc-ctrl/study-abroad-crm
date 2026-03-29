@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal | SCC Group</title>
@@ -73,7 +75,7 @@
             </div>
         </div>
 
-        <<div id="universities" class="tab-content">
+        <div id="universities" class="tab-content">
     <h3>Find Universities & Eligibility</h3>
     <div class="table-wrapper">
         <table>
@@ -91,7 +93,9 @@
     </div>
 </div>
         <div id="tracking" class="tab-content">
-            <h3>Full Student History</h3>
+            <h3>Full Student History</h3><button class="btn-gold" onclick="downloadPDFReport()" style="width:auto; float:right; padding:5px 15px;">
+    <i class="fas fa-file-pdf"></i> Download PDF
+</button>
             <div class="table-wrapper">
                 <table>
                     <thead><tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
