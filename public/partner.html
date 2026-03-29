@@ -77,15 +77,34 @@
 
         <div id="universities" class="tab-content">
     <h3>Find Universities & Eligibility</h3>
+    
+    <div class="card-grid" style="margin-bottom: 20px;">
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>Country</label>
+            <input type="text" id="fCountry" placeholder="e.g. UK" onkeyup="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>Your GPA</label>
+            <input type="number" id="userGPA" step="0.01" placeholder="e.g. 4.50" onkeyup="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>IELTS/English Score</label>
+            <input type="number" id="userScore" step="0.5" placeholder="e.g. 6.5" onkeyup="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>HSC/Graduation Year</label>
+            <input type="number" id="userGap" placeholder="e.g. 2023" onkeyup="searchUni()">
+        </div>
+    </div>
+
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
                     <th>University</th>
                     <th>Requirements</th>
-                    <th>Fees & Deposit</th> <th>Status</th>
-                    <th>Commission</th>
-                    <th>Action</th>
+                    <th>Fees & Deposit</th> 
+                    <th>Visa & Profit</th> <th>Action</th>
                 </tr>
             </thead>
             <tbody id="uniListContainer"></tbody>
