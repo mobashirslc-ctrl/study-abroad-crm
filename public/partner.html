@@ -46,16 +46,30 @@
 <body>
 
     <div class="sidebar">
-        <div class="logo-container"><img id="sidebarLogo" src="logo.jpeg" alt="SCC Logo"></div>
-        <ul>
-            <li id="menu-dashboard" class="active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
-            <li id="menu-universities" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Assessment</li>
-            <li id="menu-tracking" onclick="showTab('tracking')"><i class="fas fa-tasks"></i> Live Tracking</li>
-            <li id="menu-earnings" onclick="showTab('earnings')"><i class="fas fa-wallet"></i> Earnings & Wallet</li>
-            <li id="menu-profile" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
-            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
-        </ul>
+    <div class="logo-container" style="text-align: center; padding: 20px; border-bottom: 1px solid #222;">
+        <img src="logo.jpeg" alt="SCC Group Logo" style="max-width: 150px; border-radius: 8px; background: white; padding: 5px;">
     </div>
+    <ul>
+    <li id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')">
+        <i class="fas fa-home"></i> <span>Dashboard</span>
+    </li>
+    <li id="menu-universities" class="nav-item" onclick="showTab('universities')">
+        <i class="fas fa-search-plus"></i> <span>Assessment</span>
+    </li>
+    <li id="menu-tracking" class="nav-item" onclick="showTab('tracking')">
+        <i class="fas fa-tasks"></i> <span>Live Tracking</span>
+    </li>
+    <li id="menu-earnings" class="nav-item" onclick="showTab('earnings')">
+        <i class="fas fa-wallet"></i> <span>Earnings & Wallet</span>
+    </li>
+    <li id="menu-profile" class="nav-item" onclick="showTab('profile')">
+        <i class="fas fa-user-cog"></i> <span>Profile</span>
+    </li>
+    <li class="nav-item" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+    </li>
+</ul>
+</div>
 
     <div class="main-content">
         <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" style="color:var(--gold);">Partner</span></h2>
@@ -68,11 +82,17 @@
             </div>
             <h3 style="color:var(--gold);">Quick View (Recent)</h3>
             <div class="table-wrapper">
-                <table>
-                    <thead><tr><th>Student</th><th>Passport</th><th>University</th><th>Status</th><th>Date</th></tr></thead>
-                    <tbody id="homeTrackingBody"></tbody>
-                </table>
-            </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">University & Courses</th> <th style="width: 20%;">Requirements</th>
+                <th style="width: 15%;">Scholarship Offer</th> <th style="width: 15%;">Fees & Costing</th>    <th style="width: 15%;">Visa & Profit</th>
+                <th style="width: 10%;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="uniListContainer"></tbody>
+    </table>
+</div>
         </div>
 
         <div id="universities" class="tab-content">
@@ -183,6 +203,10 @@
         }
 
         function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
+        // সাইডবার টগল করার জন্য (মোবাইলে)
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
     </script>
 </body>
 </html>

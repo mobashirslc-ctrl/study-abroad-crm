@@ -9,7 +9,7 @@ const UPLOAD_PRESET = "ihp_upload";
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = (userData.email || "").toLowerCase().trim();
 
-let currentUniCommission = 0;
+let partnerLogoBase64 = userData.logoUrl || null;
 let selectedUniversity = "";
 let currentAvailableBalance = 0; 
 
@@ -59,39 +59,50 @@ function downloadPDFReport() {
     doc.save("Student_Report.pdf");
 }
 
-async function downloadAssessmentPDF(id) {
+async function downloadAssessmentPDF(uniId) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    const logoImg = document.getElementById('currentLogo');
-    if (logoImg && logoImg.src && !logoImg.src.includes('logo.jpeg')) {
-        try {
-            doc.addImage(logoImg.src, 'JPEG', 15, 10, 20, 20); 
-        } catch (e) { console.warn("Logo skipped"); }
-    }
+    // লোগো হ্যান্ডলিং: যদি প্রোফাইল লোগো থাকে তবে সেটি নেবে, না থাকলে ডিফল্ট
+    const logoToUse = partnerLogoBase64 || 'logo.jpeg'; 
 
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
-        const u = unis.find(uni => uni._id === id);
+        const u = unis.find(uni => uni._id === uniId);
         if(!u) return alert("Data not found");
 
-        doc.setFontSize(16);
-        doc.text(`University Assessment: ${u.universityName}`, 14, 35);
+        // Header with Logo
+        try {
+            doc.addImage(logoToUse, 'JPEG', 15, 10, 25, 25);
+        } catch(e) { console.warn("Logo skipped"); }
+
+        doc.setFontSize(18);
+        doc.setTextColor(43, 0, 84);
+        doc.text("University Assessment Report", 50, 25);
+        
         doc.autoTable({
             startY: 40,
             head: [['Field', 'Details']],
             body: [
                 ['University', u.universityName],
                 ['Country', u.country],
+                ['Suggested Courses', u.topCourses || 'Business, IT, Engineering'],
                 ['Min GPA', u.minGPA],
-                ['IELTS Req', u.ieltsReq],
-                ['Tuition Fee', `$${u.totalTuitionFee}`],
-                ['Commission', `BDT ${u.commissionBDT}`]
+                ['English Requirement', `${u.englishOptions || 'IELTS'}: ${u.ieltsReq}`],
+                ['Max Gap Allowed', `${u.maxGapAllowed || 5} Years`],
+                ['Tuition Fee (Total)', `$${(u.totalTuitionFee || 0).toLocaleString()}`],
+                ['Scholarship (Up to)', `$${(u.scholarshipMax || 0).toLocaleString()}`],
+                ['Initial Flying Cost', `BDT ${(u.initialFlyingCost || 0).toLocaleString()}`]
             ],
             theme: 'grid',
-            headStyles: { fillColor: [241, 196, 15] }
+            headStyles: { fillColor: [241, 196, 15], textColor: 0 } 
         });
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text("Generated via SCC Partner Portal", 14, doc.lastAutoTable.finalY + 10);
+        
         doc.save(`${u.universityName}_Assessment.pdf`);
     } catch (e) { alert("Error generating report"); }
 }
@@ -158,24 +169,68 @@ async function searchUni() {
                 const isEligible = hasInputs && sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= (u.maxGapAllowed || 10);
 
                 html += `
-                <tr style="border-bottom: 1px solid #333;">
-                    <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="background:var(--gold); width:40px; height:40px; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold;">${u.universityName.charAt(0)}</div>
-                            <div><b style="color:var(--gold);">${u.universityName}</b><br><small>${u.country}</small></div>
-                        </div>
-                    </td>
-                    <td><span class="badge" style="background:#252545;">${u.degreeType}</span><br><small>Intake: ${u.intake || 'N/A'}</small></td>
-                    <td><small>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</small><br><small>Gap: Max ${u.maxGapAllowed}Y</small></td>
-                    <td><b>$${(u.totalTuitionFee || 0).toLocaleString()}</b><br><small style="color:#2ecc71;">Dep: $${u.initialDeposit || 0}</small></td>
-                    <td><b style="color:var(--gold);">৳${(u.commissionBDT || 0).toLocaleString()}</b></td>
-                    <td style="text-align:center;">
-                        <button class="btn-gold" style="width:100px; background:${isEligible ? '' : '#444'}" ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
-                            ${isEligible ? 'Apply Now' : 'Locked'}
-                        </button><br>
-                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:2px 5px; margin-top:5px; border-radius:3px;">Report</button>
-                    </td>
-                </tr>`;
+                <tr style="border-bottom: 1px solid #333; transition: 0.3s;" onmouseover="this.style.background='#1a1a2e'" onmouseout="this.style.background='transparent'">
+    <td style="padding: 15px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="background:var(--gold); width:45px; height:45px; border-radius:8px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold; font-size:18px;">
+                ${u.universityName.charAt(0)}
+            </div>
+            <div>
+    <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
+    <small style="color:#2ecc71;">
+        <i class="fas fa-graduation-cap"></i> Suggested: ${u.topCourses || 'Business, IT, Engineering'}
+    </small><br>
+    <small style="color:#aaa;">
+        <i class="fas fa-clock"></i> Duration: ${u.courseDuration || '3-4 Years'}
+    </small>
+</div>
+    </td>
+
+    <td>
+        <div style="font-size: 13px;">
+            <b>GPA: ${u.minGPA}+</b> | <b>${u.englishOptions || 'IELTS'}: ${u.ieltsReq}+</b><br>
+            <small style="color:${studentGap <= (u.maxGapAllowed || 5) ? '#2ecc71' : '#ff4d4d'}">
+                Max Gap: ${u.maxGapAllowed || 5} Years Allowed
+            </small><br>
+            <small style="color:#aaa;">MOI/Duolingo: ${u.alternativeEnglish || 'Available'}</small>
+        </div>
+    </td>
+
+    <td style="text-align:center;">
+        <div style="background: rgba(46, 204, 113, 0.1); border: 1px dashed #2ecc71; padding: 5px; border-radius: 5px;">
+            <b style="color:#2ecc71; font-size:14px;">Up to $${(u.scholarshipMax || 0).toLocaleString()}</b><br>
+            <small style="color:#eee; font-size:10px;">Scholarship Offer</small>
+        </div>
+    </td>
+
+    <td>
+        <div style="font-size: 12px; line-height: 1.5;">
+            <b style="color:#fff;">Sem Fee: $${(u.totalSemesterFee || 0).toLocaleString()}</b><br>
+            <small style="color:#aaa;">Total Tuition: $${(u.totalTuitionFee || 0).toLocaleString()}</small><br>
+            <small style="color:#f1c40f;">Initial Flying: ৳${(u.initialFlyingCost || 0).toLocaleString()}</small>
+        </div>
+    </td>
+
+    <td>
+        <div style="font-size: 12px;">
+            <span class="badge" style="background:#27ae60; font-size:10px;">Visa: ${u.visaSuccessRate || 95}% Success</span><br>
+            <small style="color:#aaa;">Time: ${u.processingTime || '2-4 Weeks'}</small><br>
+            <b style="color:var(--gold); font-size:14px;">Profit: ৳${(u.commissionBDT || 0).toLocaleString()}</b>
+        </div>
+    </td>
+
+    <td style="text-align:right;">
+        <button class="btn-gold" 
+            style="width:100px; padding: 8px; margin-bottom:5px; background:${isEligible ? '' : '#444'}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
+            ${!isEligible ? 'disabled' : ''} 
+            onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
+            ${isEligible ? 'Apply Now' : 'Not Eligible'}
+        </button><br>
+        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:3px 8px; border-radius:3px; width:100px;">
+            <i class="fas fa-file-pdf"></i> Get Flyer
+        </button>
+    </td>
+</tr>`;
             }
         });
         document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No matches found.</td></tr>";
@@ -244,29 +299,51 @@ async function uploadFile(file) {
     } catch (e) { return ""; }
 }
 
-async function uploadPartnerLogo() {
+// --- 3. Logo & Profile (সংশোধিত অংশ) ---
+function uploadPartnerLogo() {
     const file = document.getElementById('logoUpload').files[0];
-    const url = await uploadFile(file);
-    if(url) { document.getElementById('currentLogo').src = url; alert("Logo uploaded! Save profile to confirm."); }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        partnerLogoBase64 = reader.result;
+        if(document.getElementById('currentLogo')) document.getElementById('currentLogo').src = reader.result;
+        alert("Logo Uploaded!");
+    }
+    if (file) reader.readAsDataURL(file);
 }
 
-async function saveProfile() {
+// এই ফাংশনটি এখন event হ্যান্ডেল করবে
+async function saveProfile(event) { 
+    if (event) event.preventDefault(); // ফর্ম রিলোড আটকাবে
+    
+    const btn = event ? event.target : null;
+    const originalText = btn ? btn.innerText : "Update Profile";
+    if (btn) btn.innerText = "Updating...";
+    
     const payload = {
         email: partnerEmail,
         contact: document.getElementById('pPhone').value,
         orgName: document.getElementById('pOrg').value,
         authorisedPerson: document.getElementById('pAuth').value,
         address: document.getElementById('pAddr').value,
-        logoUrl: document.getElementById('currentLogo').src
+        logoUrl: partnerLogoBase64 
     };
-    const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-    if(res.ok) { alert("✅ Profile Updated!"); localStorage.setItem('user', JSON.stringify({...userData, ...payload})); }
+    
+    try {
+        const res = await fetch('/api/user/profile', {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) { 
+            alert("✅ Profile Updated!"); 
+            localStorage.setItem('user', JSON.stringify({...userData, ...payload}));
+        }
+    } catch(e) { 
+        alert("Update failed"); 
+    } finally {
+        if (btn) btn.innerText = originalText;
+    }
 }
-
 function openApplyModal(name, comm) {
     selectedUniversity = name; currentUniCommission = comm;
     document.getElementById('modalTitle').innerText = name;
