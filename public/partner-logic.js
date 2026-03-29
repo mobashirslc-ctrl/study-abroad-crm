@@ -181,32 +181,85 @@ async function submitApplication() {
     finally { btn.disabled = false; btn.innerText = "Submit Application"; }
 }
 
+// --- 🔍 Updated Mega Search Logic with Unlock Wall ---
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
-    const gpa = parseFloat(document.getElementById('userGPA').value) || 0;
-    const score = parseFloat(document.getElementById('userScore').value) || 0;
-    const gap = parseInt(document.getElementById('userGap').value) || 0;
     
+    // Eligibility Inputs
+    const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
+    const sScore = parseFloat(document.getElementById('userScore').value) || 0;
+    const sYear = parseInt(document.getElementById('userGap').value) || 0;
+    
+    // Calculate Study Gap
+    const currentYear = new Date().getFullYear();
+    const studentGap = sYear ? (currentYear - sYear) : 0;
+
+    // Check if basic inputs are provided to trigger unlock check
+    const hasInputs = sGpa > 0 && sScore > 0 && sYear > 0;
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
         let html = "";
+
         unis.forEach(u => {
             if (!country || u.country.toLowerCase().includes(country)) {
-                const isEligible = gpa >= (u.minGPA || 0) && score >= (u.ieltsReq || 0) && gap <= (u.maxGapAllowed || 10);
-                html += `<tr>
-                    <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
-                    <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
-                    <td>$${(u.totalTuitionFee || 0).toLocaleString()}</td>
-                    <td><span class="badge" style="background:${isEligible ? '#2ecc71' : '#ff4757'}">${isEligible ? 'Eligible' : 'Not Eligible'}</span></td>
-                    <td style="color:var(--gold);">৳${(u.commissionBDT || 0).toLocaleString()}</td>
-                    <td><button class="btn-gold" ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">Apply</button></td>
+                
+                // --- Unlock Logic ---
+                const isGpaOk = sGpa >= (u.minGPA || 0);
+                const isIeltsOk = sScore >= (u.ieltsReq || 0);
+                const isGapOk = studentGap <= (u.maxGapAllowed || 5);
+                const isEligible = hasInputs && isGpaOk && isIeltsOk && isGapOk;
+
+                html += `
+                <tr style="border-bottom: 1px solid #333;">
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="background:var(--gold); width:40px; height:40px; border-radius:5px; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold;">${u.universityName.charAt(0)}</div>
+                            <div>
+                                <b style="color:var(--gold);">${u.universityName}</b><br>
+                                <small><i class="fas fa-map-marker-alt"></i> ${u.location || u.country}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:#252545;">${u.degreeType || 'Degree'}</span><br>
+                        <small style="color:#aaa;">Intake: ${u.intake || 'N/A'}</small><br>
+                        <small style="color:var(--gold); font-size:10px;">Courses: ${u.topCourses || 'General'}</small>
+                    </td>
+                    <td>
+                        <small>GPA: ${u.minGPA}+ | ${u.englishOptions || 'IELTS'}: ${u.ieltsReq}+</small><br>
+                        <small>Interview: ${u.interviewLevel}</small><br>
+                        <small>Gap: Max ${u.maxGapAllowed}Y</small>
+                    </td>
+                    <td>
+                        <b style="font-size:14px;">$${(u.totalTuitionFee || 0).toLocaleString()}</b><br>
+                        <small style="color:#2ecc71;">Deposit: $${(u.initialDeposit || 0).toLocaleString()}</small><br>
+                        <small style="color:#aaa;">Scholarship: $${(u.scholarshipMax || 0).toLocaleString()}</small>
+                    </td>
+                    <td>
+                        <small>Visa: ${u.visaSuccessRate}% | PSW: ${u.pswDuration || '2Y'}</small><br>
+                        <small>Time: ${u.processingTime || '1 Week'}</small><br>
+                        <b style="color:var(--gold);">Profit: ৳${(u.commissionBDT || 0).toLocaleString()}</b>
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="btn-gold" 
+                            style="width:100px; margin-bottom:5px; background:${isEligible ? '' : '#444'}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
+                            ${!isEligible ? 'disabled' : ''} 
+                            onclick="openApplyModal('${u.universityName}', ${u.commissionBDT})">
+                            ${isEligible ? 'Apply Now' : 'Locked'}
+                        </button><br>
+                        <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid #555; color:#fff; font-size:10px; cursor:pointer; padding:2px 5px; border-radius:3px;">
+                            <i class="fas fa-file-pdf"></i> Report
+                        </button>
+                    </td>
                 </tr>`;
             }
         });
-        document.getElementById('uniListContainer').innerHTML = html;
-    } catch (e) { console.error(e); }
+        document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='6' style='text-align:center;'>No universities found match your criteria.</td></tr>";
+    } catch (e) { console.error("Search Error:", e); }
 }
+
 
 async function saveProfile() {
     const payload = {

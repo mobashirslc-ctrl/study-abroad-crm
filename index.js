@@ -91,38 +91,39 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'withdrawals' }));
 
-// --- 🏫 Updated University Model with Smart Assessment Fields ---
+// --- 🏫 Updated University Model with All Mega Fields ---
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
-    universityName: { type: String, required: true },
-    country: { type: String, required: true },
+    universityName: String,
+    country: String,
     location: String,
-    degreeType: String,      // Bachelor, Master, Foundation
-    courseName: String,      // Matching Courses
-    duration: String,
+    degreeType: String,      // Bachelor/Master
+    topCourses: String,      // e.g. "CS, MBA, Public Health"
+    intake: String,          // e.g. "Sept 2026"
+    duration: String,        // e.g. "3 Years"
     
     // Financials
-    totalTuitionFee: Number, // মোট টিউশন ফি
-    initialDeposit: Number,  // অফার লেটার/CAS এর জন্য যা লাগবে (Fly Fee)
-    scholarshipMax: Number,  // সর্বোচ্চ কত স্কলারশিপ সম্ভব
-    othersFee: Number,       // Application/Admin Fee
+    totalTuitionFee: Number, 
+    initialDeposit: Number,  // Fly Fee
+    scholarshipMax: Number,  
+    applicationFee: { type: Number, default: 0 },
+    livingCost: Number,      // Monthly Estimated
+    commissionBDT: Number,   // Partner Profit
     
-    // Requirements (For Unlock Logic)
-    minGPA: { type: Number, default: 0 },       // রিকোয়ারমেন্ট ১
-    ieltsReq: { type: Number, default: 0 },     // রিকোয়ারমেন্ট ২
-    maxGapAllowed: { type: Number, default: 0 }, // রিকোয়ারমেন্ট ৩ (In Years)
+    // Requirements
+    minGPA: Number,
+    ieltsReq: Number,
+    maxGapAllowed: Number,
+    englishOptions: { type: String, default: "IELTS, Duolingo, MOI" },
+    interviewLevel: { type: String, default: "Easy" },
     
-    // Strategy & Insights
-    visaSuccessRate: { type: Number, default: 85 }, // ভিসা হওয়ার সম্ভাবনা (%)
-    processingTime: String,  // উদা: "7-10 Working Days"
-    intake: String,          // উদা: "Sept 2026"
-    
-    timestamp: { type: Date, default: Date.now }
+    // Insights
+    visaSuccessRate: { type: Number, default: 90 },
+    processingTime: String,  // e.g. "7-10 Days"
+    pswDuration: String      // e.g. "2 Years"
 }, { collection: 'universities' }));
- // অ্যাসেসমেন্টের জন্য
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
 // --- 📝 New Registration Route (সংশোধিত ও ফিক্সড) ---
-
 app.post(['/api/register', '/api/auth/register'], async (req, res) => {
     try {
         // ১. নিশ্চিত করা যে ডাটাবেস কানেক্টেড
@@ -192,49 +193,6 @@ app.post('/api/add-university', async (req, res) => {
         await newUni.save();
         res.status(201).json({ msg: "University Added!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
-});
-// --- 🔍 Smart Assessment & Search API ---
-app.get('/api/smart-assessment', async (req, res) => {
-    await connectDB();
-    try {
-        const { country, degree, uniName, gpa, ielts, passingYear } = req.query;
-        let query = {};
-
-        // ১. বেসিক ফিল্টার (Country, Degree, Name)
-        if (country) query.country = { $regex: new RegExp(country, "i") };
-        if (degree) query.degreeType = { $regex: new RegExp(degree, "i") };
-        if (uniName) query.universityName = { $regex: new RegExp(uniName, "i") };
-
-        const universities = await University.find(query);
-
-        // ২. এলিজিবিলিটি ও আনলক লজিক ক্যালকুলেশন
-        const results = universities.map(uni => {
-            const studentGpa = Number(gpa) || 0;
-            const studentIelts = Number(ielts) || 0;
-            const currentYear = new Date().getFullYear();
-            const studentGap = passingYear ? (currentYear - Number(passingYear)) : 0;
-
-            // ৩টি শর্ত চেক করা
-            const isGpaMatch = studentGpa >= uni.minGPA;
-            const isIeltsMatch = studentIelts >= uni.ieltsReq;
-            const isGapMatch = studentGap <= uni.maxGapAllowed;
-
-            // যদি ৩টি রিকোয়ারমেন্ট ইনপুট দেওয়া থাকে তবেই আনলক চেক হবে
-            const hasInput = gpa && ielts && passingYear;
-            const isEligible = isGpaMatch && isIeltsMatch && isGapMatch;
-
-            return {
-                ...uni._doc,
-                isEligible: hasInput ? isEligible : false, // ৩টি ডাটা থাকলেই কেবল ট্রু হবে
-                unlockApply: hasInput && isEligible,      // বাটন আনলক হবে কি না
-                missingReason: !isGpaMatch ? "Low GPA" : (!isIeltsMatch ? "Low IELTS" : (!isGapMatch ? "High Study Gap" : ""))
-            };
-        });
-
-        res.json(results);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
 });
 
 // ২. সব ইউজার লিস্ট দেখা (Admin UI এর জন্য)
