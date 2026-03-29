@@ -227,12 +227,18 @@
         document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
         document.getElementById(id).style.display = 'block';
         document.getElementById('menu-' + id).classList.add('active');
-        if(typeof initRealtimeData === 'function') initRealtimeData();
+        
+        // এখানে পরিবর্তন: searchUni কল হবে যদি universities ট্যাব ওপেন হয়
+        if(id === 'universities') {
+            searchUni(); 
+        } else if(typeof initRealtimeData === 'function') {
+            initRealtimeData();
+        }
     }
 
+    // searchUni ফাংশনটি এখন সরাসরি partner-logic.js থেকে কাজ করবে
     function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
     function closeSlip() { document.getElementById('slipModal').style.display = 'none'; }
-    function searchUni() { if(typeof filterUniversities === 'function') filterUniversities(); }
     
     function logout() {
         if(confirm("Logout from SCC IHP Portal?")) {

@@ -16,29 +16,23 @@ let currentAvailableBalance = 0;
 
 // --- 1. Initialization ---
 window.onload = () => {
-    // UI Initial Values
     if(document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = userData.name || "Partner";
     if(document.getElementById('pEmail')) document.getElementById('pEmail').value = partnerEmail;
     
-    // Fill profile fields
     const fields = { 'pOrg': 'orgName', 'pAuth': 'authorisedPerson', 'pPhone': 'contact', 'pAddr': 'address' };
     for (let id in fields) {
         if(document.getElementById(id)) document.getElementById(id).value = userData[fields[id]] || "";
     }
 
-    // --- লোগো ফিক্স এখানে ---
     if(userData.logoUrl) {
-        // ১. গ্লোবাল ভেরিয়েবল আপডেট (এটি স্লিপ জেনারেশনের জন্য জরুরি)
         partnerLogoBase64 = userData.logoUrl; 
-        
-        // ২. UI ইমেজ আপডেট
         if(document.getElementById('currentLogo')) {
             document.getElementById('currentLogo').src = userData.logoUrl;
         }
     }
 
     initRealtimeData(); 
-    searchUni(); // Initial Load
+    searchUni(); 
 };
 
 // --- 2. Realtime Data & Wallet ---
@@ -75,7 +69,6 @@ async function initRealtimeData() {
             tableHtml += row;
         });
 
-        // Update Dashboard UI
         const setTxt = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
         setTxt('topPending', `৳${pendingTotal.toLocaleString()}`);
         setTxt('topPendingE', `৳${pendingTotal.toLocaleString()}`);
@@ -90,17 +83,20 @@ async function initRealtimeData() {
 }
 
 // --- 3. Search & Eligibility ---
-
 async function searchUni() {
-    // ১. ইনপুট ফিল্ড থেকে ভ্যালু নেওয়া
     const country = document.getElementById('fCountry').value.toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const sScore = parseFloat(document.getElementById('userScore').value) || 0;
-    const sYear = parseInt(document.getElementById('userGap').value) || 0;
+    const sYearInput = parseInt(document.getElementById('userGap').value) || 0;
 
-    // --- এখানে অ্যাড করুন ---
     const currentYear = new Date().getFullYear(); 
-    const studentGap = sYear ? (currentYear - sYear) : 0;
+    let studentGap = 0;
+    if (sYearInput > 1900) { 
+        studentGap = currentYear - sYearInput; 
+    } else { 
+        studentGap = sYearInput; 
+    }
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
@@ -117,30 +113,21 @@ async function searchUni() {
                             <div style="background:var(--gold); color:black; padding:10px; border-radius:8px; font-weight:bold;">U</div>
                             <div>
                                 <b class="text-gold" style="font-size:16px;">${u.universityName}</b><br>
-                                <small style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i> Suggested: ${u.category || 'Business, IT, Engineering'}</small><br>
-                                <small style="color:#ccc;"><i class="fas fa-clock"></i> Duration: ${u.duration || '3-4 Years'}</small>
+                                <small style="color:#2ecc71;"><i class="fas fa-graduation-cap"></i> ${u.category || 'General'}</small>
                             </div>
                         </div>
                     </td>
                     <td>
                         <b>GPA: ${u.minGPA}+ | ${u.englishOptions}: ${u.ieltsReq}+</b><br>
-                        <small style="color:#2ecc71;">Max Gap: ${u.maxGapAllowed} Years Allowed</small><br>
-                        <small>MOI/Duolingo: Available</small>
+                        <small style="color:#2ecc71;">Max Gap: ${u.maxGapAllowed} Years</small>
                     </td>
-                    <td>
-                        <div style="border:1px dashed #2ecc71; padding:5px; border-radius:5px; text-align:center;">
-                            <span style="color:#2ecc71; font-weight:bold;">Up to $${u.scholarshipMax || '0'}</span><br>
-                            <small>Scholarship Offer</small>
-                        </div>
-                    </td>
+                    <td><span style="color:#2ecc71; font-weight:bold;">Up to $${u.scholarshipMax || '0'}</span></td>
                     <td>
                         Sem Fee: <b>$${u.totalSemesterFee}</b><br>
-                        <small>Total Tuition: $${u.totalTuition || '20,000'}</small><br>
-                        <small style="color:var(--gold);">Initial Flying: ৳${u.initialFlyingCost}</small>
+                        <small style="color:var(--gold);">Flying: ৳${u.initialFlyingCost}</small>
                     </td>
                     <td>
-                        <div style="background:#2ecc71; color:white; font-size:10px; padding:2px 5px; border-radius:4px; display:inline-block;">Visa: ${u.visaSuccess || '85%'} Success</div><br>
-                        <small>Time: ${u.processingTime || '20 Days'}</small><br>
+                        <div style="background:#2ecc71; color:white; font-size:10px; padding:2px 5px; border-radius:4px; display:inline-block;">Visa: ${u.visaSuccess || '85%'}</div><br>
                         <b style="color:var(--gold);">Profit: ৳${u.commissionBDT.toLocaleString()}</b>
                     </td>
                     <td>
@@ -149,7 +136,7 @@ async function searchUni() {
                             ${isEligible ? 'Apply Now' : 'Not Eligible'}
                         </button>
                         <button onclick="downloadAssessmentPDF('${u._id}')" style="background:none; border:1px solid white; color:white; cursor:pointer; width:100%; font-size:11px; padding:3px; border-radius:4px;">
-                            <i class="fas fa-file-pdf"></i> Get Flyer
+                            <i class="fas fa-file-pdf"></i> Flyer
                         </button>
                     </td>
                 </tr>`;
@@ -169,7 +156,6 @@ async function submitApplication() {
     btn.innerText = "Uploading Files..."; btn.disabled = true;
 
     try {
-        // Upload all 4 files dynamically
         const fileIds = ['file1', 'file2', 'file3', 'file4'];
         const uploadPromises = fileIds.map(id => {
             const file = document.getElementById(id).files[0];
@@ -185,7 +171,7 @@ async function submitApplication() {
                 studentName: sName, passportNo: sPass,
                 university: selectedUniversity, partnerEmail: partnerEmail,
                 commissionBDT: currentUniCommission, status: 'PENDING',
-                documents: docs.filter(url => url !== ""), // Only send non-empty URLs
+                documents: docs.filter(url => url !== ""),
                 timestamp: new Date().toISOString()
             })
         });
@@ -204,23 +190,15 @@ async function uploadFile(file) {
     return data.secure_url || "";
 }
 
-// --- 5. QR Slip Logic (Corrected Version) ---
-// --- 5. QR Slip Logic (Updated Text) ---
+// --- 5. QR Slip Logic ---
 function showSlip(data) {
     const trackingId = `TRAK-${data.studentName.split(' ')[0].toUpperCase()}-${data.passportNo.slice(-4)}`;
     
-    // ডাইনামিক টেক্সট আপডেট
-    if(document.getElementById('slipStatus')) {
-        document.getElementById('slipStatus').innerText = "Submission Completed & In House Processing";
-    }
-
-    // বাকি ফিল্ডগুলো আগের মতোই থাকবে
     if(document.getElementById('slipName')) document.getElementById('slipName').innerText = data.studentName;
     if(document.getElementById('slipPassport')) document.getElementById('slipPassport').innerText = data.passportNo;
     if(document.getElementById('slipDest')) document.getElementById('slipDest').innerText = data.university;
-    if(document.getElementById('slipTrackingID')) document.getElementById('slipTrackingID').innerText = trackingId;
-    
-    // QR Code এবং লোগো সেট করা
+    if(document.getElementById('slipRef')) document.getElementById('slipRef').innerText = trackingId;
+    if(document.getElementById('slipCourse')) document.getElementById('slipCourse').innerText = data.course || 'Undergraduate';
     const trackLink = `https://scc-ihp.com/track?id=${data.passportNo}`;
     if(document.getElementById('slipQR')) {
         document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
@@ -267,6 +245,7 @@ function uploadPartnerLogo() {
     reader.onloadend = () => {
         partnerLogoBase64 = reader.result;
         document.getElementById('currentLogo').src = reader.result;
+        if(document.getElementById('slipPartnerLogo')) document.getElementById('slipPartnerLogo').src = reader.result;
     };
     if (file) reader.readAsDataURL(file);
 }
@@ -290,32 +269,53 @@ async function saveProfile() {
         alert("Profile Updated!");
     }
 }
-// --- 7. Assessment PDF Generator (Missing Feature) ---
+
+// --- 7. Assessment PDF Generator ---
 async function downloadAssessmentPDF(uniId) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Fetch single uni data (Assuming an API exists)
-    const res = await fetch(`/api/universities/${uniId}`);
-    const u = await res.json();
+    try {
+        const res = await fetch(`/api/universities/${uniId}`);
+        const u = await res.json();
 
-    // PDF Design
-    doc.setFillColor(26, 26, 46);
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(241, 196, 15);
-    doc.setFontSize(22);
-    doc.text(u.universityName, 15, 25);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.text(`Country: ${u.country}`, 15, 50);
-    doc.text(`Minimum GPA: ${u.minGPA}`, 15, 60);
-    doc.text(`English Req: ${u.ieltsReq}`, 15, 70);
-    doc.text(`Semester Fee: $${u.totalSemesterFee}`, 15, 80);
-    doc.text(`Estimated Profit: BDT ${u.commissionBDT}`, 15, 90);
+        doc.setFillColor(26, 26, 46);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(241, 196, 15);
+        doc.setFontSize(22);
+        doc.text(u.universityName || "University Flyer", 15, 25);
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.text(`Country: ${u.country}`, 15, 50);
+        doc.text(`Minimum GPA: ${u.minGPA}`, 15, 60);
+        doc.text(`English Req: ${u.ieltsReq}`, 15, 70);
+        doc.text(`Semester Fee: $${u.totalSemesterFee}`, 15, 80);
+        doc.text(`Estimated Profit: BDT ${u.commissionBDT}`, 15, 90);
 
-    doc.setFontSize(10);
-    doc.text("Generated by SCC IHP Partner Portal", 15, 280);
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text("Generated by SCC IHP Partner Portal", 15, 280);
+        
+        doc.save(`${u.universityName || 'Assessment'}.pdf`);
+    } catch (e) {
+        console.error("PDF Error:", e);
+        alert("Could not generate flyer.");
+    }
+}
+
+// --- 8. Export Table Report ---
+async function downloadPDFReport() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Live Student Status Report", 14, 15);
     
-    doc.save(`${u.universityName}_Assessment.pdf`);
+   doc.autoTable({
+    html: '#fullTrackingBody'.closest('table'), // শুধুমাত্র লাইভ ট্র্যাকিং টেবিলটি নিবে
+    startY: 20,
+    theme: 'grid',
+    headStyles: { fillColor: [241, 196, 15], textColor: [0, 0, 0] }
+});
+    
+    doc.save('Student_Status_Report.pdf');
 }
