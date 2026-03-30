@@ -413,7 +413,35 @@ app.patch('/api/lock-application/:id', async (req, res) => {
         res.json({ locked: false, message: "Lock acquired" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// --- ⭐ নতুন রুট: পার্টনার ড্যাশবোর্ড সামারি ---
+app.get('/api/partner-stats', async (req, res) => {
+    await connectDB();
+    try {
+        const { email } = req.query;
+        const cleanEmail = email.toLowerCase().trim();
 
+        // ১. ইউজারের ওয়ালেট ব্যালেন্স এবং অর্গানাইজেশন নাম আনা
+        const user = await User.findOne({ email: cleanEmail });
+        
+        // ২. ইউজারের সব অ্যাপ্লিকেশনের পেন্ডিং অ্যামাউন্ট যোগ করা
+        const apps = await Application.find({ partnerEmail: cleanEmail });
+        
+        let totalPending = 0;
+        apps.forEach(app => {
+            totalPending += (app.pendingAmount || 0);
+        });
+
+        res.json({
+            orgName: user ? user.orgName : "Partner",
+            walletBalance: user ? user.walletBalance : 0,
+            pendingAmount: totalPending,
+            totalStudents: apps.length,
+            recentApplications: apps.slice(0, 5) // শেষ ৫টি অ্যাপ্লিকেশন
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 // ৪. কমপ্লায়েন্স আপডেট
 // ৪. কমপ্লায়েন্স আপডেট (index.js ফাইলে গিয়ে এটি পরিবর্তন করুন)
 app.patch('/api/update-compliance', async (req, res) => {
