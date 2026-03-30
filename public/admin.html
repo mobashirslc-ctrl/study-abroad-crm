@@ -59,53 +59,66 @@
         <h2 style="margin-bottom: 25px;">Admin <span style="color:var(--gold);">Control Center</span></h2>
 
         <div id="uni-manage" class="tab-content" style="display: block;">
-            <div class="card">
-                <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
-                <div class="input-group">
-                    <input type="text" id="uName" placeholder="University Name">
-                    <input type="text" id="uCountry" placeholder="Country">
-                    <input type="text" id="uCity" placeholder="City/Location"> 
-                </div>
-                <div class="input-group">
-                    <select id="uDegree">
-                        <option value="Bachelor">Bachelor</option>
-                        <option value="Master">Master</option>
-                        <option value="Foundation">Foundation/Diploma</option>
-                    </select>
-                    <input type="text" id="uCourse" placeholder="Popular Course Name">
-                    <input type="text" id="uIntake" placeholder="Intake (e.g. Sept 2026)"> 
-                </div>
-                <div class="input-group">
-                    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
-                    <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
-                    <input type="number" id="uScholarship" placeholder="Max Scholarship">
-                </div>
-                <div class="input-group">
-                    <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
-                    <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
-                    <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
-                </div>
-                <div class="input-group">
-                    <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
-                    <input type="text" id="uProcTime" placeholder="Processing Time (e.g. 10 Days)">
-                    <select id="uCurrency" style="background: #252545; color: var(--gold); font-weight: bold;">
-                        <option value="USD">USD ($)</option>
-                        <option value="AUD">AUD (A$)</option>
-                        <option value="EUR">EUR (€)</option>
-                        <option value="CAD">CAD (C$)</option>
-                        <option value="GBP">GBP (£)</option>
-                    </select>
-                </div>
-                <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
-                    <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
-                        <i class="fas fa-hand-holding-usd"></i> Partner Commission Settings
-                    </p>
-                    <div><label style="font-size: 11px; color: #ccc;">Commission (%)</label><input type="number" id="uCommPercent" placeholder="e.g. 10"></div>
-                    <div><label style="font-size: 11px; color: #ccc;">Fixed Amount (BDT)</label><input type="number" id="uCommFixed" placeholder="e.g. 5000"></div>
-                    <div><label style="font-size: 11px; color: #ccc;">Payment Note</label><input type="text" id="uCommNote" placeholder="e.g. After Visa"></div>
-                </div>
-                <button class="btn-gold" onclick="saveUniversity()" style="margin-top:15px;">Add University to System</button>
-            </div>
+           <div class="card">
+    <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+    
+    <div class="input-group">
+        <input type="text" id="uName" placeholder="University Name">
+        <input type="text" id="uCountry" placeholder="Country">
+        <input type="text" id="uCity" placeholder="City/Location"> 
+    </div>
+    
+    <div class="input-group">
+        <select id="uDegree">
+            <option value="Bachelor">Bachelor</option>
+            <option value="Master">Master</option>
+            <option value="Foundation">Foundation/Diploma</option>
+        </select>
+        <input type="text" id="uCourse" placeholder="Popular Course Name">
+        <input type="text" id="uIntake" placeholder="Intake (e.g. Jan 2026)"> 
+    </div>
+    
+    <div class="input-group">
+        <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
+        <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
+        <input type="number" id="uScholarship" placeholder="Max Scholarship">
+    </div>
+    
+    <div class="input-group">
+        <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
+        <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
+        <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="uLivingCost" placeholder="Approx. Living Cost (e.g. $800/mo)"> 
+        <input type="text" id="uDeadline" placeholder="Application Deadline">
+        <input type="text" id="uInterview" placeholder="Interview Time (e.g. 15-20 Mins)">
+    </div>
+
+    <div class="input-group">
+        <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
+        <input type="text" id="uProcTime" placeholder="Processing Time">
+        <select id="uCurrency" style="background: #252545; color: var(--gold); font-weight: bold;">
+            <option value="USD">USD ($)</option>
+            <option value="AUD">AUD (A$)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="CAD">CAD (C$)</option>
+            <option value="GBP">GBP (£)</option>
+        </select>
+    </div>
+
+    <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
+        <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
+            <i class="fas fa-hand-holding-usd"></i> Partner Commission Settings
+        </p>
+        <div><label style="font-size: 11px; color: #ccc;">Commission (%)</label><input type="number" id="uCommPercent" placeholder="e.g. 10"></div>
+        <div><label style="font-size: 11px; color: #ccc;">Fixed Amount (BDT)</label><input type="number" id="uCommFixed" placeholder="e.g. 5000"></div>
+        <div><label style="font-size: 11px; color: #ccc;">Payment Note</label><input type="text" id="uCommNote" placeholder="e.g. After Visa"></div>
+    </div>
+    
+    <button class="btn-gold" onclick="saveUniversity()" style="margin-top:15px;">Add University to System</button>
+</div>
             <h3>Existing Universities</h3>
             <table>
                 <thead>
@@ -162,42 +175,98 @@
 
         // --- University Functions ---
         window.saveUniversity = async () => {
-            const data = {
-                universityName: document.getElementById('uName').value,
-                country: document.getElementById('uCountry').value,
-                location: document.getElementById('uCity').value,
-                degree: document.getElementById('uDegree').value,
-                popularCourse: document.getElementById('uCourse').value,
-                intake: document.getElementById('uIntake').value,
-                totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
-                commPercent: Number(document.getElementById('uCommPercent').value) || 0,
-                commFixedBDT: Number(document.getElementById('uCommFixed').value) || 0,
-                uCurrency: document.getElementById('uCurrency').value,
-                minGPA: document.getElementById('uGpa').value,
-                ieltsReq: document.getElementById('uIelts').value,
-                gapAllowed: document.getElementById('uGap').value
-            };
+    // ফর্ম থেকে সব ডাটা সংগ্রহ
+    const data = {
+        universityName: document.getElementById('uName').value,
+        country: document.getElementById('uCountry').value,
+        location: document.getElementById('uCity').value,
+        degree: document.getElementById('uDegree').value,
+        popularCourse: document.getElementById('uCourse').value,
+        intake: document.getElementById('uIntake').value,
+        totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
+        uDeposit: Number(document.getElementById('uDeposit').value) || 0, // এটি অ্যাড করা হলো
+        uScholarship: Number(document.getElementById('uScholarship').value) || 0, // এটি অ্যাড করা হলো
+        commPercent: Number(document.getElementById('uCommPercent').value) || 0,
+        uCurrency: document.getElementById('uCurrency').value,
+        minGPA: document.getElementById('uGpa').value,
+        ieltsReq: document.getElementById('uIelts').value,
+        gapAllowed: document.getElementById('uGap').value,
+        livingCost: document.getElementById('uLivingCost').value, // কমা ঠিক করা হয়েছে
+        deadline: document.getElementById('uDeadline').value,     // কমা ঠিক করা হয়েছে
+        interviewTime: document.getElementById('uInterview').value,
+        commFixed: Number(document.getElementById('uCommFixed').value) || 0,
+        visaRate: Number(document.getElementById('uVisaRate').value) || 85,
+        processingTime: document.getElementById('uProcTime').value,
+        commNote: document.getElementById('uCommNote').value
+    };
 
-            const res = await fetch('/api/add-university', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if(res.ok) { alert("University Added!"); fetchUniversities(); }
-        };
+    try {
+        const res = await fetch('/api/add-university', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(res.ok) { 
+    alert("University Added Successfully!"); 
+    document.querySelectorAll('.card input').forEach(input => input.value = ''); // সব ইনপুট বক্স খালি হবে
+    fetchUniversities(); 
+}
+    } catch (err) {
+        alert("Error saving data!");
+    }
+};
 
         window.fetchUniversities = async () => {
-            const res = await fetch('/api/universities');
-            const unis = await res.json();
-            const tbody = document.getElementById('adminUniTable');
-            tbody.innerHTML = unis.map(u => `
-                <tr>
-                    <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
-                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
-                    <td>${u.uCurrency} ${u.totalTuitionFee}</td>
-                    <td><button onclick="deleteUni('${u._id}')" style="color:red; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button></td>
-                </tr>`).join('');
-        };
+    const res = await fetch('/api/universities');
+    const unis = await res.json();
+    const tbody = document.getElementById('adminUniTable');
+    tbody.innerHTML = unis.map(u => `
+    <tr>
+        <td>
+            <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
+            <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small><br>
+            <div style="margin-top:5px; font-size:11px; color:#2ecc71;">
+                <i class="fas fa-calendar-alt"></i> Deadline: <b>${u.deadline || 'Ongoing'}</b>
+            </div>
+        </td>
+
+        <td>
+            <div style="font-size:12px; line-height:1.5;">
+                GPA: <b>${u.minGPA || '0'}</b> | IELTS: <b>${u.ieltsReq || '0'}</b><br>
+                Gap: ${u.gapAllowed || 0} Years<br>
+                <span style="color:#aaa; font-size:11px;">
+                    <i class="fas fa-comments"></i> Interview: ${u.interviewTime || 'N/A'}
+                </span>
+            </div>
+        </td>
+
+        <td>
+            <div style="font-size:12px;">
+                Tuition: <b>${u.uCurrency} ${u.totalTuitionFee}</b><br>
+                Deposit: <span style="color:var(--red)">${u.uCurrency} ${u.uDeposit || 0}</span><br>
+                Scholarship: <span style="color:var(--green)">${u.uCurrency} ${u.uScholarship || 0}</span>
+            </div>
+        </td>
+
+        <td>
+            <div style="font-size:12px;">
+                Visa Rate: <b>${u.visaRate || 85}%</b><br>
+                <div style="background:rgba(241, 196, 15, 0.1); padding:4px; border-radius:4px; margin-top:5px; border:1px solid #333;">
+                    <span style="color:var(--green)">Profit: ${u.commPercent}%</span><br>
+                    <span style="color:var(--gold)">Bonus: ৳${u.commFixed || 0}</span>
+                </div>
+            </div>
+        </td>
+
+        <td>
+            <button class="btn-gold" style="width:100%; padding:8px; font-size:11px; margin-bottom:5px; cursor:pointer;" onclick="openEditModal('${u._id}')">EDIT INFO</button>
+            
+            <button class="action-btn" style="background:var(--red); width:100%; margin-top:5px; color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;" onclick="deleteUni('${u._id}')">
+                <i class="fas fa-trash"></i> DELETE
+            </button>
+        </td>
+    </tr>`).join('');
+};
 
         window.deleteUni = async (id) => {
             if(confirm("Delete this university?")) {
@@ -297,6 +366,18 @@
             fetchUsers();
             fetchTracking();
         };
+        window.openEditModal = async (id) => {
+    const res = await fetch(`/api/universities/${id}`);
+    const u = await res.json();
+    
+    // মডালে ডাটা সেট করা
+    document.getElementById('editId').value = u._id;
+    document.getElementById('editName').value = u.universityName;
+    document.getElementById('editCountry').value = u.country;
+    
+    // মডাল দেখানো
+    document.getElementById('editModal').style.display = 'flex';
+};
     </script>
 </body>
 </html>
