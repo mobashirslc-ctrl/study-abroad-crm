@@ -117,6 +117,16 @@ async function searchUni() {
         }).join('');
     } catch (e) { console.error("Search Error:", e); }
 }
+// রিয়েল-টাইম ডেটা লোড করার ফাংশন (এটি না থাকলে এরর আসবে)
+// এভাবে লিখলে ব্রাউজার সহজে খুঁজে পাবে
+window.initRealtimeData = async function() {
+    try {
+        console.log("Realtime data initialized for: " + partnerEmail);
+        // আপনার বাকি কোড...
+    } catch (e) {
+        console.error("Initialization Error:", e);
+    }
+};
 // --- 5. APPLICATION MODAL & SUBMISSION ---
 window.openApplyModal = (uniName, uniId) => {
     const modal = document.getElementById('applyModal');
