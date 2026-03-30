@@ -378,6 +378,35 @@
     // মডাল দেখানো
     document.getElementById('editModal').style.display = 'flex';
 };
+window.updateUniversity = async () => {
+    const id = document.getElementById('editId').value;
+    
+    // মডাল থেকে আপডেট করা ডাটা সংগ্রহ
+    const updatedData = {
+        universityName: document.getElementById('editName').value,
+        country: document.getElementById('editCountry').value,
+        // যদি আরও ফিল্ড এডিট করতে চান তবে এখানে সেগুলো যোগ করতে হবে
+    };
+
+    try {
+        const res = await fetch(`/api/universities/${id}`, {
+            method: 'PUT', // অথবা ব্যাকএন্ড অনুযায়ী PATCH
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        if (res.ok) {
+            alert("University Updated Successfully!");
+            document.getElementById('editModal').style.display = 'none'; // মডাল বন্ধ করা
+            fetchUniversities(); // টেবিল রিফ্রেশ করা
+        } else {
+            alert("Failed to update university");
+        }
+    } catch (err) {
+        console.error("Update Error:", err);
+        alert("Error updating data!");
+    }
+};
     </script>
 </body>
 </html>
