@@ -120,23 +120,70 @@ async function searchUni() {
 // রিয়েল-টাইম ডেটা লোড করার ফাংশন (এটি না থাকলে এরর আসবে)
 // এভাবে লিখলে ব্রাউজার সহজে খুঁজে পাবে
 window.initRealtimeData = async function() {
+    // ১. লোকাল স্টোরেজ থেকে পার্টনারের ইমেইল নেওয়া
+    const pEmail = localStorage.getItem('partnerEmail');
+    
+    if (!pEmail) {
+        console.error("Partner email missing in localStorage!");
+        return;
+    }
+
+    console.log("Fetching statistics for:", pEmail);
+
     try {
-        console.log("Realtime data initialized for: " + partnerEmail);
-        // আপনার বাকি কোড...
-    } catch (e) {
-        console.error("Initialization Error:", e);
+        // ২. আপনার নতুন তৈরি করা API রুট থেকে ডাটা ফেচ করা
+        const response = await fetch(`/api/partner-stats?email=${encodeURIComponent(pEmail)}`);
+        
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+
+        // ৩. HTML এলিমেন্টগুলোতে ডাটা বসানো
+        // আপনার HTML আইডিগুলোর সাথে মিলিয়ে এগুলো আপডেট হবে
+        if (document.getElementById('topPending')) {
+            document.getElementById('topPending').innerText = "৳" + (data.pendingAmount || 0);
+        }
+        
+        if (document.getElementById('topFinal')) {
+            document.getElementById('topFinal').innerText = "৳" + (data.walletBalance || 0);
+        }
+
+        if (document.getElementById('totalStudents')) {
+            document.getElementById('totalStudents').innerText = data.totalStudents || 0;
+        }
+
+        if (document.getElementById('welcomeName')) {
+            document.getElementById('welcomeName').innerText = data.orgName || "Partner";
+        }
+
+        // ৪. রিসেন্ট অ্যাপ্লিকেশন টেবিল আপডেট করা
+        const tableBody = document.getElementById('quickStatsBody');
+        if (tableBody) {
+            let html = "";
+            if (data.recentApplications && data.recentApplications.length > 0) {
+                data.recentApplications.forEach(app => {
+                    html += `
+                        <tr>
+                            <td>${app.studentName}</td>
+                            <td>${app.passportNo}</td>
+                            <td>${app.university}</td>
+                            <td><span class="status-pill">${app.status}</span></td>
+                            <td>৳${app.pendingAmount || 0}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
+            }
+            tableBody.innerHTML = html;
+        }
+
+    } catch (error) {
+        console.error("Error loading dashboard data:", error);
     }
 };
 // --- 5. APPLICATION MODAL & SUBMISSION ---
-window.openApplyModal = (uniName, uniId) => {
-    const modal = document.getElementById('applyModal');
-    if(modal) {
-        modal.style.display = 'flex';
-        document.getElementById('modalTitle').innerText = "Applying for: " + uniName;
-        // ইউনিভার্সিটি আইডিটি পরে ব্যবহারের জন্য একটি গ্লোবাল ভ্যারিয়েবলে রাখতে পারেন
-        window.currentSelectedUniId = uniId; 
-    }
-};
+window.openApplyModal
 
 // --- 6. LOGOUT ---
 window.logout = () => {
@@ -332,30 +379,38 @@ window.uploadToCloudinary = async (file) => {
 // এটি পার্টনারের অ্যাপ্লাই করার ফাইনাল লজিক
 window.submitApplication = async () => {
     const btn = document.getElementById('submitBtn');
+    const sName = document.getElementById('sName').value;
+    const sPassport = document.getElementById('sPassport').value;
+
+    // ভ্যালিডেশন চেক
+    if(!sName || !sPassport) return alert("Student name and Passport are required!");
+
     btn.disabled = true;
     btn.innerText = "Uploading Files...";
 
     const fileIds = ['file1', 'file2', 'file3', 'file4'];
     const uploadedUrls = [];
 
-    // লুপ চালিয়ে সব ফাইল আপলোড
-   for (const id of fileIds) {
-    const fileInput = document.getElementById(id);
-    if (fileInput && fileInput.files[0]) {
-        const url = await uploadToCloudinary(fileInput.files[0]);
-        if (url) uploadedUrls.push(url);
+    // ফাইল আপলোড লজিক
+    for (const id of fileIds) {
+        const fileInput = document.getElementById(id);
+        if (fileInput && fileInput.files[0]) {
+            const url = await uploadToCloudinary(fileInput.files[0]);
+            if (url) uploadedUrls.push(url);
+        }
     }
-}
 
     const payload = {
-        studentName: document.getElementById('sName').value,
-        passportNo: document.getElementById('sPassport').value,
+        studentName: sName,
+        passportNo: sPassport,
         university: document.getElementById('modalTitle').innerText.replace("Applying for: ", ""), 
+        universityId: window.currentSelectedUniId, // এটি ট্র্যাক করার জন্য জরুরি
         partnerEmail: partnerEmail,
-        documents: uploadedUrls, // অ্যারে হিসেবে সেভ হবে
+        documents: uploadedUrls,
         status: "PENDING",
         timestamp: new Date().toISOString()
     };
+
     try {
         const res = await fetch('/api/applications', {
             method: "POST",
@@ -366,6 +421,8 @@ window.submitApplication = async () => {
         if (res.ok) {
             alert("Application Submitted Successfully!");
             location.reload();
+        } else {
+            alert("Submission failed. Please try again.");
         }
     } catch (e) {
         console.error("Submit Error:", e);
@@ -374,6 +431,7 @@ window.submitApplication = async () => {
         btn.innerText = "Submit File";
     }
 };
+
 // --- 12. WALLET ACTIONS (TOP-UP & WITHDRAW) ---
 window.requestTopUp = async () => {
     const amount = document.getElementById('topUpAmount').value;
