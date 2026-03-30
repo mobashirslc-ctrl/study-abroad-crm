@@ -40,12 +40,11 @@ window.fetchUniversitiesForPartner = async () => {
 
         tbody.innerHTML = unis.map(u => {
             const tuition = parseFloat(u.totalTuitionFee) || 0;
-            const commRate = parseFloat(u.commPercent) || 0;
-            const currency = (u.uCurrency || 'USD').toUpperCase();
-            const rate = EXCHANGE_RATES[currency] || 115;
-            const fixedBonus = parseFloat(u.commFixedBDT) || 0;
-            const pBDT = Math.round((tuition * commRate / 100) * rate + fixedBonus);
-
+const commRate = parseFloat(u.commPercent) || 0;
+const currency = (u.uCurrency || 'USD').toUpperCase();
+const rate = EXCHANGE_RATES[currency] || 115;
+const fixedBonus = parseFloat(u.commFixedBDT) || 0;
+const estimatedProfit = Math.round((tuition * commRate / 100) * rate + fixedBonus);
             return `
             <tr>
                 <td>
@@ -102,45 +101,36 @@ async function searchUni() {
             const minGPA = parseFloat(u.minGPA) || 0;
             const ieltsReq = parseFloat(u.ieltsReq) || 0;
             const gapAllowed = parseInt(u.gapAllowed) || 0;
+// searchUni ফাংশনের ভেতরের লুপে এটি ব্যবহার করুন
+const gapAllowed = u.gapAllowed || "0";
+const courseName = u.courseName || "General Course";
+const livingCost = u.livingCost || "Not Specified";
 
-            const isEligible = sGpa >= minGPA && sScore >= ieltsReq && studentGap <= gapAllowed;
-
-            // প্রফিট ক্যালকুলেশন (NaN ফিক্স)
-            const tuition = parseFloat(u.totalTuitionFee) || 0;
-            const commRate = parseFloat(u.commPercent) || 0;
-            const fixedBonus = parseFloat(u.commFixedBDT) || 0;
-            const uCurr = (u.uCurrency || 'USD').toUpperCase();
-            const rate = EXCHANGE_RATES[uCurr] || 115;
-
-            const estimatedProfit = Math.round((tuition * commRate / 100) * rate + fixedBonus);
-
-            return `
-            <tr style="${!isEligible ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
-                <td>
-                    <b class="text-gold">${u.universityName}</b><br>
-                    <small>${u.location}, ${u.country}</small>
-                </td>
-                <td>
-                    <small>GPA: <b>${minGPA}</b></small><br>
-                    <small>IELTS: <b>${ieltsReq}</b></small><br>
-                    <small>Gap: <b>${gapAllowed}Y</b></small>
-                </td>
-                <td>
-                    <small>Tuition: ${uCurr} ${tuition.toLocaleString()}</small><br>
-                    <small>Deposit: ${uCurr} ${u.initialDeposit || 0}</small>
-                </td>
-                <td>
-                    <div style="color:var(--green); font-weight:bold;">৳${estimatedProfit.toLocaleString()}</div>
-                    <small style="color:var(--gold); font-size:10px;">Visa: ${u.visaRate || 85}%</small>
-                </td>
-                <td>
-                    ${isEligible ? 
-                        `<button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY</button>` : 
-                        `<span style="color:var(--red); font-size:10px; font-weight:bold;">INELIGIBLE</span>`
-                    }
-                    <button class="action-btn" style="background:#444; margin-top:3px; display:block; width:100%; font-size:10px;" onclick="downloadAssessmentPDF('${u._id}')">FLYER</button>
-                </td>
-            </tr>`;
+uniListContainer.innerHTML += `
+    <tr>
+        <td>
+            <b class="text-gold">${u.name}</b><br>
+            <small>${courseName}</small><br>
+            <small>${u.location}</small>
+        </td>
+        <td>
+            GPA: ${u.minGPA}<br>
+            IELTS: ${u.ieltsReq}<br>
+            Gap: Max ${gapAllowed} Years
+        </td>
+        <td>
+            Tuition: ${u.totalTuitionFee || 0} USD<br>
+            Living: ${livingCost} USD
+        </td>
+        <td>
+            Profit: ৳${estimatedProfit}<br>
+            Visa: ${u.visaSuccess || '85%'}
+        </td>
+        <td>
+            <button class="btn-gold" onclick="openApplyModal('${u.name}', '${courseName}')">Apply</button>
+        </td>
+    </tr>
+`;
         }).join('');
     } catch (e) { console.error("Search Error:", e); }
 }
