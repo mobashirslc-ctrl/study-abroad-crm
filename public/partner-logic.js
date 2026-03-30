@@ -96,22 +96,49 @@ async function searchUni() {
 
         container.innerHTML = filteredUnis.map(u => {
             const currentYear = new Date().getFullYear();
-            let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-            const isEligible = sGpa >= (parseFloat(u.minGPA) || 0) && sScore >= (parseFloat(u.ieltsReq) || 0) && studentGap <= (parseInt(u.gapAllowed) || 0);
+            let studentGap = sYearInput > 1900 ? currentYear - sYearInput : 0;
+            
+            // এলিজিবিলিটি চেক
+            const minGPA = parseFloat(u.minGPA) || 0;
+            const ieltsReq = parseFloat(u.ieltsReq) || 0;
+            const gapAllowed = parseInt(u.gapAllowed) || 0;
 
+            const isEligible = sGpa >= minGPA && sScore >= ieltsReq && studentGap <= gapAllowed;
+
+            // প্রফিট ক্যালকুলেশন (NaN ফিক্স)
+            const tuition = parseFloat(u.totalTuitionFee) || 0;
+            const commRate = parseFloat(u.commPercent) || 0;
+            const fixedBonus = parseFloat(u.commFixedBDT) || 0;
             const uCurr = (u.uCurrency || 'USD').toUpperCase();
             const rate = EXCHANGE_RATES[uCurr] || 115;
-            const estimatedProfitBDT = Math.round(((parseFloat(u.totalTuitionFee) * parseFloat(u.commPercent)) / 100) * rate + (u.commFixedBDT || 0));
+
+            const estimatedProfit = Math.round((tuition * commRate / 100) * rate + fixedBonus);
 
             return `
             <tr style="${!isEligible ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
-                <td><b class="text-gold">${u.universityName}</b><br><small>${u.country}</small></td>
-                <td><small>GPA: ${u.minGPA}</small><br><small>IELTS: ${u.ieltsReq}</small></td>
                 <td>
-                    <small>Profit: <b>৳${estimatedProfitBDT.toLocaleString()}</b></small>
+                    <b class="text-gold">${u.universityName}</b><br>
+                    <small>${u.location}, ${u.country}</small>
                 </td>
                 <td>
-                    ${isEligible ? `<button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY</button>` : `<span style="color:#ff4757; font-size:10px;">INELIGIBLE</span>`}
+                    <small>GPA: <b>${minGPA}</b></small><br>
+                    <small>IELTS: <b>${ieltsReq}</b></small><br>
+                    <small>Gap: <b>${gapAllowed}Y</b></small>
+                </td>
+                <td>
+                    <small>Tuition: ${uCurr} ${tuition.toLocaleString()}</small><br>
+                    <small>Deposit: ${uCurr} ${u.initialDeposit || 0}</small>
+                </td>
+                <td>
+                    <div style="color:var(--green); font-weight:bold;">৳${estimatedProfit.toLocaleString()}</div>
+                    <small style="color:var(--gold); font-size:10px;">Visa: ${u.visaRate || 85}%</small>
+                </td>
+                <td>
+                    ${isEligible ? 
+                        `<button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY</button>` : 
+                        `<span style="color:var(--red); font-size:10px; font-weight:bold;">INELIGIBLE</span>`
+                    }
+                    <button class="action-btn" style="background:#444; margin-top:3px; display:block; width:100%; font-size:10px;" onclick="downloadAssessmentPDF('${u._id}')">FLYER</button>
                 </td>
             </tr>`;
         }).join('');

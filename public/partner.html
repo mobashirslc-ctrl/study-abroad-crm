@@ -247,14 +247,13 @@
             menuIcon.classList.add('active');
         }
         
-        // ড্যাশবোর্ড হলে ডাটা রিফ্রেশ করা
-        if(id === 'dashboard') {
+        // ড্যাশবোর্ড বা ট্র্যাকিং ট্যাব হলে ডাটা রিফ্রেশ করা
+        if(id === 'dashboard' || id === 'tracking') {
             if(typeof initRealtimeData === 'function') {
                 initRealtimeData();
             } else {
                 console.log("Waiting for partner-logic.js to load...");
-                // যদি ফাইল লোড হতে দেরি হয়, তবে ১ সেকেন্ড পর আবার ট্রাই করবে
-                setTimeout(initRealtimeData, 1000);
+                setTimeout(initRealtimeData, 500);
             }
         }
 
@@ -264,7 +263,7 @@
         }
     }
 
-    // ২. অন্যান্য ছোট ফাংশন
+    // ২. অন্যান্য ইউটিলিটি ফাংশন
     function closeModal() { 
         document.getElementById('applyModal').style.display = 'none'; 
     }
@@ -279,7 +278,11 @@
             window.location.href = 'auth.html';
         }
     }
-</script>
 
+    // পেজ লোড হওয়ার সময় ডিফল্ট ট্যাব দেখানো
+    window.onload = function() {
+        showTab('dashboard');
+    };
+</script>
 </body>
 </html>
