@@ -1,29 +1,23 @@
 /**
  * Powered BY GORUN - Partner Portal Logic (2026)
- * Version: 3.0.1 (Full Compatibility with Admin Multi-Currency & Percentage Logic)
- * Features: Student Tracking, Wallet Management, Multi-Currency Conversion, PDF Flyer
+ * Version: 3.0.2 (Fixed Duplicate Logic & Currency Ref)
  */
 
 // --- GLOBAL CONFIGURATION ---
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
 
-// User Session Data
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = (userData.email || "").toLowerCase().trim();
 
-// Global State
 let currentAvailableBalance = 0;
 const EXCHANGE_RATES = { 'USD': 121, 'AUD': 82, 'EUR': 132, 'GBP': 155, 'CAD': 89 };
 
-// --- 1. INITIALIZATION ON LOAD ---
 window.onload = async () => {
     if (!userData.email) {
         window.location.href = 'login.html';
         return;
     }
-
-    // Display User Profile Info
     if (document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = userData.fullName || "Partner";
     if (document.getElementById('pEmail')) document.getElementById('pEmail').value = partnerEmail;
 
@@ -32,12 +26,11 @@ window.onload = async () => {
         if (document.getElementById(id)) document.getElementById(id).value = userData[profileFields[id]] || "";
     }
 
-    // Load Data
     await initRealtimeData();
     await fetchUniversitiesForPartner();
 };
 
-// --- 2. UNIVERSITY LIST (ALL UNIVERSITIES) ---
+// --- 2. UNIVERSITY LIST ---
 window.fetchUniversitiesForPartner = async () => {
     try {
         const res = await fetch('/api/universities');
@@ -45,221 +38,85 @@ window.fetchUniversitiesForPartner = async () => {
         const tbody = document.getElementById('partnerUniTable');
         if (!tbody) return;
 
-        tbody.innerHTML = unis.map(u => `
+        tbody.innerHTML = unis.map(u => {
+            const tuition = parseFloat(u.totalTuitionFee) || 0;
+            const commRate = parseFloat(u.commPercent) || 0;
+            const currency = (u.uCurrency || 'USD').toUpperCase();
+            const rate = EXCHANGE_RATES[currency] || 115;
+            const fixedBonus = parseFloat(u.commFixedBDT) || 0;
+            const pBDT = Math.round((tuition * commRate / 100) * rate + fixedBonus);
+
+            return `
             <tr>
                 <td>
                     <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
-                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small><br>
-                    <span class="badge" style="background:#252545; font-size:10px; color:#fff;">${u.intake}</span>
+                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small>
                 </td>
                 <td>
-                    <small>GPA: <b>${u.minGPA}</b></small><br>
-                    <small>IELTS: <b>${u.ieltsReq}</b></small><br>
-                    <small>Max Gap: <b>${u.gapAllowed} Years</b></small>
+                    <small>GPA: <b>${u.minGPA || 0}</b></small><br>
+                    <small>IELTS: <b>${u.ieltsReq || 0}</b></small>
                 </td>
                 <td>
-    <small>Tuition: <b>${u.uCurrency || 'USD'} ${(u.totalTuitionFee || 0).toLocaleString()}</b></small><br>
-    <small>App Fee: <b style="color:#ff4757;">${u.uCurrency || 'USD'} ${(u.applicationFee || 0).toLocaleString()}</b></small><br>
-    <small>Living: <b>${u.uCurrency || 'USD'} ${(u.livingCost || 0).toLocaleString()}/mo</b></small>
-</td>
+                    <small>Tuition: <b>${currency} ${tuition.toLocaleString()}</b></small>
+                </td>
                 <td>
-                    <small>Visa Rate: <b>${u.visaRate || 85}%</b></small><br>
-                    <div style="margin-top:5px; padding:5px; background:rgba(46, 204, 113, 0.1); border-radius:4px; border-left: 3px solid var(--green);">
-                        <span style="color:var(--green); font-weight:bold; font-size:12px;">Profit: ${u.commPercent}%</span><br>
-                        <span style="color:var(--gold); font-size:11px;">Bonus: ৳${(u.commFixedBDT || 0).toLocaleString()}</span>
+                    <div style="padding:5px; background:rgba(46, 204, 113, 0.1); border-radius:4px; border-left: 3px solid var(--green);">
+                        <span style="color:var(--green); font-weight:bold; font-size:12px;">Profit: ৳${pBDT.toLocaleString()}</span><br>
+                        <small style="color:var(--gold); font-size:10px;">Bonus Included</small>
                     </div>
                 </td>
                 <td>
-                    <button class="btn-gold" style="padding: 8px 12px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">
-                        APPLY NOW
-                    </button>
-                    <button class="action-btn" style="background:#444; margin-top:5px; width:100%;" onclick="downloadAssessmentPDF('${u._id}')">
-                        <i class="fas fa-file-pdf"></i> Flyer
-                    </button>
+                    <button class="btn-gold" style="padding: 8px 12px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY NOW</button>
+                    <button class="action-btn" style="background:#444; margin-top:5px; width:100%;" onclick="downloadAssessmentPDF('${u._id}')"><i class="fas fa-file-pdf"></i> Flyer</button>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     } catch (e) { console.error("Fetch Error:", e); }
 };
 
-// --- 3. REALTIME DATA & WALLET SYNC ---
-async function initRealtimeData() {
-    try {
-        const [userRes, appRes] = await Promise.all([
-            fetch('/api/admin/users'),
-            fetch('/api/applications')
-        ]);
-        
-        const allUsers = await userRes.json();
-        const me = allUsers.find(u => u.email.toLowerCase().trim() === partnerEmail);
-        currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
-
-        const allApps = await appRes.json();
-        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
-
-        let pendingTotal = 0;
-        let tableHtml = "";
-
-        myApps.forEach(data => {
-            const status = (data.status || 'PENDING').toUpperCase();
-            if(status !== 'REJECTED' && status !== 'CANCELLED') {
-                pendingTotal += Number(data.commissionBDT || 0);
-            }
-
-            tableHtml += `
-                <tr>
-                    <td><b>${data.studentName}</b></td>
-                    <td>${data.passportNo}</td>
-                    <td>${data.appliedUniversity || data.university || 'N/A'}</td>
-                    <td><span class="badge" style="border:1px solid var(--gold); color:var(--gold);">${status}</span></td>
-                    <td>${new Date(data.timestamp).toLocaleDateString()}</td>
-                    <td>
-                        <button class="action-btn" style="background:var(--gold); color:black;" onclick='showSlip(${JSON.stringify(data)})'>
-                            <i class="fas fa-print"></i> Slip
-                        </button>
-                    </td>
-                </tr>`;
-        });
-
-        // Update UI Dashboard
-        const setTxt = (id, val) => { if(document.getElementById(id)) document.getElementById(id).innerText = val; };
-        setTxt('topPending', `৳${pendingTotal.toLocaleString()}`);
-        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setTxt('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setTxt('totalStudents', myApps.length);
-
-        if(document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableHtml;
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml;
-
-    } catch (e) { console.error("Sync Error:", e); }
-}
-
-// --- 4. SEARCH & ELIGIBILITY ASSESSMENT ---
+// --- 4. SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
     const sScore = parseFloat(document.getElementById('userScore').value) || 0;
     const sYearInput = parseInt(document.getElementById('userGap').value) || 0;
-    
     const container = document.getElementById('uniListContainer'); 
-    if (!container) return;
 
-    // ১. কান্ট্রি ইনপুট না থাকলে রেজাল্ট অটো ব্ল্যাঙ্ক হয়ে যাবে
-    if (countryInput === "") {
-        container.innerHTML = "";
-        return;
-    }
+    if (countryInput === "" || !container) { container.innerHTML = ""; return; }
 
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
-        
-        // কান্ট্রি অনুযায়ী ফিল্টার
-        const filteredUnis = unis.filter(u => 
-            u.country.toLowerCase().includes(countryInput)
-        );
+        const filteredUnis = unis.filter(u => u.country.toLowerCase().includes(countryInput));
 
         if (filteredUnis.length === 0) {
-            container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No universities found for this country.</td></tr>";
+            container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No results found.</td></tr>";
             return;
         }
 
         container.innerHTML = filteredUnis.map(u => {
             const currentYear = new Date().getFullYear();
             let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-            
-            // ২. লকিং সিস্টেম লজিক (Academic + Language + Gap)
-            const isEligible = sGpa >= (u.minGPA || 0) && 
-                               sScore >= (u.ieltsReq || 0) && 
-                               studentGap <= (u.gapAllowed || 0);
+            const isEligible = sGpa >= (parseFloat(u.minGPA) || 0) && sScore >= (parseFloat(u.ieltsReq) || 0) && studentGap <= (parseInt(u.gapAllowed) || 0);
 
-            // ৩. কমিশন ক্যালকুলেশন (University Currency-তে)
             const uCurr = (u.uCurrency || 'USD').toUpperCase();
-            const semesterFee = (u.totalTuitionFee || 0);
-            const commPerc = (u.commPercent || 0);
-            
-            // সম্ভাব্য প্রফিট ক্যালকুলেশন
-            const estimatedProfit = (semesterFee * commPerc) / 100;
+            const rate = EXCHANGE_RATES[uCurr] || 115;
+            const estimatedProfitBDT = Math.round(((parseFloat(u.totalTuitionFee) * parseFloat(u.commPercent)) / 100) * rate + (u.commFixedBDT || 0));
 
             return `
             <tr style="${!isEligible ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
+                <td><b class="text-gold">${u.universityName}</b><br><small>${u.country}</small></td>
+                <td><small>GPA: ${u.minGPA}</small><br><small>IELTS: ${u.ieltsReq}</small></td>
                 <td>
-                    <b class="text-gold" style="font-size:15px;">${u.universityName}</b><br>
-                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small><br>
-                    <span style="color:#00d4ff; font-size:11px;">Course: ${u.popularCourse || 'General Admission'}</span>
+                    <small>Profit: <b>৳${estimatedProfitBDT.toLocaleString()}</b></small>
                 </td>
                 <td>
-                    <small>Min GPA: <b>${u.minGPA || 0}+</b></small><br>
-                    <small>IELTS/PTE: <b>${u.ieltsReq || 0}+</b></small><br>
-                    <small>Max Gap: <b>${u.gapAllowed || 0} Years</b></small>
-                </td>
-                <td>
-                    <small>Tuition: <b>${uCurr} ${semesterFee.toLocaleString()}</b></small><br>
-                    <small>App Fee: <b style="color:#ff4757;">${uCurr} ${u.applicationFee || 0}</b></small><br>
-                    <div style="margin-top:5px; padding:5px; background:rgba(46, 204, 113, 0.1); border-radius:4px; border-left: 3px solid var(--green);">
-                        <span style="color:var(--green); font-weight:bold; font-size:11px;">Est. Profit: ${uCurr} ${estimatedProfit.toLocaleString()}</span><br>
-                        <small style="font-size:9px; color:#aaa;">*Subject to Student Payment</small>
-                    </div>
-                </td>
-                <td>
-                    ${isEligible ? 
-                        `<button class="btn-gold" style="padding: 8px 12px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">
-                            APPLY NOW
-                        </button>` : 
-                        `<div style="color:#ff4757; font-size:10px; font-weight:bold;">
-                            <i class="fas fa-lock"></i> INELIGIBLE
-                        </div>`
-                    }
-                    <button class="action-btn" style="background:#444; margin-top:5px; width:100%; font-size:10px;" onclick="downloadAssessmentPDF('${u._id}')">
-                        <i class="fas fa-file-pdf"></i> Flyer
-                    </button>
+                    ${isEligible ? `<button class="btn-gold" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY</button>` : `<span style="color:#ff4757; font-size:10px;">INELIGIBLE</span>`}
                 </td>
             </tr>`;
         }).join('');
-    } catch (e) { 
-        console.error("Search Error:", e);
-        container.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error loading data.</td></tr>";
-    }
-}
-            
-            // Eligibility Check
-            const isEligible = sGpa >= (u.minGPA || 0) && 
-                               sScore >= (u.ieltsReq || 0) && 
-                               studentGap <= (u.gapAllowed || 10);
-
-            // --- CURRENCY LOGIC (Moved inside map) ---
-            const currencyCode = (u.uCurrency || 'USD').toUpperCase();
-            const rate = EXCHANGE_RATES[currencyCode] || 115;
-            const commFromPercent = (u.totalTuitionFee * (u.commPercent / 100)) * rate;
-            const totalProfitBDT = Math.round(commFromPercent + (u.commFixedBDT || 0));
-
-           return `
-    <tr>
-        <td>
-            <b class="text-gold" style="font-size:15px;">${u.universityName}</b><br>
-            <small>${u.location}, ${u.country}</small>
-        </td>
-        <td>
-            <small>GPA: <b>${u.minGPA || 0}+</b></small><br>
-            <small>IELTS: <b>${u.ieltsReq || 0}+</b></small>
-        </td>
-        <td>
-            <small>Tuition: <b>${u.uCurrency || 'USD'} ${(u.totalTuitionFee || 0).toLocaleString()}</b></small><br>
-            <div style="background:rgba(46,204,113,0.1); padding:5px; border-radius:6px; margin-top:5px;">
-                <b style="color:var(--green); font-size:12px;">Profit: ৳${totalProfitBDT.toLocaleString()}</b>
-            </div>
-        </td>
-        <td>
-            <button class="btn-gold" style="padding:5px 10px; font-size:11px; opacity:${isEligible ? 1 : 0.5}" 
-                ${!isEligible ? 'disabled' : ''} onclick="openApplyModal('${u.universityName}', '${u._id}')">
-                ${isEligible ? 'APPLY' : 'INELIGIBLE'}
-            </button>
-        </td>
-    </tr>`;
-        }).join('');
     } catch (e) { console.error("Search Error:", e); }
 }
-
 // --- 5. APPLICATION MODAL & SUBMISSION ---
 window.openApplyModal = (uniName, uniId) => {
     const modal = document.getElementById('applyModal');
