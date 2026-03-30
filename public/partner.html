@@ -225,31 +225,53 @@
 </div>
 
 <script src="partner-logic.js" defer></script>
+
 <script>
-  function showTab(id) {
-    // ১. সব ট্যাব কন্টেন্ট হাইড করা
-    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    
-    // ২. সব মেনু থেকে একটিভ ক্লাস সরানো
-    document.querySelectorAll('.nav-item').forEach(li => li.classList.remove('active'));
-    
-    // ৩. টার্গেট ট্যাব দেখানো
-    const targetTab = document.getElementById(id);
-    if(targetTab) targetTab.style.display = 'block';
-    
-    // ৪. মেনু হাইলাইট করা (ID: menu-dashboard, menu-universities ইত্যাদি)
-    const menuIcon = document.getElementById('menu-' + id);
-    if(menuIcon) menuIcon.classList.add('active');
-    
-    // ৫. ডেটা রিফ্রেশ (যদি ফাংশন থাকে)
-    if(id === 'universities' && typeof searchUni === 'function') searchUni();
-    if(id === 'dashboard' && typeof initRealtimeData === 'function') initRealtimeData();
-}
+    // ১. ট্যাব পরিবর্তন করার মেইন ফাংশন
+    function showTab(id) {
+        // সব ট্যাব কন্টেন্ট হাইড করা
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        
+        // সব মেনু থেকে একটিভ ক্লাস সরানো
+        document.querySelectorAll('.nav-item').forEach(li => li.classList.remove('active'));
+        
+        // টার্গেট ট্যাব দেখানো
+        const targetTab = document.getElementById(id);
+        if(targetTab) {
+            targetTab.style.display = 'block';
+        }
+        
+        // মেনু হাইলাইট করা
+        const menuIcon = document.getElementById('menu-' + id);
+        if(menuIcon) {
+            menuIcon.classList.add('active');
+        }
+        
+        // ড্যাশবোর্ড হলে ডাটা রিফ্রেশ করা
+        if(id === 'dashboard') {
+            if(typeof initRealtimeData === 'function') {
+                initRealtimeData();
+            } else {
+                console.log("Waiting for partner-logic.js to load...");
+                // যদি ফাইল লোড হতে দেরি হয়, তবে ১ সেকেন্ড পর আবার ট্রাই করবে
+                setTimeout(initRealtimeData, 1000);
+            }
+        }
 
+        // ইউনিভার্সিটি ট্যাব হলে সার্চ ফাংশন কল করা
+        if(id === 'universities' && typeof searchUni === 'function') {
+            searchUni();
+        }
+    }
 
-    // searchUni ফাংশনটি এখন সরাসরি partner-logic.js থেকে কাজ করবে
-    function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
-    function closeSlip() { document.getElementById('slipModal').style.display = 'none'; }
+    // ২. অন্যান্য ছোট ফাংশন
+    function closeModal() { 
+        document.getElementById('applyModal').style.display = 'none'; 
+    }
+    
+    function closeSlip() { 
+        document.getElementById('slipModal').style.display = 'none'; 
+    }
     
     function logout() {
         if(confirm("Logout from SCC IHP Portal?")) {
@@ -257,22 +279,6 @@
             window.location.href = 'auth.html';
         }
     }
-    <script src="partner-logic.js"></script>
-
-<script>
-    // এখানে আপনার showTab এবং অন্যান্য ফাংশন থাকবে
-    function showTab(id) {
-        // ... আপনার কোড ...
-        if(id === 'dashboard') {
-            // ফাংশনটি আছে কিনা চেক করে কল করা
-            if(typeof initRealtimeData === 'function') {
-                initRealtimeData();
-            } else {
-                console.error("initRealtimeData function not found!");
-            }
-        }
-    }
-
 </script>
 
 </body>
