@@ -144,22 +144,83 @@ async function searchUni() {
     const container = document.getElementById('uniListContainer'); 
     if (!container) return;
 
+    // ১. কান্ট্রি ইনপুট না থাকলে রেজাল্ট অটো ব্ল্যাঙ্ক হয়ে যাবে
+    if (countryInput === "") {
+        container.innerHTML = "";
+        return;
+    }
+
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
         
+        // কান্ট্রি অনুযায়ী ফিল্টার
         const filteredUnis = unis.filter(u => 
             u.country.toLowerCase().includes(countryInput)
         );
 
         if (filteredUnis.length === 0) {
-            container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No universities found.</td></tr>";
+            container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No universities found for this country.</td></tr>";
             return;
         }
 
         container.innerHTML = filteredUnis.map(u => {
             const currentYear = new Date().getFullYear();
             let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
+            
+            // ২. লকিং সিস্টেম লজিক (Academic + Language + Gap)
+            const isEligible = sGpa >= (u.minGPA || 0) && 
+                               sScore >= (u.ieltsReq || 0) && 
+                               studentGap <= (u.gapAllowed || 0);
+
+            // ৩. কমিশন ক্যালকুলেশন (University Currency-তে)
+            const uCurr = (u.uCurrency || 'USD').toUpperCase();
+            const semesterFee = (u.totalTuitionFee || 0);
+            const commPerc = (u.commPercent || 0);
+            
+            // সম্ভাব্য প্রফিট ক্যালকুলেশন
+            const estimatedProfit = (semesterFee * commPerc) / 100;
+
+            return `
+            <tr style="${!isEligible ? 'opacity: 0.6; background: rgba(0,0,0,0.1);' : ''}">
+                <td>
+                    <b class="text-gold" style="font-size:15px;">${u.universityName}</b><br>
+                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small><br>
+                    <span style="color:#00d4ff; font-size:11px;">Course: ${u.popularCourse || 'General Admission'}</span>
+                </td>
+                <td>
+                    <small>Min GPA: <b>${u.minGPA || 0}+</b></small><br>
+                    <small>IELTS/PTE: <b>${u.ieltsReq || 0}+</b></small><br>
+                    <small>Max Gap: <b>${u.gapAllowed || 0} Years</b></small>
+                </td>
+                <td>
+                    <small>Tuition: <b>${uCurr} ${semesterFee.toLocaleString()}</b></small><br>
+                    <small>App Fee: <b style="color:#ff4757;">${uCurr} ${u.applicationFee || 0}</b></small><br>
+                    <div style="margin-top:5px; padding:5px; background:rgba(46, 204, 113, 0.1); border-radius:4px; border-left: 3px solid var(--green);">
+                        <span style="color:var(--green); font-weight:bold; font-size:11px;">Est. Profit: ${uCurr} ${estimatedProfit.toLocaleString()}</span><br>
+                        <small style="font-size:9px; color:#aaa;">*Subject to Student Payment</small>
+                    </div>
+                </td>
+                <td>
+                    ${isEligible ? 
+                        `<button class="btn-gold" style="padding: 8px 12px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">
+                            APPLY NOW
+                        </button>` : 
+                        `<div style="color:#ff4757; font-size:10px; font-weight:bold;">
+                            <i class="fas fa-lock"></i> INELIGIBLE
+                        </div>`
+                    }
+                    <button class="action-btn" style="background:#444; margin-top:5px; width:100%; font-size:10px;" onclick="downloadAssessmentPDF('${u._id}')">
+                        <i class="fas fa-file-pdf"></i> Flyer
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (e) { 
+        console.error("Search Error:", e);
+        container.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Error loading data.</td></tr>";
+    }
+}
             
             // Eligibility Check
             const isEligible = sGpa >= (u.minGPA || 0) && 
