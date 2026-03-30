@@ -52,22 +52,20 @@
         .text-gold { color: var(--gold); }
     </style>
 </head>
-<body onload="showTab('dashboard')">
-    <<div class="sidebar">
-    <div class="logo-container">
-        <img src="logo.jpeg" alt="SCC Group Logo">
+<body onload="showTab('dashboard')"> 
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.jpeg" alt="SCC Group Logo">
+        </div>
+        <ul>
+            <li id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> Dashboard</li>
+            <li id="menu-universities" class="nav-item" onclick="showTab('universities')"><i class="fas fa-search-plus"></i> Assessment</li>
+            <li id="menu-tracking" class="nav-item" onclick="showTab('tracking')"><i class="fas fa-tasks"></i> Tracking</li>
+            <li id="menu-earnings" class="nav-item" onclick="showTab('earnings')"><i class="fas fa-wallet"></i> Wallet</li>
+            <li id="menu-profile" class="nav-item" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> Profile</li>
+            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
     </div>
-    <ul>
-        <li id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')"><i class="fas fa-home"></i> <span>Dashboard</span></li>
-       <li id="menu-universities" class="nav-item" onclick="showTab('universities'); searchUni();">
-    <i class="fas fa-search-plus"></i> <span>Assessment</span>
-</li>
-        <li id="menu-tracking" class="nav-item" onclick="showTab('tracking')"><i class="fas fa-tasks"></i> <span>Live Tracking</span></li>
-        <li id="menu-earnings" class="nav-item" onclick="showTab('earnings')"><i class="fas fa-wallet"></i> <span>Earnings & Wallet</span></li>
-        <li id="menu-profile" class="nav-item" onclick="showTab('profile')"><i class="fas fa-user-cog"></i> <span>Profile</span></li>
-        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></li>
-    </ul>
-</div>
 
 <div class="main-content">
     <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" class="text-gold">Partner</span></h2>
@@ -89,45 +87,43 @@
         </div>
     </div>
 
-    <div id="universities" class="tab-content">
-        <h3>Find Universities & Eligibility</h3>
-        <div class="card-grid" style="margin-bottom: 20px;">
-            <div class="card" style="text-align: left; padding: 15px;">
-    <label>Country</label>
-    <input type="text" id="fCountry" placeholder="e.g. UK" oninput="searchUni()">
-</div>
-            <div class="card" style="text-align: left; padding: 15px;">
-    <label>Your GPA</label>
-    <input type="number" id="userGPA" step="0.01" placeholder="e.g. 4.50" oninput="searchUni()">
-</div>
-
-<div class="card" style="text-align: left; padding: 15px;">
-    <label>English Score</label>
-    <input type="number" id="userScore" step="0.5" placeholder="e.g. 6.5" oninput="searchUni()">
-</div>
-
-<div class="card" style="text-align: left; padding: 15px;">
-    <label>Graduation Year</label>
-    <input type="number" id="userGap" placeholder="e.g. 2023" oninput="searchUni()">
-</div>
+   <div id="universities" class="tab-content">
+    <h3>Find Universities & Eligibility</h3>
     
-        <div class="table-wrapper">
-            <table>
-                <thead>
-    <tr>
-        <th>UNIVERSITY</th>
-        <th>REQUIREMENTS</th>
-        <th>FEES & DEPOSIT</th>
-        <th>VISA & PROFIT</th> <th>ACTION</th>
-    </tr>
-</thead>
-<tbody id="partnerUniTable">
-    </tbody>
-                <tbody id="uniListContainer"></tbody>
-            </table>
+    <div class="card-grid" style="margin-bottom: 20px;">
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>Country</label>
+            <input type="text" id="fCountry" placeholder="e.g. UK" oninput="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>Your GPA</label>
+            <input type="number" id="userGPA" step="0.01" placeholder="e.g. 4.50" oninput="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>English Score</label>
+            <input type="number" id="userScore" step="0.5" placeholder="e.g. 6.5" oninput="searchUni()">
+        </div>
+        <div class="card" style="text-align: left; padding: 15px;">
+            <label>Graduation Year</label>
+            <input type="number" id="userGap" placeholder="e.g. 2023" oninput="searchUni()">
         </div>
     </div>
 
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>UNIVERSITY</th>
+                    <th>REQUIREMENTS</th>
+                    <th>FEES & DEPOSIT</th>
+                    <th>VISA & PROFIT</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="uniListContainer"></tbody> 
+        </table>
+    </div>
+</div>
     <div id="tracking" class="tab-content">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h3><i class="fas fa-satellite"></i> Live Student Status</h3>
@@ -230,27 +226,26 @@
 
 <script src="partner-logic.js"></script>
 <script>
-   function showTab(id) {
-    // সব কন্টেন্ট হাইড করা
+  function showTab(id) {
+    // ১. সব ট্যাব কন্টেন্ট হাইড করা
     document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-    // সব মেনু আইটেম থেকে একটিভ ক্লাস সরানো
+    
+    // ২. সব মেনু থেকে একটিভ ক্লাস সরানো
     document.querySelectorAll('.nav-item').forEach(li => li.classList.remove('active'));
     
-    // সিলেক্টেড ট্যাব দেখানো
+    // ৩. টার্গেট ট্যাব দেখানো
     const targetTab = document.getElementById(id);
     if(targetTab) targetTab.style.display = 'block';
     
-    // মেনু হাইলাইট করা
+    // ৪. মেনু হাইলাইট করা (ID: menu-dashboard, menu-universities ইত্যাদি)
     const menuIcon = document.getElementById('menu-' + id);
     if(menuIcon) menuIcon.classList.add('active');
     
-    // ট্যাব অনুযায়ী ডাটা রিফ্রেশ করা
-    if(id === 'universities') {
-        if(typeof searchUni === 'function') searchUni(); 
-    } else if(id === 'tracking' || id === 'dashboard' || id === 'earnings') {
-        if(typeof initRealtimeData === 'function') initRealtimeData();
-    }
+    // ৫. ডেটা রিফ্রেশ (যদি ফাংশন থাকে)
+    if(id === 'universities' && typeof searchUni === 'function') searchUni();
+    if(id === 'dashboard' && typeof initRealtimeData === 'function') initRealtimeData();
 }
+
 
     // searchUni ফাংশনটি এখন সরাসরি partner-logic.js থেকে কাজ করবে
     function closeModal() { document.getElementById('applyModal').style.display = 'none'; }
@@ -263,5 +258,6 @@
         }
     }
 </script>
+
 </body>
 </html>
