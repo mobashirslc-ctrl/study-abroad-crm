@@ -140,6 +140,11 @@ th:nth-child(6) { width: 12%; }
         width: 100%;
         padding: 20px;
     }
+    .sidebar ul li span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 }
 /* টেবিল হোভার ইফেক্ট এবং স্ক্রলবার */
 .table-wrapper::-webkit-scrollbar { height: 6px; }
@@ -147,12 +152,17 @@ th:nth-child(6) { width: 12%; }
 tr:hover { background: rgba(241, 196, 15, 0.05); transition: 0.3s; }
 
 /* মোবাইল ডিভাইসের জন্য সাইডবার ফিক্স */
-@media (max-width: 768px) {
-    .sidebar { width: 70px; }
-    .sidebar span, .logo-container img { display: none; }
-    .main-content { margin-left: 70px; padding: 15px; }
-}
-.text-gold { color: var(--gold); }
-.text-green { color: var(--success); }
-.text-red { color: var(--danger); }
-.font-bold { font-weight: 600; }
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%); /* সাইডবার হাইড হবে */
+        transition: 0.3s;
+        z-index: 2000; /* মোবাইলে উপরে দেখানোর জন্য */
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%; /* মোবাইলে ফুল উইডথ */
+    }
+} /* এখানে ব্র্যাকেটটি ক্লোজ করা হয়েছে */

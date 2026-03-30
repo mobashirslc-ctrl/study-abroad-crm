@@ -81,7 +81,7 @@
         </div>
         <h3 class="text-gold">Quick View (Recent Activity)</h3>
         <div class="table-wrapper">
-            <table>
+            <table id="recentActivityTable">
                 <thead>
                     <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Profit</th></tr>
                 </thead>
@@ -113,8 +113,15 @@
         <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr><th>University</th><th>Requirements</th><th>Fees & Deposit</th><th>Visa & Profit</th><th>Action</th></tr>
-                </thead>
+    <tr>
+        <th>UNIVERSITY</th>
+        <th>REQUIREMENTS</th>
+        <th>FEES & DEPOSIT</th>
+        <th>VISA & PROFIT</th> <th>ACTION</th>
+    </tr>
+</thead>
+<tbody id="partnerUniTable">
+    </tbody>
                 <tbody id="uniListContainer"></tbody>
             </table>
         </div>
@@ -126,7 +133,7 @@
             <button class="btn-gold" onclick="downloadPDFReport()" style="width:auto; padding:8px 20px;"><i class="fas fa-file-pdf"></i> Export PDF</button>
         </div>
         <div class="table-wrapper">
-            <table>
+            <table id="fullTrackingTable">
                 <thead>
                     <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Update Date</th><th>Slip</th></tr>
                 </thead>

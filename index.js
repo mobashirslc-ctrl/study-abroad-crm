@@ -194,7 +194,39 @@ app.post('/api/add-university', async (req, res) => {
         res.status(201).json({ msg: "University Added!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// --- 🏫 University Edit & Delete Routes ---
 
+// ১. নির্দিষ্ট আইডি অনুযায়ী ইউনিভার্সিটির ডাটা দেখা (Edit করার সময় ফর্ম ফিল করার জন্য)
+app.get('/api/universities/:id', async (req, res) => {
+    await connectDB();
+    try {
+        const uni = await University.findById(req.params.id);
+        if (!uni) return res.status(404).json({ error: "University not found" });
+        res.json(uni);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ২. ইউনিভার্সিটি আপডেট (Edit) করা
+app.put('/api/universities/:id', async (req, res) => {
+    await connectDB();
+    try {
+        const updatedUni = await University.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true } // নতুন আপডেট হওয়া ডাটাটি রিটার্ন করবে
+        );
+        res.json({ msg: "University Updated Successfully!", data: updatedUni });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ৩. ইউনিভার্সিটি ডিলিট করা
+app.delete('/api/universities/:id', async (req, res) => {
+    await connectDB();
+    try {
+        await University.findByIdAndDelete(req.params.id);
+        res.json({ msg: "University Deleted Successfully!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
 // ২. সব ইউজার লিস্ট দেখা (Admin UI এর জন্য)
 app.get('/api/admin/users', async (req, res) => {
     await connectDB();
