@@ -121,6 +121,7 @@ window.initRealtimeData = async function() {
         setTxt('totalStudents', myApps.length);
 
         // ৩. টেবিল আপডেট
+
         if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
         if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
 
@@ -183,8 +184,18 @@ async function searchUni() {
 // --- 5. MODAL & SLIP ACTIONS ---
 window.openApplyModal = (uniName, uniId) => {
     window.currentSelectedUniId = uniId;
-    if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Applying for: " + uniName;
-    // এখানে আপনার মোডাল ওপেন করার কোড (যেমন: modal.style.display = 'block')
+    
+    const modalTitle = document.getElementById('modalTitle');
+    const modal = document.getElementById('applyModal'); // নিশ্চিত করুন HTML এ এই ID আছে
+    
+    if(modalTitle) modalTitle.innerText = "Applying for: " + uniName;
+    
+    // মোডাল ওপেন করার লজিক (CSS display block করে দেওয়া হলো)
+    if(modal) {
+        modal.style.display = 'block';
+    } else {
+        alert("Apply Modal not found in HTML!");
+    }
 };
 
 window.showSlip = (data) => {
@@ -224,11 +235,14 @@ window.submitApplication = async () => {
 
     if(!sName || !sPassport) return alert("Required fields missing!");
 
-    btn.disabled = true; btn.innerText = "Uploading...";
+    btn.disabled = true; 
+    btn.innerText = "Uploading Files...";
 
     const uploadedUrls = [];
-    for (let i = 1; i <= 4; i++) {
-        const fileInput = document.getElementById('file' + i);
+    const fileIds = ['file1', 'file2', 'file3', 'file4']; // নিশ্চিত করুন HTML এ এই ID গুলোর ইনপুট আছে
+    
+    for (const id of fileIds) {
+        const fileInput = document.getElementById(id);
         if (fileInput && fileInput.files[0]) {
             const url = await uploadToCloudinary(fileInput.files[0]);
             if (url) uploadedUrls.push(url);
@@ -252,12 +266,22 @@ window.submitApplication = async () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
-        if (res.ok) { alert("Submitted!"); location.reload(); }
-    } catch (e) { alert("Error!"); }
-    finally { btn.disabled = false; btn.innerText = "Submit File"; }
+        if (res.ok) { 
+            alert("Application Submitted Successfully!"); 
+            location.reload(); 
+        } else {
+            alert("Submission failed. Check your connection.");
+        }
+    } catch (e) { 
+        console.error("Submit Error:", e);
+        alert("Error during submission!"); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerText = "Submit File"; 
+    }
 };
 
-// --- 7. WALLET ACTIONS ---
+// --- 7. WALLET ACTIONS (WITHDRAW FIX) ---
 window.requestTopUp = async () => {
     const amount = document.getElementById('topUpAmount').value;
     const trxId = document.getElementById('trxId').value;
@@ -269,10 +293,40 @@ window.requestTopUp = async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ partnerEmail, amount: Number(amount), trxId, type: 'TOPUP', status: 'PENDING' })
         });
-        alert("Sent!");
+        alert("Top-up request sent!");
     } catch (e) { console.error(e); }
 };
 
+window.requestWithdraw = async () => {
+    const amount = Number(document.getElementById('withdrawAmount').value);
+    
+    // ডাইনামিক ব্যালেন্স চেক (currentAvailableBalance গ্লোবাল ভেরিয়েবল থেকে আসে)
+    if(!amount || amount <= 0) return alert("Please enter a valid amount!");
+    if(amount > currentAvailableBalance) return alert("Insufficient Balance in your wallet!");
+
+    const payload = {
+        partnerEmail,
+        type: 'WITHDRAW',
+        amount: amount,
+        status: 'PENDING',
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        const res = await fetch('/api/wallet/transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) {
+            alert("Withdrawal request sent for approval.");
+            location.reload();
+        }
+    } catch (e) { 
+        console.error("Withdraw Error:", e);
+        alert("Withdrawal request failed!");
+    }
+};
 // --- 8. PDF GENERATORS ---
 window.downloadAssessmentPDF = async (uniId) => {
     const { jsPDF } = window.jspdf;
