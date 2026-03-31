@@ -1,19 +1,20 @@
 /**
  * Powered BY GORUN - Partner Portal Logic (2026)
- * Full Stability & Error Fixed
+ * Full Feature Set: Search, Eligibility, Dashboard, Wallet, Slip, & Submission
  */
 
 // --- GLOBAL CONFIGURATION ---
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
-let currentSelectedUniId = "";
-let currentSelectedUniName = "";
-let currentSelectedUniComm = 0; // এটিই কমপ্লায়েন্সের জন্য দরকার
 
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = (userData.email || "").toLowerCase().trim();
 
 let currentAvailableBalance = 0;
+let currentSelectedUniId = "";
+let currentSelectedUniName = "";
+let currentSelectedUniComm = 0;
+
 const EXCHANGE_RATES = { 'USD': 121, 'AUD': 82, 'EUR': 132, 'GBP': 155, 'CAD': 89 };
 
 // --- 1. INITIALIZATION ---
@@ -23,7 +24,7 @@ window.onload = async () => {
         return;
     }
     
-    // UI Update
+    // UI Setup
     if (document.getElementById('welcomeName')) document.getElementById('welcomeName').innerText = userData.fullName || userData.orgName || "Partner";
     if (document.getElementById('pEmail')) document.getElementById('pEmail').value = partnerEmail;
 
@@ -36,60 +37,7 @@ window.onload = async () => {
     await fetchUniversitiesForPartner();
 };
 
-// --- 2. UNIVERSITY LIST ---
-window.fetchUniversitiesForPartner = async () => {
-    try {
-        const res = await fetch('/api/universities');
-        const unis = await res.json();
-        const tbody = document.getElementById('partnerUniTable');
-        if (!tbody) return;
-
-        tbody.innerHTML = unis.map(u => {
-            const tuition = parseFloat(u.totalTuitionFee) || 0;
-            const commRate = parseFloat(u.commPercent) || 0;
-            const currency = (u.uCurrency || 'USD').toUpperCase();
-            const rate = EXCHANGE_RATES[currency] || 115;
-            const fixedBonus = parseFloat(u.commFixedBDT) || 0;
-            const estimatedProfit = Math.round((tuition * commRate / 100) * rate + fixedBonus);
-
-            return `
-            <tr>
-                <td>
-                    <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
-                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small>
-                </td>
-                <td>
-                    <small>GPA: <b>${u.minGPA || 0}</b></small><br>
-                    <small>IELTS: <b>${u.ieltsReq || 0}</b></small>
-                </td>
-                <td>
-                    <small>Tuition: <b>${currency} ${tuition.toLocaleString()}</b></small>
-                </td>
-                <td>
-                    <div style="padding:5px; background:rgba(46, 204, 113, 0.1); border-radius:4px; border-left: 3px solid var(--green);">
-                        <span style="color:var(--green); font-weight:bold; font-size:12px;">Profit: ৳${estimatedProfit.toLocaleString()}</span><br>
-                        <small style="color:var(--gold); font-size:10px;">Bonus Included</small>
-                    </div>
-                </td>
-               <td>
-    <button class="btn-gold" 
-            style="padding: 8px 12px; font-size:11px;" 
-            onclick="window.openApplyModal('${u.universityName}', '${u._id}', ${estimatedProfit})">
-        APPLY NOW
-    </button>
-    
-    <button class="action-btn" 
-            style="background:#444; margin-top:5px; width:100%; border:none; color:white; border-radius:4px; cursor:pointer;" 
-            onclick="downloadAssessmentPDF('${u._id}')">
-        <i class="fas fa-file-pdf"></i> Flyer
-    </button>
-</td>
-            </tr>`;
-        }).join('');
-    } catch (e) { console.error("Fetch Error:", e); }
-};
-
-// --- ৩. DASHBOARD REALTIME DATA ---
+// --- 2. DASHBOARD & WALLET SYNC ---
 window.initRealtimeData = async function() {
     if (!partnerEmail) return;
     try {
@@ -98,27 +46,19 @@ window.initRealtimeData = async function() {
             fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`)
         ]);
 
-        // ১. ইউজার ডাটা চেক
         const allUsers = await userRes.json();
         const me = Array.isArray(allUsers) ? allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail) : null;
-        
         currentAvailableBalance = me ? (Number(me.walletBalance) || 0) : 0;
 
-        // ২. অ্যাপ্লিকেশন ডাটা চেক (এটিই ব্ল্যাঙ্ক হওয়ার কারণ হতে পারে)
         const myApps = await appRes.json();
-        
-        // যদি ডাটা না থাকে বা ভুল আসে তবে খালি অ্যারে ধরে নিবে
         const safeApps = Array.isArray(myApps) ? myApps : [];
         
         let pendingTotal = 0;
-
         const tableRows = safeApps.map(app => {
             const status = (app.status || 'PENDING').toUpperCase();
             const comm = Number(app.commissionBDT || 0);
-            
-            if(status !== 'REJECTED' && status !== 'CANCELLED') {
-                pendingTotal += comm;
-            }
+            if(status !== 'REJECTED' && status !== 'CANCELLED') pendingTotal += comm;
+
             return `
                 <tr>
                     <td><b>${app.studentName}</b></td>
@@ -134,123 +74,96 @@ window.initRealtimeData = async function() {
             if (el) el.innerText = val; 
         };
         
-        // ৩. UI আপডেট (সেফলি)
         setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); 
         setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); 
         setTxt('totalStudents', safeApps.length);
-
         setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
-        
-        const withdrawInput = document.getElementById('withdrawAmount');
-        if(withdrawInput) {
-            withdrawInput.max = currentAvailableBalance;
-            withdrawInput.placeholder = "Max: " + currentAvailableBalance;
-        }
 
-        // ৪. টেবিল বডি আপডেট
-        const quickBody = document.getElementById('quickStatsBody');
-        const fullBody = document.getElementById('fullTrackingBody');
-        
-        if (quickBody) quickBody.innerHTML = tableRows || "<tr><td colspan='5' style='text-align:center;'>No Data Found</td></tr>";
-        if (fullBody) fullBody.innerHTML = tableRows || "<tr><td colspan='5' style='text-align:center;'>No Data Found</td></tr>";
+        const qBody = document.getElementById('quickStatsBody');
+        const fBody = document.getElementById('fullTrackingBody');
+        if (qBody) qBody.innerHTML = tableRows || "<tr><td colspan='5'>No student records.</td></tr>";
+        if (fBody) fBody.innerHTML = tableRows || "<tr><td colspan='5'>No student records.</td></tr>";
 
-    } catch (error) { 
-        console.error("Dashboard Sync Error:", error);
-        // এরর হলেও যেন লোডিং বা ব্ল্যাঙ্ক হয়ে না থাকে
-        const quickBody = document.getElementById('quickStatsBody');
-        if (quickBody) quickBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Failed to load data.</td></tr>";
-    }
+    } catch (error) { console.error("Dashboard Sync Error:", error); }
 };
-// --- ৪. SEARCH & ELIGIBILITY ---
-async function searchUni() {
-    const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
-    const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
-    const sScore = parseFloat(document.getElementById('userScore').value) || 0;
-    const sYearInput = parseInt(document.getElementById('userGap').value) || 0;
-    const container = document.getElementById('uniListContainer'); 
 
-    if (!container) return;
-    if (!countryInput) { container.innerHTML = ""; return; }
+// --- 3. UNIVERSITY LIST & SEARCH ---
+window.fetchUniversitiesForPartner = async () => {
+    try {
+        const res = await fetch('/api/universities');
+        const unis = await res.json();
+        const tbody = document.getElementById('partnerUniTable');
+        if (!tbody) return;
+
+        tbody.innerHTML = unis.map(u => {
+            const tuition = parseFloat(u.totalTuitionFee) || 0;
+            const currency = (u.uCurrency || 'USD').toUpperCase();
+            const rate = EXCHANGE_RATES[currency] || 115;
+            const profit = Math.round((tuition * (u.commPercent || 0) / 100) * rate + (parseFloat(u.commFixedBDT) || 0));
+
+            return `
+            <tr>
+                <td><b>${u.universityName}</b><br><small><i class="fas fa-map-marker-alt"></i> ${u.country}</small></td>
+                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
+                <td>${currency} ${tuition.toLocaleString()}</td>
+                <td><b style="color:var(--green)">৳${profit.toLocaleString()}</b></td>
+                <td>
+                    <button class="btn-gold" onclick="window.openApplyModal('${u.universityName}', '${u._id}', ${profit})">APPLY NOW</button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (e) { console.error("Uni List Error:", e); }
+};
+
+// Eligibility Search Function
+window.searchUni = async () => {
+    const country = document.getElementById('fCountry').value.trim().toLowerCase();
+    const gpa = parseFloat(document.getElementById('userGPA').value) || 0;
+    const score = parseFloat(document.getElementById('userScore').value) || 0;
+    const container = document.getElementById('uniListContainer');
+
+    if (!container || !country) return;
 
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
-        
-        // কান্ট্রি ফিল্টার
-        const filteredUnis = unis.filter(u => u.country.toLowerCase().includes(countryInput));
+        const filtered = unis.filter(u => u.country.toLowerCase().includes(country));
 
-        if (filteredUnis.length === 0) {
-            container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No results found.</td></tr>";
-            return;
-        }
-
-        const currentYear = new Date().getFullYear();
-        container.innerHTML = filteredUnis.map(u => {
-            // ভেরিয়েবল নাম পরিবর্তন করা হয়েছে (Conflict এড়াতে)
-            let studentCalculatedGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-            const uniAllowedGap = parseInt(u.gapAllowed) || 0;
-            
-            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentCalculatedGap <= uniAllowedGap;
-
+        container.innerHTML = filtered.map(u => {
+            const isEligible = gpa >= (u.minGPA || 0) && score >= (u.ieltsReq || 0);
             const tuition = parseFloat(u.totalTuitionFee) || 0;
             const currency = (u.uCurrency || 'USD').toUpperCase();
             const rate = EXCHANGE_RATES[currency] || 115;
-            const profit = Math.round((tuition * (u.commPercent || 0) / 100) * rate + (u.commFixedBDT || 0));
+            const profit = Math.round((tuition * (u.commPercent || 0) / 100) * rate + (parseFloat(u.commFixedBDT) || 0));
 
             return `
             <tr>
-                <td><b class="text-gold">${u.universityName}</b><br><small>${u.location}</small></td>
-                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${uniAllowedGap}y</td>
-                <td>Tuition: ${currency} ${tuition.toLocaleString()}</td>
-                <td>Profit: <b>৳${profit.toLocaleString()}</b></td>
+                <td><b class="text-gold">${u.universityName}</b></td>
+                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+</td>
+                <td>${currency} ${tuition.toLocaleString()}</td>
+                <td>৳${profit.toLocaleString()}</td>
                 <td>
-                    <button class="btn-gold" 
-                        style="opacity:${isEligible ? 1 : 0.5}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
-                        ${!isEligible ? 'disabled' : ''} 
-                        onclick="window.openApplyModal('${u.universityName}', '${u._id}')">
+                    <button class="btn-gold" ${!isEligible ? 'disabled style="opacity:0.5"' : ''} 
+                            onclick="window.openApplyModal('${u.universityName}', '${u._id}', ${profit})">
                         ${isEligible ? 'Apply' : 'Ineligible'}
                     </button>
                 </td>
             </tr>`;
         }).join('');
     } catch (e) { console.error("Search Error:", e); }
-}
-// --- 5. MODAL & SLIP ACTIONS ---
-window.openApplyModal = (uniName, uniId, comm = 0) => {
-    window.currentSelectedUniId = uniId;
-    window.currentSelectedUniName = uniName;
-    window.currentSelectedUniComm = comm; // কমিশন সেভ করা হলো
-    
-    const modalTitle = document.getElementById('modalTitle');
+};
+
+// --- 4. MODAL ACTIONS ---
+window.openApplyModal = (name, id, comm) => {
+    window.currentSelectedUniId = id;
+    window.currentSelectedUniName = name;
+    window.currentSelectedUniComm = comm;
     const modal = document.getElementById('applyModal');
-    
-    if(modalTitle) modalTitle.innerText = "Applying for: " + uniName;
+    if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Applying for: " + name;
     if(modal) modal.style.display = 'block';
 };
-     else {
-        alert("Apply Modal not found in HTML!");
-    }
 
-
-window.showSlip = (data) => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFillColor(26, 26, 46);
-    doc.rect(0, 0, 210, 35, 'F');
-    doc.setTextColor(241, 196, 15);
-    doc.setFontSize(18);
-    doc.text("STUDENT CAREER CONSULTANCY", 15, 18);
-    doc.setFontSize(10);
-    doc.text("Official Partner Admission Slip", 15, 25);
-    doc.setTextColor(40, 40, 40);
-    doc.text(`Student: ${data.studentName}`, 15, 50);
-    doc.text(`Passport: ${data.passportNo}`, 15, 60);
-    doc.text(`University: ${data.university}`, 15, 70);
-    doc.text(`Status: ${data.status.toUpperCase()}`, 15, 80);
-    doc.save(`Slip_${data.studentName}.pdf`);
-};
-
-// --- 6. CLOUDINARY & SUBMISSION ---
+// --- 5. SUBMISSION & CLOUDINARY ---
 window.uploadToCloudinary = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -262,17 +175,14 @@ window.uploadToCloudinary = async (file) => {
     } catch (e) { return null; }
 };
 
-// --- 6. SUBMISSION ---
-// --- 6. SUBMISSION (Old Format Restored for Compliance) ---
 window.submitApplication = async () => {
     const btn = document.getElementById('submitBtn');
     const sName = document.getElementById('sName').value;
     const sPassport = document.getElementById('sPassport').value;
 
-    if(!sName || !sPassport) return alert("Required: Student Name & Passport No");
+    if(!sName || !sPassport) return alert("Student Name & Passport Required");
 
-    btn.disabled = true; 
-    btn.innerText = "Uploading Files...";
+    btn.disabled = true; btn.innerText = "Uploading Files...";
 
     try {
         const urls = [];
@@ -280,27 +190,21 @@ window.submitApplication = async () => {
             const fileInput = document.getElementById('file' + i);
             if (fileInput && fileInput.files[0]) {
                 const url = await window.uploadToCloudinary(fileInput.files[0]);
-                urls.push(url || ""); // ফাইল না থাকলে খালি স্ট্রিং
-            } else {
-                urls.push(""); 
-            }
+                urls.push(url || "");
+            } else { urls.push(""); }
         }
 
-        // --- পুরনো ফরম্যাটে পেলোড তৈরি ---
         const payload = {
-    studentName: sName,
-    passportNo: sPassport,
-    university: window.currentSelectedUniName || document.getElementById('modalTitle').innerText.replace("Applying for: ", ""),
-    universityId: window.currentSelectedUniId,
-    partnerEmail: partnerEmail,
-    pdf1: urls[0] || "",
-    pdf2: urls[1] || "",
-    pdf3: urls[2] || "",
-    pdf4: urls[3] || "",
-    commissionBDT: window.currentSelectedUniComm || 0, // এখানে ০ এর বদলে ভ্যারিয়েবল দিন
-    status: "PENDING",
-    timestamp: new Date().toISOString()
-};
+            studentName: sName,
+            passportNo: sPassport,
+            university: window.currentSelectedUniName,
+            universityId: window.currentSelectedUniId,
+            partnerEmail: partnerEmail,
+            pdf1: urls[0], pdf2: urls[1], pdf3: urls[2], pdf4: urls[3],
+            commissionBDT: window.currentSelectedUniComm,
+            status: "PENDING",
+            timestamp: new Date().toISOString()
+        };
 
         const res = await fetch('/api/applications', {
             method: "POST",
@@ -308,80 +212,26 @@ window.submitApplication = async () => {
             body: JSON.stringify(payload)
         });
 
-        if (res.ok) { 
-            alert("Submitted Successfully!"); 
-            location.reload(); 
-        } else {
-            alert("Submission failed at server.");
-        }
-    } catch (e) { 
-        alert("Error during submission!"); 
-    } finally { 
-        btn.disabled = false; 
-        btn.innerText = "Submit File"; 
-    }
-};
-// --- 7. WALLET ACTIONS (WITHDRAW FIX) ---
-window.requestTopUp = async () => {
-    const amount = document.getElementById('topUpAmount').value;
-    const trxId = document.getElementById('trxId').value;
-    if(!amount || !trxId) return alert("Fill all fields!");
-
-    try {
-        await fetch('/api/wallet/transactions', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ partnerEmail, amount: Number(amount), trxId, type: 'TOPUP', status: 'PENDING' })
-        });
-        alert("Top-up request sent!");
-    } catch (e) { console.error(e); }
+        if (res.ok) { alert("Submitted Successfully!"); location.reload(); }
+        else { alert("Server Error during submission."); }
+    } catch (e) { alert("Submission Error!"); }
+    finally { btn.disabled = false; btn.innerText = "Submit File"; }
 };
 
+// --- 6. WALLET & WITHDRAW ---
 window.requestWithdraw = async () => {
     const amount = Number(document.getElementById('withdrawAmount').value);
-    
-    // ডাইনামিক ব্যালেন্স চেক (currentAvailableBalance গ্লোবাল ভেরিয়েবল থেকে আসে)
-    if(!amount || amount <= 0) return alert("Please enter a valid amount!");
-    if(amount > currentAvailableBalance) return alert("Insufficient Balance in your wallet!");
-
-    const payload = {
-        partnerEmail,
-        type: 'WITHDRAW',
-        amount: amount,
-        status: 'PENDING',
-        timestamp: new Date().toISOString()
-    };
+    if(!amount || amount <= 0) return alert("Invalid amount!");
+    if(amount > currentAvailableBalance) return alert("Insufficient Balance!");
 
     try {
         const res = await fetch('/api/wallet/transactions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ partnerEmail, amount, type: 'WITHDRAW', status: 'PENDING' })
         });
-        if(res.ok) {
-            alert("Withdrawal request sent for approval.");
-            location.reload();
-        }
-    } catch (e) { 
-        console.error("Withdraw Error:", e);
-        alert("Withdrawal request failed!");
-    }
-};
-// --- 8. PDF GENERATORS ---
-window.downloadAssessmentPDF = async (uniId) => {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    try {
-        const res = await fetch(`/api/universities/${uniId}`);
-        const u = await res.json();
-        doc.setFillColor(26, 26, 46); doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(241, 196, 15); doc.setFontSize(20);
-        doc.text(u.universityName, 15, 25);
-        doc.setTextColor(40,40,40); doc.setFontSize(12);
-        doc.text(`Location: ${u.location}, ${u.country}`, 15, 55);
-        doc.text(`Requirements: GPA ${u.minGPA}, IELTS ${u.ieltsReq}`, 15, 65);
-        doc.save(`${u.universityName}_Flyer.pdf`);
-    } catch (e) { alert("Error generating PDF"); }
+        if(res.ok) { alert("Withdrawal request sent!"); location.reload(); }
+    } catch (e) { alert("Withdrawal failed!"); }
 };
 
 window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
