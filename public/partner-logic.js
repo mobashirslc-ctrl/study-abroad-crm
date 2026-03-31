@@ -81,35 +81,50 @@ window.fetchUniversitiesForPartner = async () => {
 window.initRealtimeData = async function() {
     if (!partnerEmail) return;
     try {
-        const response = await fetch(`/api/partner-stats?email=${encodeURIComponent(partnerEmail)}`);
-        if (!response.ok) throw new Error('Stats fetch failed');
-        const data = await response.json();
+        // ১. সরাসরি এপ্লিকেশন এপিআই থেকে ডাটা আনা (যাতে সব ডাটা পাওয়া যায়)
+        const response = await fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`);
+        if (!response.ok) throw new Error('Applications fetch failed');
+        const allApps = await response.json();
 
-        currentAvailableBalance = data.walletBalance || 0;
+        // ২. আপনার ইমেইল অনুযায়ী ফিল্টার করা (নিশ্চিত হওয়ার জন্য)
+        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
 
-        const setTxt = (id, val) => { if (document.getElementById(id)) document.getElementById(id).innerText = val; };
-        setTxt('topPending', `৳${(data.pendingAmount || 0).toLocaleString()}`);
-        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setTxt('totalStudents', data.totalStudents || 0);
+        // ৩. স্ট্যাটাস অনুযায়ী ক্যালকুলেশন
+        let pendingBDT = 0;
+        let totalStudents = myApps.length;
 
-        const tableBody = document.getElementById('quickStatsBody');
-        if (tableBody) {
-            if (data.recentApplications && data.recentApplications.length > 0) {
-                tableBody.innerHTML = data.recentApplications.map(app => `
-                    <tr>
-                        <td>${app.studentName}</td>
-                        <td>${app.passportNo}</td>
-                        <td>${app.university}</td>
-                        <td><span class="status-pill ${(app.status || '').toLowerCase()}">${app.status}</span></td>
-                        <td>৳${(app.commissionBDT || 0).toLocaleString()}</td>
-                    </tr>`).join('');
-            } else {
-                tableBody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
+        const tableRows = myApps.map(app => {
+            const status = (app.status || 'PENDING').toUpperCase();
+            // রিজেক্টেড ছাড়া বাকি সব কমিশন যোগ হবে
+            if(status !== 'REJECTED') {
+                pendingBDT += Number(app.commissionBDT || 0);
             }
-        }
-    } catch (error) { console.error("Dashboard Error:", error); }
-};
 
+            return `
+                <tr>
+                    <td><b>${app.studentName}</b></td>
+                    <td>${app.passportNo}</td>
+                    <td>${app.university || 'N/A'}</td>
+                    <td><span class="status-pill ${status.toLowerCase()}">${status}</span></td>
+                    <td>৳${(app.commissionBDT || 0).toLocaleString()}</td>
+                </tr>`;
+        }).join('');
+
+        // ৪. ড্যাশবোর্ড কার্ড আপডেট
+        const setTxt = (id, val) => { if (document.getElementById(id)) document.getElementById(id).innerText = val; };
+        
+        setTxt('topPending', `৳${pendingBDT.toLocaleString()}`);
+        setTxt('totalStudents', totalStudents);
+        // ওয়ালেট ব্যালেন্সের জন্য আলাদা এপিআই কল না থাকলে স্ট্যাটাস থেকে নিতে হবে
+        
+        // ৫. টেবিল আপডেট (দুইটি টেবিলেই ডাটা পুশ করা)
+        if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
+        if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
+
+    } catch (error) { 
+        console.error("Dashboard Sync Error:", error); 
+    }
+};
 // --- 4. SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
