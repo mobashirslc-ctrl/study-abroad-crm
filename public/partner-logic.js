@@ -56,9 +56,15 @@ async function initRealtimeData() {
         let pendingTotal = 0;
         let tableHtml = "";
 
-        myApps.forEach(data => {
-            const status = (data.status || 'PENDING').toUpperCase();
+     myApps.forEach(data => {
+    const status = (data.status || 'PENDING').toUpperCase();
+    const comm = Number(data.commissionBDT || 0);
     
+    // পেন্ডিং ব্যালেন্স ক্যালকুলেশন (এটি আপনার কোডে মিসিং ছিল)
+    if(['DOCS_VERIFIED', 'PROCESSING', 'SUBMITTED', 'PENDING'].includes(status)) {
+        pendingTotal += comm;
+    }
+
     tableHtml += `
         <tr>
             <td><b>${data.studentName}</b></td>
@@ -66,13 +72,12 @@ async function initRealtimeData() {
             <td>${data.university || 'Direct Entry'}</td>
             <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
             <td>
-                <button class="btn-slip-small" onclick='showAdmissionSlip(${JSON.stringify(data)})'>
+                <button class="btn-slip-small" onclick="handleSlipClick('${data.passportNo}')">
                     <i class="fas fa-file-invoice"></i> View Slip
                 </button>
             </td>
         </tr>`;
 });
-
         const setEl = (id, val) => {
             const el = document.getElementById(id);
             if(el) el.innerText = val;
@@ -161,11 +166,18 @@ async function submitApplication() {
     const sPass = document.getElementById('sPassport').value;
     const btn = document.getElementById('submitBtn');
 
-    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
+    // ১. ভ্যালিডেশন চেক
+    if(!sName || !sPass) {
+        alert("Student Name & Passport are mandatory!");
+        return;
+    }
 
     try {
-        btn.innerText = "Processing..."; btn.disabled = true;
-        
+        // ২. বাটন ডিজেবল করা যাতে ডাবল ক্লিক না হয়
+        btn.innerText = "Processing..."; 
+        btn.disabled = true;
+
+        // ৩. ফাইল আপলোড লজিক (নিশ্চিত করুন input field গুলোর ID ঠিক আছে)
         const docs = await Promise.all([
             uploadFile(document.getElementById('file1')?.files[0]),
             uploadFile(document.getElementById('file2')?.files[0]),
@@ -173,40 +185,50 @@ async function submitApplication() {
             uploadFile(document.getElementById('file4')?.files[0])
         ]);
 
+        // ৪. ডাটা অবজেক্ট তৈরি (Manual ও Auto দুটোর জন্যই কাজ করবে)
+        const payload = {
+            studentName: sName, 
+            passportNo: sPass,
+            university: selectedUniversity || "Direct Entry", 
+            partnerEmail: partnerEmail,
+            commissionBDT: currentUniCommission || 0,
+            status: 'PENDING', 
+            timestamp: new Date().toISOString(),
+            pdf1: docs[0], 
+            pdf2: docs[1], 
+            pdf3: docs[2], 
+            pdf4: docs[3]
+        };
+
+        // ৫. API কল
         const res = await fetch('/api/applications', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentName: sName, 
-                passportNo: sPass,
-                university: selectedUniversity || "Direct Entry", 
-                partnerEmail: partnerEmail,
-                commissionBDT: currentUniCommission,
-                status: 'PENDING', 
-                timestamp: new Date().toISOString(),
-                pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
-            })
+            body: JSON.stringify(payload)
         });
 
         if(res.ok) { 
             alert("Submission Successful!");
             document.getElementById('applyModal').style.display = 'none'; 
-            showAdmissionSlip({
-                studentName: sName,
-                passportNo: sPass,
-                university: selectedUniversity || "Direct Entry"
-            });
+            
+            // স্লিপ দেখানো
+            showAdmissionSlip(payload);
+            
+            // পেজ রিফ্রেশ (ডাটা আপডেট দেখার জন্য)
+            setTimeout(() => location.reload(), 2000); 
         } else {
-            alert("Server Error! Try again.");
+            const errorData = await res.json();
+            alert("Server Error: " + (errorData.message || "Unknown error"));
         }
     } catch (e) { 
-        alert("Submission failed. Check connection."); 
+        console.error("Submission Error:", e);
+        alert("Submission failed. Please check your connection."); 
     } finally { 
+        // ৬. বাটন রিসেট
         btn.disabled = false; 
         btn.innerText = "Submit Application"; 
     }
 }
-
 // --- 5. WITHDRAWAL & SLIP FUNCTIONS ---
 async function requestWithdraw() {
     const amount = Number(document.getElementById('withdrawAmount').value);
@@ -230,6 +252,23 @@ function openApplyModal(name, comm) {
     document.getElementById('modalTitle').innerText = name;
     document.getElementById('applyModal').style.display = 'flex';
 }
+// পাসপোর্ট দিয়ে অ্যাপলিকেশন খুঁজে স্লিপ দেখাবে
+async function handleSlipClick(passport) {
+    try {
+        const res = await fetch(`/api/applications`);
+        const apps = await res.json();
+        const studentData = apps.find(a => a.passportNo === passport);
+        
+        if(studentData) {
+            showAdmissionSlip(studentData);
+        } else {
+            alert("Data not found!");
+        }
+    } catch (e) {
+        console.error("Slip Error:", e);
+    }
+}
+window.handleSlipClick = handleSlipClick; // গ্লোবাল এক্সপোজ
 
 function showAdmissionSlip(appData) {
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -271,8 +310,18 @@ window.openManualApply = async () => {
     const uniName = prompt("Enter University Name:");
     if (!uniName) return;
     const comm = prompt("Enter Expected Commission (BDT):", "0");
+    
+    // এই ভেরিয়েবলগুলো টপ লেভেলে ডিফাইন করা আছে, তাই সাবমিট বাটন এগুলো পাবে
     selectedUniversity = uniName;
     currentUniCommission = Number(comm) || 0;
-    if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Manual: " + uniName;
-    if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'flex';
+    
+    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
+    document.getElementById('applyModal').style.display = 'flex';
+    
+    // সাবমিট বাটন এনাবল করা
+    const btn = document.getElementById('submitBtn');
+    if(btn) {
+        btn.disabled = false;
+        btn.innerText = "Submit Application";
+    }
 };
