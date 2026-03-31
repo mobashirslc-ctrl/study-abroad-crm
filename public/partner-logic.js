@@ -137,62 +137,59 @@ uniListContainer.innerHTML += `
 // রিয়েল-টাইম ডেটা লোড করার ফাংশন (এটি না থাকলে এরর আসবে)
 // এভাবে লিখলে ব্রাউজার সহজে খুঁজে পাবে
 window.initRealtimeData = async function() {
-    // ১. লোকাল স্টোরেজ থেকে পার্টনারের ইমেইল নেওয়া
-    const pEmail = localStorage.getItem('partnerEmail');
+    // ১. লোকাল স্টোরেজ থেকে ইউজারের ইমেইল ধরা (ডাইনামিক উপায়)
+    const userData = JSON.parse(localStorage.getItem('user') || "{}");
+    
+    // আপনার সিস্টেমে ইমেইলটি 'user' অবজেক্টের ভেতর থাকে, তাই এভাবে চেক করুন:
+    const pEmail = userData.email ? userData.email.toLowerCase().trim() : null;
     
     if (!pEmail) {
-        console.error("Partner email missing in localStorage!");
+        console.error("Partner email missing! Please login again.");
+        // ইউজারকে লগইন পেজে পাঠিয়ে দিতে পারেন
+        // window.location.href = 'login.html'; 
         return;
     }
 
     console.log("Fetching statistics for:", pEmail);
 
     try {
-        // ২. আপনার নতুন তৈরি করা API রুট থেকে ডাটা ফেচ করা
+        // ২. API কল (আপনার ব্যাকএন্ড যদি অন্য পোর্টে চলে তবে http://localhost:3000 যোগ করুন)
         const response = await fetch(`/api/partner-stats?email=${encodeURIComponent(pEmail)}`);
         
-        if (!response.ok) throw new Error('Network response was not ok');
+        if (!response.ok) throw new Error('Backend data fetch failed');
         
         const data = await response.json();
 
-        // ৩. HTML এলিমেন্টগুলোতে ডাটা বসানো
-        // আপনার HTML আইডিগুলোর সাথে মিলিয়ে এগুলো আপডেট হবে
-        if (document.getElementById('topPending')) {
-            document.getElementById('topPending').innerText = "৳" + (data.pendingAmount || 0);
-        }
+        // ৩. ড্যাশবোর্ডের কার্ডগুলো আপডেট করা
+        const updateElement = (id, value, prefix = "") => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = prefix + (value || 0).toLocaleString();
+        };
+
+        updateElement('topPending', data.pendingAmount, "৳");
+        updateElement('topFinal', data.walletBalance, "৳");
+        updateElement('totalStudents', data.totalStudents);
         
-        if (document.getElementById('topFinal')) {
-            document.getElementById('topFinal').innerText = "৳" + (data.walletBalance || 0);
-        }
-
-        if (document.getElementById('totalStudents')) {
-            document.getElementById('totalStudents').innerText = data.totalStudents || 0;
-        }
-
         if (document.getElementById('welcomeName')) {
-            document.getElementById('welcomeName').innerText = data.orgName || "Partner";
+            document.getElementById('welcomeName').innerText = data.orgName || userData.fullName || "Partner";
         }
 
-        // ৪. রিসেন্ট অ্যাপ্লিকেশন টেবিল আপডেট করা
+        // ৪. রিসেন্ট অ্যাপ্লিকেশন টেবিল আপডেট
         const tableBody = document.getElementById('quickStatsBody');
         if (tableBody) {
-            let html = "";
             if (data.recentApplications && data.recentApplications.length > 0) {
-                data.recentApplications.forEach(app => {
-                    html += `
-                        <tr>
-                            <td>${app.studentName}</td>
-                            <td>${app.passportNo}</td>
-                            <td>${app.university}</td>
-                            <td><span class="status-pill">${app.status}</span></td>
-                            <td>৳${app.pendingAmount || 0}</td>
-                        </tr>
-                    `;
-                });
+                tableBody.innerHTML = data.recentApplications.map(app => `
+                    <tr>
+                        <td>${app.studentName}</td>
+                        <td>${app.passportNo}</td>
+                        <td>${app.university}</td>
+                        <td><span class="status-pill ${app.status.toLowerCase()}">${app.status}</span></td>
+                        <td>৳${(app.pendingAmount || 0).toLocaleString()}</td>
+                    </tr>
+                `).join('');
             } else {
-                html = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
+                tableBody.innerHTML = "<tr><td colspan='5' style='text-align:center;'>No applications found</td></tr>";
             }
-            tableBody.innerHTML = html;
         }
 
     } catch (error) {
