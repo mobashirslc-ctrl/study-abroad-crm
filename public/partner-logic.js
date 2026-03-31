@@ -77,11 +77,10 @@ window.fetchUniversitiesForPartner = async () => {
     } catch (e) { console.error("Fetch Error:", e); }
 };
 
-// --- ৩. DASHBOARD REALTIME DATA (সংশোধিত ও এরর-মুক্ত ভার্সন) ---
+// --- ৩. DASHBOARD REALTIME DATA ---
 window.initRealtimeData = async function() {
     if (!partnerEmail) return;
     try {
-        // ১. প্রোফাইল এবং অ্যাপ্লিকেশন ডাটা একসাথে কল করা
         const [userRes, appRes] = await Promise.all([
             fetch(`/api/admin/users`), 
             fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`)
@@ -90,7 +89,6 @@ window.initRealtimeData = async function() {
         const allUsers = await userRes.json();
         const me = allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail);
         
-        // অ্যাডমিন সেট করা মেইন ব্যালেন্স
         currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
 
         const myApps = await appRes.json();
@@ -98,11 +96,9 @@ window.initRealtimeData = async function() {
 
         const tableRows = myApps.map(app => {
             const status = (app.status || 'PENDING').toUpperCase();
-            // কমিশন ক্যালকুলেশন (রিজেক্টেড বা ক্যান্সেল বাদে)
             if(status !== 'REJECTED' && status !== 'CANCELLED') {
                 pendingTotal += Number(app.commissionBDT || 0);
             }
-
             return `
                 <tr>
                     <td><b>${app.studentName}</b></td>
@@ -113,27 +109,25 @@ window.initRealtimeData = async function() {
                 </tr>`;
         }).join('');
 
-        // ২. UI আপডেট করার ফাংশন
         const setTxt = (id, val) => { 
             const el = document.getElementById(id);
             if (el) el.innerText = val; 
         };
         
-        // ড্যাশবোর্ড কার্ড আপডেট
         setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); 
         setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); 
         setTxt('totalStudents', myApps.length);
 
-        // ৩. উইথড্র অপশনে ব্যালেন্স সিঙ্ক (এটিই আপনার মিসিং ছিল)
+        // উইথড্র অপশনে ব্যালেন্স সিঙ্ক
         setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         
         const withdrawInput = document.getElementById('withdrawAmount');
         if(withdrawInput) {
             withdrawInput.max = currentAvailableBalance;
+            withdrawInput.value = ""; // ফিল্ড খালি রাখা
             withdrawInput.placeholder = "Max: " + currentAvailableBalance;
         }
 
-        // ৪. টেবিল আপডেট
         if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
         if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
 
@@ -141,7 +135,7 @@ window.initRealtimeData = async function() {
         console.error("Dashboard Sync Error:", error); 
     }
 };
-// --- 4. SEARCH & ELIGIBILITY ---
+// --- ৪. SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
@@ -149,11 +143,14 @@ async function searchUni() {
     const sYearInput = parseInt(document.getElementById('userGap').value) || 0;
     const container = document.getElementById('uniListContainer'); 
 
-    if (!countryInput || !container) { if(container) container.innerHTML = ""; return; }
+    if (!container) return;
+    if (!countryInput) { container.innerHTML = ""; return; }
 
     try {
         const res = await fetch('/api/universities');
         const unis = await res.json();
+        
+        // কান্ট্রি ফিল্টার
         const filteredUnis = unis.filter(u => u.country.toLowerCase().includes(countryInput));
 
         if (filteredUnis.length === 0) {
@@ -163,12 +160,11 @@ async function searchUni() {
 
         const currentYear = new Date().getFullYear();
         container.innerHTML = filteredUnis.map(u => {
-            // Gap Calculation (No Duplicate const here)
-            let calculatedGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-const universityMaxGap = parseInt(u.gapAllowed) || 0;
+            // ভেরিয়েবল নাম পরিবর্তন করা হয়েছে (Conflict এড়াতে)
+            let studentCalculatedGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
+            const uniAllowedGap = parseInt(u.gapAllowed) || 0;
             
-            // Eligibility Logic
-            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && calculatedGap <= universityMaxGap;
+            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentCalculatedGap <= uniAllowedGap;
 
             const tuition = parseFloat(u.totalTuitionFee) || 0;
             const currency = (u.uCurrency || 'USD').toUpperCase();
@@ -178,8 +174,8 @@ const universityMaxGap = parseInt(u.gapAllowed) || 0;
             return `
             <tr>
                 <td><b class="text-gold">${u.universityName}</b><br><small>${u.location}</small></td>
-                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${allowedGap}y</td>
-                <td>Tuition: ${currency} ${tuition.toLocaleString()}<br>Living: ${u.livingCost || 'N/A'}</td>
+                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${uniAllowedGap}y</td>
+                <td>Tuition: ${currency} ${tuition.toLocaleString()}</td>
                 <td>Profit: <b>৳${profit.toLocaleString()}</b></td>
                 <td>
                     <button class="btn-gold" 
