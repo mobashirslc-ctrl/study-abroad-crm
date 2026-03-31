@@ -129,7 +129,7 @@ window.initRealtimeData = async function() {
         console.error("Dashboard Sync Error:", error); 
     }
 };
-// --- ৪. SEARCH & ELIGIBILITY (সংশোধিত) ---
+// --- 4. SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
@@ -151,12 +151,12 @@ async function searchUni() {
 
         const currentYear = new Date().getFullYear();
         container.innerHTML = filteredUnis.map(u => {
-            // Gap Calculation
+            // Gap Calculation (No Duplicate const here)
             let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-            const gapLimit = parseInt(u.gapAllowed) || 0;
+            const allowedGap = parseInt(u.gapAllowed) || 0;
             
-            // Eligibility Condition
-            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= gapLimit;
+            // Eligibility Logic
+            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= allowedGap;
 
             const tuition = parseFloat(u.totalTuitionFee) || 0;
             const currency = (u.uCurrency || 'USD').toUpperCase();
@@ -166,7 +166,7 @@ async function searchUni() {
             return `
             <tr>
                 <td><b class="text-gold">${u.universityName}</b><br><small>${u.location}</small></td>
-                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${gapLimit}y</td>
+                <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${allowedGap}y</td>
                 <td>Tuition: ${currency} ${tuition.toLocaleString()}<br>Living: ${u.livingCost || 'N/A'}</td>
                 <td>Profit: <b>৳${profit.toLocaleString()}</b></td>
                 <td>
@@ -228,10 +228,12 @@ window.uploadToCloudinary = async (file) => {
     } catch (e) { return null; }
 };
 
+// --- 6. SUBMISSION ---
 window.submitApplication = async () => {
     const btn = document.getElementById('submitBtn');
     const sName = document.getElementById('sName').value;
     const sPassport = document.getElementById('sPassport').value;
+    const modalTitle = document.getElementById('modalTitle');
 
     if(!sName || !sPassport) return alert("Required fields missing!");
 
@@ -239,12 +241,11 @@ window.submitApplication = async () => {
     btn.innerText = "Uploading Files...";
 
     const uploadedUrls = [];
-    const fileIds = ['file1', 'file2', 'file3', 'file4']; // নিশ্চিত করুন HTML এ এই ID গুলোর ইনপুট আছে
-    
-    for (const id of fileIds) {
-        const fileInput = document.getElementById(id);
+    // HTML-এ ইনপুটগুলোর আইডি file1, file2, file3, file4 হতে হবে
+    for (let i = 1; i <= 4; i++) {
+        const fileInput = document.getElementById('file' + i);
         if (fileInput && fileInput.files[0]) {
-            const url = await uploadToCloudinary(fileInput.files[0]);
+            const url = await window.uploadToCloudinary(fileInput.files[0]);
             if (url) uploadedUrls.push(url);
         }
     }
@@ -252,7 +253,7 @@ window.submitApplication = async () => {
     const payload = {
         studentName: sName,
         passportNo: sPassport,
-        university: document.getElementById('modalTitle').innerText.replace("Applying for: ", ""),
+        university: modalTitle ? modalTitle.innerText.replace("Applying for: ", "") : "Unknown",
         universityId: window.currentSelectedUniId,
         partnerEmail: partnerEmail,
         documents: uploadedUrls,
@@ -267,20 +268,18 @@ window.submitApplication = async () => {
             body: JSON.stringify(payload)
         });
         if (res.ok) { 
-            alert("Application Submitted Successfully!"); 
+            alert("Submitted Successfully!"); 
             location.reload(); 
         } else {
-            alert("Submission failed. Check your connection.");
+            alert("Server Error! Check required fields.");
         }
     } catch (e) { 
-        console.error("Submit Error:", e);
-        alert("Error during submission!"); 
+        alert("Submission Failed! Check connection."); 
     } finally { 
         btn.disabled = false; 
         btn.innerText = "Submit File"; 
     }
 };
-
 // --- 7. WALLET ACTIONS (WITHDRAW FIX) ---
 window.requestTopUp = async () => {
     const amount = document.getElementById('topUpAmount').value;
