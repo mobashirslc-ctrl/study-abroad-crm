@@ -6,6 +6,9 @@
 // --- GLOBAL CONFIGURATION ---
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddziennkh/image/upload";
 const UPLOAD_PRESET = "ihp_upload";
+let currentSelectedUniId = "";
+let currentSelectedUniName = "";
+let currentSelectedUniComm = 0; // এটিই কমপ্লায়েন্সের জন্য দরকার
 
 const userData = JSON.parse(localStorage.getItem('user') || "{}");
 const partnerEmail = (userData.email || "").toLowerCase().trim();
@@ -68,10 +71,19 @@ window.fetchUniversitiesForPartner = async () => {
                         <small style="color:var(--gold); font-size:10px;">Bonus Included</small>
                     </div>
                 </td>
-                <td>
-                    <button class="btn-gold" style="padding: 8px 12px; font-size:11px;" onclick="openApplyModal('${u.universityName}', '${u._id}')">APPLY NOW</button>
-                    <button class="action-btn" style="background:#444; margin-top:5px; width:100%; border:none; color:white; border-radius:4px; cursor:pointer;" onclick="downloadAssessmentPDF('${u._id}')"><i class="fas fa-file-pdf"></i> Flyer</button>
-                </td>
+               <td>
+    <button class="btn-gold" 
+            style="padding: 8px 12px; font-size:11px;" 
+            onclick="window.openApplyModal('${u.universityName}', '${u._id}', ${estimatedProfit})">
+        APPLY NOW
+    </button>
+    
+    <button class="action-btn" 
+            style="background:#444; margin-top:5px; width:100%; border:none; color:white; border-radius:4px; cursor:pointer;" 
+            onclick="downloadAssessmentPDF('${u._id}')">
+        <i class="fas fa-file-pdf"></i> Flyer
+    </button>
+</td>
             </tr>`;
         }).join('');
     } catch (e) { console.error("Fetch Error:", e); }
@@ -190,21 +202,21 @@ async function searchUni() {
     } catch (e) { console.error("Search Error:", e); }
 }
 // --- 5. MODAL & SLIP ACTIONS ---
-window.openApplyModal = (uniName, uniId) => {
+window.openApplyModal = (uniName, uniId, comm = 0) => {
     window.currentSelectedUniId = uniId;
+    window.currentSelectedUniName = uniName;
+    window.currentSelectedUniComm = comm; // কমিশন সেভ করা হলো
     
     const modalTitle = document.getElementById('modalTitle');
-    const modal = document.getElementById('applyModal'); // নিশ্চিত করুন HTML এ এই ID আছে
+    const modal = document.getElementById('applyModal');
     
     if(modalTitle) modalTitle.innerText = "Applying for: " + uniName;
-    
-    // মোডাল ওপেন করার লজিক (CSS display block করে দেওয়া হলো)
-    if(modal) {
-        modal.style.display = 'block';
-    } else {
+    if(modal) modal.style.display = 'block';
+};
+     else {
         alert("Apply Modal not found in HTML!");
     }
-};
+
 
 window.showSlip = (data) => {
     const { jsPDF } = window.jspdf;
@@ -262,20 +274,19 @@ window.submitApplication = async () => {
 
         // --- পুরনো ফরম্যাটে পেলোড তৈরি ---
         const payload = {
-            studentName: sName,
-            passportNo: sPassport,
-            university: document.getElementById('modalTitle').innerText.replace("Applying for: ", ""),
-            universityId: window.currentSelectedUniId,
-            partnerEmail: partnerEmail,
-            // কমপ্লায়েন্স এই নামগুলো চেনে, তাই এভাবেই পাঠাতে হবে:
-            pdf1: urls[0] || "",
-            pdf2: urls[1] || "",
-            pdf3: urls[2] || "",
-            pdf4: urls[3] || "",
-            commissionBDT: 0, // ডিফল্ট কমিশন ০
-            status: "PENDING",
-            timestamp: new Date().toISOString()
-        };
+    studentName: sName,
+    passportNo: sPassport,
+    university: window.currentSelectedUniName || document.getElementById('modalTitle').innerText.replace("Applying for: ", ""),
+    universityId: window.currentSelectedUniId,
+    partnerEmail: partnerEmail,
+    pdf1: urls[0] || "",
+    pdf2: urls[1] || "",
+    pdf3: urls[2] || "",
+    pdf4: urls[3] || "",
+    commissionBDT: window.currentSelectedUniComm || 0, // এখানে ০ এর বদলে ভ্যারিয়েবল দিন
+    status: "PENDING",
+    timestamp: new Date().toISOString()
+};
 
         const res = await fetch('/api/applications', {
             method: "POST",
