@@ -54,63 +54,48 @@ setInterval(loadApplications, 60000);
 // ৩. মোডাল ওপেন ও ৪টি PDF শো করা (With Commission & Locking Safety)
 window.openReviewModal = async (id, name, commission, passport, university) => {
     try {
-        // লকিং লজিক
+        // ১. লকিং লজিক (আগের মতোই থাকবে)
         const lockRes = await fetch(`/api/lock-application/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ staffEmail: staffEmail })
         });
         
-        const lockData = await lockRes.json();
         if (lockRes.status === 403) {
+            const lockData = await lockRes.json();
             alert(`⚠️ এই ফাইলটি বর্তমানে ${lockData.lockedBy || 'অন্য একজন'} রিভিউ করছেন।`);
             return;
         }
 
+        // ২. ডাটা ফেচিং (এটাই আপনার নতুন লজিক)
+        const res = await fetch('/api/applications'); // সব ডাটা আনছি
+        const allApps = await res.json();
+        const d = allApps.find(app => app._id === id); // মেমোরি থেকে আইডি খুঁজে বের করছি
+
+        if(!d) {
+            alert("ফাইলটি ডাটাবেসে খুঁজে পাওয়া যাচ্ছে না!");
+            return;
+        }
+
+        // ৩. ডাটা মোডালে বসানো
         currentActiveId = id;
-        
-        // পার্ট ১: কমিশন হ্যান্ডেলিং (যদি ০ বা নাল থাকে তবে ওয়ার্নিং দিবে)
         currentCommission = Number(commission) || 0;
-        if(currentCommission <= 0) console.warn("Commission missing for:", name);
-        
-        document.getElementById('revStudentName').innerText = "Reviewing: " + name;
-        document.getElementById('targetUniDisplay').innerText = `Applying for: ${university}`;
-        
-        // ডাইনামিক ফাইল লিঙ্ক (পার্টনারের সব ফাইল শো করা)
-        const res = await fetch(`/api/applications/${id}`);
-        const d = await res.json();
-        
-       // compliance-logic.js এর ভেতরে window.openReviewModal ফাংশনে এটি বসান
-let docHtml = "";
+        document.getElementById('revStudentName').innerText = "Reviewing: " + (d.studentName || name);
+        document.getElementById('targetUniDisplay').innerText = `Applying for: ${d.university || university}`;
 
-// চেক করুন নতুন 'documents' অ্যারেতে ডাটা আছে কি না
-if (d.documents && Array.isArray(d.documents) && d.documents.length > 0) {
-    d.documents.forEach((url, i) => {
-        if(url) {
-            docHtml += `<a href="${url}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> File ${i+1}</a>`;
-        }
-    });
-} 
+        // ৪. ফাইল লিঙ্ক দেখানো
+        let docHtml = "";
+        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link">Passport</a>`;
+        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link">Academic</a>`;
+        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link">English</a>`;
+        if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link">Other</a>`;
 
-// যদি অ্যারে খালি থাকে, তবে পুরনো pdf1, pdf2 ফরম্যাট চেক করবে
-if (!docHtml) {
-    if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link">Passport</a>`;
-    if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link">Academic</a>`;
-    if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link">English</a>`;
-    if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link">Other</a>`;
-}
-
-document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
-        
-        if(d.status) {
-            document.getElementById('statusSelect').value = d.status;
-            updateWalletIndicator(d.status); 
-        }
-        document.getElementById('complianceNote').value = d.complianceNote || "";
+        document.getElementById('docLinksArea').innerHTML = docHtml || "No documents found.";
         document.getElementById('reviewModal').style.display = 'flex';
 
     } catch (e) {
-        alert("Error loading details or acquiring lock.");
+        console.error("Review Load Error:", e);
+        alert("Error loading details. Please check console for logs.");
     }
 };
 
