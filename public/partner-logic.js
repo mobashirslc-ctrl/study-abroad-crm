@@ -58,12 +58,12 @@ async function initRealtimeData() {
 
 myApps.forEach(data => {
     const status = (data.status || 'PENDING').toUpperCase();
-    const comm = Number(data.commissionBDT || 0); // এটি যোগ করুন
+    const comm = Number(data.commissionBDT || 0);
 
-    // পেন্ডিং টোটাল ক্যালকুলেশন
-    if(['PENDING', 'PROCESSING', 'SUBMITTED'].includes(status)) {
+    // শুধু 'DOCS_VERIFIED' হলে পেন্ডিং টোটাল এ যোগ হবে
+    if(status === 'DOCS_VERIFIED') {
         pendingTotal += comm;
-    } 
+    }
     tableHtml += `
         <tr>
             <td><b>${data.studentName}</b></td>
@@ -196,16 +196,16 @@ async function submitApplication() {
             body: JSON.stringify(payload)
         });
 
-        if(res.ok) { 
-            alert("Submission Successful!");
-            document.getElementById('applyModal').style.display = 'none'; 
-            
-            // সাবমিট হওয়ার সাথে সাথে স্লিপ দেখানো
-            showAdmissionSlip(payload);
-            
-            // ড্যাশবোর্ড আপডেট করতে ২ সেকেন্ড পর রিলোড
-            setTimeout(() => location.reload(), 2000);
-        } else {
+       if(res.ok) { 
+    const savedData = await res.json(); // সার্ভার থেকে সেভ হওয়া ডাটা নিন
+    alert("Submission Successful!");
+    document.getElementById('applyModal').style.display = 'none'; 
+    
+    // সেভ হওয়া ডাটা দিয়েই স্লিপ দেখান
+    showAdmissionSlip(savedData.application || payload);
+    
+    setTimeout(() => location.reload(), 3000); // ৩ সেকেন্ড সময় দিন স্লিপটি দেখার জন্য
+} else {
             alert("Server Error! Status: " + res.status);
         }
     } catch (e) { 
@@ -258,21 +258,27 @@ async function handleSlipClick(passport) {
 // স্লিপ দেখার জন্য স্পেশাল হ্যান্ডলার
 async function handleSlipView(passportNo) {
     try {
+        // API থেকে লেটেস্ট ডাটা নিয়ে আসা
         const res = await fetch(`/api/applications`);
+        if (!res.ok) throw new Error("Network response was not ok");
+        
         const allApps = await res.json();
-        const student = allApps.find(a => a.passportNo === passportNo);
+        
+        // কেস-সেনসিটিভ ইস্যু এড়াতে পাসপোর্ট নম্বরটি ট্রিম করে চেক করা
+        const student = allApps.find(a => a.passportNo.trim() === passportNo.trim());
         
         if(student) {
             showAdmissionSlip(student);
         } else {
-            alert("Slip data not found!");
+            console.warn("Passport not found in list:", passportNo);
+            alert("No student found with this passport: " + passportNo);
         }
     } catch (e) {
-        alert("Error loading slip.");
+        console.error("Slip Fetch Error:", e);
+        alert("System error! Could not load the slip.");
     }
 }
-window.handleSlipView = handleSlipView; // গ্লোবাল এক্সপোজ
-
+window.handleSlipView = handleSlipView;
 window.handleSlipClick = handleSlipClick; // গ্লোবাল এক্সপোজ
 
 function showAdmissionSlip(appData) {
