@@ -196,21 +196,17 @@ async function submitApplication() {
             body: JSON.stringify(payload)
         });
 
-       if(res.ok) { 
-    const savedData = await res.json(); // সার্ভার থেকে সেভ হওয়া ডাটা নিন
-    alert("Submission Successful!");
-    document.getElementById('applyModal').style.display = 'none'; 
-    
-    // সেভ হওয়া ডাটা দিয়েই স্লিপ দেখান
-    showAdmissionSlip(savedData.application || payload);
-    
-    setTimeout(() => location.reload(), 3000); // ৩ সেকেন্ড সময় দিন স্লিপটি দেখার জন্য
-} else {
-            alert("Server Error! Status: " + res.status);
+        if(res.ok) { 
+            alert("Submission Successful!");
+            document.getElementById('applyModal').style.display = 'none'; 
+            
+            // সাবমিট হওয়ার সাথে সাথে স্লিপ দেখানো (পেলোড ডাটা দিয়ে)
+            showAdmissionSlip(payload); 
+        } else {
+            alert("Submission failed on server.");
         }
     } catch (e) { 
-        console.error("Submission Error:", e);
-        alert("Check internet and try again."); 
+        alert("Network Error!"); 
     } finally { 
         btn.disabled = false; 
         btn.innerText = "Submit Application"; 
@@ -258,27 +254,24 @@ async function handleSlipClick(passport) {
 // স্লিপ দেখার জন্য স্পেশাল হ্যান্ডলার
 async function handleSlipView(passportNo) {
     try {
-        // API থেকে লেটেস্ট ডাটা নিয়ে আসা
         const res = await fetch(`/api/applications`);
-        if (!res.ok) throw new Error("Network response was not ok");
-        
         const allApps = await res.json();
         
-        // কেস-সেনসিটিভ ইস্যু এড়াতে পাসপোর্ট নম্বরটি ট্রিম করে চেক করা
+        // পাসপোর্ট নম্বরটি খুঁজে বের করা
         const student = allApps.find(a => a.passportNo.trim() === passportNo.trim());
         
         if(student) {
             showAdmissionSlip(student);
         } else {
-            console.warn("Passport not found in list:", passportNo);
-            alert("No student found with this passport: " + passportNo);
+            alert("Application not found for: " + passportNo);
         }
     } catch (e) {
-        console.error("Slip Fetch Error:", e);
-        alert("System error! Could not load the slip.");
+        console.error("Slip View Error:", e);
+        alert("Could not load slip. Please try again.");
     }
 }
 window.handleSlipView = handleSlipView;
+
 window.handleSlipClick = handleSlipClick; // গ্লোবাল এক্সপোজ
 
 function showAdmissionSlip(appData) {
@@ -319,18 +312,36 @@ window.closeSlip = () => {
 };
 // ম্যানুয়াল অ্যাপ্লাই বাটন লজিক
 window.openManualApply = () => {
-    const uniName = "Manual Entry (Direct)"; // অথবা ইউজারের কাছ থেকে ছোট ইনপুট নিতে পারেন
-    const fixedAdminCommission = 5000; // এটা আপনি অ্যাডমিন প্যানেল থেকে যা সেট করবেন সেটা এখানে আসবে
+    // ইউজারের কাছ থেকে শুধু ইউনিভার্সিটির নাম নেওয়া (বাকিগুলো ফর্ম থেকে আসবে)
+    const uniName = prompt("Enter University Name:", "Direct Admission");
+    if (!uniName) return;
 
     selectedUniversity = uniName;
-    currentUniCommission = fixedAdminCommission;
+    currentUniCommission = 5000; // আপনার ফিক্সড কমিশন
 
-    // মডালের টাইটেল এবং বাটন টেক্সট আপডেট
-    const modalTitle = document.getElementById('modalTitle');
-    if(modalTitle) modalTitle.innerText = "Applying for: " + uniName;
+    // মডাল টাইটেল আপডেট
+    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
     
-    const applyModal = document.getElementById('applyModal');
-    if(applyModal) applyModal.style.display = 'flex';
+    // ফর্ম ক্লিয়ার করা (যাতে আগের স্টুডেন্টের নাম না থাকে)
+    document.getElementById('sName').value = "";
+    document.getElementById('sPassport').value = "";
 
-    console.log("Manual Mode Activated:", uniName, "Comm:", fixedAdminCommission);
+    document.getElementById('applyModal').style.display = 'flex';
+};
+
+    // ফাইলের একদম শেষে এই অংশটুকু রিপ্লেস করুন
+window.openManualApply = () => {
+    const uniName = prompt("Enter University Name:", "Direct Admission");
+    if (!uniName) return;
+
+    selectedUniversity = uniName;
+    currentUniCommission = 5000; 
+
+    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
+    document.getElementById('sName').value = "";
+    document.getElementById('sPassport').value = "";
+    document.getElementById('applyModal').style.display = 'flex';
+
+    // লগটি ফাংশনের ভেতরে নিয়ে আসা হয়েছে
+    console.log("Manual Mode Activated:", uniName, "Comm: 5000"); 
 };
