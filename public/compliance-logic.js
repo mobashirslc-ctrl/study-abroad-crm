@@ -80,13 +80,27 @@ window.openReviewModal = async (id, name, commission, passport, university) => {
         const res = await fetch(`/api/applications/${id}`);
         const d = await res.json();
         
-        let docHtml = "";
-        if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 1. Passport Copy</a>`;
-        if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 2. Academic Records</a>`;
-        if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 3. English Proficiency</a>`;
-        if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> 4. Other/CV Docs</a>`;
+       // compliance-logic.js এর ভেতরে window.openReviewModal ফাংশনে এটি বসান
+let docHtml = "";
 
-        document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
+// চেক করুন নতুন 'documents' অ্যারেতে ডাটা আছে কি না
+if (d.documents && Array.isArray(d.documents) && d.documents.length > 0) {
+    d.documents.forEach((url, i) => {
+        if(url) {
+            docHtml += `<a href="${url}" target="_blank" class="doc-link"><i class="fas fa-file-pdf"></i> File ${i+1}</a>`;
+        }
+    });
+} 
+
+// যদি অ্যারে খালি থাকে, তবে পুরনো pdf1, pdf2 ফরম্যাট চেক করবে
+if (!docHtml) {
+    if (d.pdf1) docHtml += `<a href="${d.pdf1}" target="_blank" class="doc-link">Passport</a>`;
+    if (d.pdf2) docHtml += `<a href="${d.pdf2}" target="_blank" class="doc-link">Academic</a>`;
+    if (d.pdf3) docHtml += `<a href="${d.pdf3}" target="_blank" class="doc-link">English</a>`;
+    if (d.pdf4) docHtml += `<a href="${d.pdf4}" target="_blank" class="doc-link">Other</a>`;
+}
+
+document.getElementById('docLinksArea').innerHTML = docHtml || "<p style='color:orange;'>No documents found.</p>";
         
         if(d.status) {
             document.getElementById('statusSelect').value = d.status;

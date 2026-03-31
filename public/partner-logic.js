@@ -98,18 +98,26 @@ window.initRealtimeData = async function() {
             fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`)
         ]);
 
+        // ১. ইউজার ডাটা চেক
         const allUsers = await userRes.json();
-        const me = allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail);
+        const me = Array.isArray(allUsers) ? allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail) : null;
         
-        currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
+        currentAvailableBalance = me ? (Number(me.walletBalance) || 0) : 0;
 
+        // ২. অ্যাপ্লিকেশন ডাটা চেক (এটিই ব্ল্যাঙ্ক হওয়ার কারণ হতে পারে)
         const myApps = await appRes.json();
+        
+        // যদি ডাটা না থাকে বা ভুল আসে তবে খালি অ্যারে ধরে নিবে
+        const safeApps = Array.isArray(myApps) ? myApps : [];
+        
         let pendingTotal = 0;
 
-        const tableRows = myApps.map(app => {
+        const tableRows = safeApps.map(app => {
             const status = (app.status || 'PENDING').toUpperCase();
+            const comm = Number(app.commissionBDT || 0);
+            
             if(status !== 'REJECTED' && status !== 'CANCELLED') {
-                pendingTotal += Number(app.commissionBDT || 0);
+                pendingTotal += comm;
             }
             return `
                 <tr>
@@ -117,7 +125,7 @@ window.initRealtimeData = async function() {
                     <td>${app.passportNo}</td>
                     <td>${app.university || 'N/A'}</td>
                     <td><span class="status-pill ${status.toLowerCase()}">${status}</span></td>
-                    <td>৳${(app.commissionBDT || 0).toLocaleString()}</td>
+                    <td>৳${comm.toLocaleString()}</td>
                 </tr>`;
         }).join('');
 
@@ -126,25 +134,31 @@ window.initRealtimeData = async function() {
             if (el) el.innerText = val; 
         };
         
+        // ৩. UI আপডেট (সেফলি)
         setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); 
         setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); 
-        setTxt('totalStudents', myApps.length);
+        setTxt('totalStudents', safeApps.length);
 
-        // উইথড্র অপশনে ব্যালেন্স সিঙ্ক
         setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         
         const withdrawInput = document.getElementById('withdrawAmount');
         if(withdrawInput) {
             withdrawInput.max = currentAvailableBalance;
-            withdrawInput.value = ""; // ফিল্ড খালি রাখা
             withdrawInput.placeholder = "Max: " + currentAvailableBalance;
         }
 
-        if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
-        if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
+        // ৪. টেবিল বডি আপডেট
+        const quickBody = document.getElementById('quickStatsBody');
+        const fullBody = document.getElementById('fullTrackingBody');
+        
+        if (quickBody) quickBody.innerHTML = tableRows || "<tr><td colspan='5' style='text-align:center;'>No Data Found</td></tr>";
+        if (fullBody) fullBody.innerHTML = tableRows || "<tr><td colspan='5' style='text-align:center;'>No Data Found</td></tr>";
 
     } catch (error) { 
-        console.error("Dashboard Sync Error:", error); 
+        console.error("Dashboard Sync Error:", error);
+        // এরর হলেও যেন লোডিং বা ব্ল্যাঙ্ক হয়ে না থাকে
+        const quickBody = document.getElementById('quickStatsBody');
+        if (quickBody) quickBody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:red;'>Failed to load data.</td></tr>";
     }
 };
 // --- ৪. SEARCH & ELIGIBILITY ---
