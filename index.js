@@ -262,10 +262,11 @@ app.patch('/api/applications/:id', async (req, res) => {
         const { pendingAmount, status } = req.body; 
         const amountFromAdmin = Number(pendingAmount) || 0; 
 
+        // ১. আগে অ্যাপ্লিকেশনের ডাটা খুঁজে বের করা (পার্টনারের ইমেইল পাওয়ার জন্য)
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ১. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে মাইনাস
+        // ২. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে মাইনাস করা
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
             { 
@@ -275,29 +276,20 @@ app.patch('/api/applications/:id', async (req, res) => {
             { new: true }
         );
 
-        // ২. পার্টনারের মেইন ওয়ালেটে টাকা যোগ করা (ইমেইল ফরম্যাট ফিক্সড)
+        // ৩. পার্টনারের ওয়ালেটে (User Model) টাকা যোগ করা (এটিই মিসিং ছিল)
         if (amountFromAdmin > 0 && appData.partnerEmail) {
-            const partnerEmailClean = appData.partnerEmail.toLowerCase().trim(); // ইমেইল পরিষ্কার করা
-            
-            const updatedUser = await User.findOneAndUpdate(
-                { email: partnerEmailClean }, 
-                { $inc: { walletBalance: amountFromAdmin } }, 
-                { new: true }
+            await User.findOneAndUpdate(
+                { email: appData.partnerEmail.toLowerCase().trim() },
+                { $inc: { walletBalance: amountFromAdmin } } // ইউজারের ওয়ালেটে টাকা যোগ হবে
             );
-
-            if (!updatedUser) {
-                console.log("❌ User not found with email:", partnerEmailClean);
-                return res.status(404).json({ error: "Partner User not found to update wallet" });
-            }
-            
-            console.log("✅ Wallet Updated! New Balance:", updatedUser.walletBalance);
         }
 
-        res.json({ 
-            msg: `Success! ${amountFromAdmin} added to available wallet.`, 
-            data: updatedApp 
-        });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        res.json({ message: "Success", updatedApp });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 // ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনার যখন টাকা তোলার রিকোয়েস্ট পাঠাবে)
 app.post('/api/withdrawals', async (req, res) => {
