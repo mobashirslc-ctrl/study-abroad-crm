@@ -77,20 +77,20 @@ window.fetchUniversitiesForPartner = async () => {
     } catch (e) { console.error("Fetch Error:", e); }
 };
 
-// --- ৩. DASHBOARD REALTIME DATA (সংশোধিত ওয়ালেট লজিক) ---
+// --- ৩. DASHBOARD REALTIME DATA (সংশোধিত ও এরর-মুক্ত ভার্সন) ---
 window.initRealtimeData = async function() {
     if (!partnerEmail) return;
     try {
-        // ১. একসাথে ইউজার প্রোফাইল (ব্যালেন্সের জন্য) এবং এপ্লিকেশন (পেন্ডিংয়ের জন্য) কল করা
+        // ১. প্রোফাইল এবং অ্যাপ্লিকেশন ডাটা একসাথে কল করা
         const [userRes, appRes] = await Promise.all([
-            fetch(`/api/admin/users`), // সব ইউজার আনার এপিআই
+            fetch(`/api/admin/users`), 
             fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`)
         ]);
 
         const allUsers = await userRes.json();
         const me = allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail);
         
-        // ফাইনাল ব্যালেন্স (এডমিন যা সেট করেছে)
+        // অ্যাডমিন সেট করা মেইন ব্যালেন্স
         currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
 
         const myApps = await appRes.json();
@@ -98,7 +98,7 @@ window.initRealtimeData = async function() {
 
         const tableRows = myApps.map(app => {
             const status = (app.status || 'PENDING').toUpperCase();
-            // পেন্ডিং বক্সের জন্য কমিশন ক্যালকুলেশন
+            // কমিশন ক্যালকুলেশন (রিজেক্টেড বা ক্যান্সেল বাদে)
             if(status !== 'REJECTED' && status !== 'CANCELLED') {
                 pendingTotal += Number(app.commissionBDT || 0);
             }
@@ -113,15 +113,27 @@ window.initRealtimeData = async function() {
                 </tr>`;
         }).join('');
 
-        // ২. ড্যাশবোর্ড কার্ড আপডেট
-        const setTxt = (id, val) => { if (document.getElementById(id)) document.getElementById(id).innerText = val; };
+        // ২. UI আপডেট করার ফাংশন
+        const setTxt = (id, val) => { 
+            const el = document.getElementById(id);
+            if (el) el.innerText = val; 
+        };
         
-        setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); // পেন্ডিং বক্স
-        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); // ফাইনাল ওয়ালেট বক্স
+        // ড্যাশবোর্ড কার্ড আপডেট
+        setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); 
+        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); 
         setTxt('totalStudents', myApps.length);
 
-        // ৩. টেবিল আপডেট
+        // ৩. উইথড্র অপশনে ব্যালেন্স সিঙ্ক (এটিই আপনার মিসিং ছিল)
+        setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
+        
+        const withdrawInput = document.getElementById('withdrawAmount');
+        if(withdrawInput) {
+            withdrawInput.max = currentAvailableBalance;
+            withdrawInput.placeholder = "Max: " + currentAvailableBalance;
+        }
 
+        // ৪. টেবিল আপডেট
         if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
         if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
 
@@ -152,11 +164,11 @@ async function searchUni() {
         const currentYear = new Date().getFullYear();
         container.innerHTML = filteredUnis.map(u => {
             // Gap Calculation (No Duplicate const here)
-            let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
-            const allowedGap = parseInt(u.gapAllowed) || 0;
+            let calculatedGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
+const universityMaxGap = parseInt(u.gapAllowed) || 0;
             
             // Eligibility Logic
-            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= allowedGap;
+            const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && calculatedGap <= universityMaxGap;
 
             const tuition = parseFloat(u.totalTuitionFee) || 0;
             const currency = (u.uCurrency || 'USD').toUpperCase();
@@ -262,11 +274,11 @@ window.submitApplication = async () => {
     };
 
     try {
-        const res = await fetch('/api/applications', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        const res = await fetch('/api/applications', { 
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+});
         if (res.ok) { 
             alert("Submitted Successfully!"); 
             location.reload(); 
