@@ -71,21 +71,27 @@
     <h2 style="margin-bottom: 25px;">Welcome, <span id="welcomeName" class="text-gold">Partner</span></h2>
 
     <div id="dashboard" class="tab-content" style="display: block;">
-        <div class="card-grid">
-            <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
-            <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:24px; color:var(--green);">৳0</p></div>
-            <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:24px; color:#3498db;">0</p></div>
-        </div>
-        <h3 class="text-gold">Quick View (Recent Activity)</h3>
-        <div class="table-wrapper">
-            <table id="recentActivityTable">
-                <thead>
-                    <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Profit</th></tr>
-                </thead>
-                <tbody id="quickStatsBody"></tbody>
-            </table>
-        </div>
+    <div class="card-grid">
+        <div class="card"><h3>Pending BDT</h3><p id="topPending" style="font-size:24px; color:var(--gold);">৳0</p></div>
+        <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:24px; color:var(--green);">৳0</p></div>
+        <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:24px; color:#3498db;">0</p></div>
     </div>
+
+    <div style="margin-bottom: 25px; text-align: right;">
+        <button class="btn-gold" onclick="window.openManualApply()" style="width: auto; padding: 12px 30px; border-radius: 8px; cursor: pointer;">
+            <i class="fas fa-plus-circle"></i> Manual Student Entry
+        </button>
+    </div>
+
+    <h3 class="text-gold">Quick View (Recent Activity)</h3>
+    <div class="table-wrapper">
+        <table id="recentActivityTable">
+            <thead>
+                <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Profit</th></tr>
+            </thead>
+            <tbody id="homeTrackingBody"></tbody> </table>
+    </div>
+</div>
 
    <div id="universities" class="tab-content">
     <h3>Find Universities & Eligibility</h3>

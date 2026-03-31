@@ -60,8 +60,8 @@ async function initRealtimeData() {
             const status = (data.status || 'PENDING').toUpperCase();
             const comm = Number(data.commissionBDT || 0);
 
-            // CORRECTION: Only add to pending if Staff verified (DOCS_VERIFIED)
-            if(status === 'DOCS_VERIFIED' || status === 'PROCESSING') {
+            // লজিক: স্টাফ ভেরিফাই করলে বা ফাইল সাবমিট অবস্থায় থাকলে পেন্ডিং বক্সে যোগ হবে
+            if(['DOCS_VERIFIED', 'PROCESSING', 'SUBMITTED', 'PENDING'].includes(status)) {
                 pendingTotal += comm;
             }
 
@@ -69,36 +69,38 @@ async function initRealtimeData() {
                 <tr>
                     <td><b>${data.studentName}</b></td>
                     <td>${data.passportNo}</td>
-                    <td>${data.university || 'N/A'}</td>
+                    <td>${data.university || 'Direct Entry'}</td>
                     <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
                     <td>৳${comm.toLocaleString()}</td>
                 </tr>`;
         });
 
-        // Update UI
-        const setEl = (id, val, isHTML = false) => {
+        // UI আপডেট
+        const setEl = (id, val) => {
             const el = document.getElementById(id);
-            if(el) isHTML ? el.innerHTML = val : el.innerText = val;
+            if(el) el.innerText = val;
         };
 
         setEl('topPending', `৳${pendingTotal.toLocaleString()}`);
         setEl('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setEl('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`); // For older UI
-        setEl('availableWithdrawBalance', currentAvailableBalance.toLocaleString()); // For newer UI
+        setEl('topPendingE', `৳${pendingTotal.toLocaleString()}`); // Earnings ট্যাবের জন্য
+        setEl('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`);
+        setEl('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         setEl('totalStudents', myApps.length);
+
+        // টেবিল আপডেট
+        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
+        if(document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
+        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No history found</td></tr>";
 
         const withdrawInput = document.getElementById('withdrawAmount');
         if(withdrawInput) {
             withdrawInput.disabled = (currentAvailableBalance < 500);
-            withdrawInput.placeholder = currentAvailableBalance > 0 ? "Max: " + currentAvailableBalance : "Min 500 BDT";
+            withdrawInput.placeholder = currentAvailableBalance >= 500 ? "Max: " + currentAvailableBalance : "Min 500 BDT";
         }
-
-        if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records</td></tr>";
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No history</td></tr>";
 
     } catch (e) { console.error("Sync Error:", e); }
 }
-
 // --- 3. MEGA SEARCH & ELIGIBILITY (Unlock Wall) ---
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
@@ -230,3 +232,15 @@ window.submitApplication = submitApplication;
 window.requestWithdraw = requestWithdraw;
 window.openApplyModal = openApplyModal;
 window.downloadAssessmentPDF = downloadAssessmentPDF;
+window.openManualApply = async () => {
+    const uniName = prompt("Enter University Name:");
+    if (!uniName) return;
+    
+    const comm = prompt("Enter Expected Commission (BDT):", "0");
+    
+    selectedUniversity = uniName;
+    currentUniCommission = Number(comm) || 0;
+    
+    if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Manual: " + uniName;
+    if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'flex';
+};
