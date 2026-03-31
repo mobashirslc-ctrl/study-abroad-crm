@@ -56,15 +56,14 @@ async function initRealtimeData() {
         let pendingTotal = 0;
         let tableHtml = "";
 
-     myApps.forEach(data => {
+myApps.forEach(data => {
     const status = (data.status || 'PENDING').toUpperCase();
-    const comm = Number(data.commissionBDT || 0);
-    
-    // পেন্ডিং ব্যালেন্স ক্যালকুলেশন (এটি আপনার কোডে মিসিং ছিল)
-    if(['DOCS_VERIFIED', 'PROCESSING', 'SUBMITTED', 'PENDING'].includes(status)) {
-        pendingTotal += comm;
-    }
+    const comm = Number(data.commissionBDT || 0); // এটি যোগ করুন
 
+    // পেন্ডিং টোটাল ক্যালকুলেশন
+    if(['PENDING', 'PROCESSING', 'SUBMITTED'].includes(status)) {
+        pendingTotal += comm;
+    } 
     tableHtml += `
         <tr>
             <td><b>${data.studentName}</b></td>
@@ -72,10 +71,10 @@ async function initRealtimeData() {
             <td>${data.university || 'Direct Entry'}</td>
             <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
             <td>
-                <button class="btn-slip-small" onclick="handleSlipClick('${data.passportNo}')">
-                    <i class="fas fa-file-invoice"></i> View Slip
-                </button>
-            </td>
+    <button class="btn-slip-small" onclick="handleSlipView('${data.passportNo}')">
+        <i class="fas fa-file-invoice"></i> View Slip
+    </button>
+</td>
         </tr>`;
 });
         const setEl = (id, val) => {
@@ -166,18 +165,13 @@ async function submitApplication() {
     const sPass = document.getElementById('sPassport').value;
     const btn = document.getElementById('submitBtn');
 
-    // ১. ভ্যালিডেশন চেক
-    if(!sName || !sPass) {
-        alert("Student Name & Passport are mandatory!");
-        return;
-    }
+    if(!sName || !sPass) return alert("Student Name & Passport are mandatory!");
 
     try {
-        // ২. বাটন ডিজেবল করা যাতে ডাবল ক্লিক না হয়
         btn.innerText = "Processing..."; 
         btn.disabled = true;
 
-        // ৩. ফাইল আপলোড লজিক (নিশ্চিত করুন input field গুলোর ID ঠিক আছে)
+        // ফাইল আপলোড
         const docs = await Promise.all([
             uploadFile(document.getElementById('file1')?.files[0]),
             uploadFile(document.getElementById('file2')?.files[0]),
@@ -185,7 +179,6 @@ async function submitApplication() {
             uploadFile(document.getElementById('file4')?.files[0])
         ]);
 
-        // ৪. ডাটা অবজেক্ট তৈরি (Manual ও Auto দুটোর জন্যই কাজ করবে)
         const payload = {
             studentName: sName, 
             passportNo: sPass,
@@ -194,13 +187,9 @@ async function submitApplication() {
             commissionBDT: currentUniCommission || 0,
             status: 'PENDING', 
             timestamp: new Date().toISOString(),
-            pdf1: docs[0], 
-            pdf2: docs[1], 
-            pdf3: docs[2], 
-            pdf4: docs[3]
+            pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
         };
 
-        // ৫. API কল
         const res = await fetch('/api/applications', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -211,20 +200,18 @@ async function submitApplication() {
             alert("Submission Successful!");
             document.getElementById('applyModal').style.display = 'none'; 
             
-            // স্লিপ দেখানো
+            // সাবমিট হওয়ার সাথে সাথে স্লিপ দেখানো
             showAdmissionSlip(payload);
             
-            // পেজ রিফ্রেশ (ডাটা আপডেট দেখার জন্য)
-            setTimeout(() => location.reload(), 2000); 
+            // ড্যাশবোর্ড আপডেট করতে ২ সেকেন্ড পর রিলোড
+            setTimeout(() => location.reload(), 2000);
         } else {
-            const errorData = await res.json();
-            alert("Server Error: " + (errorData.message || "Unknown error"));
+            alert("Server Error! Status: " + res.status);
         }
     } catch (e) { 
         console.error("Submission Error:", e);
-        alert("Submission failed. Please check your connection."); 
+        alert("Check internet and try again."); 
     } finally { 
-        // ৬. বাটন রিসেট
         btn.disabled = false; 
         btn.innerText = "Submit Application"; 
     }
@@ -268,6 +255,24 @@ async function handleSlipClick(passport) {
         console.error("Slip Error:", e);
     }
 }
+// স্লিপ দেখার জন্য স্পেশাল হ্যান্ডলার
+async function handleSlipView(passportNo) {
+    try {
+        const res = await fetch(`/api/applications`);
+        const allApps = await res.json();
+        const student = allApps.find(a => a.passportNo === passportNo);
+        
+        if(student) {
+            showAdmissionSlip(student);
+        } else {
+            alert("Slip data not found!");
+        }
+    } catch (e) {
+        alert("Error loading slip.");
+    }
+}
+window.handleSlipView = handleSlipView; // গ্লোবাল এক্সপোজ
+
 window.handleSlipClick = handleSlipClick; // গ্লোবাল এক্সপোজ
 
 function showAdmissionSlip(appData) {
@@ -306,22 +311,20 @@ window.closeSlip = () => {
     document.getElementById('slipModal').style.display = 'none';
     location.reload(); 
 };
-window.openManualApply = async () => {
-    const uniName = prompt("Enter University Name:");
-    if (!uniName) return;
-    const comm = prompt("Enter Expected Commission (BDT):", "0");
-    
-    // এই ভেরিয়েবলগুলো টপ লেভেলে ডিফাইন করা আছে, তাই সাবমিট বাটন এগুলো পাবে
+// ম্যানুয়াল অ্যাপ্লাই বাটন লজিক
+window.openManualApply = () => {
+    const uniName = "Manual Entry (Direct)"; // অথবা ইউজারের কাছ থেকে ছোট ইনপুট নিতে পারেন
+    const fixedAdminCommission = 5000; // এটা আপনি অ্যাডমিন প্যানেল থেকে যা সেট করবেন সেটা এখানে আসবে
+
     selectedUniversity = uniName;
-    currentUniCommission = Number(comm) || 0;
+    currentUniCommission = fixedAdminCommission;
+
+    // মডালের টাইটেল এবং বাটন টেক্সট আপডেট
+    const modalTitle = document.getElementById('modalTitle');
+    if(modalTitle) modalTitle.innerText = "Applying for: " + uniName;
     
-    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
-    document.getElementById('applyModal').style.display = 'flex';
-    
-    // সাবমিট বাটন এনাবল করা
-    const btn = document.getElementById('submitBtn');
-    if(btn) {
-        btn.disabled = false;
-        btn.innerText = "Submit Application";
-    }
+    const applyModal = document.getElementById('applyModal');
+    if(applyModal) applyModal.style.display = 'flex';
+
+    console.log("Manual Mode Activated:", uniName, "Comm:", fixedAdminCommission);
 };
