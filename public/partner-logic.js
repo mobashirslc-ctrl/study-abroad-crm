@@ -37,7 +37,7 @@ window.onload = async () => {
     await searchUni(); 
 };
 
-// --- 2. DASHBOARD & WALLET SYNC (Updated Logic) ---
+// --- 2. DASHBOARD & WALLET SYNC ---
 async function initRealtimeData() {
     if (!partnerEmail) return;
     try {
@@ -60,7 +60,6 @@ async function initRealtimeData() {
             const status = (data.status || 'PENDING').toUpperCase();
             const comm = Number(data.commissionBDT || 0);
 
-            // লজিক: স্টাফ ভেরিফাই করলে বা ফাইল সাবমিট অবস্থায় থাকলে পেন্ডিং বক্সে যোগ হবে
             if(['DOCS_VERIFIED', 'PROCESSING', 'SUBMITTED', 'PENDING'].includes(status)) {
                 pendingTotal += comm;
             }
@@ -75,7 +74,6 @@ async function initRealtimeData() {
                 </tr>`;
         });
 
-        // UI আপডেট
         const setEl = (id, val) => {
             const el = document.getElementById(id);
             if(el) el.innerText = val;
@@ -83,12 +81,11 @@ async function initRealtimeData() {
 
         setEl('topPending', `৳${pendingTotal.toLocaleString()}`);
         setEl('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setEl('topPendingE', `৳${pendingTotal.toLocaleString()}`); // Earnings ট্যাবের জন্য
+        setEl('topPendingE', `৳${pendingTotal.toLocaleString()}`);
         setEl('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`);
         setEl('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         setEl('totalStudents', myApps.length);
 
-        // টেবিল আপডেট
         if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
         if(document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
         if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No history found</td></tr>";
@@ -98,10 +95,10 @@ async function initRealtimeData() {
             withdrawInput.disabled = (currentAvailableBalance < 500);
             withdrawInput.placeholder = currentAvailableBalance >= 500 ? "Max: " + currentAvailableBalance : "Min 500 BDT";
         }
-
     } catch (e) { console.error("Sync Error:", e); }
 }
-// --- 3. MEGA SEARCH & ELIGIBILITY (Unlock Wall) ---
+
+// --- 3. MEGA SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
@@ -170,12 +167,11 @@ async function submitApplication() {
     try {
         btn.innerText = "Processing..."; btn.disabled = true;
         
-        // ফাইল আপলোড লজিক
         const docs = await Promise.all([
-            uploadFile(document.getElementById('file1').files[0]),
-            uploadFile(document.getElementById('file2').files[0]),
-            uploadFile(document.getElementById('file3').files[0]),
-            uploadFile(document.getElementById('file4').files[0])
+            uploadFile(document.getElementById('file1')?.files[0]),
+            uploadFile(document.getElementById('file2')?.files[0]),
+            uploadFile(document.getElementById('file3')?.files[0]),
+            uploadFile(document.getElementById('file4')?.files[0])
         ]);
 
         const res = await fetch('/api/applications', {
@@ -184,7 +180,7 @@ async function submitApplication() {
             body: JSON.stringify({
                 studentName: sName, 
                 passportNo: sPass,
-                university: selectedUniversity, 
+                university: selectedUniversity || "Direct Entry", 
                 partnerEmail: partnerEmail,
                 commissionBDT: currentUniCommission,
                 status: 'PENDING', 
@@ -194,30 +190,29 @@ async function submitApplication() {
         });
 
         if(res.ok) { 
-            alert("Submitted Successfully!");
-            if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'none'; 
-            
-            // স্লিপ দেখানো
+            alert("Submission Successful!");
+            document.getElementById('applyModal').style.display = 'none'; 
             showAdmissionSlip({
                 studentName: sName,
                 passportNo: sPass,
                 university: selectedUniversity || "Direct Entry"
             });
+        } else {
+            alert("Server Error! Try again.");
         }
     } catch (e) { 
-        console.error(e);
-        alert("Submission failed"); 
+        alert("Submission failed. Check connection."); 
     } finally { 
         btn.disabled = false; 
         btn.innerText = "Submit Application"; 
     }
 }
-// --- 5. WITHDRAWAL & PDF ---
+
+// --- 5. WITHDRAWAL & SLIP FUNCTIONS ---
 async function requestWithdraw() {
     const amount = Number(document.getElementById('withdrawAmount').value);
     if (amount < 500) return alert("Minimum 500 BDT required");
     if (amount > currentAvailableBalance) return alert("Insufficient balance");
-
     if(!confirm(`Withdraw ৳${amount}?`)) return;
 
     try {
@@ -230,28 +225,17 @@ async function requestWithdraw() {
     } catch (e) { alert("Error"); }
 }
 
-async function downloadAssessmentPDF(id) {
-    // আপনার আগের PDF লজিক এখানে হুবহু থাকবে...
-    alert("Generating PDF Report...");
-    // (আগের কোডের PDF অংশটি এখানে কপি করে দিতে পারেন)
-}
-
 function openApplyModal(name, comm) {
     selectedUniversity = name;
     currentUniCommission = comm;
     document.getElementById('modalTitle').innerText = name;
     document.getElementById('applyModal').style.display = 'flex';
 }
-// ১. প্রিন্ট ফাংশন
-function printSlip() {
-    window.print();
-}
 
-// ২. স্লিপ দেখানোর মেইন ফাংশন
 function showAdmissionSlip(appData) {
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const user = JSON.parse(localStorage.getItem('user') || "{}");
     
-    // স্টুডেন্ট ইনফো
     document.getElementById('slipStudentNameTop').innerText = appData.studentName;
     document.getElementById('slipStudentName').innerText = appData.studentName;
     document.getElementById('slipPassport').innerText = appData.passportNo;
@@ -260,61 +244,36 @@ function showAdmissionSlip(appData) {
     document.getElementById('slipRef').innerText = "SCC-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
     document.getElementById('slipDate').innerText = today;
 
-    // পার্টনার ইনফো (LocalStorage থেকে নেওয়া)
-    const user = JSON.parse(localStorage.getItem('user') || "{}");
     document.getElementById('slipPartnerOrg').innerText = user.orgName || "SCC Partner";
     document.getElementById('slipPartnerName').innerText = user.fullName || "Authorized Agent";
     document.getElementById('slipPartnerPhone').innerText = user.contact || "N/A";
     document.getElementById('slipPartnerEmail').innerText = user.email || "N/A";
 
-    // QR Code জেনারেট (আপনার লিঙ্ক দিয়ে)
     const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${appData.passportNo}`;
     document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
 
-    // মোডাল দেখানো
     document.getElementById('slipModal').style.display = 'flex';
 }
 
-// ৩. সাবমিট ফাংশন আপডেট (যাতে সফল হলে স্লিপ আসে)
-async function submitApplication() {
-    // ... আপনার আগের আপলোড লজিক ...
-    // সফল হওয়ার পর:
-    if(res.ok) { 
-        const result = await res.json();
-        alert("Submission Successful!");
-        document.getElementById('applyModal').style.display = 'none'; // ফরম মোডাল বন্ধ
-        showAdmissionSlip({
-            studentName: sName,
-            passportNo: sPass,
-            university: selectedUniversity
-        });
-    }
-}
-
+// --- 6. UTILS & EXPOSE ---
+function printSlip() { window.print(); }
 function logout() { localStorage.clear(); window.location.href='login.html'; }
 
-// Global Expose
 window.searchUni = searchUni;
 window.submitApplication = submitApplication;
 window.requestWithdraw = requestWithdraw;
 window.openApplyModal = openApplyModal;
-window.downloadAssessmentPDF = downloadAssessmentPDF;
+window.printSlip = printSlip;
+window.closeSlip = () => { 
+    document.getElementById('slipModal').style.display = 'none';
+    location.reload(); 
+};
 window.openManualApply = async () => {
     const uniName = prompt("Enter University Name:");
     if (!uniName) return;
-    
     const comm = prompt("Enter Expected Commission (BDT):", "0");
-    
     selectedUniversity = uniName;
     currentUniCommission = Number(comm) || 0;
-    
     if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Manual: " + uniName;
     if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'flex';
-};
-// একদম নিচে এগুলো যোগ করুন
-window.printSlip = printSlip;
-window.showAdmissionSlip = showAdmissionSlip;
-window.closeSlip = () => { 
-    document.getElementById('slipModal').style.display = 'none';
-    location.reload(); // স্লিপ বন্ধ করলে পেজ রিফ্রেশ হবে যাতে ডেটা আপডেট হয়
 };
