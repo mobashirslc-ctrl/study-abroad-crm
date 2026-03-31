@@ -77,27 +77,30 @@ window.fetchUniversitiesForPartner = async () => {
     } catch (e) { console.error("Fetch Error:", e); }
 };
 
-// --- 3. DASHBOARD REALTIME DATA ---
+// --- ৩. DASHBOARD REALTIME DATA (সংশোধিত ওয়ালেট লজিক) ---
 window.initRealtimeData = async function() {
     if (!partnerEmail) return;
     try {
-        // ১. সরাসরি এপ্লিকেশন এপিআই থেকে ডাটা আনা (যাতে সব ডাটা পাওয়া যায়)
-        const response = await fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`);
-        if (!response.ok) throw new Error('Applications fetch failed');
-        const allApps = await response.json();
+        // ১. একসাথে ইউজার প্রোফাইল (ব্যালেন্সের জন্য) এবং এপ্লিকেশন (পেন্ডিংয়ের জন্য) কল করা
+        const [userRes, appRes] = await Promise.all([
+            fetch(`/api/admin/users`), // সব ইউজার আনার এপিআই
+            fetch(`/api/applications?partnerEmail=${encodeURIComponent(partnerEmail)}`)
+        ]);
 
-        // ২. আপনার ইমেইল অনুযায়ী ফিল্টার করা (নিশ্চিত হওয়ার জন্য)
-        const myApps = allApps.filter(app => (app.partnerEmail || "").toLowerCase().trim() === partnerEmail);
+        const allUsers = await userRes.json();
+        const me = allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail);
+        
+        // ফাইনাল ব্যালেন্স (এডমিন যা সেট করেছে)
+        currentAvailableBalance = me ? (me.walletBalance || 0) : 0;
 
-        // ৩. স্ট্যাটাস অনুযায়ী ক্যালকুলেশন
-        let pendingBDT = 0;
-        let totalStudents = myApps.length;
+        const myApps = await appRes.json();
+        let pendingTotal = 0;
 
         const tableRows = myApps.map(app => {
             const status = (app.status || 'PENDING').toUpperCase();
-            // রিজেক্টেড ছাড়া বাকি সব কমিশন যোগ হবে
-            if(status !== 'REJECTED') {
-                pendingBDT += Number(app.commissionBDT || 0);
+            // পেন্ডিং বক্সের জন্য কমিশন ক্যালকুলেশন
+            if(status !== 'REJECTED' && status !== 'CANCELLED') {
+                pendingTotal += Number(app.commissionBDT || 0);
             }
 
             return `
@@ -110,14 +113,14 @@ window.initRealtimeData = async function() {
                 </tr>`;
         }).join('');
 
-        // ৪. ড্যাশবোর্ড কার্ড আপডেট
+        // ২. ড্যাশবোর্ড কার্ড আপডেট
         const setTxt = (id, val) => { if (document.getElementById(id)) document.getElementById(id).innerText = val; };
         
-        setTxt('topPending', `৳${pendingBDT.toLocaleString()}`);
-        setTxt('totalStudents', totalStudents);
-        // ওয়ালেট ব্যালেন্সের জন্য আলাদা এপিআই কল না থাকলে স্ট্যাটাস থেকে নিতে হবে
-        
-        // ৫. টেবিল আপডেট (দুইটি টেবিলেই ডাটা পুশ করা)
+        setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); // পেন্ডিং বক্স
+        setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); // ফাইনাল ওয়ালেট বক্স
+        setTxt('totalStudents', myApps.length);
+
+        // ৩. টেবিল আপডেট
         if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
         if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
 
@@ -125,7 +128,7 @@ window.initRealtimeData = async function() {
         console.error("Dashboard Sync Error:", error); 
     }
 };
-// --- 4. SEARCH & ELIGIBILITY ---
+// --- ৪. SEARCH & ELIGIBILITY (সংশোধিত) ---
 async function searchUni() {
     const countryInput = document.getElementById('fCountry').value.trim().toLowerCase();
     const sGpa = parseFloat(document.getElementById('userGPA').value) || 0;
@@ -147,8 +150,11 @@ async function searchUni() {
 
         const currentYear = new Date().getFullYear();
         container.innerHTML = filteredUnis.map(u => {
+            // Gap Calculation
             let studentGap = sYearInput > 1900 ? currentYear - sYearInput : sYearInput;
             const gapLimit = parseInt(u.gapAllowed) || 0;
+            
+            // Eligibility Condition
             const isEligible = sGpa >= (u.minGPA || 0) && sScore >= (u.ieltsReq || 0) && studentGap <= gapLimit;
 
             const tuition = parseFloat(u.totalTuitionFee) || 0;
@@ -161,10 +167,12 @@ async function searchUni() {
                 <td><b class="text-gold">${u.universityName}</b><br><small>${u.location}</small></td>
                 <td>GPA: ${u.minGPA}+ | IELTS: ${u.ieltsReq}+<br>Gap: Max ${gapLimit}y</td>
                 <td>Tuition: ${currency} ${tuition.toLocaleString()}<br>Living: ${u.livingCost || 'N/A'}</td>
-                <td>Profit: <b>৳${profit.toLocaleString()}</b><br>Visa: ${u.visaRate || '85'}%</td>
+                <td>Profit: <b>৳${profit.toLocaleString()}</b></td>
                 <td>
-                    <button class="btn-gold" style="opacity:${isEligible ? 1 : 0.5}" ${!isEligible ? 'disabled' : ''} 
-                        onclick="openApplyModal('${u.universityName}', '${u._id}')">
+                    <button class="btn-gold" 
+                        style="opacity:${isEligible ? 1 : 0.5}; cursor:${isEligible ? 'pointer' : 'not-allowed'}" 
+                        ${!isEligible ? 'disabled' : ''} 
+                        onclick="window.openApplyModal('${u.universityName}', '${u._id}')">
                         ${isEligible ? 'Apply' : 'Ineligible'}
                     </button>
                 </td>
@@ -172,7 +180,6 @@ async function searchUni() {
         }).join('');
     } catch (e) { console.error("Search Error:", e); }
 }
-
 // --- 5. MODAL & SLIP ACTIONS ---
 window.openApplyModal = (uniName, uniId) => {
     window.currentSelectedUniId = uniId;
