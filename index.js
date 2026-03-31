@@ -384,16 +384,16 @@ app.patch('/api/user/profile', async (req, res) => {
 });
 
 // ২. সিঙ্গেল অ্যাপ্লিকেশন ডিটেইলস (আইডি চেকসহ)
-app.get('/api/applications/:id', async (req, res) => {
-    await connectDB();
+app.post('/api/applications', async (req, res) => {
     try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ error: "Invalid ID Format" });
-        }
-        const appData = await Application.findById(req.params.id);
-        if (!appData) return res.status(404).json({ error: "No student found with this ID" });
-        res.json(appData);
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        await connectDB();
+        const newApp = new Application(req.body); // আপনার Schema অনুযায়ী
+        await newApp.save();
+        res.status(201).json({ success: true, data: newApp });
+    } catch (e) {
+        console.error("Backend Save Error:", e);
+        res.status(400).json({ success: false, message: e.message });
+    }
 });
 
 // ৩. অ্যাপ্লিকেশন লকিং রুট (সংশোধিত)

@@ -237,52 +237,60 @@ window.uploadToCloudinary = async (file) => {
 };
 
 // --- 6. SUBMISSION ---
+// --- 6. SUBMISSION (FIXED) ---
 window.submitApplication = async () => {
     const btn = document.getElementById('submitBtn');
     const sName = document.getElementById('sName').value;
     const sPassport = document.getElementById('sPassport').value;
     const modalTitle = document.getElementById('modalTitle');
 
-    if(!sName || !sPassport) return alert("Required fields missing!");
+    if(!sName || !sPassport) return alert("Required: Student Name & Passport No");
 
     btn.disabled = true; 
-    btn.innerText = "Uploading Files...";
-
-    const uploadedUrls = [];
-    // HTML-এ ইনপুটগুলোর আইডি file1, file2, file3, file4 হতে হবে
-    for (let i = 1; i <= 4; i++) {
-        const fileInput = document.getElementById('file' + i);
-        if (fileInput && fileInput.files[0]) {
-            const url = await window.uploadToCloudinary(fileInput.files[0]);
-            if (url) uploadedUrls.push(url);
-        }
-    }
-
-    const payload = {
-        studentName: sName,
-        passportNo: sPassport,
-        university: modalTitle ? modalTitle.innerText.replace("Applying for: ", "") : "Unknown",
-        universityId: window.currentSelectedUniId,
-        partnerEmail: partnerEmail,
-        documents: uploadedUrls,
-        status: "PENDING",
-        timestamp: new Date().toISOString()
-    };
+    btn.innerText = "Processing...";
 
     try {
-        const res = await fetch('/api/applications', { 
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-});
+        // ১. ফাইল আপলোড লজিক
+        const uploadedUrls = [];
+        for (let i = 1; i <= 4; i++) {
+            const fileInput = document.getElementById('file' + i);
+            if (fileInput && fileInput.files[0]) {
+                const url = await window.uploadToCloudinary(fileInput.files[0]);
+                if (url) uploadedUrls.push(url);
+            }
+        }
+
+        // ২. ডাটা তৈরি (Payload)
+        const payload = {
+            studentName: sName,
+            passportNo: sPassport,
+            university: modalTitle ? modalTitle.innerText.replace("Applying for: ", "").trim() : "Unknown University",
+            universityId: window.currentSelectedUniId || "", // Global variable থেকে আইডি নেওয়া
+            partnerEmail: partnerEmail,
+            documents: uploadedUrls,
+            status: "PENDING",
+            commissionBDT: 0, // ডিফল্ট ভ্যালু
+            timestamp: new Date().toISOString()
+        };
+
+        // ৩. এপিআই কল (Full Path নিশ্চিত করা)
+        const res = await fetch('/api/applications', {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
         if (res.ok) { 
-            alert("Submitted Successfully!"); 
+            alert("Application Submitted Successfully!"); 
             location.reload(); 
         } else {
-            alert("Server Error! Check required fields.");
+            alert("Server Error: " + (result.message || "Required fields missing"));
         }
     } catch (e) { 
-        alert("Submission Failed! Check connection."); 
+        console.error("Submit Error:", e);
+        alert("Network Error! Check your internet or API route."); 
     } finally { 
         btn.disabled = false; 
         btn.innerText = "Submit File"; 
