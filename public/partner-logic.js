@@ -58,21 +58,20 @@ async function initRealtimeData() {
 
         myApps.forEach(data => {
             const status = (data.status || 'PENDING').toUpperCase();
-            const comm = Number(data.commissionBDT || 0);
-
-            if(['DOCS_VERIFIED', 'PROCESSING', 'SUBMITTED', 'PENDING'].includes(status)) {
-                pendingTotal += comm;
-            }
-
-            tableHtml += `
-                <tr>
-                    <td><b>${data.studentName}</b></td>
-                    <td>${data.passportNo}</td>
-                    <td>${data.university || 'Direct Entry'}</td>
-                    <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
-                    <td>৳${comm.toLocaleString()}</td>
-                </tr>`;
-        });
+    
+    tableHtml += `
+        <tr>
+            <td><b>${data.studentName}</b></td>
+            <td>${data.passportNo}</td>
+            <td>${data.university || 'Direct Entry'}</td>
+            <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
+            <td>
+                <button class="btn-slip-small" onclick='showAdmissionSlip(${JSON.stringify(data)})'>
+                    <i class="fas fa-file-invoice"></i> View Slip
+                </button>
+            </td>
+        </tr>`;
+});
 
         const setEl = (id, val) => {
             const el = document.getElementById(id);
