@@ -86,14 +86,14 @@ window.initRealtimeData = async function() {
         setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         
         // ২. ইনপুট ফিল্ড এবং বাটন এনাবল করা
-        const withdrawInput = document.getElementById('withdrawAmount');
+       const withdrawInput = document.getElementById('withdrawAmount');
         if(withdrawInput) {
             if(currentAvailableBalance > 0) {
                 withdrawInput.disabled = false;
                 withdrawInput.max = currentAvailableBalance;
                 withdrawInput.placeholder = "Max: " + currentAvailableBalance;
             } else {
-                withdrawInput.disabled = true;git commit -m "Fix: Withdraw balance sync and compliance review modal"
+                withdrawInput.disabled = true;
                 withdrawInput.placeholder = "Insufficient Balance";
             }
         }
