@@ -48,6 +48,8 @@ window.initRealtimeData = async function() {
 
         const allUsers = await userRes.json();
         const me = Array.isArray(allUsers) ? allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail) : null;
+        
+        // এখানে ব্যালেন্স সেট হচ্ছে
         currentAvailableBalance = me ? (Number(me.walletBalance) || 0) : 0;
 
         const myApps = await appRes.json();
@@ -69,6 +71,7 @@ window.initRealtimeData = async function() {
                 </tr>`;
         }).join('');
 
+        // --- UI তে ডাটা বসানো শুরু ---
         const setTxt = (id, val) => { 
             const el = document.getElementById(id);
             if (el) el.innerText = val; 
@@ -77,14 +80,30 @@ window.initRealtimeData = async function() {
         setTxt('topPending', `৳${pendingTotal.toLocaleString()}`); 
         setTxt('topFinal', `৳${currentAvailableBalance.toLocaleString()}`); 
         setTxt('totalStudents', safeApps.length);
+
+        // --- উইথড্র সেকশন আপডেট (এটিই আপনার মেইন প্রবলেম ছিল) ---
+        // ১. উইথড্র বক্সের টেক্সট আপডেট
         setTxt('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
+        
+        // ২. ইনপুট ফিল্ড এবং বাটন এনাবল করা
+        const withdrawInput = document.getElementById('withdrawAmount');
+        if(withdrawInput) {
+            if(currentAvailableBalance > 0) {
+                withdrawInput.disabled = false;
+                withdrawInput.max = currentAvailableBalance;
+                withdrawInput.placeholder = "Max: " + currentAvailableBalance;
+            } else {
+                withdrawInput.disabled = true;git commit -m "Fix: Withdraw balance sync and compliance review modal"
+                withdrawInput.placeholder = "Insufficient Balance";
+            }
+        }
 
-        const qBody = document.getElementById('quickStatsBody');
-        const fBody = document.getElementById('fullTrackingBody');
-        if (qBody) qBody.innerHTML = tableRows || "<tr><td colspan='5'>No student records.</td></tr>";
-        if (fBody) fBody.innerHTML = tableRows || "<tr><td colspan='5'>No student records.</td></tr>";
+        if (document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableRows;
+        if (document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableRows;
 
-    } catch (error) { console.error("Dashboard Sync Error:", error); }
+    } catch (error) { 
+        console.error("Dashboard Sync Error:", error); 
+    }
 };
 
 // --- 3. UNIVERSITY LIST & SEARCH ---
@@ -220,18 +239,47 @@ window.submitApplication = async () => {
 
 // --- 6. WALLET & WITHDRAW ---
 window.requestWithdraw = async () => {
-    const amount = Number(document.getElementById('withdrawAmount').value);
-    if(!amount || amount <= 0) return alert("Invalid amount!");
-    if(amount > currentAvailableBalance) return alert("Insufficient Balance!");
+    // ১. ইনপুট থেকে অ্যামাউন্ট নেওয়া
+    const amountInput = document.getElementById('withdrawAmount');
+    const amount = Number(amountInput.value);
+    
+    // ২. ভ্যালিডেশন চেক
+    if (!amount || amount <= 0) {
+        return alert("Please enter a valid amount!");
+    }
+
+    // ৩. ব্যালেন্স চেক (নিশ্চিত করা যে currentAvailableBalance আপডেট আছে)
+    if (amount > currentAvailableBalance) {
+        return alert(`Insufficient Balance! Your current balance is ৳${currentAvailableBalance.toLocaleString()}`);
+    }
+
+    // ৪. কনফার্মেশন (ঐচ্ছিক কিন্তু নিরাপদ)
+    if (!confirm(`Are you sure you want to withdraw ৳${amount.toLocaleString()}?`)) return;
 
     try {
         const res = await fetch('/api/wallet/transactions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ partnerEmail, amount, type: 'WITHDRAW', status: 'PENDING' })
+            body: JSON.stringify({ 
+                partnerEmail: partnerEmail, 
+                amount: amount, 
+                type: 'WITHDRAW', 
+                status: 'PENDING',
+                timestamp: new Date().toISOString() // টাইমস্ট্যাম্প যোগ করা ভালো
+            })
         });
-        if(res.ok) { alert("Withdrawal request sent!"); location.reload(); }
-    } catch (e) { alert("Withdrawal failed!"); }
+
+        if (res.ok) { 
+            alert("Withdrawal request sent successfully! Waiting for Admin approval."); 
+            location.reload(); 
+        } else {
+            const errorData = await res.json();
+            alert("Failed: " + (errorData.message || "Server Error"));
+        }
+    } catch (e) { 
+        console.error("Withdraw Error:", e);
+        alert("Withdrawal failed! Please check your internet connection."); 
+    }
 };
 
 window.logout = () => { localStorage.clear(); window.location.href = 'login.html'; };
