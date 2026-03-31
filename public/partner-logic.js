@@ -237,60 +237,60 @@ window.uploadToCloudinary = async (file) => {
 };
 
 // --- 6. SUBMISSION ---
-// --- 6. SUBMISSION (FIXED) ---
+// --- 6. SUBMISSION (Old Format Restored for Compliance) ---
 window.submitApplication = async () => {
     const btn = document.getElementById('submitBtn');
     const sName = document.getElementById('sName').value;
     const sPassport = document.getElementById('sPassport').value;
-    const modalTitle = document.getElementById('modalTitle');
 
     if(!sName || !sPassport) return alert("Required: Student Name & Passport No");
 
     btn.disabled = true; 
-    btn.innerText = "Processing...";
+    btn.innerText = "Uploading Files...";
 
     try {
-        // ১. ফাইল আপলোড লজিক
-        const uploadedUrls = [];
+        const urls = [];
         for (let i = 1; i <= 4; i++) {
             const fileInput = document.getElementById('file' + i);
             if (fileInput && fileInput.files[0]) {
                 const url = await window.uploadToCloudinary(fileInput.files[0]);
-                if (url) uploadedUrls.push(url);
+                urls.push(url || ""); // ফাইল না থাকলে খালি স্ট্রিং
+            } else {
+                urls.push(""); 
             }
         }
 
-        // ২. ডাটা তৈরি (Payload)
+        // --- পুরনো ফরম্যাটে পেলোড তৈরি ---
         const payload = {
             studentName: sName,
             passportNo: sPassport,
-            university: modalTitle ? modalTitle.innerText.replace("Applying for: ", "").trim() : "Unknown University",
-            universityId: window.currentSelectedUniId || "", // Global variable থেকে আইডি নেওয়া
+            university: document.getElementById('modalTitle').innerText.replace("Applying for: ", ""),
+            universityId: window.currentSelectedUniId,
             partnerEmail: partnerEmail,
-            documents: uploadedUrls,
+            // কমপ্লায়েন্স এই নামগুলো চেনে, তাই এভাবেই পাঠাতে হবে:
+            pdf1: urls[0] || "",
+            pdf2: urls[1] || "",
+            pdf3: urls[2] || "",
+            pdf4: urls[3] || "",
+            commissionBDT: 0, // ডিফল্ট কমিশন ০
             status: "PENDING",
-            commissionBDT: 0, // ডিফল্ট ভ্যালু
             timestamp: new Date().toISOString()
         };
 
-        // ৩. এপিআই কল (Full Path নিশ্চিত করা)
         const res = await fetch('/api/applications', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        const result = await res.json();
-
         if (res.ok) { 
-            alert("Application Submitted Successfully!"); 
+            alert("Submitted Successfully!"); 
             location.reload(); 
         } else {
-            alert("Server Error: " + (result.message || "Required fields missing"));
+            alert("Submission failed at server.");
         }
     } catch (e) { 
-        console.error("Submit Error:", e);
-        alert("Network Error! Check your internet or API route."); 
+        alert("Error during submission!"); 
     } finally { 
         btn.disabled = false; 
         btn.innerText = "Submit File"; 
