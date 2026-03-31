@@ -169,6 +169,8 @@ async function submitApplication() {
 
     try {
         btn.innerText = "Processing..."; btn.disabled = true;
+        
+        // ফাইল আপলোড লজিক
         const docs = await Promise.all([
             uploadFile(document.getElementById('file1').files[0]),
             uploadFile(document.getElementById('file2').files[0]),
@@ -176,23 +178,40 @@ async function submitApplication() {
             uploadFile(document.getElementById('file4').files[0])
         ]);
 
-        const res = await fetch('/api/applications', { // Updated endpoint to match your B2B route
+        const res = await fetch('/api/applications', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                studentName: sName, passportNo: sPass,
-                university: selectedUniversity, partnerEmail: partnerEmail,
+                studentName: sName, 
+                passportNo: sPass,
+                university: selectedUniversity, 
+                partnerEmail: partnerEmail,
                 commissionBDT: currentUniCommission,
-                status: 'PENDING', timestamp: new Date().toISOString(),
+                status: 'PENDING', 
+                timestamp: new Date().toISOString(),
                 pdf1: docs[0], pdf2: docs[1], pdf3: docs[2], pdf4: docs[3]
             })
         });
 
-        if(res.ok) { alert("Submitted Successfully!"); location.reload(); }
-    } catch (e) { alert("Submission failed"); } 
-    finally { btn.disabled = false; btn.innerText = "Submit Application"; }
+        if(res.ok) { 
+            alert("Submitted Successfully!");
+            if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'none'; 
+            
+            // স্লিপ দেখানো
+            showAdmissionSlip({
+                studentName: sName,
+                passportNo: sPass,
+                university: selectedUniversity || "Direct Entry"
+            });
+        }
+    } catch (e) { 
+        console.error(e);
+        alert("Submission failed"); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerText = "Submit Application"; 
+    }
 }
-
 // --- 5. WITHDRAWAL & PDF ---
 async function requestWithdraw() {
     const amount = Number(document.getElementById('withdrawAmount').value);
@@ -223,6 +242,54 @@ function openApplyModal(name, comm) {
     document.getElementById('modalTitle').innerText = name;
     document.getElementById('applyModal').style.display = 'flex';
 }
+// ১. প্রিন্ট ফাংশন
+function printSlip() {
+    window.print();
+}
+
+// ২. স্লিপ দেখানোর মেইন ফাংশন
+function showAdmissionSlip(appData) {
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    
+    // স্টুডেন্ট ইনফো
+    document.getElementById('slipStudentNameTop').innerText = appData.studentName;
+    document.getElementById('slipStudentName').innerText = appData.studentName;
+    document.getElementById('slipPassport').innerText = appData.passportNo;
+    document.getElementById('slipDest').innerText = appData.university || "N/A";
+    document.getElementById('slipCourse').innerText = "International Admissions";
+    document.getElementById('slipRef').innerText = "SCC-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
+    document.getElementById('slipDate').innerText = today;
+
+    // পার্টনার ইনফো (LocalStorage থেকে নেওয়া)
+    const user = JSON.parse(localStorage.getItem('user') || "{}");
+    document.getElementById('slipPartnerOrg').innerText = user.orgName || "SCC Partner";
+    document.getElementById('slipPartnerName').innerText = user.fullName || "Authorized Agent";
+    document.getElementById('slipPartnerPhone').innerText = user.contact || "N/A";
+    document.getElementById('slipPartnerEmail').innerText = user.email || "N/A";
+
+    // QR Code জেনারেট (আপনার লিঙ্ক দিয়ে)
+    const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${appData.passportNo}`;
+    document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
+
+    // মোডাল দেখানো
+    document.getElementById('slipModal').style.display = 'flex';
+}
+
+// ৩. সাবমিট ফাংশন আপডেট (যাতে সফল হলে স্লিপ আসে)
+async function submitApplication() {
+    // ... আপনার আগের আপলোড লজিক ...
+    // সফল হওয়ার পর:
+    if(res.ok) { 
+        const result = await res.json();
+        alert("Submission Successful!");
+        document.getElementById('applyModal').style.display = 'none'; // ফরম মোডাল বন্ধ
+        showAdmissionSlip({
+            studentName: sName,
+            passportNo: sPass,
+            university: selectedUniversity
+        });
+    }
+}
 
 function logout() { localStorage.clear(); window.location.href='login.html'; }
 
@@ -243,4 +310,11 @@ window.openManualApply = async () => {
     
     if(document.getElementById('modalTitle')) document.getElementById('modalTitle').innerText = "Manual: " + uniName;
     if(document.getElementById('applyModal')) document.getElementById('applyModal').style.display = 'flex';
+};
+// একদম নিচে এগুলো যোগ করুন
+window.printSlip = printSlip;
+window.showAdmissionSlip = showAdmissionSlip;
+window.closeSlip = () => { 
+    document.getElementById('slipModal').style.display = 'none';
+    location.reload(); // স্লিপ বন্ধ করলে পেজ রিফ্রেশ হবে যাতে ডেটা আপডেট হয়
 };
