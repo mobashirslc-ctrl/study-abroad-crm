@@ -402,6 +402,30 @@
     window.onload = function() {
         showTab('dashboard');
     };
+<script>
+    // এই ফাংশনটি আপনার existing searchUni কে আপডেট না করে নতুন সুবিধা যোগ করবে
+    function extraFilters() {
+        const grid = document.querySelector('#universities .card-grid');
+        if (grid && !document.getElementById('userLevel')) {
+            const levelCard = document.createElement('div');
+            levelCard.className = 'card';
+            levelCard.style.textAlign = 'left';
+            levelCard.style.padding = '15px';
+            levelCard.innerHTML = `
+                <label>Study Level</label>
+                <select id="userLevel" onchange="searchUni()">
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="Diploma">Diploma</option>
+                </select>
+            `;
+            grid.appendChild(levelCard);
+        }
+    }
+    // পেজ লোড হলে ফিল্ডটি তৈরি হবে
+    window.addEventListener('DOMContentLoaded', extraFilters);
 </script>
+
+    
 </body>
 </html>
