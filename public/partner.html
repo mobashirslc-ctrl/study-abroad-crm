@@ -426,6 +426,59 @@
     window.addEventListener('DOMContentLoaded', extraFilters);
 </script>
 
+    <script src="partner-logic.js"></script>
+
+<script>
+    // Sidebar switching logic - strictly tied to your IDs
+    window.showTab = function(tabId) {
+        console.log("Switching to: " + tabId);
+
+        // 1. Sob tab content hide kora
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(content => {
+            content.style.display = 'none';
+        });
+
+        // 2. Sob nav-item theke active class remove kora
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // 3. Target tab show kora
+        const target = document.getElementById(tabId);
+        if (target) {
+            target.style.display = 'block';
+        }
+
+        // 4. Sidebar menu active kora (menu-dashboard, menu-universities etc.)
+        const activeMenu = document.getElementById('menu-' + tabId);
+        if (activeMenu) {
+            activeMenu.classList.add('active');
+        }
+
+        // 5. Data Refresh (Dashboard ba Tracking e gele)
+        if ((tabId === 'dashboard' || tabId === 'tracking') && typeof initRealtimeData === 'function') {
+            initRealtimeData();
+        }
+    };
+
+    // Modal & Utility Functions
+    window.closeModal = () => document.getElementById('applyModal').style.display = 'none';
+    window.closeSlip = () => document.getElementById('slipModal').style.display = 'none';
     
+    window.logout = () => {
+        if(confirm("Logout from SCC Portal?")) {
+            localStorage.clear();
+            window.location.href = 'auth.html';
+        }
+    };
+
+    // Page load hole default dashboard dekhabe
+    window.addEventListener('DOMContentLoaded', () => {
+        showTab('dashboard');
+    });
+</script>
+
 </body>
 </html>
