@@ -99,14 +99,21 @@
     <div class="input-group">
         <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
         <input type="text" id="uProcTime" placeholder="Processing Time">
-        <select id="uCurrency" style="background: #252545; color: var(--gold); font-weight: bold;">
-            <option value="USD">USD ($)</option>
-            <option value="AUD">AUD (A$)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="CAD">CAD (C$)</option>
-            <option value="GBP">GBP (£)</option>
-        </select>
-    </div>
+    <div class="input-group">
+    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee" oninput="updateCommPreview()">
+    <select id="uCurrency" onchange="updateCommPreview()">
+        <option value="USD">USD ($)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="AUD">AUD (A$)</option>
+        <option value="CAD">CAD (C$)</option>
+    </select>
+    <input type="number" id="uCommPercent" placeholder="Partner Comm %" oninput="updateCommPreview()">
+</div>
+<div style="margin-bottom: 15px;">
+    <small style="color: var(--gold);">Commission Preview: <b id="commPreview">0.00</b></small>
+</div>
+
 
     <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
         <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
