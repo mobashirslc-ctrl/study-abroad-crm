@@ -298,18 +298,32 @@ function showAdmissionSlip(appData) {
 }
 
 // --- 6. UTILS & EXPOSE ---
-function printSlip() { window.print(); }
-function logout() { localStorage.clear(); window.location.href='login.html'; }
-
-window.searchUni = searchUni;
-window.submitApplication = submitApplication;
-window.requestWithdraw = requestWithdraw;
-window.openApplyModal = openApplyModal;
+// আপনার জাভাস্ক্রিপ্ট ফাইলের printSlip ফাংশনটি এভাবে আপডেট করুন
+function printSlip() {
+    const slipContent = document.getElementById('slipModal').innerHTML; // স্লিপ মডালের ভেতরের অংশ
+    const printWindow = window.open('', '', 'height=800,width=1000');
+    
+    printWindow.document.write('<html><head><title>Print Admission Slip</title>');
+    // বর্তমান পেজের সব স্টাইলশিট কপি করা যাতে প্রিন্ট ভিউ সুন্দর থাকে
+    const styles = document.getElementsByTagName('style');
+    for (let style of styles) { printWindow.document.write(style.outerHTML); }
+    const links = document.getElementsByTagName('link');
+    for (let link of links) { if (link.rel === 'stylesheet') printWindow.document.write(link.outerHTML); }
+    
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">' + slipContent + '</div>');
+    printWindow.document.write('</body></html>');
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // অল্প সময় অপেক্ষা করা যাতে ইমেজ (QR Code/Logo) লোড হতে পারে
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 1000);
+}
 window.printSlip = printSlip;
-window.closeSlip = () => { 
-    document.getElementById('slipModal').style.display = 'none';
-    location.reload(); 
-};
 // ম্যানুয়াল অ্যাপ্লাই বাটন লজিক
 window.openManualApply = () => {
     // ইউজারের কাছ থেকে শুধু ইউনিভার্সিটির নাম নেওয়া (বাকিগুলো ফর্ম থেকে আসবে)
@@ -342,6 +356,5 @@ window.openManualApply = () => {
     document.getElementById('sPassport').value = "";
     document.getElementById('applyModal').style.display = 'flex';
 
-    // লগটি ফাংশনের ভেতরে নিয়ে আসা হয়েছে
-    console.log("Manual Mode Activated:", uniName, "Comm: 5000"); 
+    console.log("Manual Mode Activated:", uniName, "Comm: 5000");
 };

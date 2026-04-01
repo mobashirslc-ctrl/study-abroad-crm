@@ -135,7 +135,14 @@
         <div class="table-wrapper">
             <table id="fullTrackingTable">
                 <thead>
-                    <tr><th>Name</th><th>Passport</th><th>University</th><th>Status</th><th>Update Date</th><th>Slip</th></tr>
+                    <thead>
+    <tr>
+        <th>Student Name</th>
+        <th>Passport</th>
+        <th>University</th>
+        <th>Status</th>
+        <th>Action</th> </tr>
+</thead>
                 </thead>
                 <tbody id="fullTrackingBody"></tbody>
             </table>
@@ -277,12 +284,63 @@
 </div>
 
 <style>
-    @media print {
-        body * { visibility: hidden; }
-        #printableSlip, #printableSlip * { visibility: visible; }
-        #printableSlip { position: absolute; left: 0; top: 0; width: 100%; border: none; }
-        .no-print { display: none !important; }
+   /* --- PRINT SECTION CORRECTION --- */
+@media print {
+    /* ১. পুরো পেজের সব এলিমেন্ট হাইড করা */
+    body * {
+        visibility: hidden;
     }
+
+    /* ২. শুধুমাত্র স্লিপ মডাল এবং তার ভেতরের কন্টেন্ট ভিজিবল করা */
+    #slipModal, 
+    #slipModal * {
+        visibility: visible !important;
+    }
+
+    /* ৩. স্লিপ মডালটিকে প্রিন্ট পেজের শুরুতে পজিশন করা */
+    #slipModal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        display: block !important;
+    }
+
+    /* ৪. স্লিপের ভেতরের অপ্রয়োজনীয় বাটন হাইড করা */
+    .no-print, 
+    .btn-gold, 
+    .btn-pdf-small, 
+    .close-btn, 
+    button {
+        display: none !important;
+    }
+
+    /* ৫. প্রিন্ট লেআউট ক্লিন করা */
+    .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        background: white !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}
+
+/* এটি শুধুমাত্র প্রিন্ট কন্টেইনারের সাধারণ স্টাইল (প্রিন্ট মোডের বাইরেও কাজ করবে) */
+.print-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
 </style>
 
 <script src="partner-logic.js" defer></script>
