@@ -375,3 +375,84 @@ window.openManualApply = () => {
 
     console.log("Manual Mode Activated:", uniName, "Comm: 5000");
 };
+// --- আপনার বর্তমান কোডের শেষ অংশ ---
+window.openManualApply = () => {
+    const uniName = prompt("Enter University Name:", "Direct Admission");
+    if (!uniName) return;
+
+    selectedUniversity = uniName;
+    currentUniCommission = 5000; 
+
+    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
+    document.getElementById('sName').value = "";
+    document.getElementById('sPassport').value = "";
+    document.getElementById('applyModal').style.display = 'flex';
+
+    console.log("Manual Mode Activated:", uniName, "Comm: 5000");
+}; 
+
+// --- এখান থেকে নতুন কোডগুলো পেস্ট করুন (কোনো কিছু না মুছে) ---
+
+async function generateAssessmentPDF(uniData) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const partner = JSON.parse(localStorage.getItem('user')) || {};
+
+    // ১. লোগো যোগ করা (SCC লোগো বামে, পার্টনার লোগো ডানে)
+    try {
+        doc.addImage('logo.jpeg', 'JPEG', 10, 10, 25, 12); 
+    } catch(e) { console.log("SCC Logo not found"); }
+
+    if(partner.logoUrl) {
+        try {
+            doc.addImage(partner.logoUrl, 'PNG', 170, 10, 25, 12);
+        } catch(e) { console.log("Partner Logo not found"); }
+    }
+
+    doc.setDrawColor(241, 196, 15); // গোল্ডেন লাইন
+    doc.line(10, 25, 200, 25);
+
+    doc.setFontSize(16);
+    doc.setTextColor(26, 26, 46);
+    doc.text("Admission Eligibility Report", 70, 40);
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Agency: ${partner.orgName || 'Authorized Partner'}`, 10, 50);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 170, 50);
+
+    // ২. এসেসমেন্ট টেবিল
+    doc.autoTable({
+        startY: 60,
+        head: [['Category', 'Details']],
+        body: [
+            ['University', uniData.name || 'N/A'],
+            ['Country', uniData.country || 'N/A'],
+            ['Course Name', uniData.courseName || 'Selected Program'],
+            ['Tuition Fee', uniData.tuition || 'TBA'],
+            ['Scholarship', uniData.scholarship || 'As per Eligibility'],
+            ['Min Requirements', `GPA: ${uniData.minGPA} | IELTS/English: ${uniData.minScore}`]
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [43, 0, 84] } // SCC Dark Blue Theme
+    });
+
+    // ৩. ফুটার সেকশন
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text("Next Steps:", 10, finalY);
+    doc.setFontSize(9);
+    doc.text("1. Contact your agent for document submission.", 10, finalY + 7);
+    doc.text("2. Keep your Passport and Academic Transcripts ready.", 10, finalY + 12);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Disclaimer: This is a preliminary assessment based on provided data. Final decision rests with the university.", 10, 285);
+    
+    doc.save(`${uniData.name || 'Assessment'}_Report.pdf`);
+}
+
+function getCommissionText(amount) {
+    return amount ? `৳${amount}` : "Consult for Profit";
+}
