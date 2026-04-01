@@ -277,26 +277,43 @@ window.handleSlipClick = handleSlipClick; // গ্লোবাল এক্স�
 function showAdmissionSlip(appData) {
     const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     const user = JSON.parse(localStorage.getItem('user') || "{}");
-    
-    document.getElementById('slipStudentNameTop').innerText = appData.studentName;
-    document.getElementById('slipStudentName').innerText = appData.studentName;
-    document.getElementById('slipPassport').innerText = appData.passportNo;
-    document.getElementById('slipDest').innerText = appData.university || "N/A";
-    document.getElementById('slipCourse').innerText = "International Admissions";
-    document.getElementById('slipRef').innerText = "SCC-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
-    document.getElementById('slipDate').innerText = today;
 
-    document.getElementById('slipPartnerOrg').innerText = user.orgName || "SCC Partner";
-    document.getElementById('slipPartnerName').innerText = user.fullName || "Authorized Agent";
-    document.getElementById('slipPartnerPhone').innerText = user.contact || "N/A";
-    document.getElementById('slipPartnerEmail').innerText = user.email || "N/A";
+    // হেল্পার ফাংশন (যাতে আইডি না থাকলে এরর না দেয়)
+    const setIfExists = (id, val) => {
+        const el = document.getElementById(id);
+        if(el) el.innerText = val;
+    };
 
+    // ১. ড্যাশবোর্ড আপডেট
+    setIfExists('dashStudentName', appData.studentName);
+    setIfExists('dashPassport', appData.passportNo);
+    setIfExists('dashDest', appData.university || "Direct Entry");
+    setIfExists('dashCourse', "International Admissions");
+
+    // ২. মডাল/স্লিপ আপডেট
+    setIfExists('slipStudentNameTop', appData.studentName);
+    setIfExists('slipName', appData.studentName);
+    setIfExists('slipPassport', appData.passportNo);
+    setIfExists('slipDest', appData.university || "N/A");
+    setIfExists('slipCourse', "International Admissions");
+    setIfExists('slipRef', "SCC-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000));
+    setIfExists('slipDate', today);
+
+    // ৩. পার্টনার ডাটা
+    setIfExists('slipPartnerOrg', user.orgName || "SCC Partner");
+    setIfExists('slipPartnerName', user.fullName || "Authorized Agent");
+    setIfExists('slipPartnerPhone', user.contact || "N/A");
+    setIfExists('slipPartnerEmail', user.email || "N/A");
+
+    // ৪. QR কোড জেনারেশন
     const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${appData.passportNo}`;
-    document.getElementById('slipQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
+    const qrEl = document.getElementById('slipQR');
+    if(qrEl) qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}`;
 
-    document.getElementById('slipModal').style.display = 'flex';
+    // ৫. মডাল দেখানো
+    const modal = document.getElementById('slipModal');
+    if(modal) modal.style.display = 'flex';
 }
-
 // --- 6. UTILS & EXPOSE ---
 // আপনার জাভাস্ক্রিপ্ট ফাইলের printSlip ফাংশনটি এভাবে আপডেট করুন
 function printSlip() {
