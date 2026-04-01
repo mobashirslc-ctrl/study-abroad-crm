@@ -6,10 +6,8 @@
     <title>Master Admin | SCC Group</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; }
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; --blue: #3498db; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
-        
-        /* Sidebar */
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
         .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
         .logo-container img { max-width: 180px; border-radius: 8px; }
@@ -17,29 +15,22 @@
         .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
         .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
         .sidebar ul li i { margin-right: 12px; width: 20px; }
-        
-        /* Main Content */
         .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
-        
-        /* Cards & Forms */
         .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
         .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
-        
+        .search-container { margin-bottom: 20px; display: flex; gap: 10px; }
+        .search-container input { flex: 1; padding: 12px; background: #252545; border: 1px solid #444; color: white; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #252545; color: var(--gold); }
-        
         input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; }
         .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
-
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .status-active { background: var(--green); color: white; }
         .status-pending { background: var(--gold); color: black; }
-        .status-expired { background: var(--red); color: white; }
-
-        .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
-
+        .action-btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; transition: 0.2s; }
+        .action-btn:hover { opacity: 0.8; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -59,97 +50,74 @@
         <h2 style="margin-bottom: 25px;">Admin <span style="color:var(--gold);">Control Center</span></h2>
 
         <div id="uni-manage" class="tab-content" style="display: block;">
-           <div class="card">
-    <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
-    
-    <div class="input-group">
-        <input type="text" id="uName" placeholder="University Name">
-        <input type="text" id="uCountry" placeholder="Country">
-        <input type="text" id="uCity" placeholder="City/Location"> 
-    </div>
-    
-    <div class="input-group">
-        <select id="uDegree">
-            <option value="Bachelor">Bachelor</option>
-            <option value="Master">Master</option>
-            <option value="Foundation">Foundation/Diploma</option>
-        </select>
-        <input type="text" id="uCourse" placeholder="Popular Course Name">
-        <input type="text" id="uIntake" placeholder="Intake (e.g. Jan 2026)"> 
-    </div>
-    
-    <div class="input-group">
-        <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
-        <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
-        <input type="number" id="uScholarship" placeholder="Max Scholarship">
-    </div>
-    
-    <div class="input-group">
-        <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
-        <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
-        <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
-    </div>
-
-    <div class="input-group">
-        <input type="text" id="uLivingCost" placeholder="Approx. Living Cost (e.g. $800/mo)"> 
-        <input type="text" id="uDeadline" placeholder="Application Deadline">
-        <input type="text" id="uInterview" placeholder="Interview Time (e.g. 15-20 Mins)">
-    </div>
-
-    <div class="input-group">
-        <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
-        <input type="text" id="uProcTime" placeholder="Processing Time">
-    <div class="input-group">
-    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee" oninput="updateCommPreview()">
-    <select id="uCurrency" onchange="updateCommPreview()">
-        <option value="USD">USD ($)</option>
-        <option value="GBP">GBP (£)</option>
-        <option value="EUR">EUR (€)</option>
-        <option value="AUD">AUD (A$)</option>
-        <option value="CAD">CAD (C$)</option>
-    </select>
-    <input type="number" id="uCommPercent" placeholder="Partner Comm %" oninput="updateCommPreview()">
-</div>
-<div style="margin-bottom: 15px;">
-    <small style="color: var(--gold);">Commission Preview: <b id="commPreview">0.00</b></small>
-</div>
-
-
-    <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
-        <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
-            <i class="fas fa-hand-holding-usd"></i> Partner Commission Settings
-        </p>
-        <div><label style="font-size: 11px; color: #ccc;">Commission (%)</label><input type="number" id="uCommPercent" placeholder="e.g. 10"></div>
-        <div><label style="font-size: 11px; color: #ccc;">Fixed Amount (BDT)</label><input type="number" id="uCommFixed" placeholder="e.g. 5000"></div>
-        <div><label style="font-size: 11px; color: #ccc;">Payment Note</label><input type="text" id="uCommNote" placeholder="e.g. After Visa"></div>
-    </div>
-    
-    <button class="btn-gold" onclick="saveUniversity()" style="margin-top:15px;">Add University to System</button>
-</div>
-            <h3>Existing Universities</h3>
+            <div class="card">
+                <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+                <div class="input-group">
+                    <input type="text" id="uName" placeholder="University Name">
+                    <input type="text" id="uCountry" placeholder="Country">
+                    <input type="text" id="uCity" placeholder="City/Location"> 
+                </div>
+                <div class="input-group">
+                    <select id="uDegree">
+                        <option value="Bachelor">Bachelor</option>
+                        <option value="Master">Master</option>
+                        <option value="Foundation">Foundation/Diploma</option>
+                    </select>
+                    <input type="text" id="uCourse" placeholder="Popular Course Name">
+                    <input type="text" id="uIntake" placeholder="Intake (e.g. Jan 2026)"> 
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
+                    <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
+                    <input type="number" id="uScholarship" placeholder="Max Scholarship">
+                </div>
+                <div class="input-group">
+                    <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA">
+                    <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS">
+                    <input type="number" id="uGap" placeholder="Max Gap (Years)">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="uInterview" placeholder="Interview Time">
+                    <input type="text" id="uProcTime" placeholder="Processing Time">
+                    <select id="uCurrency">
+                        <option value="USD">USD ($)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="EUR">EUR (€)</option>
+                    </select>
+                </div>
+                <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px;">
+                    <div><label style="font-size: 11px; color: var(--gold);">Fixed Commission (BDT)</label><input type="number" id="uCommFixed" placeholder="e.g. 50000"></div>
+                    <div><label style="font-size: 11px; color: var(--gold);">Payment Note</label><input type="text" id="uCommNote" placeholder="e.g. After Visa"></div>
+                </div>
+                <button class="btn-gold" onclick="saveUniversity()" style="margin-top:15px;">Add University</button>
+            </div>
             <table>
                 <thead>
-                    <tr><th>University</th><th>Requirements</th><th>Fee & Comm</th><th>Action</th></tr>
+                    <tr><th>University</th><th>Requirements</th><th>Fee & Profit</th><th>Action</th></tr>
                 </thead>
                 <tbody id="adminUniTable"></tbody>
             </table>
         </div>
 
         <div id="user-manage" class="tab-content">
-            <h3>User Management (Approval & Subscription)</h3>
+            <div class="search-container">
+                <input type="text" id="userSearch" onkeyup="searchTable('userSearch', 'adminUserTable')" placeholder="Search Agency by Name or Email...">
+            </div>
             <table>
                 <thead>
-                    <tr><th>Name & Org</th><th>Type</th><th>Contact</th><th>Documents</th><th>Expiry</th><th>Status</th><th>Action</th></tr>
+                    <tr><th>Agency & Name</th><th>Contact</th><th>Documents</th><th>Expiry</th><th>Status</th><th>Action</th></tr>
                 </thead>
                 <tbody id="adminUserTable"></tbody>
             </table>
         </div>
 
         <div id="tracking-manage" class="tab-content">
-            <h3>Student File Tracking & Wallet Generation</h3>
+            <div class="search-container">
+                <input type="text" id="trackSearch" onkeyup="searchTable('trackSearch', 'adminTrackingTable')" placeholder="Search Student Name...">
+            </div>
             <table>
                 <thead>
-                    <tr><th>Student Name</th><th>Partner Agency</th><th>Current Status</th><th>Final Wallet (৳)</th><th>Action</th></tr>
+                    <tr><th>Student & University</th><th>Partner Agency</th><th>Status</th><th>Wallet (BDT)</th><th>Action</th></tr>
                 </thead>
                 <tbody id="adminTrackingTable"></tbody>
             </table>
@@ -157,287 +125,141 @@
     </div>
 
     <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
-    <div class="card" style="width: 700px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
-        <h3 style="color:var(--gold);">Edit University Information</h3>
-        <input type="hidden" id="editId">
-
-        <div class="input-group">
-            <div><label style="font-size:11px;">University Name</label><input type="text" id="editName"></div>
-            <div><label style="font-size:11px;">Country</label><input type="text" id="editCountry"></div>
-            <div><label style="font-size:11px;">City</label><input type="text" id="editCity"></div>
-        </div>
-
-        <div class="input-group">
-            <div><label style="font-size:11px;">Degree</label>
-                <select id="editDegree">
-                    <option value="Bachelor">Bachelor</option>
-                    <option value="Master">Master</option>
-                    <option value="Foundation">Foundation/Diploma</option>
-                </select>
+        <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color:var(--gold);">Edit University</h3>
+            <input type="hidden" id="editId">
+            <div class="input-group">
+                <input type="text" id="editName" placeholder="Uni Name">
+                <input type="text" id="editCountry" placeholder="Country">
+                <input type="text" id="editCity" placeholder="City">
             </div>
-            <div><label style="font-size:11px;">Course</label><input type="text" id="editCourse"></div>
-            <div><label style="font-size:11px;">Intake</label><input type="text" id="editIntake"></div>
-        </div>
-
-        <div class="input-group">
-            <div><label style="font-size:11px;">Tuition Fee</label><input type="number" id="editTotalFee"></div>
-            <div><label style="font-size:11px;">Deposit</label><input type="number" id="editDeposit"></div>
-            <div><label style="font-size:11px;">Scholarship</label><input type="number" id="editScholarship"></div>
-        </div>
-
-        <div class="input-group">
-            <div><label style="font-size:11px;">Min GPA</label><input type="number" step="0.01" id="editGpa"></div>
-            <div><label style="font-size:11px;">Min IELTS</label><input type="number" step="0.1" id="editIelts"></div>
-            <div><label style="font-size:11px;">Max Gap</label><input type="number" id="editGap"></div>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-gold" onclick="updateUniversity()">Update University</button>
-            <button class="btn-gold" style="background:#444; color:white;" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            <div class="input-group">
+                <input type="number" id="editTotalFee" placeholder="Fee">
+                <input type="number" id="editCommFixed" placeholder="Commission BDT">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-gold" onclick="updateUniversity()">Update</button>
+                <button class="btn-gold" style="background:#444; color:white;" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            </div>
         </div>
     </div>
-</div>
+
     <script type="module">
-    // --- Navigation ---
-    window.showTab = (event, tabId) => {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        document.getElementById(tabId).style.display = 'block';
-        if(event) event.currentTarget.classList.add('active');
-    };
-
-    // --- University Functions ---
-    window.saveUniversity = async () => {
-        // Validation - এখন এটা সঠিক জায়গায় আছে
-        if(!document.getElementById('uName').value || !document.getElementById('uCountry').value) {
-            alert("Please enter University Name and Country!");
-            return;
-        }
-
-        const data = {
-            universityName: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            location: document.getElementById('uCity').value,
-            degree: document.getElementById('uDegree').value,
-            popularCourse: document.getElementById('uCourse').value,
-            intake: document.getElementById('uIntake').value,
-            totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
-            uDeposit: Number(document.getElementById('uDeposit').value) || 0,
-            uScholarship: Number(document.getElementById('uScholarship').value) || 0,
-            commPercent: Number(document.getElementById('uCommPercent').value) || 0,
-            uCurrency: document.getElementById('uCurrency').value,
-            minGPA: Number(document.getElementById('uGpa').value) || 0, // আইডি ঠিক করা হয়েছে
-            ieltsReq: Number(document.getElementById('uIelts').value) || 0, // আইডি ঠিক করা হয়েছে
-            gapAllowed: document.getElementById('uGap').value,
-            livingCost: document.getElementById('uLivingCost').value,
-            deadline: document.getElementById('uDeadline').value,
-            interviewTime: document.getElementById('uInterview').value,
-            commFixed: Number(document.getElementById('uCommFixed').value) || 0,
-            visaRate: Number(document.getElementById('uVisaRate').value) || 85,
-            processingTime: document.getElementById('uProcTime').value,
-            commNote: document.getElementById('uCommNote').value
+        // --- Core Navigation ---
+        window.showTab = (event, tabId) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            if(event) event.currentTarget.classList.add('active');
         };
 
-        try {
-            const res = await fetch('/api/add-university', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            if(res.ok) { 
-                alert("University Added Successfully!"); 
-                document.querySelectorAll('.card input').forEach(input => input.value = ''); 
-                fetchUniversities(); 
+        // --- Search Function (Universal) ---
+        window.searchTable = (inputId, tableId) => {
+            let input = document.getElementById(inputId).value.toUpperCase();
+            let rows = document.getElementById(tableId).getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                let text = rows[i].innerText.toUpperCase();
+                rows[i].style.display = text.includes(input) ? "" : "none";
             }
-        } catch (err) {
-            alert("Error saving data!");
-        }
-    };
+        };
 
-    window.fetchUniversities = async () => {
-        try {
-            const res = await fetch('/api/universities');
-            if (!res.ok) throw new Error("Failed to load");
-            const unis = await res.json();
-            const tbody = document.getElementById('adminUniTable');
-            tbody.innerHTML = unis.map(u => `
-            <tr>
-                <td>
-                    <b style="color:var(--gold); font-size:15px;">${u.universityName}</b><br>
-                    <small><i class="fas fa-map-marker-alt"></i> ${u.location}, ${u.country}</small>
-                </td>
-                <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
-                <td>${u.uCurrency} ${u.totalTuitionFee} <br> <small>Comm: ${u.commPercent}%</small></td>
-                <td>
-                    <button class="btn-gold" style="padding:5px 10px; font-size:11px;" onclick="openEditModal('${u._id}')">EDIT</button>
-                    <button class="action-btn" style="background:var(--red); color:white;" onclick="deleteUni('${u._id}')">DELETE</button>
-                </td>
-            </tr>`).join('');
-        } catch (err) {
-            console.error("Load Error:", err);
-            document.getElementById('adminUniTable').innerHTML = "<tr><td colspan='4' style='text-align:center;'>Failed to load data from server.</td></tr>";
-        }
-    };
-
-    window.deleteUni = async (id) => {
-        if(confirm("Delete this university?")) {
-            await fetch(`/api/universities/${id}`, { method: 'DELETE' });
+        // --- University Management ---
+        window.saveUniversity = async () => {
+            const data = {
+                universityName: document.getElementById('uName').value,
+                country: document.getElementById('uCountry').value,
+                location: document.getElementById('uCity').value,
+                degree: document.getElementById('uDegree').value,
+                popularCourse: document.getElementById('uCourse').value,
+                intake: document.getElementById('uIntake').value,
+                totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
+                uDeposit: Number(document.getElementById('uDeposit').value) || 0,
+                uScholarship: Number(document.getElementById('uScholarship').value) || 0,
+                uCurrency: document.getElementById('uCurrency').value,
+                minGPA: Number(document.getElementById('uGpa').value) || 0,
+                ieltsReq: Number(document.getElementById('uIelts').value) || 0,
+                gapAllowed: document.getElementById('uGap').value,
+                interviewTime: document.getElementById('uInterview').value,
+                commFixed: Number(document.getElementById('uCommFixed').value) || 0,
+                processingTime: document.getElementById('uProcTime').value,
+                commNote: document.getElementById('uCommNote').value
+            };
+            await fetch('/api/add-university', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            alert("Added!");
             fetchUniversities();
-        }
-    };
-
-    // --- User Management ---
-    window.fetchUsers = async () => {
-        const res = await fetch('/api/admin/users');
-        const users = await res.json();
-        const tbody = document.getElementById('adminUserTable');
-        tbody.innerHTML = users.map(user => `
-            <tr>
-                <td>${user.fullName}<br><small>${user.orgName || ''}</small></td>
-                <td>${user.role}</td>
-                <td>${user.email}</td>
-                <td><button class="action-btn" style="background:#673ab7" onclick="viewDocuments('${user.tradeLicense}', '${user.nidFront}')">View Docs</button></td>
-                <td><input type="date" value="${user.expiryDate ? user.expiryDate.split('T')[0] : ''}" onchange="updateExpiry('${user._id}', this.value)"></td>
-                <td><span class="badge status-${user.status}">${user.status}</span></td>
-                <td><button class="action-btn" style="background:var(--green)" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
-            </tr>`).join('');
-    };
-
-    window.updateStatus = async (id, status) => {
-        await fetch(`/api/admin/users/${id}/status`, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ status })
-        });
-        fetchUsers();
-    };
-
-    window.updateExpiry = async (id, date) => {
-        await fetch(`/api/admin/users/${id}/expiry`, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ expiryDate: date })
-        });
-        fetchUsers();
-    };
-
-    // --- Tracking ---
-    window.fetchTracking = async () => {
-        const res = await fetch('/api/applications');
-        const apps = await res.json();
-        const tbody = document.getElementById('adminTrackingTable');
-        tbody.innerHTML = apps.map(app => `
-            <tr>
-                <td><b>${app.studentName}</b></td>
-                <td>${app.partnerEmail || 'Direct'}</td>
-                <td><span class="badge status-pending">${app.status}</span></td>
-                <td>৳${app.pendingAmount || 0}</td>
-                <td>
-                    <button class="action-btn" style="background:var(--gold); color:black;" onclick="openWalletBox('${app._id}')">Set Wallet</button>
-                    <button class="action-btn" style="background:#2ecc71" onclick="printAdmissionSlip('${app._id}')">Slip</button>
-                </td>
-            </tr>`).join('');
-    };
-
-    window.openWalletBox = async (appId) => {
-        const amount = prompt("Enter Final Wallet Amount (BDT):");
-        if (amount) {
-            await fetch(`/api/applications/${appId}`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pendingAmount: Number(amount), status: 'VERIFIED' })
-            });
-            fetchTracking();
-        }
-    };
-
-    window.printAdmissionSlip = async (appId) => {
-        const res = await fetch(`/api/applications/${appId}`);
-        const data = await res.json();
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<html><body onload="window.print()"><h2>SCC GROUP | ADMISSION SLIP</h2><hr><p>Name: ${data.studentName}</p><p>University: ${data.appliedUniversity}</p><p>Status: ${data.status}</p></body></html>`);
-    };
-
-    window.viewDocuments = (doc1, doc2) => {
-        const modal = document.createElement('div');
-        modal.id = "docModal";
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; overflow-y:auto; padding:20px;";
-        modal.innerHTML = `
-            <button onclick="this.parentElement.remove()" class="btn-gold" style="width:100px; margin-bottom:10px;">Close</button>
-            <div style="display:flex; flex-direction:column; gap:20px;">
-                ${doc1 ? `<iframe src="${doc1}" width="100%" height="500px" style="border:none;"></iframe>` : '<p>No Trade License Uploaded</p>'}
-                ${doc2 ? `<iframe src="${doc2}" width="100%" height="500px" style="border:none;"></iframe>` : '<p>No NID Uploaded</p>'}
-            </div>`;
-        document.body.appendChild(modal);
-    };
-
-    window.logout = () => { localStorage.clear(); location.href = 'login.html'; };
-
-    // --- Init ---
-    window.onload = () => {
-        fetchUniversities();
-        fetchUsers();
-        fetchTracking();
-    };
-
-    window.openEditModal = async (id) => {
-        const res = await fetch(`/api/universities/${id}`);
-        const u = await res.json();
-        
-        document.getElementById('editId').value = u._id;
-        document.getElementById('editName').value = u.universityName || '';
-        document.getElementById('editCountry').value = u.country || '';
-        document.getElementById('editCity').value = u.location || '';
-        document.getElementById('editDegree').value = u.degree || 'Bachelor';
-        document.getElementById('editCourse').value = u.popularCourse || '';
-        document.getElementById('editIntake').value = u.intake || '';
-        document.getElementById('editTotalFee').value = u.totalTuitionFee || 0;
-        document.getElementById('editDeposit').value = u.uDeposit || 0;
-        document.getElementById('editScholarship').value = u.uScholarship || 0;
-        document.getElementById('editGpa').value = u.minGPA || '';
-        document.getElementById('editIelts').value = u.ieltsReq || '';
-        document.getElementById('editGap').value = u.gapAllowed || '';
-        
-        document.getElementById('editModal').style.display = 'flex';
-    };
-
-    window.updateUniversity = async () => {
-        const id = document.getElementById('editId').value;
-        const data = {
-            universityName: document.getElementById('editName').value,
-            country: document.getElementById('editCountry').value,
-            location: document.getElementById('editCity').value,
-            degree: document.getElementById('editDegree').value,
-            popularCourse: document.getElementById('editCourse').value,
-            intake: document.getElementById('editIntake').value,
-            totalTuitionFee: Number(document.getElementById('editTotalFee').value),
-            uDeposit: Number(document.getElementById('editDeposit').value),
-            uScholarship: Number(document.getElementById('editScholarship').value),
-            minGPA: Number(document.getElementById('editGpa').value) || 0,
-            ieltsReq: Number(document.getElementById('editIelts').value) || 0,
-            gapAllowed: document.getElementById('editGap').value
         };
 
-        try {
-            const res = await fetch(`/api/universities/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+        window.fetchUniversities = async () => {
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            document.getElementById('adminUniTable').innerHTML = unis.map(u => `
+                <tr>
+                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
+                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
+                    <td>${u.uCurrency} ${u.totalTuitionFee}<br><small style="color:var(--green)">Profit: ৳${u.commFixed}</small></td>
+                    <td>
+                        <button class="action-btn" style="background:var(--gold)" onclick="openEditModal('${u._id}')">EDIT</button>
+                        <button class="action-btn" style="background:var(--red); color:white;" onclick="deleteUni('${u._id}')">DEL</button>
+                    </td>
+                </tr>`).join('');
+        };
 
-            if(res.ok) {
-                alert("Updated Successfully!");
-                document.getElementById('editModal').style.display = 'none';
-                fetchUniversities();
-            } else {
-                alert("Update failed!");
+        // --- Wallet & Assessment (New) ---
+        window.openWalletBox = async (appId) => {
+            const amount = prompt("Enter Final Wallet Amount (BDT) for this student:");
+            if (amount) {
+                await fetch(`/api/applications/${appId}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ pendingAmount: Number(amount), status: 'VERIFIED' })
+                });
+                alert("Wallet Updated!");
+                fetchTracking();
             }
-        } catch (err) {
-            console.error(err);
-            alert("Error updating data!");
-        }
-    };
-</script>
+        };
 
+        window.generateAssessment = async (appId) => {
+            const res = await fetch(`/api/applications/${appId}`);
+            const data = await res.json();
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <body style="font-family:sans-serif; padding:50px; background:#f9f9f9;">
+                    <div style="background:white; padding:30px; border:2px solid #f1c40f; border-radius:10px;">
+                        <h2 style="color:#1a1a2e; text-align:center;">SCC GROUP | INSTANT ASSESSMENT</h2>
+                        <hr>
+                        <p><b>Student Name:</b> ${data.studentName}</p>
+                        <p><b>University:</b> ${data.appliedUniversity}</p>
+                        <p><b>Assessment Result:</b> <span style="color:green; font-weight:bold;">ELIGIBLE</span></p>
+                        <p><b>Next Step:</b> Please pay the initial deposit to proceed.</p>
+                        <br><br>
+                        <p style="font-size:12px; color:gray;">Generated on: ${new Date().toLocaleDateString()}</p>
+                    </div>
+                    <script>window.print();<\/script>
+                </body>
+                </html>
+            `);
+        };
+
+        window.fetchTracking = async () => {
+            const res = await fetch('/api/applications');
+            const apps = await res.json();
+            document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
+                <tr>
+                    <td><b>${app.studentName}</b><br><small>${app.appliedUniversity}</small></td>
+                    <td>${app.partnerEmail || 'Direct'}</td>
+                    <td><span class="badge status-pending">${app.status}</span></td>
+                    <td>৳${app.pendingAmount || 0}</td>
+                    <td>
+                        <button class="action-btn" style="background:var(--gold)" onclick="openWalletBox('${app._id}')">WALLET</button>
+                        <button class="action-btn" style="background:var(--blue); color:white;" onclick="generateAssessment('${app._id}')">ASSESS</button>
+                    </td>
+                </tr>`).join('');
+        };
+
+        // --- Init ---
+        window.onload = () => { fetchUniversities(); fetchTracking(); };
+        window.logout = () => { localStorage.clear(); location.href = 'login.html'; };
+    </script>
 </body>
 </html>
