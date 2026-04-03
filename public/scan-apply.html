@@ -3,68 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eligibility Check | SCC Group</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Student Assessment | SCC Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
-        body { background: var(--deep); color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { width: 90%; max-width: 400px; background: var(--dark); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #0b0b15; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        .success-box { display: none; padding: 20px; color: var(--gold); }
+        :root { --gold: #f1c40f; --white: rgba(255, 255, 255, 0.1); }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+            background-attachment: fixed;
+            color: white;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            text-align: center;
+        }
+        h2 { color: var(--gold); margin-bottom: 25px; font-weight: 600; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; font-size: 13px; margin-bottom: 5px; color: #ccc; }
+        input, select {
+            width: 100%; padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px; color: white;
+            box-sizing: border-box; outline: none;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--gold); background: rgba(255, 255, 255, 0.2); }
+        .btn-submit {
+            background: var(--gold); color: #000; border: none;
+            padding: 15px; width: 100%; border-radius: 8px;
+            font-weight: bold; cursor: pointer; font-size: 16px;
+            transition: 0.3s; margin-top: 10px;
+        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4); }
+        
+        /* Result Card Area */
+        #resultArea { display: none; margin-top: 20px; }
+        .slc-promo {
+            background: rgba(241, 196, 15, 0.1);
+            border: 1px dashed var(--gold);
+            padding: 15px; border-radius: 10px; margin-top: 15px;
+        }
+        #qrcode-container { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
+        #qrcode { background: white; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="card" id="formContainer">
-    <img src="logo.jpeg" style="width: 70px; margin-bottom: 10px;">
-    <h2>Start Your Journey</h2>
-    <p style="color: #aaa; font-size: 14px;">Fill details for instant assessment.</p>
-    
-    <input type="text" id="sName" placeholder="Full Name" required>
-    <input type="tel" id="sPhone" placeholder="Mobile Number" required>
-    <input type="text" id="sPassport" placeholder="Passport Number (For Tracking)">
-    <input type="text" id="sGpa" placeholder="HSC GPA / Result">
-    
-    <input type="hidden" id="merchantId">
-    <button onclick="submitLead()">Check Eligibility</button>
-</div>
+<div class="glass-card" id="mainCard">
+    <div id="formSection">
+        <h2>Study Abroad Assessment</h2>
+        <form id="assessmentForm">
+            <div class="input-group">
+                <input type="text" id="name" placeholder="Student Full Name" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="phone" placeholder="Contact Number" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="passport" placeholder="Passport Number (Optional)">
+            </div>
+            <div class="input-group">
+                <select id="degree">
+                    <option value="">Expected Degree</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="Diploma">Diploma</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="text" id="country" placeholder="Expected Country">
+            </div>
+            <div class="input-group">
+                <input type="text" id="uni" placeholder="Preferred University (If any)">
+            </div>
+            <div class="input-group">
+                <select id="langScore" onchange="checkLanguage()">
+                    <option value="">Language Proficiency</option>
+                    <option value="IELTS">IELTS</option>
+                    <option value="Duolingo">Duolingo</option>
+                    <option value="MOI">MOI</option>
+                    <option value="PREP">Preparation nibe (Need Training)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="text" id="academic" placeholder="Last Academic Score (GPA)">
+            </div>
+            <button type="submit" class="btn-submit">Submit Assessment</button>
+        </form>
+    </div>
 
-<div class="card success-box" id="successBox">
-    <i class="fas fa-check-circle fa-4x"></i>
-    <h2>Submission Successful!</h2>
-    <p style="color: white;">Our counselor will call you shortly. You can now track your file status live.</p>
-    <button onclick="window.location.href='/track'" style="background: white; color: black;">Go to Tracking</button>
+    <div id="resultArea">
+        <h2 style="color: #2ecc71;">Application Submitted!</h2>
+        <p style="font-size: 14px;">আমাদের টিম খুব দ্রুত আপনার প্রোফাইলটি যাচাই করে রেজাল্ট প্রদান করবে।</p>
+        
+        <div id="slcContact" class="slc-promo" style="display: none;">
+            <h4 style="margin:0; color: var(--gold);">Need Language Training?</h4>
+            <p style="font-size: 12px; margin: 5px 0;"><b>Name:</b> Student Language Consultant (SLC)</p>
+            <p style="font-size: 12px; margin: 5px 0;"><b>Web:</b> <a href="https://slc.education/" style="color:white;">slc.education</a></p>
+            <p style="font-size: 12px; margin: 5px 0;"><b>Contact:</b> +8801703-523861</p>
+        </div>
+
+        <div id="qrcode-container">
+            <p style="font-size: 13px; margin-bottom: 10px; color: var(--gold);">Live Tracking QR Code:</p>
+            <div id="qrcode"></div>
+            <p style="font-size: 11px; margin-top: 10px; opacity: 0.7;">স্ক্যান করে আপনার ফাইল আপডেট দেখুন</p>
+        </div>
+    </div>
 </div>
 
 <script>
-    window.onload = () => {
-        const params = new URLSearchParams(window.location.search);
-        document.getElementById('merchantId').value = params.get('ref') || 'Direct';
-    };
+    function checkLanguage() {
+        const score = document.getElementById('langScore').value;
+        const slcDiv = document.getElementById('slcContact');
+        slcDiv.style.display = (score === "PREP") ? "block" : "none";
+    }
 
-    async function submitLead() {
-        const payload = {
-            name: document.getElementById('sName').value,
-            phone: document.getElementById('sPhone').value,
-            passport: document.getElementById('sPassport').value,
-            gpa: document.getElementById('sGpa').value,
-            refSource: document.getElementById('merchantId').value
+    document.getElementById('assessmentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        
+        // Form Data Collection
+        const formData = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            passport: document.getElementById('passport').value,
+            degree: document.getElementById('degree').value,
+            country: document.getElementById('country').value,
+            uni: document.getElementById('uni').value,
+            lang: document.getElementById('langScore').value,
+            gpa: document.getElementById('academic').value,
+            refSource: new URLSearchParams(window.location.search).get('ref') || 'Direct'
         };
 
-        if(!payload.name || !payload.phone) return alert("Fill required fields!");
+        // backend call (your existing endpoint)
+        try {
+            const res = await fetch('/api/merchant/submit-scan-lead', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(formData)
+            });
 
-        const res = await fetch('/api/merchant/submit-scan-lead', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if(data.success) {
-            document.getElementById('formContainer').style.display = 'none';
-            document.getElementById('successBox').style.display = 'block';
+            if(res.ok) {
+                document.getElementById('formSection').style.display = 'none';
+                document.getElementById('resultArea').style.display = 'block';
+                
+                // Generate Tracking QR
+                const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${formData.passport}`;
+                new QRCode(document.getElementById("qrcode"), {
+                    text: trackLink,
+                    width: 120,
+                    height: 120
+                });
+            }
+        } catch (err) {
+            alert("Submission failed. Please try again.");
         }
-    }
+    };
 </script>
+
 </body>
 </html>
