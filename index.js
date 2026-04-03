@@ -550,5 +550,8 @@ app.get('/api/track-status', async (req, res) => {
 app.get('*', (req, res) => {
     res.sendFile(path.join(publicPath, 'auth.html'));
 });
+// index.js এর শেষে যোগ করুন
+const merchantService = require('./merchant-service');
+app.use('/api/merchant', merchantService);
 
 module.exports = app;
