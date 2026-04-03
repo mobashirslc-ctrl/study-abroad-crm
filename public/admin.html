@@ -334,6 +334,7 @@ window.fetchMerchants = async () => {
 // ২. মার্চেন্ট এপ্রুভ এবং আইডি সেভ করার ফাংশন
 // এই ফাংশনটি আপনার Admin Panel এর স্ক্রিপ্টে আপডেট করুন
 window.approveAndAssignID = async (id) => {
+window.approveAndAssignID = async (id) => {
     const assignedId = document.getElementById(`mid_${id}`).value;
     
     if(!assignedId) {
@@ -342,8 +343,8 @@ window.approveAndAssignID = async (id) => {
     }
 
     try {
-        // এখানে URL টি খেয়াল করুন: /api/admin/users/update-id/
-        const res = await fetch(`/api/admin/users/update-id/${id}`, { 
+        // ফিক্সড URL: আপনার index.js অনুযায়ী এটি /api/merchant এ পাঠাতে হবে
+        const res = await fetch(`/api/merchant/update-id/${id}`, { 
             method: 'PATCH', 
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify({ 
@@ -356,16 +357,17 @@ window.approveAndAssignID = async (id) => {
 
         if(res.ok && result.success) {
             alert("Merchant Activated successfully!");
-            fetchMerchants(); // টেবিল রিফ্রেশ করবে
+            // টেবিল রিফ্রেশ করতে আগের ফাংশন কল করুন
+            if(typeof fetchMerchants === 'function') fetchMerchants();
         } else {
-            // সার্ভার থেকে আসা আসল এরর মেসেজটি দেখাবে
             alert("Failed: " + (result.error || result.message || "Unknown error"));
         }
     } catch (err) {
         console.error("Update error:", err);
-        alert("Network Error! সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।");
+        alert("Network Error! সার্ভার রেসপন্স করছে না। URL চেক করুন।");
     }
 };
+
 
 
         window.openWalletBox = async (id) => {
