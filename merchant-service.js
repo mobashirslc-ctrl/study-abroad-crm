@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
+// আপনার root ডিরেক্টরিতে থাকা ফাইল সরাসরি কল করুন
+const Application = require('./Application'); 
+// যদি User মডেলটিও root-এ থাকে তবে এটিও নিচের মতো হবে
+const User = require('./index'); // অথবা যেখানে User মডেল ডিফাইন করা আছে
+
+
 // ১. মার্চেন্ট মডেল
 const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
