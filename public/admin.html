@@ -31,26 +31,36 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body>
-
-    <div class="sidebar">
-        <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
-        <ul>
-            <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Manage Universities</li>
-            <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partner & Compliance</li>
-            <li onclick="showTab(event, 'tracking-manage')"><i class="fas fa-tasks"></i> Tracking & Wallet</li>
-            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
-        </ul>
-    </div>
-
-    <div class="main-content">
+<body><div class="sidebar">
+    <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
+    <ul>
+        <li class="active" onclick="showTab(event, 'uni-manage')">
+            <i class="fas fa-university"></i> Manage Universities
+        </li>
+        <li onclick="showTab(event, 'user-manage')">
+            <i class="fas fa-users-cog"></i> Partner & Compliance
+        </li>
+        <li onclick="showTab(event, 'merchant-manage')">
+            <i class="fas fa-store"></i> Merchant Partners
+        </li>
+        <li onclick="showTab(event, 'tracking-manage')">
+            <i class="fas fa-tasks"></i> Tracking & Wallet
+        </li>
+        <hr style="border: 0.5px solid #222; margin: 10px 20px;">
+        <li onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </li>
+    </ul>
+</div>
+ <div class="main-content">
         <h2>Admin <span style="color:var(--gold);">Control Center</span></h2>
 
         <div id="uni-manage" class="tab-content" style="display: block;">
             <div class="card">
                 <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
                 <div class="input-group">
-                    <input type="text" id="uName" placeholder="University Name">
+                    <input type="
+                        " id="uName" placeholder="University Name">
                     <input type="text" id="uCountry" placeholder="Country">
                     <input type="text" id="uCity" placeholder="City/Location"> 
                 </div>
@@ -127,6 +137,31 @@
             </div>
         </div>
     </div>
+    
+<div id="merchant-manage" class="tab-content">
+    <div class="card">
+        <h3><i class="fas fa-store" style="color:var(--gold)"></i> Merchant Partner Management</h3>
+        <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">
+            নতুন মার্চেন্টদের ডকুমেন্টস চেক করুন এবং একটি ইউনিক ID দিয়ে Active করুন। 
+            ID দেওয়ার সাথে সাথে তাদের কিউআর কোড অটো-জেনারেট হয়ে যাবে।
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Shop & Owner</th>
+                    <th>Contact & Address</th>
+                    <th>Documents</th>
+                    <th>Status</th>
+                    <th>Assign Merchant ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminMerchantTable">
+                </tbody>
+        </table>
+    </div>
+</div>
 
     <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
         <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
@@ -242,6 +277,90 @@
                     <td><button class="action-btn" onclick="openWalletBox('${app._id}')">Wallet</button></td>
                 </tr>`).join('');
         };
+        
+// ১. সব মার্চেন্ট ডাটা সার্ভার থেকে নিয়ে আসা এবং টেবিলে দেখানো
+window.fetchMerchants = async () => {
+    try {
+        const res = await fetch('/api/admin/users'); // আপনার ইউজার লিস্ট এপিআই
+        const users = await res.json();
+        
+        // শুধু যাদের রোল 'merchant' তাদের ফিল্টার করা
+        const merchants = users.filter(u => u.role === 'merchant');
+
+        const tableBody = document.getElementById('adminMerchantTable');
+        
+        if (merchants.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No merchant applications found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = merchants.map(m => `
+            <tr>
+                <td>
+                    <b>${m.orgName || 'N/A'}</b><br>
+                    <small>${m.fullName}</small>
+                </td>
+                <td>
+                    <small>${m.email}</small><br>
+                    <small>${m.contact}</small>
+                </td>
+                <td>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${m.nidPdf}', '_blank')">NID</button>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${m.tradeLicensePdf}', '_blank')">TRADE</button>
+                </td>
+                <td>
+                    <span class="badge ${m.status === 'active' ? 'status-active' : 'status-pending'}">
+                        ${m.status.toUpperCase()}
+                    </span>
+                </td>
+                <td>
+                    <input type="text" id="mid_${m._id}" placeholder="e.g. SCC-M101" 
+                    value="${m.merchantId || ''}" 
+                    style="width:120px; border: 1px solid var(--gold); padding: 5px; font-size: 12px;">
+                </td>
+                <td>
+                    <button class="action-btn" style="background:var(--green); color:white;" 
+                        onclick="approveAndAssignID('${m._id}')">
+                        <i class="fas fa-check"></i> APPROVE
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Error fetching merchants:", err);
+    }
+};
+
+// ২. মার্চেন্ট এপ্রুভ এবং আইডি সেভ করার ফাংশন
+window.approveAndAssignID = async (id) => {
+    const assignedId = document.getElementById(`mid_${id}`).value;
+    
+    if(!assignedId) {
+        alert("দয়া করে একটি Merchant ID দিন (যেমন: M101)");
+        return;
+    }
+
+    try {
+        // মার্চেন্ট আইডি আপডেট এবং একাউন্ট একটিভ করা
+        const res = await fetch(`/api/admin/users/${id}/update-id`, { 
+            method: 'PATCH', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ 
+                merchantId: assignedId,
+                status: 'active' 
+            }) 
+        });
+
+        if(res.ok) {
+            alert("Merchant Activated successfully!");
+            fetchMerchants(); // টেবিল রিফ্রেশ করা
+        } else {
+            alert("Failed to update merchant.");
+        }
+    } catch (err) {
+        console.error("Update error:", err);
+    }
+};
 
         window.openWalletBox = async (id) => {
             const amount = prompt("Enter Wallet Amount:");
@@ -251,7 +370,7 @@
             }
         };
 
-        window.onload = () => { fetchUniversities(); fetchUsers(); fetchTracking(); };
+        window.onload = () => { fetchUniversities(); fetchUsers(); fetchTracking(); fetchMerchants();};
         window.logout = () => { localStorage.clear(); location.href = 'login.html'; };
     </script>
 </body>
