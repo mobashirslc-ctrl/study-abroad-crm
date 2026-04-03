@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Assessment | SCC Group</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --gold: #f1c40f;
+            --dark: #1a1a2e;
+            --deep: #0f0f1b;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--deep);
+            color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 400px;
+            background: var(--dark);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            margin-bottom: 15px;
+        }
+
+        h2 {
+            color: var(--gold);
+            margin-bottom: 5px;
+            font-size: 22px;
+        }
+
+        p.subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: var(--gold);
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            background: #0f0f1b;
+            border: 1px solid #333;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--gold);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--gold);
+            color: black;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* Loading Overlay */
+        #loading {
+            display: none;
+            margin-top: 15px;
+            color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="logo.jpeg" alt="SCC Logo" class="logo">
+    <h2>Apply for Assessment</h2>
+    <p class="subtitle">Enter your details for a free eligibility check.</p>
+
+    <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="sName" placeholder="Enter your full name" required>
+    </div>
+
+    <div class="input-group">
+        <label>Phone Number</label>
+        <input type="tel" id="sPhone" placeholder="e.g. 017XXXXXXXX" required>
+    </div>
+
+    <div class="input-group">
+        <label>Passport Number (Optional)</label>
+        <input type="text" id="sPassport" placeholder="For live tracking">
+    </div>
+
+    <div class="input-group">
+        <label>HSC GPA / Last Result</label>
+        <input type="text" id="sGpa" placeholder="e.g. 4.50">
+    </div>
+
+    <input type="hidden" id="merchantId">
+
+    <button class="btn-submit" onclick="handleSubmission()">
+        <i class="fas fa-paper-plane"></i> Submit Application
+    </button>
+
+    <div id="loading">
+        <i class="fas fa-circle-notch fa-spin"></i> Processing...
+    </div>
+
+    <p class="footer-text">
+        By submitting, you agree to be contacted by SCC Group counselors.
+    </p>
+</div>
+
+<script>
+    // ১. URL থেকে Merchant ID সংগ্রহ করা
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref') || 'Direct';
+        document.getElementById('merchantId').value = ref;
+        console.log("Tracking Merchant ID:", ref);
+    };
+
+    // ২. ডাটা সাবমিশন ফাংশন
+    async function handleSubmission() {
+        const name = document.getElementById('sName').value;
+        const phone = document.getElementById('sPhone').value;
+        const passport = document.getElementById('sPassport').value;
+        const gpa = document.getElementById('sGpa').value;
+        const merchantId = document.getElementById('merchantId').value;
+
+        if (!name || !phone) {
+            alert("Please fill in your Name and Phone number.");
+            return;
+        }
+
+        // লোডিং শুরু
+        document.querySelector('.btn-submit').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+
+        const payload = {
+            name: name,
+            phone: phone,
+            passport: passport || "N/A",
+            gpa: gpa,
+            refSource: merchantId
+        };
+
+        try {
+            // আপনার নতুন তৈরি করা এপিআই এন্ডপয়েন্টে ডাটা পাঠানো
+            const response = await fetch('/api/merchant/submit-scan-lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert("Success! Your application is now in our live tracking system.");
+                // সাবমিট হয়ে গেলে স্টুডেন্টকে সরাসরি ট্র্যাকিং পেজে পাঠিয়ে দেওয়া
+                window.location.href = "/track"; 
+            } else {
+                alert("Error: " + result.error);
+                resetButton();
+            }
+        } catch (error) {
+            console.error("Submission Error:", error);
+            alert("Server connection failed. Please try again.");
+            resetButton();
+        }
+    }
+
+    function resetButton() {
+        document.querySelector('.btn-submit').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
