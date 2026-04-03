@@ -6,15 +6,41 @@
     <title>Merchant Dashboard | SCC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
-        body { background: var(--deep); color: white; font-family: sans-serif; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
-        .qr-area { background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-top: 15px; }
-        @media print { .no-print { display: none; } body { background: white; color: black; } }
-    </style>
+    :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
+    body { background: var(--deep); color: white; font-family: sans-serif; padding: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #333; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; text-align: left; }
+    th, td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
+    .qr-area { background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-top: 15px; border: 2px solid #000; }
+    
+    /* --- প্রিন্ট ফিক্স --- */
+    @media print { 
+        .no-print { display: none !important; } 
+        body { background: white !important; color: black !important; padding: 0; margin: 0; }
+        .grid { display: block !important; } /* গ্রিড বন্ধ করা */
+        
+        .card { 
+            background: transparent !important; 
+            border: none !important; 
+            width: 100% !important; 
+            margin-top: 50px !important; 
+            display: block !important;
+        }
+
+        /* শুধু কিউআর কোড ছাড়া বাকি সব কার্ড হাইড করা */
+        div.card:not(#printableQR) { display: none !important; }
+
+        .qr-area { 
+            border: 1px solid #ccc !important; 
+            padding: 30px !important;
+        }
+        
+        h3 { font-size: 24px !important; color: black !important; }
+        #mIdDisplay { font-size: 20px !important; }
+    }
+</style>
+
 </head>
 <body>
 
