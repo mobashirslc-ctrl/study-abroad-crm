@@ -131,45 +131,66 @@
     }
 
     document.getElementById('assessmentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        
-        // Form Data Collection
-        const formData = {
-            name: document.getElementById('name').value,
-            phone: document.getElementById('phone').value,
-            passport: document.getElementById('passport').value,
-            degree: document.getElementById('degree').value,
-            country: document.getElementById('country').value,
-            uni: document.getElementById('uni').value,
-            lang: document.getElementById('langScore').value,
-            gpa: document.getElementById('academic').value,
-            refSource: new URLSearchParams(window.location.search).get('ref') || 'Direct'
-        };
+    e.preventDefault();
+    
+    // বাটন ডিজেবল করা যাতে বারবার ক্লিক না হয়
+    const submitBtn = e.target.querySelector('button');
+    submitBtn.innerText = "Submitting...";
+    submitBtn.disabled = true;
 
-        // backend call (your existing endpoint)
-        try {
-            const res = await fetch('/api/merchant/submit-scan-lead', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(formData)
-            });
-
-            if(res.ok) {
-                document.getElementById('formSection').style.display = 'none';
-                document.getElementById('resultArea').style.display = 'block';
-                
-                // Generate Tracking QR
-                const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${formData.passport}`;
-                new QRCode(document.getElementById("qrcode"), {
-                    text: trackLink,
-                    width: 120,
-                    height: 120
-                });
-            }
-        } catch (err) {
-            alert("Submission failed. Please try again.");
-        }
+    const formData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        passport: document.getElementById('passport').value,
+        degree: document.getElementById('degree').value,
+        country: document.getElementById('country').value,
+        uni: document.getElementById('uni').value,
+        lang: document.getElementById('langScore').value,
+        gpa: document.getElementById('academic').value,
+        refSource: new URLSearchParams(window.location.search).get('ref') || 'Direct'
     };
+
+    try {
+        // আপনার ব্যাকএন্ড রাউটটি নিশ্চিত করুন (index.js এ যা আছে)
+        const res = await fetch('/api/merchant/submit-scan-lead', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+        });
+
+        const result = await res.json();
+
+        if(res.ok) {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('resultArea').style.display = 'block';
+            
+            // QR Code জেনারেট করার সেফ মেথড
+            const qrContainer = document.getElementById("qrcode");
+            const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${formData.passport}`;
+            
+            if (typeof QRCode !== "undefined") {
+                new QRCode(qrContainer, {
+                    text: trackLink,
+                    width: 150,
+                    height: 150
+                });
+            } else {
+                // যদি লাইব্রেরি কাজ না করে তবে ইমেজ এপিআই ব্যবহার করবে
+                qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}" />`;
+            }
+        } else {
+            alert("Error: " + (result.error || "Submission failed"));
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Assessment";
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Network Error! সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।");
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit Assessment";
+    }
+};
+
 </script>
 
 </body>
