@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// ১. মার্চেন্ট মডেল (মার্চেন্ট স্পেসিফিক ডাটার জন্য)
+// ১. মার্চেন্ট মডেল
 const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
     shopName: String,
@@ -13,33 +13,26 @@ const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', new mong
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'merchants' }));
 
-// ২. প্রয়োজনীয় মডেলগুলো রেফারেন্স করা
+// ২. মডেল রেফারেন্স (নিশ্চিত করুন এগুলো আপনার main index.js এ ডিফাইন করা আছে)
 const Application = mongoose.models.Application;
 const User = mongoose.models.User;
 
-/** * ৩. অ্যাডমিন কর্তৃক মার্চেন্ট আইডি ও স্ট্যাটাস আপডেট করার রাউট 
- * এটি আপনার অ্যাডমিন প্যানেলের 'Approve & Save' বাটনের সাথে কাজ করবে।
- */
+// ৩. মার্চেন্ট আইডি ও স্ট্যাটাস আপডেট রাউট (Admin Panel এর জন্য)
 router.patch('/update-id/:id', async (req, res) => {
     try {
         const { merchantId, status } = req.body;
         const userId = req.params.id;
 
-        // User কালেকশনে আইডি এবং স্ট্যাটাস আপডেট করা
         const updatedUser = await User.findByIdAndUpdate(
             userId, 
-            { 
-                merchantId: merchantId, 
-                status: status || 'active' 
-            }, 
+            { merchantId: merchantId, status: status || 'active' }, 
             { new: true }
         );
 
         if (!updatedUser) {
-            return res.status(404).json({ success: false, error: "Merchant not found in Users" });
+            return res.status(404).json({ success: false, error: "Merchant not found" });
         }
 
-        // ঐচ্ছিক: মার্চেন্ট যদি 'merchants' কালেকশনে না থাকে তবে নতুন এন্ট্রি তৈরি করা
         await Merchant.findOneAndUpdate(
             { merchantId: merchantId },
             { 
@@ -50,22 +43,29 @@ router.patch('/update-id/:id', async (req, res) => {
             { upsert: true, new: true }
         );
 
-        res.json({ success: true, message: "Merchant ID and Status updated successfully!" });
+        res.json({ success: true, message: "Merchant Activated!" });
     } catch (err) {
-        console.error("Update ID Error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ৪. কিউআর স্ক্যান থেকে লিড সাবমিশন এপিআই
+/**
+ * ৪. কিউআর স্ক্যান থেকে লিড সাবমিশন এপিআই (সংশোধিত)
+ * আপনার ফ্রন্টএন্ড ফর্মের সব ডাটা এখানে রিসিভ করা হচ্ছে
+ */
 router.post('/submit-scan-lead', async (req, res) => {
     try {
-        const { name, phone, passport, gpa, refSource } = req.body;
+        // ফ্রন্টএন্ড থেকে আসা সব ইনপুট এখানে ধরছি
+        const { name, phone, passport, degree, country, uni, lang, gpa, refSource } = req.body;
 
         const newStudent = new Application({
             studentName: name,
             contactNo: phone, 
             passportNo: passport || "N/A", 
+            expectedDegree: degree,        // নতুন যোগ করা হয়েছে
+            expectedCountry: country,      // নতুন যোগ করা হয়েছে
+            preferredUni: uni || "N/A",    // নতুন যোগ করা হয়েছে
+            languageScore: lang,           // নতুন যোগ করা হয়েছে
             gpa: gpa,
             status: 'PENDING', 
             referredBy: refSource, 
@@ -75,7 +75,7 @@ router.post('/submit-scan-lead', async (req, res) => {
 
         await newStudent.save();
 
-        // মার্চেন্টের লিড কাউন্ট আপডেট
+        // মার্চেন্টের লিড কাউন্ট ১ বৃদ্ধি করা
         if (refSource && refSource !== 'Direct') {
             await Merchant.findOneAndUpdate(
                 { merchantId: refSource },
@@ -83,13 +83,14 @@ router.post('/submit-scan-lead', async (req, res) => {
             );
         }
 
-        res.json({ success: true, msg: "Assessment submitted!" });
+        res.json({ success: true, message: "Assessment submitted successfully!" });
     } catch (err) {
+        console.error("Lead Submission Error:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-// ৫. মার্চেন্টের আন্ডারে থাকা স্টুডেন্ট হিস্ট্রি এপিআই
+// ৫. মার্চেন্টের লিড হিস্ট্রি
 router.get('/leads/:mId', async (req, res) => {
     try {
         const leads = await Application.find({ referredBy: req.params.mId }).sort({ timestamp: -1 });
@@ -99,7 +100,7 @@ router.get('/leads/:mId', async (req, res) => {
     }
 });
 
-// ৬. মার্চেন্ট প্রোফাইল স্ট্যাটাস/ড্যাশবোর্ড ডাটা
+// ৬. ড্যাশবোর্ড স্ট্যাটাস
 router.get('/stats/:id', async (req, res) => {
     try {
         const stats = await Merchant.findOne({ merchantId: req.params.id });
