@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Portal | SCC Group</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
+        body { background: var(--deep); color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .auth-card { width: 100%; max-width: 500px; background: var(--dark); padding: 30px; border-radius: 20px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .logo { width: 80px; display: block; margin: 0 auto 20px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #444; background: #0b0b15; color: white; box-sizing: border-box; font-size: 14px; }
+        input:focus { border-color: var(--gold); outline: none; }
+        .btn-auth { width: 100%; padding: 15px; background: var(--gold); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; transition: 0.3s; }
+        .btn-auth:hover { opacity: 0.9; transform: translateY(-2px); }
+        .toggle-link { color: var(--gold); cursor: pointer; font-size: 14px; text-align: center; margin-top: 20px; display: block; }
+        h2 { text-align: center; color: var(--gold); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="auth-card" id="loginBox">
+    <img src="logo.jpeg" class="logo">
+    <h2>Merchant Login</h2>
+    <input type="email" id="lEmail" placeholder="Merchant Email">
+    <input type="password" id="lPass" placeholder="Password">
+    <button class="btn-auth" onclick="handleLogin()">Login to Hub</button>
+    <p class="toggle-link" onclick="toggleAuth()">New Partner? Register Your Shop</p>
+</div>
+
+<div class="auth-card" id="regBox" style="display: none;">
+    <img src="logo.jpeg" class="logo">
+    <h2>Merchant Registration</h2>
+    <div class="grid-inputs">
+        <input type="text" id="rShop" placeholder="Shop/Studio Name" style="grid-column: span 2;">
+        <input type="text" id="rOwner" placeholder="Owner Name">
+        <input type="tel" id="rPhone" placeholder="Contact Number">
+        <input type="email" id="rEmail" placeholder="Official Email">
+        <input type="text" id="rAddress" placeholder="Full Address">
+        <input type="text" id="rNid" placeholder="NID PDF Link">
+        <input type="text" id="rTrade" placeholder="Trade License Link">
+        <input type="password" id="rPass" placeholder="Set Password">
+        <input type="password" id="rConfirm" placeholder="Confirm Password">
+    </div>
+    <button class="btn-auth" onclick="handleRegister()">Submit Application</button>
+    <p class="toggle-link" onclick="toggleAuth()">Already Registered? Login</p>
+</div>
+
+<script>
+    function toggleAuth() {
+        document.getElementById('loginBox').style.display = document.getElementById('loginBox').style.display === 'none' ? 'block' : 'none';
+        document.getElementById('regBox').style.display = document.getElementById('regBox').style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function handleRegister() {
+        const pass = document.getElementById('rPass').value;
+        if(pass !== document.getElementById('rConfirm').value) return alert("Passwords do not match!");
+
+        const payload = {
+            role: 'merchant',
+            orgName: document.getElementById('rShop').value,
+            fullName: document.getElementById('rOwner').value,
+            email: document.getElementById('rEmail').value,
+            contact: document.getElementById('rPhone').value,
+            address: document.getElementById('rAddress').value,
+            nidPdf: document.getElementById('rNid').value,
+            tradeLicensePdf: document.getElementById('rTrade').value,
+            password: pass
+        };
+
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        alert(data.message || data.error);
+        if(data.success) location.reload();
+    }
+
+    async function handleLogin() {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email: document.getElementById('lEmail').value,
+                password: document.getElementById('lPass').value
+            })
+        });
+        const data = await res.json();
+        if(data.user && data.user.role === 'merchant') {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            window.location.href = "/merchant-dashboard.html";
+        } else {
+            alert(data.msg || "Invalid Merchant Credentials");
+        }
+    }
+</script>
+</body>
+</html>
