@@ -552,6 +552,5 @@ app.get('*', (req, res) => {
 });
 // index.js এর শেষে যোগ করুন
 const merchantService = require('./merchant-service');
-app.use('/api/merchant', merchantService);
-
+app.use('/api/merchant', merchantService); 
 module.exports = app;
