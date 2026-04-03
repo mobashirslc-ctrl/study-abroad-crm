@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard | SCC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
+        body { background: var(--deep); color: white; font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #333; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
+        .qr-area { background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-top: 15px; }
+        @media print { .no-print { display: none; } body { background: white; color: black; } }
+    </style>
+</head>
+<body>
+
+<div class="no-print" style="text-align:center; margin-bottom: 30px;">
+    <h2>Merchant Partner Portal</h2>
+    <p id="welcome">Loading shop details...</p>
+</div>
+
+<div class="grid">
+    <div class="card" id="printableQR">
+        <h3>Official Desk QR</h3>
+        <div class="qr-area">
+            <img id="mQR" src="" style="width: 180px;">
+            <div id="mIdDisplay" style="color: black; font-weight: bold; margin-top: 5px;">ID: ---</div>
+        </div>
+        <br>
+        <button class="no-print" onclick="window.print()" style="margin-top:15px; padding:10px; cursor:pointer;">Print for Table</button>
+    </div>
+
+    <div class="card" style="grid-column: span 2;">
+        <h3><i class="fas fa-history"></i> Recent Scans from Your Shop</h3>
+        <table>
+            <thead>
+                <tr><th>Student Name</th><th>Phone</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody id="historyBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function init() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if(!user) return window.location.href = "/auth.html";
+
+        const mId = user.merchantId || "M101"; 
+        document.getElementById('welcome').innerText = `Welcome, ${user.orgName}`;
+        document.getElementById('mIdDisplay').innerText = `ID: ${mId}`;
+
+        // QR Generate
+        const link = `${window.location.origin}/scan-apply.html?ref=${mId}`;
+        document.getElementById('mQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+
+        // Load History
+        const res = await fetch(`/api/merchant/leads/${mId}`);
+        const leads = await res.json();
+        const tbody = document.getElementById('historyBody');
+        tbody.innerHTML = leads.map(l => `
+            <tr>
+                <td>${l.studentName}</td>
+                <td>${l.contactNo}</td>
+                <td><b style="color:var(--gold)">${l.status}</b></td>
+                <td>${new Date(l.timestamp).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+    init();
+</script>
+</body>
+</html>
