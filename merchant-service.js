@@ -67,3 +67,20 @@ router.get('/stats/:id', async (req, res) => {
 });
 
 module.exports = router;
+
+// অ্যাডমিন কর্তৃক মার্চেন্ট আইডি আপডেট করার রাউট
+router.patch('/update-id/:id', async (req, res) => {
+    try {
+        const User = mongoose.models.User;
+        const { merchantId } = req.body;
+        
+        await User.findByIdAndUpdate(req.params.id, { 
+            merchantId: merchantId,
+            status: 'active' // আইডি দেওয়ার সাথে সাথে একাউন্ট একটিভ হয়ে যাবে
+        });
+        
+        res.json({ success: true, message: "Merchant ID updated successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
