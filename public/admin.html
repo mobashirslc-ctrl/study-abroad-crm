@@ -6,7 +6,7 @@
     <title>Master Admin | SCC Group</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; --blue: #3498db; }
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
         .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
@@ -27,37 +27,19 @@
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .status-active { background: var(--green); color: white; }
         .status-pending { background: var(--gold); color: black; }
+        .status-verified { background: #3498db; color: white; }
         .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
-
     <script>
-        // ১. সাইডবার লজিক (সবার আগে ডিফাইন করা হলো যাতে লক না হয়)
+        // Global Navigation Logic (Locker Problem Fixed)
         function showTab(event, tabId) {
-            // সব ট্যাব হাইড করা
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(t => t.style.display = 'none');
-
-            // সব মেনু আইটেম থেকে একটিভ ক্লাস রিমুভ করা
-            const listItems = document.querySelectorAll('.sidebar ul li');
-            listItems.forEach(li => li.classList.remove('active'));
-
-            // নির্দিষ্ট ট্যাব দেখানো
-            const target = document.getElementById(tabId);
-            if (target) {
-                target.style.display = 'block';
-                if (event && event.currentTarget) {
-                    event.currentTarget.classList.add('active');
-                }
-            }
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            if(event) event.currentTarget.classList.add('active');
         }
-
-        function logout() {
-            if(confirm("Logout from Admin Panel?")) {
-                localStorage.clear();
-                location.href = 'auth.html';
-            }
-        }
+        function logout() { localStorage.clear(); location.href = 'login.html'; }
     </script>
 </head>
 <body>
@@ -65,98 +47,138 @@
 <div class="sidebar">
     <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
     <ul>
-        <li class="active" onclick="showTab(event, 'uni-manage')">
-            <i class="fas fa-university"></i> Manage Universities
-        </li>
-        <li onclick="showTab(event, 'user-manage')">
-            <i class="fas fa-users-cog"></i> Partner & Compliance
-        </li>
-        <li onclick="showTab(event, 'merchant-manage')">
-            <i class="fas fa-store"></i> Merchant Partners
-        </li>
-        <li onclick="showTab(event, 'tracking-manage')">
-            <i class="fas fa-tasks"></i> Tracking & Wallet
-        </li>
-        <li onclick="showTab(event, 'admission-manage')">
-            <i class="fas fa-user-graduate"></i> Admission Requests
-        </li>
-        <hr style="border: 0.5px solid #222; margin: 10px 20px;">
-        <li onclick="logout()">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </li>
+        <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Manage Universities</li>
+        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partner & Compliance</li>
+        <li onclick="showTab(event, 'admission-manage')"><i class="fas fa-user-graduate"></i> Admission Requests</li>
+        <li onclick="showTab(event, 'tracking-manage')"><i class="fas fa-tasks"></i> Tracking & Wallet</li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
     </ul>
 </div>
 
 <div class="main-content">
-    <h2>Admin <span style="color:var(--gold);">Control Center</span></h2>
+    <h2 style="margin-bottom: 25px;">Admin <span style="color:var(--gold);">Control Center</span></h2>
 
     <div id="uni-manage" class="tab-content" style="display: block;">
         <div class="card">
-            <h3>Add New University</h3>
+            <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
             <div class="input-group">
                 <input type="text" id="uName" placeholder="University Name">
                 <input type="text" id="uCountry" placeholder="Country">
-                <input type="text" id="uCity" placeholder="City">
+                <input type="text" id="uCity" placeholder="City/Location">
             </div>
-            <button class="btn-gold" onclick="saveUniversity()">Add University</button>
+            <div class="input-group">
+                <select id="uDegree">
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="Foundation">Foundation/Diploma</option>
+                </select>
+                <input type="text" id="uCourse" placeholder="Popular Course Name">
+                <input type="text" id="uIntake" placeholder="Intake (e.g. Jan 2026)">
+            </div>
+            <button class="btn-gold" onclick="saveUniversity()">Add University to System</button>
         </div>
         <table>
-            <thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Action</th></tr></thead>
+            <thead><tr><th>University</th><th>Requirements</th><th>Fee & Comm</th><th>Action</th></tr></thead>
             <tbody id="adminUniTable"></tbody>
         </table>
     </div>
 
     <div id="user-manage" class="tab-content">
-        <div class="card"><h3>Partner Management</h3>
+        <h3>User Management (Approval & Subscription)</h3>
+        <table>
+            <thead><tr><th>Name & Org</th><th>Type</th><th>Contact</th><th>Documents</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="adminUserTable"></tbody>
-        </div>
-    </div>
-
-    <div id="merchant-manage" class="tab-content">
-        <div class="card"><h3>Merchant Management</h3>
-            <tbody id="adminMerchantTable"></tbody>
-        </div>
-    </div>
-
-    <div id="tracking-manage" class="tab-content">
-        <div class="card"><h3>Tracking & Wallet</h3>
-            <tbody id="adminTrackingTable"></tbody>
-        </div>
+        </table>
     </div>
 
     <div id="admission-manage" class="tab-content">
-        <div class="card"><h3>Admission Requests</h3>
+        <h3>New Admission Requests</h3>
+        <table>
+            <thead><tr><th>Student Name</th><th>Interested Uni</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead>
             <tbody id="adminAdmissionTable"></tbody>
-        </div>
+        </table>
+    </div>
+
+    <div id="tracking-manage" class="tab-content">
+        <h3>Student File Tracking & Wallet</h3>
+        <table>
+            <thead><tr><th>Student Name</th><th>Partner Agency</th><th>Status</th><th>Wallet (৳)</th><th>Action</th></tr></thead>
+            <tbody id="adminTrackingTable"></tbody>
+        </table>
     </div>
 </div>
 
 <script type="module">
-    // ২. ডাটা ফেচিং লজিক (API কলগুলো এখানে থাকবে)
-    async function fetchAll() {
+    // Data Loading Functions
+    window.fetchAllData = async () => {
         try {
-            const res = await fetch('/api/universities');
-            const unis = await res.json();
+            // 1. Fetch Universities
+            const uniRes = await fetch('/api/universities');
+            const unis = await uniRes.json();
             document.getElementById('adminUniTable').innerHTML = unis.map(u => `
                 <tr>
-                    <td><b>${u.universityName}</b></td>
-                    <td>GPA: ${u.minGPA}</td>
+                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
+                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
                     <td>${u.uCurrency} ${u.totalTuitionFee}</td>
-                    <td><button class="action-btn" style="background:var(--gold)">EDIT</button></td>
+                    <td><button class="action-btn" style="background:var(--red); color:white;" onclick="deleteUni('${u._id}')">DEL</button></td>
                 </tr>`).join('');
-            
-            // অন্যান্য ফেচ কল এখানে এড করুন (User, Merchant, etc.)
-        } catch(e) { console.error("Loading Error:", e); }
-    }
 
-    window.saveUniversity = async () => {
-        const data = { universityName: document.getElementById('uName').value, country: document.getElementById('uCountry').value };
-        await fetch('/api/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-        fetchAll();
+            // 2. Fetch Partners
+            const userRes = await fetch('/api/admin/users');
+            const users = await userRes.json();
+            document.getElementById('adminUserTable').innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.fullName}<br><small>${user.orgName || ''}</small></td>
+                    <td>${user.role}</td>
+                    <td>${user.email}</td>
+                    <td><button class="action-btn" style="background:#673ab7; color:white;" onclick="viewDocuments('${user.tradeLicense}', '${user.nidFront}')">View</button></td>
+                    <td><span class="badge status-${user.status}">${user.status}</span></td>
+                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
+                </tr>`).join('');
+
+            // 3. Fetch Applications (Tracking & Admission)
+            const appRes = await fetch('/api/applications');
+            const apps = await appRes.json();
+            
+            // Filter Admission (Pending) and Tracking (Others)
+            document.getElementById('adminAdmissionTable').innerHTML = apps.filter(a => a.status === 'PENDING').map(app => `
+                <tr>
+                    <td><b>${app.studentName}</b></td>
+                    <td>${app.appliedUniversity || 'Not Set'}</td>
+                    <td>${app.studentPhone || 'N/A'}</td>
+                    <td><span class="badge status-pending">${app.status}</span></td>
+                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateAppStatus('${app._id}', 'PROCESSING')">Accept</button></td>
+                </tr>`).join('');
+
+            document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
+                <tr>
+                    <td><b>${app.studentName}</b></td>
+                    <td>${app.partnerEmail || 'Direct'}</td>
+                    <td><span class="badge status-verified">${app.status}</span></td>
+                    <td>৳${app.pendingAmount || 0}</td>
+                    <td><button class="action-btn" style="background:var(--gold)" onclick="openWalletBox('${app._id}')">Wallet</button></td>
+                </tr>`).join('');
+
+        } catch (err) { console.error("Load Error:", err); }
     };
 
-    window.onload = fetchAll;
-</script>
+    window.saveUniversity = async () => {
+        const data = {
+            universityName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            location: document.getElementById('uCity').value,
+            degree: document.getElementById('uDegree').value
+        };
+        await fetch('/api/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        fetchAllData();
+    };
 
+    window.updateAppStatus = async (id, status) => {
+        await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
+        fetchAllData();
+    };
+
+    window.onload = fetchAllData;
+</script>
 </body>
 </html>
