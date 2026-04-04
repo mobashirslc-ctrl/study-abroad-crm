@@ -2,13 +2,20 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// --- ১. মডেল ইমপোর্ট (সবার উপরে থাকবে) ---
-// ফাইলগুলো সরাসরি রুট ফোল্ডারে থাকায় নিচের পাথগুলো সঠিক
+// --- ১. মডেল ইমপোর্ট (Safe Loading) ---
+// ফাইলগুলো সরাসরি রুট ফোল্ডারে থাকায় require করা হচ্ছে
 const Application = require('./Application'); 
-const User = require('./index'); 
 
-// ২. মার্চেন্ট মডেল (এটি এই ফাইলেই ডিফাইন করা আছে)
-const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', new mongoose.Schema({
+// User মডেল সরাসরি require করলে অনেক সময় ওভাররাইট এরর দেয়, তাই এভাবে চেক করা ভালো
+let User;
+try {
+    User = mongoose.model('User');
+} catch (e) {
+    User = require('./index'); 
+}
+
+// ২. মার্চেন্ট মডেল (OverwriteModelError প্রতিরোধের জন্য Safe Check)
+const MerchantSchema = new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
     shopName: String,
     ownerName: String,
@@ -16,7 +23,9 @@ const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', new mong
     leadsCount: { type: Number, default: 0 },
     walletBalance: { type: Number, default: 0 },
     timestamp: { type: Date, default: Date.now }
-}, { collection: 'merchants' }));
+}, { collection: 'merchants' });
+
+const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', MerchantSchema);
 
 /**
  * ৩. কিউআর স্ক্যান থেকে লিড সাবমিশন এপিআই
@@ -42,7 +51,6 @@ router.post('/submit-scan-lead', async (req, res) => {
 
         await newStudent.save();
 
-        // মার্চেন্টের লিড কাউন্ট ১ বৃদ্ধি করা
         if (refSource && refSource !== 'Direct') {
             await Merchant.findOneAndUpdate(
                 { merchantId: refSource },
