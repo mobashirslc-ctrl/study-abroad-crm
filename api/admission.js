@@ -9,7 +9,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// ২. MongoDB কানেকশন ফাংশন (Serverless এর জন্য নিরাপদ)
+// ২. MongoDB কানেকশন ফাংশন
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
     try {
@@ -48,22 +48,25 @@ module.exports = async (req, res) => {
             let photoUrl = null;
             let nidUrl = null;
 
-            // ৩. ফাইল আপলোড লজিক
+            // ৩. ফটো আপলোড (Logic Cleaned)
             if (files.studentPhoto) {
                 const resPhoto = await cloudinary.uploader.upload(files.studentPhoto.filepath, {
-                    folder: 'slc_language_hub/photos'
+                    folder: 'slc_language_hub/photos',
+                    resource_type: "auto"
                 });
                 photoUrl = resPhoto.secure_url;
             }
 
+            // ৪. NID আপলোড
             if (files.nidFile) {
                 const resNid = await cloudinary.uploader.upload(files.nidFile.filepath, {
-                    folder: 'slc_language_hub/documents'
+                    folder: 'slc_language_hub/documents',
+                    resource_type: "auto"
                 });
                 nidUrl = resNid.secure_url;
             }
 
-            // ৪. আপনার ডেটা অবজেক্ট
+            // ৫. ডেটা অবজেক্ট তৈরি
             const admissionData = {
                 name: fields.name,
                 phone: fields.phone,
@@ -80,8 +83,8 @@ module.exports = async (req, res) => {
                 submittedAt: new Date()
             };
 
-            // নোট: এখানে আপনি চাইলে mongoose মডেল ব্যবহার করে ডাটা সেভ করতে পারেন।
-            console.log("Form Data Received:", admissionData);
+            // কনসোলে চেক করা (Vercel logs এ দেখা যাবে)
+            console.log("Submission Success:", admissionData.name);
 
             return res.status(200).json({ 
                 success: true, 
