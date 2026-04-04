@@ -76,6 +76,15 @@
         <div class="card"><h3>Available Balance</h3><p id="topFinal" style="font-size:24px; color:var(--green);">৳0</p></div>
         <div class="card"><h3>Total Students</h3><p id="totalStudents" style="font-size:24px; color:#3498db;">0</p></div>
     </div>
+    <div>
+    <h4 style="background: #f4f4f4; padding: 8px; border-bottom: 2px solid #2b0054; margin-bottom: 10px; font-size: 13px;">STUDENT INFORMATION</h4>
+    <div style="font-size: 13px; line-height: 1.8;">
+        <p style="margin: 5px 0;"><strong>Name:</strong> <span id="dashStudentName"></span></p>
+<p style="margin: 5px 0;"><strong>Passport:</strong> <span id="dashPassport"></span></p>
+<p style="margin: 5px 0;"><strong>University:</strong> <span id="dashDest"></span></p>
+<p style="margin: 5px 0;"><strong>Course:</strong> <span id="dashCourse"></span></p>
+    </div>
+</div>
 
     <div style="margin-bottom: 25px; text-align: right;">
         <button class="btn-gold" onclick="window.openManualApply()" style="width: auto; padding: 12px 30px; border-radius: 8px; cursor: pointer;">
@@ -402,83 +411,6 @@
     window.onload = function() {
         showTab('dashboard');
     };
-<script>
-    // এই ফাংশনটি আপনার existing searchUni কে আপডেট না করে নতুন সুবিধা যোগ করবে
-    function extraFilters() {
-        const grid = document.querySelector('#universities .card-grid');
-        if (grid && !document.getElementById('userLevel')) {
-            const levelCard = document.createElement('div');
-            levelCard.className = 'card';
-            levelCard.style.textAlign = 'left';
-            levelCard.style.padding = '15px';
-            levelCard.innerHTML = `
-                <label>Study Level</label>
-                <select id="userLevel" onchange="searchUni()">
-                    <option value="Bachelor">Bachelor</option>
-                    <option value="Master">Master</option>
-                    <option value="Diploma">Diploma</option>
-                </select>
-            `;
-            grid.appendChild(levelCard);
-        }
-    }
-    // পেজ লোড হলে ফিল্ডটি তৈরি হবে
-    window.addEventListener('DOMContentLoaded', extraFilters);
 </script>
-
-    <script src="partner-logic.js"></script>
-
-<script>
-    // Sidebar switching logic - strictly tied to your IDs
-    window.showTab = function(tabId) {
-        console.log("Switching to: " + tabId);
-
-        // 1. Sob tab content hide kora
-        const contents = document.querySelectorAll('.tab-content');
-        contents.forEach(content => {
-            content.style.display = 'none';
-        });
-
-        // 2. Sob nav-item theke active class remove kora
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.classList.remove('active');
-        });
-
-        // 3. Target tab show kora
-        const target = document.getElementById(tabId);
-        if (target) {
-            target.style.display = 'block';
-        }
-
-        // 4. Sidebar menu active kora (menu-dashboard, menu-universities etc.)
-        const activeMenu = document.getElementById('menu-' + tabId);
-        if (activeMenu) {
-            activeMenu.classList.add('active');
-        }
-
-        // 5. Data Refresh (Dashboard ba Tracking e gele)
-        if ((tabId === 'dashboard' || tabId === 'tracking') && typeof initRealtimeData === 'function') {
-            initRealtimeData();
-        }
-    };
-
-    // Modal & Utility Functions
-    window.closeModal = () => document.getElementById('applyModal').style.display = 'none';
-    window.closeSlip = () => document.getElementById('slipModal').style.display = 'none';
-    
-    window.logout = () => {
-        if(confirm("Logout from SCC Portal?")) {
-            localStorage.clear();
-            window.location.href = 'auth.html';
-        }
-    };
-
-    // Page load hole default dashboard dekhabe
-    window.addEventListener('DOMContentLoaded', () => {
-        showTab('dashboard');
-    });
-</script>
-
 </body>
 </html>
