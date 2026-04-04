@@ -1,7 +1,6 @@
 const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
 
-// Cloudinary কনফিগারেশন (আপনার দেওয়া কি ব্যবহার করা হয়েছে)
 cloudinary.config({
   cloud_name: 'dqriueu9r',
   api_key: '698924766176623',
