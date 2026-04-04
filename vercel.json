@@ -15,3 +15,11 @@
     }
   ]
 }
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/admission", "destination": "/api/admission.js" },
+    { "source": "/api/approve", "destination": "/api/approve.js" },
+    { "source": "/api/(.*)", "destination": "/index.js" }
+  ]
+}

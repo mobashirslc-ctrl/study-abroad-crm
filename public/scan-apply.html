@@ -19,6 +19,12 @@
         .fee-display { text-align: center; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px dashed #2ecc71; font-weight: bold; color: #1b5e20; }
         .btn-confirm { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; text-transform: uppercase; margin-top: 20px; }
         .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
+
+        /* Popup Styles */
+        .popup-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .popup-content { background: white; padding: 30px; border-radius: 15px; text-align: center; max-width: 450px; }
+        .success-icon { font-size: 50px; color: #2ecc71; margin-bottom: 10px; }
+        
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -28,10 +34,10 @@
     <div class="header">
         <img src="logo.jpeg" alt="Logo" class="logo" onerror="this.src='https://via.placeholder.com/100'">
         <div style="font-weight: 600; color: var(--primary); font-size: 22px;">SLC LANGUAGE HUB</div>
-        <p style="font-size: 12px; color: #777;">Official Student Admission Portal</p>
+        <p style="font-size: 12px; color: #777;">Admission Voucher & Payment Portal</p>
     </div>
 
-    <div class="fee-display">Admission Fee: ৳ <span id="amount">0</span></div>
+    <div class="fee-display">Payable Amount: ৳ <span id="amount">0</span></div>
 
     <form id="enrollForm" enctype="multipart/form-data">
         <div class="section-title">Step 1: Personal Information</div>
@@ -77,12 +83,16 @@
                 </select>
             </div>
         </div>
+        <div class="form-group">
+            <label>Exact Home Address</label>
+            <textarea name="homeAddress" rows="2" placeholder="House No, Road, Village/Area details..." required></textarea>
+        </div>
 
         <div class="section-title">Step 3: Course & Documents</div>
         <div class="grid">
             <div class="form-group">
                 <label>Choose Course</label>
-                <select id="courseSelect" name="course" required>
+                <select id="courseSelect" name="course" onchange="updateFee()" required>
                     <option value="" data-fee="0">Select Course</option>
                     <option value="Spoken English" data-fee="4500">Spoken English (৳4500)</option>
                     <option value="IELTS Course" data-fee="8500">IELTS Course (৳8500)</option>
@@ -105,9 +115,34 @@
             </div>
         </div>
 
+        <div class="section-title">Step 4: Payment Details</div>
+        <div class="grid">
+            <div class="form-group">
+                <label>Payment Method</label>
+                <select name="paymentMethod" required>
+                    <option value="Bkash">bKash (Personal: 01XXXXXXXXX)</option>
+                    <option value="Nagad">Nagad (Personal: 01XXXXXXXXX)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Transaction ID</label>
+                <input type="text" name="transactionId" placeholder="Enter Bkash/Nagad TrxID" required>
+            </div>
+        </div>
+
         <input type="hidden" id="refSource" name="refSource" value="Direct">
+        <input type="hidden" id="hiddenFee" name="fee" value="0">
         <button type="submit" id="submitBtn" class="btn-confirm">Confirm Admission</button>
     </form>
+</div>
+
+<div id="successPopup" class="popup-overlay">
+    <div class="popup-content">
+        <div class="success-icon">✔</div>
+        <h3>Request Submitted!</h3>
+        <p style="font-size: 14px; color: #555;">আপনার আবেদনটি গ্রহণ করা হয়েছে। দয়া করে আপনার <b>Transaction ID</b> টি যত্ন করে রাখুন। এডমিন পেমেন্ট ভেরিফাই করলে আপনার ফোনে কনফার্মেশন এসএমএস যাবে।</p>
+        <button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 25px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer;">Close</button>
+    </div>
 </div>
 
 <script>
@@ -126,16 +161,19 @@
             thanaSelect.disabled = false;
             bdData[district].forEach(t => {
                 let opt = document.createElement('option');
-                opt.value = t; opt.text = t;
+                opt.value = t; 
+                opt.innerText = t; // 'text' এর বদলে 'innerText' ব্যবহার করা হয়েছে যা নিরাপদ
                 thanaSelect.appendChild(opt);
             });
         } else { thanaSelect.disabled = true; }
     }
 
-    document.getElementById('courseSelect').onchange = function() {
-        const selected = this.options[this.selectedIndex];
-        document.getElementById('amount').innerText = selected.dataset.fee || 0;
-    };
+    function updateFee() {
+        const select = document.getElementById('courseSelect');
+        const fee = select.options[select.selectedIndex].getAttribute('data-fee') || 0;
+        document.getElementById('amount').innerText = fee;
+        document.getElementById('hiddenFee').value = fee;
+    }
 
     document.getElementById('enrollForm').onsubmit = async (e) => {
         e.preventDefault();
@@ -144,29 +182,29 @@
         btn.innerText = "Submitting...";
 
         const formData = new FormData(e.target);
-        // এপিআই-এর সাথে মিল রাখার জন্য অতিরিক্ত ডাটা যোগ করা
-        formData.append('fee', document.getElementById('amount').innerText);
 
         try {
-    const res = await fetch('/api/admission', { // আমরা নতুন যে এপিআই বানালাম সেটির লিঙ্ক
-        method: 'POST',
-        body: formData // ফাইলসহ পাঠানোর জন্য সরাসরি FormData ব্যবহার করাই সেরা
-    });
-    
-    const result = await res.json();
-    if(result.success) {
-        alert("🎉 Admission Successful! Your ID: " + result.id);
-        window.location.reload();
-    } else {
-        alert("❌ Submission Failed: " + result.message);
-        btn.disabled = false;
-        btn.innerText = "Confirm Admission";
-    }
-} catch (err) {
-    alert("❌ Server Connection Failed!");
-    btn.disabled = false;
-    btn.innerText = "Confirm Admission";
-}
+            const res = await fetch('/api/admission', {
+                method: 'POST',
+                body: formData 
+            });
+            
+            const result = await res.json();
+            if(result.success) {
+                // পপ-আপ দেখানো
+                document.getElementById('successPopup').style.display = 'flex';
+            } else {
+                alert("❌ Submission Failed: " + result.message);
+                btn.disabled = false;
+                btn.innerText = "Confirm Admission";
+            }
+        } catch (err) {
+            alert("❌ Server Connection Failed!");
+            btn.disabled = false;
+            btn.innerText = "Confirm Admission";
+        }
+    };
+
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
         if (params.has('ref')) document.getElementById('refSource').value = params.get('ref');
