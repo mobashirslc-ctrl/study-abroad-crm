@@ -3,163 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admission Enrollment | SCC Learning Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Admission Form | SCC Learning Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #2ecc71; --gold: #f1c40f; }
-        body {
-            margin: 0; font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        body { font-family: 'Roboto', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .form-container {
+            background: white; max-width: 700px; margin: 0 auto;
+            padding: 40px; border-top: 8px solid #1a237e;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-radius: 4px;
         }
-        .enroll-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(15px);
-            padding: 30px; border-radius: 20px;
-            width: 90%; max-width: 400px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-        }
-        h2 { color: var(--accent); margin-bottom: 5px; }
-        p { font-size: 13px; color: #bbb; margin-bottom: 25px; }
+        .header { text-align: center; border-bottom: 2px solid #eee; margin-bottom: 30px; padding-bottom: 20px; }
         
-        input, select {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px; color: white; outline: none; box-sizing: border-box;
-        }
+        /* লোগোর জন্য নতুন স্টাইল */
+        .logo-container { margin-bottom: 15px; }
+        .logo-container img { max-width: 100px; height: auto; }
         
-        .fee-box {
-            background: rgba(46, 204, 113, 0.15);
-            border: 1px solid var(--accent);
-            padding: 15px; border-radius: 8px; margin-bottom: 20px;
-            display: none; /* শুরুতে লুকানো থাকবে */
-        }
-        .fee-box span { font-size: 22px; font-weight: bold; color: var(--accent); }
+        .header h1 { margin: 0; font-size: 24px; color: #1a237e; letter-spacing: 1px; }
+        .header p { margin: 5px 0; font-size: 14px; color: #666; }
+
+        .section-title { background: #f8f9fa; padding: 10px; font-weight: bold; margin: 20px 0 15px; border-left: 4px solid #1a237e; font-size: 15px; }
+        
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        
+        .fee-highlight { background: #e8eaf6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0; border: 1px dashed #1a237e; }
+        .fee-highlight span { font-size: 24px; font-weight: bold; color: #1a237e; }
+
+        .file-input { background: #fafafa; border: 1px dashed #bbb; padding: 10px; cursor: pointer; }
 
         .btn-submit {
-            background: var(--accent); color: white; border: none;
-            padding: 15px; width: 100%; border-radius: 8px;
-            font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s;
+            background: #1a237e; color: white; border: none; padding: 15px; width: 100%;
+            font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 20px;
         }
-        .btn-submit:hover { background: #27ae60; transform: scale(1.02); }
-        
-        #successMsg { display: none; }
+        .btn-submit:hover { background: #0d1642; }
+
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-<div class="enroll-card">
-    <div id="formArea">
-        <h2>SCC Learning Hub</h2>
-        <p>ভর্তি ফর্মটি নির্ভুলভাবে পূরণ করুন</p>
+<div class="form-container">
+    <div class="header">
+        <div class="logo-container">
+            <img src="logo.jpeg" alt="SCC Group Logo">
+        </div>
         
-        <form id="enrollForm">
-            <input type="text" id="stuName" placeholder="শিক্ষার্থীর পূর্ণ নাম" required>
-            <input type="text" id="stuPhone" placeholder="মোবাইল নম্বর" required>
-            
-            <select id="courseSelect" onchange="updatePrice()" required>
-                <option value="">কোর্স পছন্দ করুন</option>
-            </select>
+        <h1>SCC STUDENT LEARNING HUB</h1>
+        <p>Authorized Admission & Language Training Center</p>
+        <p style="font-size: 12px; color: #999;">Application for Admission</p>
+    </div>
 
-            <div id="feeBox" class="fee-box">
-                <small style="color: #ccc;">ভর্তি ফি:</small><br>
-                ৳ <span id="displayAmount">0</span>
+    <form id="admissionForm">
+        <div class="section-title">Personal Information</div>
+        <div class="grid">
+            <div class="input-group">
+                <label>Student Full Name</label>
+                <input type="text" id="name" placeholder="As per NID/Passport" required>
             </div>
+            <div class="input-group">
+                <label>Contact Number</label>
+                <input type="text" id="phone" placeholder="017XXXXXXXX" required>
+            </div>
+            <div class="input-group">
+                <label>Guardian Contact Number</label>
+                <input type="text" id="guardianPhone" placeholder="Emergency Contact" required>
+            </div>
+            <div class="input-group">
+                <label>Current Occupation</label>
+                <select id="occupation" onchange="toggleOccupationDetails()">
+                    <option value="Student">Student</option>
+                    <option value="Job Holder">Job Holder</option>
+                    <option value="Business">Business</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
 
-            <select id="batch" required>
-                <option value="">ব্যাচ সময় নির্বাচন করুন</option>
-                <option value="Morning">সকাল (১০টা - ১২টা)</option>
-                <option value="Afternoon">বিকাল (৩টা - ৫টা)</option>
-                <option value="Evening">সন্ধ্যা (৬টা - ৮টা)</option>
-            </select>
+        <div id="occDetails" class="input-group">
+            <label id="occLabel">Institute/Organization Name</label>
+            <input type="text" id="occName" placeholder="Enter specific name">
+        </div>
 
-            <button type="submit" class="btn-submit" id="submitBtn">ভর্তি নিশ্চিত করুন</button>
-        </form>
-    </div>
+        <div class="section-title">Course & Schedule</div>
+        <div class="grid">
+            <div class="input-group">
+                <label>Select Course</label>
+                <select id="courseSelect" onchange="updateCourseInfo()" required>
+                    <option value="">Choose Course</option>
+                    </select>
+            </div>
+            <div class="input-group">
+                <label>Preferred Batch</label>
+                <select id="batch" required>
+                    <option value="Morning">Morning (10 AM)</option>
+                    <option value="Afternoon">Afternoon (4 PM)</option>
+                    <option value="Evening">Evening (7 PM)</option>
+                </select>
+            </div>
+        </div>
 
-    <div id="successMsg">
-        <h2 style="color: var(--gold);">অভিনন্দন!</h2>
-        <p>আপনার ভর্তি আবেদনটি সফলভাবে গৃহীত হয়েছে। আমাদের ট্রেইনার খুব শীঘ্রই আপনার সাথে যোগাযোগ করবেন।</p>
-        <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; border-radius:5px; cursor:pointer;">আরেকটি ভর্তি করুন</button>
-    </div>
+        <div id="feeDisplay" class="fee-highlight" style="display:none;">
+            Total Admission Fee: <span>৳ <span id="amount">0</span></span>
+        </div>
+
+        <div class="section-title">Document Upload (Upload clear images/PDF)</div>
+        <div class="grid">
+            <div class="input-group">
+                <label>Student Photo (Passport Size)</label>
+                <input type="file" id="photo" accept="image/*" class="file-input" required>
+            </div>
+            <div class="input-group">
+                <label>Student NID/Birth Certificate (PDF/Image)</label>
+                <input type="file" id="nid" accept="image/*,application/pdf" class="file-input" required>
+            </div>
+        </div>
+
+        <input type="hidden" id="refSource">
+        <button type="submit" class="btn-submit">Submit Official Admission</button>
+    </form>
 </div>
 
 <script>
-    // ১. ব্যাকএন্ড থেকে ডায়নামিক কোর্স লিস্ট লোড করা
-    async function fetchCourses() {
-        try {
-            const res = await fetch('/api/courses'); // আপনার index.js এর API
-            const courses = await res.json();
-            const select = document.getElementById('courseSelect');
-            
-            courses.forEach(course => {
-                const opt = document.createElement('option');
-                opt.value = course.name;
-                opt.text = course.name;
-                opt.setAttribute('data-fee', course.fee);
-                select.appendChild(opt);
-            });
-        } catch (err) {
-            console.error("Course load error:", err);
-        }
-    }
-    fetchCourses();
+    // জাভাস্ক্রিপ্ট আগের মতোই থাকবে
+    const ref = new URLSearchParams(window.location.search).get('ref') || 'Direct';
+    document.getElementById('refSource').value = ref;
 
-    // ২. কোর্স সিলেক্ট করলে ফি আপডেট করা
-    function updatePrice() {
+    async function loadCourses() {
+        const res = await fetch('/api/courses');
+        const courses = await res.json();
         const select = document.getElementById('courseSelect');
-        const selectedOption = select.options[select.selectedIndex];
-        const fee = selectedOption.getAttribute('data-fee');
-        const feeBox = document.getElementById('feeBox');
-        
-        if (fee) {
-            feeBox.style.display = 'block';
-            document.getElementById('displayAmount').innerText = fee;
-        } else {
-            feeBox.style.display = 'none';
+        courses.forEach(c => {
+            let opt = document.createElement('option');
+            opt.value = c.name;
+            opt.text = c.name;
+            opt.setAttribute('data-fee', c.fee);
+            select.appendChild(opt);
+        });
+    }
+    loadCourses();
+
+    function updateCourseInfo() {
+        const select = document.getElementById('courseSelect');
+        const fee = select.options[select.selectedIndex].getAttribute('data-fee');
+        if(fee) {
+            document.getElementById('feeDisplay').style.display = 'block';
+            document.getElementById('amount').innerText = fee;
         }
     }
 
-    // ৩. ভর্তি ফর্ম সাবমিট করা
-    document.getElementById('enrollForm').onsubmit = async (e) => {
+    function toggleOccupationDetails() {
+        const occ = document.getElementById('occupation').value;
+        const label = document.getElementById('occLabel');
+        if(occ === 'Student') label.innerText = "School/College Name";
+        else if(occ === 'Job Holder') label.innerText = "Company Name";
+        else if(occ === 'Business') label.innerText = "Business Name";
+        else label.innerText = "Details";
+    }
+
+    document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerText = "Processing...";
-        submitBtn.disabled = true;
-
-        const refId = new URLSearchParams(window.location.search).get('ref') || 'Direct';
         
-        const payload = {
-            name: document.getElementById('stuName').value,
-            phone: document.getElementById('stuPhone').value,
-            course: document.getElementById('courseSelect').value,
-            fee: document.getElementById('displayAmount').innerText,
-            batch: document.getElementById('batch').value,
-            refSource: refId
-        };
+        const formData = new FormData();
+        formData.append('name', document.getElementById('name').value);
+        formData.append('phone', document.getElementById('phone').value);
+        formData.append('guardianPhone', document.getElementById('guardianPhone').value);
+        formData.append('occupation', document.getElementById('occupation').value);
+        formData.append('occName', document.getElementById('occName').value);
+        formData.append('course', document.getElementById('courseSelect').value);
+        formData.append('fee', document.getElementById('amount').innerText);
+        formData.append('batch', document.getElementById('batch').value);
+        formData.append('refSource', document.getElementById('refSource').value);
+        
+        formData.append('photo', document.getElementById('photo').files[0]);
+        formData.append('nid', document.getElementById('nid').files[0]);
 
-        try {
-            const res = await fetch('/api/merchant/submit-scan-lead', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
+        const res = await fetch('/api/merchant/submit-scan-lead', {
+            method: 'POST',
+            body: formData
+        });
 
-            if (res.ok) {
-                document.getElementById('formArea').style.display = 'none';
-                document.getElementById('successMsg').style.display = 'block';
-            } else {
-                alert("ভর্তি ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "ভর্তি নিশ্চিত করুন";
-            }
-        } catch (err) {
-            alert("Network Error!");
-            submitBtn.disabled = false;
-        }
+        if(res.ok) alert("Official Admission Submitted Successfully!");
     };
 </script>
 
