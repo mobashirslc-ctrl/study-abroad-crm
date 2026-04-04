@@ -3,7 +3,7 @@ const formidable = require('formidable');
 
 // Cloudinary কনফিগারেশন (আপনার দেওয়া কি ব্যবহার করা হয়েছে)
 cloudinary.config({
-    cloud_name: 'dqriueu9r', // আপনার ইউজারনেম অনুযায়ী এটি পরিবর্তন হতে পারে, তবে আপনার কি কাজ করবে
+    cloud_name: 'dqriueu9r', // এই নামটি আবার ভালো করে চেক করুন আপনার ড্যাশবোর্ড থেকে
     api_key: '698924766176623',
     api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
 });

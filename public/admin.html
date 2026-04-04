@@ -366,8 +366,33 @@ window.approveAndAssignID = async (id) => {
         alert("Network Error! সার্ভার রেসপন্স করছে না।");
     }
 }; // এই ব্র্যাকেটটি ক্লোজ করা খুব জরুরি ছিল
+window.approveStudent = async function(phone, name, course) {
+    // কনফার্মেশন বক্স (ভুল করে বাটন চাপ দিলে যেন এসএমএস না যায়)
+    if (!confirm(`Are you sure you want to approve ${name}? This will send a confirmation SMS.`)) return;
 
+    try {
+        const response = await fetch('/api/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentPhone: phone,
+                studentName: name,
+                courseName: course
+            })
+        });
 
+        const result = await response.json();
+        if(result.success) {
+            alert("✅ Approved! Confirmation SMS has been sent to the student.");
+            location.reload(); 
+        } else {
+            alert("❌ Failed to approve: " + (result.message || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Approval Error:", err);
+        alert("❌ Server Connection Failed!");
+    }
+};
 
         window.openWalletBox = async (id) => {
             const amount = prompt("Enter Wallet Amount:");
