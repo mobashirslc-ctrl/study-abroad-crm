@@ -148,28 +148,25 @@
         formData.append('fee', document.getElementById('amount').innerText);
 
         try {
-            const res = await fetch('/api/merchant/submit-scan-lead', {
-                method: 'POST',
-                // FormData ব্যবহার করলে Content-Type হেডার দেওয়ার প্রয়োজন নেই, ব্রাউজার নিজে থেকেই নিয়ে নেয়
-                body: formData 
-            });
-            
-            const result = await res.json();
-            if(result.success) {
-                alert("🎉 Admission Successful!");
-                window.location.reload();
-            } else {
-                alert("❌ Submission Failed: " + result.error);
-                btn.disabled = false;
-                btn.innerText = "Confirm Admission";
-            }
-        } catch (err) {
-            alert("❌ Server Connection Failed! Please check your network.");
-            btn.disabled = false;
-            btn.innerText = "Confirm Admission";
-        }
-    };
-
+    const res = await fetch('/api/admission', { // আমরা নতুন যে এপিআই বানালাম সেটির লিঙ্ক
+        method: 'POST',
+        body: formData // ফাইলসহ পাঠানোর জন্য সরাসরি FormData ব্যবহার করাই সেরা
+    });
+    
+    const result = await res.json();
+    if(result.success) {
+        alert("🎉 Admission Successful! Your ID: " + result.id);
+        window.location.reload();
+    } else {
+        alert("❌ Submission Failed: " + result.message);
+        btn.disabled = false;
+        btn.innerText = "Confirm Admission";
+    }
+} catch (err) {
+    alert("❌ Server Connection Failed!");
+    btn.disabled = false;
+    btn.innerText = "Confirm Admission";
+}
     window.onload = () => {
         const params = new URLSearchParams(window.location.search);
         if (params.has('ref')) document.getElementById('refSource').value = params.get('ref');
