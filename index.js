@@ -14,7 +14,15 @@ app.use(express.json());
 const publicPath = path.join(__dirname, 'public'); 
 app.use(express.static(publicPath));
 
-// --- 🌐 Database Connection ---
+// রুট পাথ
+app.get('/', (req, res) => {
+    res.sendFile(path.join(publicPath, 'auth.html'));
+});
+
+app.get('/track', (req, res) => {
+    res.sendFile(path.join(publicPath, 'track.html'));
+});
+
 const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://GORUN:IhpCrm2026@cluster0.8qewhkr.mongodb.net/crm_db?retryWrites=true&w=majority';
 
 const connectDB = async () => {
@@ -24,10 +32,11 @@ const connectDB = async () => {
         console.log('✅ Connected successfully to MongoDB');
     } catch (err) {
         console.error('❌ DB Error:', err.message);
+        throw err;
     }
 };
 
-// --- 👤 Models ---
+// --- Models ---
 const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true, lowercase: true, trim: true },
@@ -42,10 +51,10 @@ const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema(
     expertCountries: String,
     experience: String,
     website: String,
+    logoUrl: String,
     status: { type: String, default: 'pending' }, 
     expiryDate: { type: Date, default: null },   
-    walletBalance: { type: Number, default: 0 },
-    logoUrl: String
+    walletBalance: { type: Number, default: 0 }
 }, { collection: 'users' }));
 
 const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
@@ -54,10 +63,12 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     partnerEmail: String, 
     university: String,
     commissionBDT: Number, 
+    pdf1: String, pdf2: String, pdf3: String, pdf4: String,
     status: { type: String, default: 'PENDING' }, 
     complianceMember: String, 
     complianceNote: String, 
     pendingAmount: { type: Number, default: 0 },
+    handledBy: String, 
     lockBy: { type: String, default: null }, 
     lockUntil: { type: Date, default: null }, 
     timestamp: { type: Date, default: Date.now }
@@ -68,103 +79,193 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
     partnerName: String,
     amount: { type: Number, required: true },
     method: { type: String, default: 'Bank/Mobile Finance' },
-    status: { type: String, default: 'PENDING' },
+    status: { type: String, default: 'PENDING' }, 
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'withdrawals' }));
 
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
-    universityName: String, country: String, location: String, degree: String,
-    duration: String, semesterFee: Number, livingCost: Number,
-    jobOpportunity: String, partnerComm: Number, minGPA: Number, ieltsReq: Number, gap: Number
+    universityName: String,
+    country: String,
+    location: String,
+    degree: String,
+    duration: String,
+    semesterFee: Number,
+    livingCost: Number,
+    jobOpportunity: String,
+    partnerComm: Number,
+    minGPA: Number,
+    ieltsReq: Number,
+    gap: Number
 }, { collection: 'universities' }));
 
-// --- 🚀 API Routes ---
+// --- API Routes ---
 
-// HTML Routes
-app.get('/', (req, res) => res.sendFile(path.join(publicPath, 'auth.html')));
-app.get('/track', (req, res) => res.sendFile(path.join(publicPath, 'track.html')));
-
-// 1. Registration
+// Registration
 app.post(['/api/register', '/api/auth/register'], async (req, res) => {
     try {
         await connectDB();
-        const { email, password } = req.body;
-        if (!email || !password) return res.status(400).json({ message: "Email/Password missing" });
+        const { role, fullName, email, password, contact, orgName, authorisedPerson, address, expertCountries, experience, website } = req.body;
+        if (!email || !password) return res.status(400).json({ message: "Email and Password are required!" });
+        
         const cleanEmail = email.toLowerCase().trim();
-        const existing = await User.findOne({ email: cleanEmail });
-        if (existing) return res.status(400).json({ message: "Email exists" });
+        const existingUser = await User.findOne({ email: cleanEmail });
+        if (existingUser) return res.status(400).json({ message: "Email already exists!" });
+
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ ...req.body, email: cleanEmail, password: hashedPassword });
+        const newUser = new User({
+            role: role || 'partner', fullName, email: cleanEmail, password: hashedPassword,
+            contact, orgName, authorisedPerson, address, expertCountries, experience, website,
+            status: 'pending', walletBalance: 0
+        });
+
         await newUser.save();
-        res.status(201).json({ success: true, message: "Registered! Wait for approval." });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+        res.status(201).json({ success: true, message: "Registration successful! Waiting for Admin Approval." });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
 });
 
-// 2. Login
-app.post(['/api/login', '/api/auth/login'], async (req, res) => {
-    try {
-        await connectDB();
-        const user = await User.findOne({ email: req.body.email.toLowerCase().trim() });
-        if (!user || !(await bcrypt.compare(req.body.password, user.password))) return res.status(400).json({ msg: 'Invalid Credentials' });
-        if (user.status === 'pending') return res.status(403).json({ msg: 'Account Pending Approval' });
-        res.json({ user });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 3. Admin: Update Wallet & Application Status
+// Admin: Wallet Update (FIXED SYNTAX)
 app.patch('/api/applications/:id', async (req, res) => {
-    try {
-        await connectDB();
-        const amount = Number(req.body.pendingAmount) || 0; 
-        const appData = await Application.findById(req.params.id);
-        if (!appData) return res.status(404).json({ error: "Not found" });
-
-        const updatedApp = await Application.findByIdAndUpdate(req.params.id, 
-            { $inc: { pendingAmount: -amount }, status: req.body.status || 'PAID' }, { new: true });
-
-        if (amount > 0) {
-            await User.findOneAndUpdate({ email: appData.partnerEmail.toLowerCase().trim() }, { $inc: { walletBalance: amount } });
-        }
-        res.json({ msg: `Success! ${amount} added.`, data: updatedApp });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 4. Compliance: Update Status and Commission
-app.patch('/api/update-compliance', async (req, res) => {
-    try {
-        await connectDB(); 
-        const { appId, status, complianceNote, staffEmail, commission } = req.body;
-        let pAmount = (status.includes('VERIFIED')) ? (Number(commission) || 0) : 0;
-        const updatedApp = await Application.findByIdAndUpdate(appId, { 
-            status, complianceNote, complianceMember: staffEmail, pendingAmount: pAmount,
-            lockBy: null, lockUntil: null, timestamp: new Date()
-        }, { new: true });
-        res.json({ msg: `Updated to ${status}`, data: updatedApp });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 5. Public Tracking
-app.get('/api/track-status', async (req, res) => {
-    try {
-        await connectDB();
-        const appData = await Application.findOne({ passportNo: { $regex: new RegExp(req.query.passportNo, "i") } });
-        if (!appData) return res.status(404).json({ message: "No record found" });
-        res.json({ studentName: appData.studentName, status: appData.status, university: appData.university });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// Other APIs
-app.get('/api/applications', async (req, res) => {
-    try { await connectDB(); const apps = await Application.find().sort({ timestamp: -1 }); res.json(apps); }
-    catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('*', (req, res) => res.sendFile(path.join(publicPath, 'auth.html')));
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
     await connectDB();
-    console.log(`🚀 IHP CRM is Live on Port ${PORT}`);
+    try {
+        const { pendingAmount, status } = req.body; 
+        const amountFromAdmin = Number(pendingAmount) || 0; 
+
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "Application not found" });
+
+        const updatedApp = await Application.findByIdAndUpdate(
+            req.params.id, 
+            { $inc: { pendingAmount: -amountFromAdmin }, status: status || 'PARTIAL_PAID' }, 
+            { new: true }
+        );
+
+        if (amountFromAdmin > 0 && appData.partnerEmail) {
+            const partnerEmailClean = appData.partnerEmail.toLowerCase().trim();
+            await User.findOneAndUpdate(
+                { email: partnerEmailClean }, 
+                { $inc: { walletBalance: amountFromAdmin } }
+            );
+        }
+
+        res.json({ 
+            msg: `Success! ${amountFromAdmin} added to wallet.`, // FIXED BACKTICKS & VARIABLE
+            data: updatedApp 
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Withdrawal Request
+app.post('/api/withdrawals', async (req, res) => {
+    await connectDB();
+    try {
+        const { email, amount, partnerName, method } = req.body;
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user || user.walletBalance < Number(amount)) {
+            return res.status(400).json({ error: "Insufficient balance or user not found!" });
+        }
+        const newWithdraw = new Withdrawal({
+            partnerEmail: email.toLowerCase().trim(), partnerName, amount: Number(amount), method, status: 'PENDING'
+        });
+        await newWithdraw.save();
+        res.status(201).json({ msg: "Withdrawal request submitted!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Locking Application (FIXED SYNTAX)
+app.patch('/api/lock-application/:id', async (req, res) => {
+    await connectDB();
+    try {
+        const { staffEmail } = req.body;
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "Application not found" });
+
+        if (appData.lockBy && appData.lockBy !== staffEmail && appData.lockUntil > new Date()) {
+            return res.status(403).json({ locked: true, message: `Locked by ${appData.lockBy}` }); // FIXED BACKTICKS
+        }
+
+        const lockTime = new Date(Date.now() + 5 * 60000); 
+        await Application.findByIdAndUpdate(req.params.id, { lockBy: staffEmail, lockUntil: lockTime });
+        res.json({ locked: false, message: "Lock acquired" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Compliance Update (FIXED SYNTAX)
+app.patch('/api/update-compliance', async (req, res) => {
+    await connectDB(); 
+    try {
+        const { appId, status, complianceNote, staffEmail, commission } = req.body;
+        let updateData = { 
+            status, complianceNote, complianceMember: staffEmail,
+            lockBy: null, lockUntil: null, timestamp: new Date()
+        };
+
+        if (['VERIFIED', 'DOCS_VERIFIED', 'DOC_VERIFIED'].includes(status)) {
+            updateData.pendingAmount = Number(commission) || 0;
+        } else {
+            updateData.pendingAmount = 0;
+        }
+
+        const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
+        res.json({ msg: `Updated successfully to ${status}`, data: updatedApp }); // FIXED BACKTICKS
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// User List & Status (Admin)
+app.get('/api/admin/users', async (req, res) => {
+    await connectDB();
+    try {
+        const users = await User.find({ role: { $ne: 'admin' } });
+        res.json(users);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.patch('/api/admin/users/:id/status', async (req, res) => {
+    await connectDB();
+    try {
+        await User.findByIdAndUpdate(req.params.id, { status: req.body.status });
+        res.json({ msg: "Status Updated" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Login
+app.post(['/api/login', '/api/auth/login'], async (req, res) => {
+    await connectDB();
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.status(400).json({ msg: 'Invalid Credentials' });
+        }
+        if (user.status !== 'active') {
+            return res.status(403).json({ msg: `Your account is ${user.status}!` });
+        }
+        res.json({ user: { 
+            email: user.email, name: user.fullName, role: user.role, orgName: user.orgName, logoUrl: user.logoUrl, walletBalance: user.walletBalance || 0 
+        }});
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Global Application Search
+app.get('/api/applications', async (req, res) => {
+    await connectDB();
+    try {
+        const apps = await Application.find().sort({ timestamp: -1 });
+        res.json(apps);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/universities', async (req, res) => {
+    await connectDB();
+    try {
+        const unis = await University.find();
+        res.json(unis);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(publicPath, 'auth.html'));
 });
 
 module.exports = app;
