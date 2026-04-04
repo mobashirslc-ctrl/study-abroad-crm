@@ -246,7 +246,7 @@ app.patch('/api/applications/:id', async (req, res) => {
         }
 
         res.json({ 
-    msg: `Success! ${amount} added to wallet.`, // এই কমাটি দিন
+    msg: `Success! ${amount} added to wallet.`, // অবশ্যই এই কমাটি দিন
     data: updatedApp 
 });
     } catch (e) { res.status(500).json({ error: e.message }); }
