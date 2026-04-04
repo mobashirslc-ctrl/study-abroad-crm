@@ -246,9 +246,9 @@ app.patch('/api/applications/:id', async (req, res) => {
         }
 
         res.json({ 
-            msg: `Success! ${amountFromAdmin} added to wallet.`
-            data: updatedApp 
-        });
+    msg: `Success! ${amount} added to wallet.`, // এই কমাটি দিন
+    data: updatedApp 
+});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 // ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনার যখন টাকা তোলার রিকোয়েস্ট পাঠাবে)
