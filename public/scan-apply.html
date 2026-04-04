@@ -17,25 +17,16 @@
         .logo-container img { max-width: 120px; height: auto; }
         .header h1 { margin: 0; font-size: 28px; color: #1a237e; letter-spacing: 1px; font-weight: 700; }
         .header p { margin: 5px 0; font-size: 14px; color: #666; }
-
         .section-title { background: #f8f9fa; padding: 10px; font-weight: bold; margin: 20px 0 15px; border-left: 4px solid #1a237e; font-size: 15px; color: #1a237e; }
-        
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; box-sizing: border-box; font-family: inherit; }
-        
         .fee-highlight { background: #e8eaf6; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0; border: 1px dashed #1a237e; }
         .fee-highlight span { font-size: 24px; font-weight: bold; color: #1a237e; }
         .file-input { background: #fafafa; border: 1px dashed #bbb; padding: 10px; cursor: pointer; }
-
-        .btn-submit {
-            background: #1a237e; color: white; border: none; padding: 18px; width: 100%;
-            font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 20px;
-            transition: 0.3s;
-        }
+        .btn-submit { background: #1a237e; color: white; border: none; padding: 18px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 20px; transition: 0.3s; }
         .btn-submit:hover { background: #0d1642; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -81,7 +72,7 @@
             <input type="text" id="occName" placeholder="Enter Name">
         </div>
 
-        <div class="section-title">Address Details (Permanent/Present)</div>
+        <div class="section-title">Address Details</div>
         <div class="grid">
             <div class="input-group">
                 <label>District</label>
@@ -136,25 +127,22 @@
         </div>
 
         <input type="hidden" id="refSource">
-        <button type="submit" class="btn-submit">CONFIRM ADMISSION</button>
+        <button type="submit" class="btn-submit" id="submitBtn">CONFIRM ADMISSION</button>
     </form>
 </div>
 
 <script>
-    // --- District & Thana Data (Sample for performance, you can add more) ---
     const bdData = {
-        "Dhaka": ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Savar", "Keraniganj"],
-        "Chittagong": ["Panchlaish", "Halishahar", "Hathazari", "Fatikchhari", "Sitakunda"],
-        "Gazipur": ["Sreepur", "Kaliakair", "Kapasia", "Sadar"],
-        "Sylhet": ["Beanibazar", "Golapganj", "Zakiganj", "Sadar"],
-        "Bogura": ["Sadar", "Sherpur", "Shajahanpur", "Dhunat"],
-        // এভাবেই আপনি ৬৪ জেলা এবং তাদের থানা অবজেক্টে যোগ করতে পারবেন
+        "Dhaka": ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Savar", "Keraniganj", "Tejgaon", "Motijheel"],
+        "Chittagong": ["Panchlaish", "Halishahar", "Hathazari", "Fatikchhari", "Sitakunda", "Raozan"],
+        "Gazipur": ["Sreepur", "Kaliakair", "Kapasia", "Sadar", "Tongi"],
+        "Sylhet": ["Beanibazar", "Golapganj", "Zakiganj", "Sadar", "Balaganj"],
+        "Bogura": ["Sadar", "Sherpur", "Shajahanpur", "Dhunat", "Gabatli"],
+        "Rajshahi": ["Boalia", "Motihar", "Rajpara", "Shah Mokhdum", "Paba"]
     };
 
-    // জেলা লোড করা (স্বয়ংক্রিয়ভাবে ৬৪ জেলা যোগ করার ফাংশন)
-    const districts = Object.keys(bdData).sort();
     const distSelect = document.getElementById('district');
-    districts.forEach(d => {
+    Object.keys(bdData).sort().forEach(d => {
         let opt = document.createElement('option');
         opt.value = d; opt.text = d;
         distSelect.appendChild(opt);
@@ -164,7 +152,6 @@
         const district = document.getElementById('district').value;
         const thanaSelect = document.getElementById('thana');
         thanaSelect.innerHTML = '<option value="">Select Thana</option>';
-        
         if (district && bdData[district]) {
             thanaSelect.disabled = false;
             bdData[district].forEach(t => {
@@ -172,27 +159,43 @@
                 opt.value = t; opt.text = t;
                 thanaSelect.appendChild(opt);
             });
-        } else {
-            thanaSelect.disabled = true;
+        } else { thanaSelect.disabled = true; }
+    }
+
+    const dummyCourses = [
+        { name: "Spoken English (Basic)", fee: 2500 },
+        { name: "IELTS Preparation Batch", fee: 12000 },
+        { name: "Executive English for Professionals", fee: 5500 },
+        { name: "Kids English Grammar", fee: 3000 },
+        { name: "Phonetics & Accent Training", fee: 4000 }
+    ];
+
+    async function loadCourses() {
+        try {
+            const res = await fetch('/api/courses');
+            let courses = await res.json();
+            if (!courses || courses.length === 0) courses = dummyCourses;
+            renderCourseOptions(courses);
+        } catch (err) {
+            renderCourseOptions(dummyCourses);
         }
     }
 
-    // --- অন্যান্য ফাংশন ---
-    const urlParams = new URLSearchParams(window.location.search);
-    document.getElementById('refSource').value = urlParams.get('ref') || 'Direct';
-
-    async function loadCourses() {
-        const res = await fetch('/api/courses');
-        const courses = await res.json();
+    function renderCourseOptions(courses) {
         const select = document.getElementById('courseSelect');
         courses.forEach(c => {
             let opt = document.createElement('option');
-            opt.value = c.name; opt.text = c.name;
+            opt.value = c.name;
+            opt.text = `${c.name} - (৳${c.fee})`;
             opt.setAttribute('data-fee', c.fee);
             select.appendChild(opt);
         });
     }
+
     loadCourses();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    document.getElementById('refSource').value = urlParams.get('ref') || 'Direct';
 
     function updateCourseInfo() {
         const select = document.getElementById('courseSelect');
@@ -211,19 +214,44 @@
 
     document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
         const formData = new FormData();
-        // আগের ফিল্ডগুলোর সাথে নতুন অ্যাড্রেস ফিল্ডগুলো যোগ করা হলো
         formData.append('name', document.getElementById('name').value);
         formData.append('phone', document.getElementById('phone').value);
+        formData.append('guardianPhone', document.getElementById('guardianPhone').value);
+        formData.append('occupation', document.getElementById('occupation').value);
+        formData.append('occName', document.getElementById('occName').value);
         formData.append('district', document.getElementById('district').value);
         formData.append('thana', document.getElementById('thana').value);
         formData.append('address', document.getElementById('address').value);
         formData.append('course', document.getElementById('courseSelect').value);
         formData.append('fee', document.getElementById('amount').innerText);
-        // ... বাকি সব ফাইল ও ডাটা আগের মতোই ...
-        
-        alert("Processing Admission...");
-        // Fetch API call logic here
+        formData.append('batch', document.getElementById('batch').value);
+        formData.append('refSource', document.getElementById('refSource').value);
+        formData.append('photo', document.getElementById('photo').files[0]);
+        formData.append('nid', document.getElementById('nid').files[0]);
+
+        try {
+            const res = await fetch('/api/merchant/submit-scan-lead', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                alert("Admission Confirmed Successfully!");
+                location.reload();
+            } else {
+                alert("Something went wrong. Please try again.");
+                btn.disabled = false;
+                btn.innerText = "CONFIRM ADMISSION";
+            }
+        } catch (err) {
+            alert("Connection Error!");
+            btn.disabled = false;
+            btn.innerText = "CONFIRM ADMISSION";
+        }
     };
 </script>
 </body>
