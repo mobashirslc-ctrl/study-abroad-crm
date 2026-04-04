@@ -16,10 +16,7 @@ app.use(express.json());
 const publicPath = path.join(__dirname, 'public'); 
 
 // ২. স্ট্যাটিক ফাইল মিডলওয়্যার
-// index.js (Line 23-24 এর আশেপাশে)
 app.use(express.static(publicPath));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // এটি নতুন যোগ করুন
-
 
 // ৩. রুট পাথ এ সরাসরি index.html পাঠানো
 app.get('/', (req, res) => {
@@ -84,30 +81,6 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     lockUntil: { type: Date, default: null }, 
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
-// Application Model এ এই ফিল্ডগুলো রিপ্লেস বা অ্যাড করুন
-const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
-    studentName: String, 
-    passportNo: String, 
-    contactNo: String,        // নতুন
-    guardianContact: String,   // নতুন
-    occupation: String,        // নতুন
-    instituteName: String,     // নতুন
-    district: String,          // নতুন (Address)
-    thana: String,             // নতুন (Address)
-    fullAddress: String,       // নতুন (Address)
-    partnerEmail: String, 
-    university: String,
-    batchTime: String,         // নতুন
-    photoUrl: String,          // নতুন (Image Path)
-    nidUrl: String,            // নতুন (Image Path)
-    commissionBDT: Number, 
-    pdf1: String, pdf2: String, pdf3: String, pdf4: String,
-    status: { type: String, default: 'PENDING' }, 
-    referredBy: String,        // নতুন (Merchant ID)
-    pendingAmount: { type: Number, default: 0 },
-    timestamp: { type: Date, default: Date.now }
-}, { collection: 'applications' }));
-
 
 const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', new mongoose.Schema({
     partnerEmail: { type: String, required: true },
@@ -118,35 +91,19 @@ const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', ne
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'withdrawals' }));
 
-// --- 🏫 Updated University Model with All Mega Fields ---
 const University = mongoose.models.University || mongoose.model('University', new mongoose.Schema({
     universityName: String,
     country: String,
     location: String,
-    degreeType: String,      // Bachelor/Master
-    topCourses: String,      // e.g. "CS, MBA, Public Health"
-    intake: String,          // e.g. "Sept 2026"
-    duration: String,        // e.g. "3 Years"
-    
-    // Financials
-    totalTuitionFee: Number, 
-    initialDeposit: Number,  // Fly Fee
-    scholarshipMax: Number,  
-    applicationFee: { type: Number, default: 0 },
-    livingCost: Number,      // Monthly Estimated
-    commissionBDT: Number,   // Partner Profit
-    
-    // Requirements
-    minGPA: Number,
-    ieltsReq: Number,
-    maxGapAllowed: Number,
-    englishOptions: { type: String, default: "IELTS, Duolingo, MOI" },
-    interviewLevel: { type: String, default: "Easy" },
-    
-    // Insights
-    visaSuccessRate: { type: Number, default: 90 },
-    processingTime: String,  // e.g. "7-10 Days"
-    pswDuration: String      // e.g. "2 Years"
+    degree: String,
+    duration: String,
+    semesterFee: Number,
+    livingCost: Number,
+    jobOpportunity: String,
+    partnerComm: Number,
+    minGPA: Number,   // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
+    ieltsReq: Number, // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
+    gap: Number       // পার্টনার ড্যাশবোর্ডে অ্যাসেসমেন্টের জন্য
 }, { collection: 'universities' }));
 // --- 🚀 API Routes ---
 // --- 👑 Admin Master Routes ---
@@ -221,39 +178,7 @@ app.post('/api/add-university', async (req, res) => {
         res.status(201).json({ msg: "University Added!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// --- 🏫 University Edit & Delete Routes ---
 
-// ১. নির্দিষ্ট আইডি অনুযায়ী ইউনিভার্সিটির ডাটা দেখা (Edit করার সময় ফর্ম ফিল করার জন্য)
-app.get('/api/universities/:id', async (req, res) => {
-    await connectDB();
-    try {
-        const uni = await University.findById(req.params.id);
-        if (!uni) return res.status(404).json({ error: "University not found" });
-        res.json(uni);
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// ২. ইউনিভার্সিটি আপডেট (Edit) করা
-app.put('/api/universities/:id', async (req, res) => {
-    await connectDB();
-    try {
-        const updatedUni = await University.findByIdAndUpdate(
-            req.params.id, 
-            req.body, 
-            { new: true } // নতুন আপডেট হওয়া ডাটাটি রিটার্ন করবে
-        );
-        res.json({ msg: "University Updated Successfully!", data: updatedUni });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// ৩. ইউনিভার্সিটি ডিলিট করা
-app.delete('/api/universities/:id', async (req, res) => {
-    await connectDB();
-    try {
-        await University.findByIdAndDelete(req.params.id);
-        res.json({ msg: "University Deleted Successfully!" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
 // ২. সব ইউজার লিস্ট দেখা (Admin UI এর জন্য)
 app.get('/api/admin/users', async (req, res) => {
     await connectDB();
@@ -289,11 +214,10 @@ app.patch('/api/applications/:id', async (req, res) => {
         const { pendingAmount, status } = req.body; 
         const amountFromAdmin = Number(pendingAmount) || 0; 
 
-        // ১. আগে অ্যাপ্লিকেশনের ডাটা খুঁজে বের করা (পার্টনারের ইমেইল পাওয়ার জন্য)
         const appData = await Application.findById(req.params.id);
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
-        // ২. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে মাইনাস করা
+        // ১. অ্যাপ্লিকেশন আপডেট: পেন্ডিং থেকে মাইনাস
         const updatedApp = await Application.findByIdAndUpdate(
             req.params.id, 
             { 
@@ -303,20 +227,29 @@ app.patch('/api/applications/:id', async (req, res) => {
             { new: true }
         );
 
-        // ৩. পার্টনারের ওয়ালেটে (User Model) টাকা যোগ করা (এটিই মিসিং ছিল)
+        // ২. পার্টনারের মেইন ওয়ালেটে টাকা যোগ করা (ইমেইল ফরম্যাট ফিক্সড)
         if (amountFromAdmin > 0 && appData.partnerEmail) {
-            await User.findOneAndUpdate(
-                { email: appData.partnerEmail.toLowerCase().trim() },
-                { $inc: { walletBalance: amountFromAdmin } } // ইউজারের ওয়ালেটে টাকা যোগ হবে
+            const partnerEmailClean = appData.partnerEmail.toLowerCase().trim(); // ইমেইল পরিষ্কার করা
+            
+            const updatedUser = await User.findOneAndUpdate(
+                { email: partnerEmailClean }, 
+                { $inc: { walletBalance: amountFromAdmin } }, 
+                { new: true }
             );
+
+            if (!updatedUser) {
+                console.log("❌ User not found with email:", partnerEmailClean);
+                return res.status(404).json({ error: "Partner User not found to update wallet" });
+            }
+            
+            console.log("✅ Wallet Updated! New Balance:", updatedUser.walletBalance);
         }
 
-        res.json({ message: "Success", updatedApp });
-
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
+        res.json({ 
+            msg: `Success! ${amountFromAdmin} added to wallet.`
+            data: updatedApp 
+        });
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 // ১. উইথড্রয়াল রিকোয়েস্ট সাবমিট করা (পার্টনার যখন টাকা তোলার রিকোয়েস্ট পাঠাবে)
 app.post('/api/withdrawals', async (req, res) => {
@@ -403,16 +336,16 @@ app.patch('/api/user/profile', async (req, res) => {
 });
 
 // ২. সিঙ্গেল অ্যাপ্লিকেশন ডিটেইলস (আইডি চেকসহ)
-app.post('/api/applications', async (req, res) => {
+app.get('/api/applications/:id', async (req, res) => {
+    await connectDB();
     try {
-        await connectDB();
-        const newApp = new Application(req.body); // আপনার Schema অনুযায়ী
-        await newApp.save();
-        res.status(201).json({ success: true, data: newApp });
-    } catch (e) {
-        console.error("Backend Save Error:", e);
-        res.status(400).json({ success: false, message: e.message });
-    }
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: "Invalid ID Format" });
+        }
+        const appData = await Application.findById(req.params.id);
+        if (!appData) return res.status(404).json({ error: "No student found with this ID" });
+        res.json(appData);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ৩. অ্যাপ্লিকেশন লকিং রুট (সংশোধিত)
@@ -424,7 +357,7 @@ app.patch('/api/lock-application/:id', async (req, res) => {
         if (!appData) return res.status(404).json({ error: "Application not found" });
 
         if (appData.lockBy && appData.lockBy !== staffEmail && appData.lockUntil > new Date()) {
-            return res.status(403).json({ locked: true, message: `Locked by ${appData.lockBy}` });
+            return res.status(403).json({ locked: true, message: Locked by ${appData.lockBy} });
         }
 
         const lockTime = new Date(Date.now() + 5 * 60000); 
@@ -432,35 +365,7 @@ app.patch('/api/lock-application/:id', async (req, res) => {
         res.json({ locked: false, message: "Lock acquired" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// --- ⭐ নতুন রুট: পার্টনার ড্যাশবোর্ড সামারি ---
-app.get('/api/partner-stats', async (req, res) => {
-    await connectDB();
-    try {
-        const { email } = req.query;
-        const cleanEmail = email.toLowerCase().trim();
 
-        // ১. ইউজারের ওয়ালেট ব্যালেন্স এবং অর্গানাইজেশন নাম আনা
-        const user = await User.findOne({ email: cleanEmail });
-        
-        // ২. ইউজারের সব অ্যাপ্লিকেশনের পেন্ডিং অ্যামাউন্ট যোগ করা
-        const apps = await Application.find({ partnerEmail: cleanEmail });
-        
-        let totalPending = 0;
-        apps.forEach(app => {
-            totalPending += (app.pendingAmount || 0);
-        });
-
-        res.json({
-            orgName: user ? user.orgName : "Partner",
-            walletBalance: user ? user.walletBalance : 0,
-            pendingAmount: totalPending,
-            totalStudents: apps.length,
-            recentApplications: apps.slice(0, 5) // শেষ ৫টি অ্যাপ্লিকেশন
-        });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
 // ৪. কমপ্লায়েন্স আপডেট
 // ৪. কমপ্লায়েন্স আপডেট (index.js ফাইলে গিয়ে এটি পরিবর্তন করুন)
 app.patch('/api/update-compliance', async (req, res) => {
@@ -483,7 +388,7 @@ if (status === 'VERIFIED' || status === 'DOCS_VERIFIED' || status === 'DOC_VERIF
 }
 
         const updatedApp = await Application.findByIdAndUpdate(appId, { $set: updateData }, { new: true });
-        res.json({ msg: `Updated successfully to ${status}`, data: updatedApp });
+        res.json({ msg: Updated successfully to ${status}, data: updatedApp });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -546,56 +451,6 @@ app.post(['/api/login', '/api/auth/login'], async (req, res) => {
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-// --- 📚 New Course Model ---
-const CourseSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    fee: { type: Number, required: true },
-    agentCommission: { type: Number, default: 0 }, // প্রতি ভর্তিতে এজেন্টের লাভ
-    status: { type: String, default: 'active' }
-}, { collection: 'courses' });
-
-const Course = mongoose.models.Course || mongoose.model('Course', CourseSchema);
-
-// --- 🛠️ Admin APIs for Courses ---
-
-// ১. নতুন কোর্স অ্যাড করা
-app.post('/api/admin/add-course', async (req, res) => {
-    try {
-        await connectDB();
-        const { name, fee, agentCommission } = req.body;
-        const newCourse = new Course({ name, fee, agentCommission });
-        await newCourse.save();
-        res.status(201).json({ success: true, message: "Course added successfully!" });
-    } catch (e) {
-        res.status(500).json({ success: false, error: e.message });
-    }
-});
-
-// ২. সব কোর্সের লিস্ট দেখা (Enrollment Form এর জন্য)
-app.get('/api/courses', async (req, res) => {
-    try {
-        await connectDB();
-        const courses = await Course.find({ status: 'active' });
-        res.json(courses);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-// ৩. কোর্স ডিলিট করা
-app.delete('/api/admin/courses/:id', async (req, res) => {
-    try {
-        await connectDB();
-        await Course.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: "Course deleted!" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- 🔗 Merchant/Hub Service Link ---
-// নিশ্চিত করুন এই লাইনটি আপনার index.js এর নিচে আছে
-const merchantService = require('./merchant-service'); 
-app.use('/api/merchant', merchantService);
-
 // --- 🔍 Public Tracking Route ---
 app.get('/api/track-status', async (req, res) => {
     await connectDB();
@@ -627,7 +482,5 @@ app.get('/api/track-status', async (req, res) => {
 app.get('*', (req, res) => {
     res.sendFile(path.join(publicPath, 'auth.html'));
 });
-// index.js এর শেষে যোগ করুন
-const merchantService = require('./merchant-service');
-app.use('/api/merchant', merchantService); 
+
 module.exports = app;
