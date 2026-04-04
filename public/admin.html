@@ -715,54 +715,168 @@ window.fetchAdmissions = async () => {
         };
 
         window.approveAndAssignID = async (id) => {
-            const assignedId = document.getElementById(`mid_${id}`).value;
-            if(!assignedId) { alert("Merchant ID input please"); return; }
-            const res = await fetch(`/api/merchant/update-id/${id}`, { 
-                method: 'PATCH', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ merchantId: assignedId, status: 'active' }) 
-            });
-            if(res.ok) { alert("Merchant Activated!"); fetchMerchants(); }
+    <script type="module">
+        // ১. সাইডবার ট্যাব নেভিগেশন (এটি আপনার সাইডবার সচল রাখবে)
+        window.showTab = (event, tabId) => {
+            // সব ট্যাব কন্টেন্ট হাইড করা
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => t.style.display = 'none');
+
+            // সব সাইডবার লিস্ট থেকে 'active' ক্লাস রিমুভ করা
+            const listItems = document.querySelectorAll('.sidebar ul li');
+            listItems.forEach(li => li.classList.remove('active'));
+
+            // নির্দিষ্ট ট্যাব দেখানো
+            const target = document.getElementById(tabId);
+            if (target) {
+                target.style.display = 'block';
+                if (event) event.currentTarget.classList.add('active');
+            }
         };
 
-        // ৬. অ্যাডমিশন লজিক
+        // ২. ইউনিভার্সিটি ম্যানেজমেন্ট লজিক
+        window.saveUniversity = async () => {
+            const data = {
+                universityName: document.getElementById('uName').value,
+                country: document.getElementById('uCountry').value,
+                location: document.getElementById('uCity').value,
+                degree: document.getElementById('uDegree').value,
+                popularCourse: document.getElementById('uCourse').value,
+                intake: document.getElementById('uIntake').value,
+                totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
+                uDeposit: Number(document.getElementById('uDeposit').value) || 0,
+                uScholarship: Number(document.getElementById('uScholarship').value) || 0,
+                uCurrency: document.getElementById('uCurrency').value,
+                minGPA: Number(document.getElementById('uGpa').value) || 0,
+                ieltsReq: Number(document.getElementById('uIelts').value) || 0,
+                gapAllowed: document.getElementById('uGap').value,
+                livingCost: document.getElementById('uLivingCost').value,
+                deadline: document.getElementById('uDeadline').value,
+                interviewTime: document.getElementById('uInterview').value,
+                commFixed: Number(document.getElementById('uCommFixed').value) || 0,
+                visaRate: Number(document.getElementById('uVisaRate').value) || 85,
+                processingTime: document.getElementById('uProcTime').value,
+                commNote: document.getElementById('uCommNote').value
+            };
+            const res = await fetch('/api/add-university', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) { alert("University Added!"); fetchUniversities(); }
+        };
+
+        window.fetchUniversities = async () => {
+            try {
+                const res = await fetch('/api/universities');
+                const unis = await res.json();
+                document.getElementById('adminUniTable').innerHTML = unis.map(u => `
+                    <tr>
+                        <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
+                        <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
+                        <td>${u.uCurrency} ${u.totalTuitionFee}<br><small style="color:var(--green)">Comm: ৳${u.commFixed}</small></td>
+                        <td><button class="action-btn" style="background:var(--gold)" onclick="openEditModal('${u._id}')">EDIT</button></td>
+                    </tr>`).join('');
+            } catch (err) { console.error(err); }
+        };
+
+        // ৩. ইউজার ও পার্টনার ম্যানেজমেন্ট
+        window.fetchUsers = async () => {
+            try {
+                const res = await fetch('/api/admin/users');
+                const users = await res.json();
+                document.getElementById('adminUserTable').innerHTML = users.map(user => `
+                    <tr>
+                        <td><b>${user.fullName}</b><br><small>${user.orgName || ''}</small></td>
+                        <td>${user.email}</td>
+                        <td><button class="action-btn" style="background:#3498db; color:white;" onclick="window.open('${user.tradeLicense}')">VIEW</button></td>
+                        <td><span class="badge status-${user.status}">${user.status}</span></td>
+                        <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
+                    </tr>`).join('');
+            } catch (err) { console.error(err); }
+        };
+
+        window.updateStatus = async (id, status) => {
+            await fetch(`/api/admin/users/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
+            fetchUsers();
+        };
+
+        // ৪. ট্র্যাকিং ও মার্চেন্ট লজিক
+        window.fetchTracking = async () => {
+            const res = await fetch('/api/applications');
+            const apps = await res.json();
+            document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
+                <tr>
+                    <td><b>${app.studentName}</b></td>
+                    <td>${app.partnerEmail}</td>
+                    <td><span class="badge status-pending">${app.status}</span></td>
+                    <td>৳${app.pendingAmount || 0}</td>
+                    <td><button class="action-btn" onclick="openWalletBox('${app._id}')">Wallet</button></td>
+                </tr>`).join('');
+        };
+
+        window.fetchMerchants = async () => {
+            try {
+                const res = await fetch('/api/admin/users');
+                const users = await res.json();
+                const merchants = users.filter(u => u.role === 'merchant');
+                document.getElementById('adminMerchantTable').innerHTML = merchants.map(m => `
+                    <tr>
+                        <td><b>${m.orgName || 'N/A'}</b><br><small>${m.fullName}</small></td>
+                        <td><small>${m.email}</small></td>
+                        <td>
+                            <button class="action-btn" onclick="window.open('${m.nidPdf}')">NID</button>
+                            <button class="action-btn" onclick="window.open('${m.tradeLicensePdf}')">TRADE</button>
+                        </td>
+                        <td><span class="badge">${m.status.toUpperCase()}</span></td>
+                        <td><input type="text" id="mid_${m._id}" value="${m.merchantId || ''}" style="width:100px;"></td>
+                        <td><button class="action-btn" onclick="approveAndAssignID('${m._id}')">APPROVE</button></td>
+                    </tr>`).join('');
+            } catch (err) { console.error(err); }
+        };
+
+        window.approveAndAssignID = async (id) => {
+            const assignedId = document.getElementById(`mid_${id}`).value;
+            if(!assignedId) { alert("Merchant ID please"); return; }
+            const res = await fetch(`/api/merchant/update-id/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ merchantId: assignedId, status: 'active' }) });
+            if(res.ok) { alert("Activated!"); fetchMerchants(); }
+        };
+
+        // ৫. অ্যাডমিশন লজিক
         window.fetchAdmissions = async () => {
             try {
                 const res = await fetch('/api/get-pending');
                 const result = await res.json();
-                const admissions = result.data || result; 
-                const tableBody = document.getElementById('adminAdmissionTable');
-
-                if (!admissions || (Array.isArray(admissions) && admissions.length === 0)) {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No pending admissions found.</td></tr>';
+                const admissions = result.data || result;
+                if (!admissions || admissions.length === 0) {
+                    document.getElementById('adminAdmissionTable').innerHTML = '<tr><td colspan="5">No pending requests.</td></tr>';
                     return;
                 }
-
-                tableBody.innerHTML = admissions.map(adm => `
+                document.getElementById('adminAdmissionTable').innerHTML = admissions.map(adm => `
                     <tr>
-                        <td><b>${adm.name || 'No Name'}</b><br><small>${adm.phone || ''}</small></td>
-                        <td><b>${adm.course || ''}</b><br><small>Fee: ৳${adm.fee || 0}</small></td>
-                        <td style="color:var(--gold); font-weight:bold;">${adm.transactionId || 'N/A'}</td>
+                        <td><b>${adm.name}</b><br><small>${adm.phone}</small></td>
+                        <td><b>${adm.course}</b><br><small>Fee: ৳${adm.fee}</small></td>
+                        <td style="color:var(--gold);">${adm.transactionId}</td>
                         <td>
-                            <button class="action-btn" style="background:#3498db" onclick="window.open('${adm.photoUrl}', '_blank')">Photo</button>
-                            <button class="action-btn" style="background:#3498db" onclick="window.open('${adm.nidUrl}', '_blank')">NID</button>
+                            <button class="action-btn" onclick="window.open('${adm.photoUrl}')">Photo</button>
+                            <button class="action-btn" onclick="window.open('${adm.nidUrl}')">NID</button>
                         </td>
-                        <td><button class="action-btn" style="background:var(--green); color:white;" onclick="approveStudentAction('${adm._id}', '${adm.phone}', '${adm.name}', '${adm.course}')">APPROVE</button></td>
+                        <td><button class="action-btn" onclick="approveStudentAction('${adm._id}', '${adm.phone}', '${adm.name}', '${adm.course}')">APPROVE</button></td>
                     </tr>`).join('');
             } catch (err) { console.error(err); }
         };
 
         window.approveStudentAction = async (id, phone, name, course) => {
             if(!confirm(`Approve ${name}?`)) return;
-            const res = await fetch('/api/approve', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ id, studentPhone: phone, studentName: name, courseName: course }) 
-            });
+            const res = await fetch('/api/approve', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ id, studentPhone: phone, studentName: name, courseName: course }) });
             if(res.ok) { alert("Approved!"); fetchAdmissions(); }
         };
 
-        // ৭. ইনিশিয়ালাইজেশন
+        window.openWalletBox = async (id) => {
+            const amount = prompt("Enter Wallet Amount:");
+            if(amount) {
+                await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pendingAmount: Number(amount) }) });
+                fetchTracking();
+            }
+        };
+
+        // ৬. পেজ লোড এবং লগআউট (auth.html সেট করা হয়েছে)
         window.onload = () => {
             fetchUniversities();
             fetchUsers();
@@ -773,9 +887,10 @@ window.fetchAdmissions = async () => {
 
         window.logout = () => {
             localStorage.clear();
-            location.href = 'login.html';
+            location.href = 'auth.html';
         };
     </script>
+
 
 </body>
 </html>
