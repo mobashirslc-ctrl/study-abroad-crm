@@ -23,20 +23,24 @@
         /* QR Section */
         .qr-container { background: white; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         #qrcode { display: inline-block; padding: 15px; background: white; border: 1px solid #eee; border-radius: 10px; margin: 15px 0; }
-        .btn-print { background: var(--dark); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #qrcode img { margin: 0 auto; }
+        .btn-print { background: var(--dark); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-print:hover { background: #1a164d; }
 
         /* Table Section */
         .table-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: left; background: #f9f9f9; padding: 12px; color: #555; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
+        th { text-align: left; background: #f9f9f9; padding: 12px; color: #555; font-size: 14px; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+        
+        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .location-info { font-size: 11px; color: #888; display: block; margin-top: 2px; }
 
         @media print {
             body * { visibility: hidden; }
             #printable-area, #printable-area * { visibility: visible; }
             #printable-area { position: absolute; left: 0; top: 0; width: 100%; text-align: center; }
-            .btn-print { display: none; }
+            .btn-print, .header, .stats-grid, .table-card { display: none !important; }
         }
     </style>
 </head>
@@ -62,9 +66,9 @@
     <div class="qr-container">
         <div id="printable-area">
             <h3 style="margin-bottom: 5px;">Admission Point QR</h3>
-            <p style="font-size: 12px; color: #666; margin-top: 0;">Scan to Enroll in English Courses</p>
+            <p style="font-size: 12px; color: #666; margin-top: 0;">Scan to Enroll in Professional Courses</p>
             <div id="qrcode"></div>
-            <p style="font-weight: bold; color: var(--dark);" id="merchantIdLabel"></p>
+            <p style="font-weight: bold; color: var(--dark); margin-top: 10px;" id="merchantIdLabel"></p>
         </div>
         <button class="btn-print" onclick="window.print()">Print Admission Kit</button>
     </div>
@@ -74,62 +78,82 @@
         <table>
             <thead>
                 <tr>
-                    <th>Student Name</th>
-                    <th>Course</th>
+                    <th>Student Details</th>
+                    <th>Course & Location</th>
                     <th>Date</th>
                     <th>Status</th>
                 </tr>
             </thead>
             <tbody id="studentList">
-                </tbody>
+                <tr><td colspan="4" style="text-align:center;">Loading data...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // ১. ইউজার ডাটা লোড করা (LocalStorage থেকে অথবা API থেকে)
-    const merchantId = localStorage.getItem('mId') || 'DEMO-101'; // আপনার লগইন সিস্টেম অনুযায়ী আইডি নিবেন
+    // ১. মার্চেন্ট আইডি নির্ধারণ (Login সেশন থেকে)
+    const merchantId = localStorage.getItem('mId') || 'DEMO-101'; 
 
     async function loadDashboardData() {
         try {
-            // মার্চেন্ট স্ট্যাটাস (Stats) আনা
+            // মার্চেন্ট প্রোফাইল ও স্ট্যাটাস লোড করা
             const statsRes = await fetch(`/api/merchant/stats/${merchantId}`);
             const stats = await statsRes.json();
             
             document.getElementById('studentCount').innerText = stats.leadsCount || 0;
             document.getElementById('walletBalance').innerText = `৳ ${stats.walletBalance || 0}`;
-            document.getElementById('merchantIdLabel').innerText = `ID: ${merchantId}`;
+            document.getElementById('merchantIdLabel').innerText = `PARTNER ID: ${merchantId}`;
 
-            // স্টুডেন্ট লিস্ট আনা
+            // স্টুডেন্ট লিস্ট লোড করা
             const listRes = await fetch(`/api/merchant/leads/${merchantId}`);
             const students = await listRes.json();
             const listBody = document.getElementById('studentList');
             listBody.innerHTML = '';
 
+            if (students.length === 0) {
+                listBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: #999;">No admissions found yet.</td></tr>';
+            }
+
             students.forEach(stu => {
                 const row = `<tr>
-                    <td><b>${stu.studentName}</b><br><small>${stu.contactNo}</small></td>
-                    <td>${stu.university}</td>
-                    <td>${new Date(stu.timestamp).toLocaleDateString()}</td>
-                    <td><span class="status-badge">Enrolled</span></td>
+                    <td>
+                        <strong style="color:var(--dark);">${stu.studentName}</strong><br>
+                        <small style="color:#555;">${stu.contactNo}</small>
+                    </td>
+                    <td>
+                        <span>${stu.university}</span>
+                        <span class="location-info">${stu.district || 'N/A'}, ${stu.thana || 'N/A'}</span>
+                    </td>
+                    <td>${new Date(stu.timestamp).toLocaleDateString('en-GB')}</td>
+                    <td><span class="status-badge">${stu.status || 'Enrolled'}</span></td>
                 </tr>`;
                 listBody.innerHTML += row;
             });
 
-            // QR Code জেনারেট করা
-            const enrollLink = `https://study-abroad-crm-nine.vercel.app/apply-scan.html?ref=${merchantId}`;
+            // ২. QR Code জেনারেট করা (স্মার্ট লিঙ্ক)
+            const currentDomain = window.location.origin; 
+            const enrollLink = `${currentDomain}/apply-scan.html?ref=${merchantId}`;
+            
+            // পূর্বের কিউআর মুছে নতুন করে জেনারেট করা
+            document.getElementById("qrcode").innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
                 text: enrollLink,
                 width: 180,
-                height: 180
+                height: 180,
+                colorDark : "#0f0c29",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
             });
 
         } catch (err) {
             console.error("Dashboard Load Error:", err);
+            document.getElementById('studentList').innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Failed to load data.</td></tr>';
         }
     }
 
-    loadDashboardData();
+    // পেজ লোড হলে ফাংশনটি রান করবে
+    window.onload = loadDashboardData;
 </script>
 
 </body>
