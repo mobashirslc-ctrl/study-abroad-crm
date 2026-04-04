@@ -3,30 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Official Admission Form | SLC</title>
+    <title>Admission Form | SLC Language Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1a237e; --secondary: #2ecc71; }
         body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
         .form-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 10px solid var(--primary); }
-        
-        /* Logo Styling */
         .header { text-align: center; margin-bottom: 30px; }
-        .logo { width: 120px; height: auto; margin-bottom: 15px; border-radius: 8px; }
-        
-        .section-title { background: #f8f9fa; padding: 12px; border-left: 5px solid var(--primary); color: var(--primary); font-weight: 600; margin: 25px 0 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        .logo { width: 100px; height: auto; margin-bottom: 10px; }
+        .section-title { background: #f8f9fa; padding: 12px; border-left: 5px solid var(--primary); color: var(--primary); font-weight: 600; margin: 25px 0 15px; font-size: 14px; text-transform: uppercase; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; color: #444; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: 0.3s; }
-        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 8px rgba(26, 35, 126, 0.1); }
-        
-        .fee-display { text-align: center; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px dashed #2ecc71; }
-        .fee-display span { font-size: 24px; font-weight: bold; color: #1b5e20; }
-        
-        .btn-confirm { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; text-transform: uppercase; margin-top: 20px; transition: 0.4s; }
-        .btn-confirm:hover { background: #0d1442; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .fee-display { text-align: center; background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px dashed #2ecc71; font-weight: bold; color: #1b5e20; }
+        .btn-confirm { background: var(--primary); color: white; border: none; width: 100%; padding: 18px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; text-transform: uppercase; margin-top: 20px; }
+        .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
         @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -34,45 +26,48 @@
 
 <div class="form-container">
     <div class="header">
-        <img src="logo.jpeg" alt="SLC Logo" class="logo" onerror="this.src='https://via.placeholder.com/120x120?text=SLC+LOGO'">
-        <div style="font-weight: 600; color: var(--primary); font-size: 22px; letter-spacing: 1px;">SLC LANGUAGE HUB</div>
-        <p style="font-size: 12px; color: #777; margin: 5px 0;">Empowering Your Career with Global Languages</p>
+        <img src="logo.jpeg" alt="Logo" class="logo" onerror="this.src='https://via.placeholder.com/100'">
+        <div style="font-weight: 600; color: var(--primary); font-size: 22px;">SLC LANGUAGE HUB</div>
+        <p style="font-size: 12px; color: #777;">Official Student Admission Portal</p>
     </div>
 
-    <div class="fee-display">Payable Admission Fee: ৳ <span id="amount">0</span></div>
+    <div class="fee-display">Admission Fee: ৳ <span id="amount">0</span></div>
 
-    <form id="enrollForm">
+    <form id="enrollForm" enctype="multipart/form-data">
         <div class="section-title">Step 1: Personal Information</div>
         <div class="grid">
             <div class="form-group">
-                <label>Student Full Name</label>
-                <input type="text" name="name" placeholder="Full Name (As per NID)" required>
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="As per Certificate" required>
             </div>
             <div class="form-group">
-                <label>Contact Number (WhatsApp)</label>
+                <label>Phone Number</label>
                 <input type="tel" name="phone" placeholder="01XXXXXXXXX" required>
             </div>
             <div class="form-group">
                 <label>Guardian Contact</label>
-                <input type="tel" name="guardianPhone" placeholder="Emergency Contact No">
+                <input type="tel" name="guardianPhone" placeholder="Parent/Emergency No" required>
             </div>
             <div class="form-group">
                 <label>Occupation</label>
                 <select name="occupation">
                     <option value="Student">Student</option>
                     <option value="Job Holder">Job Holder</option>
-                    <option value="Business">Business</option>
-                    <option value="Unemployed">Unemployed</option>
+                    <option value="Others">Others</option>
                 </select>
             </div>
         </div>
 
-        <div class="section-title">Step 2: Location Details</div>
+        <div class="section-title">Step 2: Address Details</div>
         <div class="grid">
             <div class="form-group">
                 <label>District</label>
                 <select id="district" name="district" onchange="loadThanas()" required>
                     <option value="">Select District</option>
+                    <option value="Dhaka">Dhaka</option>
+                    <option value="Chittagong">Chittagong</option>
+                    <option value="Sylhet">Sylhet</option>
+                    <option value="Bogura">Bogura</option>
                 </select>
             </div>
             <div class="form-group">
@@ -83,54 +78,45 @@
             </div>
         </div>
 
-        <div class="section-title">Step 3: Course Selection</div>
+        <div class="section-title">Step 3: Course & Documents</div>
         <div class="grid">
             <div class="form-group">
                 <label>Choose Course</label>
                 <select id="courseSelect" name="course" required>
-                    <option value="" data-fee="0">Select a Course</option>
-                    <option value="Spoken English" data-fee="4500">Spoken English Premium - ৳4500</option>
-                    <option value="IELTS Crash Course" data-fee="8500">IELTS Crash Course - ৳8500</option>
-                    <option value="Freelancing Basics" data-fee="5000">Freelancing Basics - ৳5000</option>
-                    <option value="Digital Marketing" data-fee="6000">Digital Marketing - ৳6000</option>
-                    <option value="Basic Computer" data-fee="3000">Basic Computer & IT - ৳3000</option>
+                    <option value="" data-fee="0">Select Course</option>
+                    <option value="Spoken English" data-fee="4500">Spoken English (৳4500)</option>
+                    <option value="IELTS Course" data-fee="8500">IELTS Course (৳8500)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Preferred Batch Time</label>
+                <label>Batch Time</label>
                 <select name="batch">
-                    <option value="Morning">Morning (10:00 AM - 12:00 PM)</option>
-                    <option value="Afternoon">Afternoon (03:00 PM - 05:00 PM)</option>
-                    <option value="Evening">Evening (07:00 PM - 09:00 PM)</option>
+                    <option value="Morning">Morning (10 AM)</option>
+                    <option value="Evening">Evening (7 PM)</option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label>Passport Size Photo</label>
+                <input type="file" name="studentPhoto" accept="image/*,application/pdf">
+            </div>
+            <div class="form-group">
+                <label>NID / Birth Certificate</label>
+                <input type="file" name="nidFile" accept="image/*,application/pdf">
             </div>
         </div>
 
         <input type="hidden" id="refSource" name="refSource" value="Direct">
-        <button type="submit" class="btn-confirm">Complete Enrollment</button>
+        <button type="submit" id="submitBtn" class="btn-confirm">Confirm Admission</button>
     </form>
 </div>
 
 <script>
-    // ডাইনামিক জেলা ও থানা ডাটা
     const bdData = {
-        "Dhaka": ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Savar", "Keraniganj", "Tongi"],
-        "Chittagong": ["Panchlaish", "Halishahar", "Hathazari", "Sitakunda", "Cox's Bazar"],
-        "Sylhet": ["Sylhet Sadar", "Beanibazar", "Golapganj", "Sreemangal"],
-        "Bogura": ["Bogra Sadar", "Sherpur", "Shajahanpur", "Kahaloo", "Nandigram"],
-        "Rajshahi": ["Boalia", "Motihar", "Paba", "Bagmara"],
-        "Rangpur": ["Rangpur Sadar", "Dinajpur", "Kurigram"],
-        "Khulna": ["Khulna Sadar", "Jessore", "Kushtia"]
+        "Dhaka": ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Savar"],
+        "Chittagong": ["Hathazari", "Patiya", "Sitakunda"],
+        "Sylhet": ["Sylhet Sadar", "Beanibazar"],
+        "Bogura": ["Bogra Sadar", "Sherpur", "Shajahanpur"]
     };
-
-    function initDistricts() {
-        const distSelect = document.getElementById('district');
-        Object.keys(bdData).sort().forEach(d => {
-            let opt = document.createElement('option');
-            opt.value = d; opt.text = d;
-            distSelect.appendChild(opt);
-        });
-    }
 
     function loadThanas() {
         const district = document.getElementById('district').value;
@@ -138,7 +124,7 @@
         thanaSelect.innerHTML = '<option value="">Select Thana</option>';
         if (district && bdData[district]) {
             thanaSelect.disabled = false;
-            bdData[district].sort().forEach(t => {
+            bdData[district].forEach(t => {
                 let opt = document.createElement('option');
                 opt.value = t; opt.text = t;
                 thanaSelect.appendChild(opt);
@@ -146,35 +132,45 @@
         } else { thanaSelect.disabled = true; }
     }
 
-    // কোর্স সিলেক্ট করলে ফি আপডেট
     document.getElementById('courseSelect').onchange = function() {
         const selected = this.options[this.selectedIndex];
-        const fee = selected.getAttribute('data-fee');
-        document.getElementById('amount').innerText = fee;
+        document.getElementById('amount').innerText = selected.dataset.fee || 0;
     };
 
     document.getElementById('enrollForm').onsubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = "Submitting...";
+
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-        data.fee = document.getElementById('amount').innerText;
+        // এপিআই-এর সাথে মিল রাখার জন্য অতিরিক্ত ডাটা যোগ করা
+        formData.append('fee', document.getElementById('amount').innerText);
 
         try {
             const res = await fetch('/api/merchant/submit-scan-lead', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                // FormData ব্যবহার করলে Content-Type হেডার দেওয়ার প্রয়োজন নেই, ব্রাউজার নিজে থেকেই নিয়ে নেয়
+                body: formData 
             });
+            
             const result = await res.json();
             if(result.success) {
-                alert("🎉 Enrollment Successful!");
+                alert("🎉 Admission Successful!");
                 window.location.reload();
-            } else { alert("❌ Error: " + result.error); }
-        } catch (err) { alert("❌ Server connection failed!"); }
+            } else {
+                alert("❌ Submission Failed: " + result.error);
+                btn.disabled = false;
+                btn.innerText = "Confirm Admission";
+            }
+        } catch (err) {
+            alert("❌ Server Connection Failed! Please check your network.");
+            btn.disabled = false;
+            btn.innerText = "Confirm Admission";
+        }
     };
 
     window.onload = () => {
-        initDistricts();
         const params = new URLSearchParams(window.location.search);
         if (params.has('ref')) document.getElementById('refSource').value = params.get('ref');
     };
