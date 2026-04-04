@@ -1,13 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const multer = require('multer');
+const path = require('path');
 
-// মডেলগুলো কানেক্ট করা (Overwrite Error এড়াতে এই পদ্ধতি শ্রেষ্ঠ)
-const Application = mongoose.models.Application || mongoose.model('Application');
-const User = mongoose.models.User || mongoose.model('User');
-const Course = mongoose.models.Course || mongoose.model('Course');
+// ১. ফাইল আপলোড কনফিগারেশন (Multer)
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // নিশ্চিত করুন আপনার প্রজেক্টে 'uploads' নামে একটি ফোল্ডার আছে
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage: storage });
 
-// মার্চেন্ট ডাটাবেস স্কিমা
+// ২. মডেলগুলো কানেক্ট করা (Overwrite Error এড়াতে এই পদ্ধতি শ্রেষ্ঠ)
+const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({}, { strict: false }));
+const User = mongoose.models.User || mongoose.model('User', new mongoose.Schema({}, { strict: false }));
+const Course = mongoose.models.Course || mongoose.model('Course', new mongoose.Schema({}, { strict: false }));
+
+// ৩. মার্চেন্ট ডাটাবেস স্কিমা
 const MerchantSchema = new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
     shopName: String,
@@ -21,10 +34,16 @@ const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', Merchant
 
 // --- 🚀 APIs ---
 
-// ১. স্টুডেন্ট ভর্তি এবং এজেন্টের ওয়ালেট আপডেট
-router.post('/submit-scan-lead', async (req, res) => {
+// ১. স্টুডেন্ট ভর্তি এবং এজেন্টের ওয়ালেট আপডেট (UPDATED with File & Address)
+router.post('/submit-scan-lead', upload.fields([
+    { name: 'photo', maxCount: 1 }, 
+    { name: 'nid', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const { name, phone, course, fee, batch, refSource } = req.body;
+        const { 
+            name, phone, guardianPhone, occupation, occName, 
+            district, thana, address, course, fee, batch, refSource 
+        } = req.body;
 
         // ওই কোর্সের ডায়নামিক কমিশন খুঁজে বের করা
         const courseData = await Course.findOne({ name: course });
@@ -34,10 +53,19 @@ router.post('/submit-scan-lead', async (req, res) => {
         const newStudent = new Application({
             studentName: name,
             contactNo: phone,
+            guardianContact: guardianPhone,
+            occupation: occupation,
+            instituteName: occName,
+            district: district,
+            thana: thana,
+            fullAddress: address,
             university: course, // কোর্সের নাম এখানে সেভ হবে
-            pendingAmount: fee, // ভর্তি ফি
-            batchTime: batch,   // নতুন ফিল্ড (যদি স্কিমাতে থাকে)
+            pendingAmount: Number(fee), 
+            batchTime: batch,
             referredBy: refSource,
+            // ফাইলের পাথ সেভ করা হচ্ছে
+            photoUrl: req.files['photo'] ? req.files['photo'][0].path : null,
+            nidUrl: req.files['nid'] ? req.files['nid'][0].path : null,
             status: 'ENROLLED',
             timestamp: new Date()
         });
@@ -50,16 +78,16 @@ router.post('/submit-scan-lead', async (req, res) => {
                 { 
                     $inc: { 
                         leadsCount: 1, 
-                        walletBalance: Number(commission) // অটোমেটিক টাকা যোগ হবে
+                        walletBalance: Number(commission) 
                     } 
                 },
-                { upsert: true } // মার্চেন্ট না থাকলে তৈরি করবে
+                { upsert: true } 
             );
         }
 
         res.status(201).json({ success: true, message: "Enrollment complete!" });
     } catch (err) {
-        console.error(err);
+        console.error("Error in submission:", err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
