@@ -2,6 +2,14 @@ const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
 
 const cloudinary = require('cloudinary').v2;
+const mongoose = require('mongoose');
+
+// MongoDB কানেকশন চেক
+if (mongoose.connection.readyState === 0) {
+    mongoose.connect(process.env.MONGODB_URI)
+        .then(() => console.log("MongoDB Connected"))
+        .catch(err => console.error("MongoDB Connection Error:", err));
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
