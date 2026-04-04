@@ -1,21 +1,24 @@
 const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
-
-const cloudinary = require('cloudinary').v2;
 const mongoose = require('mongoose');
 
-// MongoDB কানেকশন চেক
-if (mongoose.connection.readyState === 0) {
-    mongoose.connect(process.env.MONGODB_URI)
-        .then(() => console.log("MongoDB Connected"))
-        .catch(err => console.error("MongoDB Connection Error:", err));
-}
-
+// ১. Cloudinary কনফিগারেশন
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+// ২. MongoDB কানেকশন ফাংশন (Serverless এর জন্য নিরাপদ)
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("MongoDB Connected Successfully");
+    } catch (err) {
+        console.error("MongoDB Connection Error:", err);
+    }
+};
 
 // Vercel Serverless Config
 export const config = {
@@ -33,6 +36,9 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ message: "Only POST allowed" });
 
+    // ডাটাবেস কানেক্ট করুন
+    await connectDB();
+
     const form = new formidable.IncomingForm();
 
     form.parse(req, async (err, fields, files) => {
@@ -42,7 +48,7 @@ module.exports = async (req, res) => {
             let photoUrl = null;
             let nidUrl = null;
 
-            // ১. ফটো আপলোড
+            // ৩. ফাইল আপলোড লজিক
             if (files.studentPhoto) {
                 const resPhoto = await cloudinary.uploader.upload(files.studentPhoto.filepath, {
                     folder: 'slc_language_hub/photos'
@@ -50,7 +56,6 @@ module.exports = async (req, res) => {
                 photoUrl = resPhoto.secure_url;
             }
 
-            // ২. NID আপলোড
             if (files.nidFile) {
                 const resNid = await cloudinary.uploader.upload(files.nidFile.filepath, {
                     folder: 'slc_language_hub/documents'
@@ -58,7 +63,7 @@ module.exports = async (req, res) => {
                 nidUrl = resNid.secure_url;
             }
 
-            // ৩. ডাটাবেসের জন্য অবজেক্ট তৈরি
+            // ৪. আপনার ডেটা অবজেক্ট
             const admissionData = {
                 name: fields.name,
                 phone: fields.phone,
@@ -75,19 +80,19 @@ module.exports = async (req, res) => {
                 submittedAt: new Date()
             };
 
-            console.log("Success! Data received:", admissionData);
+            // নোট: এখানে আপনি চাইলে mongoose মডেল ব্যবহার করে ডাটা সেভ করতে পারেন।
+            console.log("Form Data Received:", admissionData);
 
-            // সফল রেসপন্স
             return res.status(200).json({ 
                 success: true, 
-                message: "Admission Success! Files are safe in Cloudinary.",
+                message: "Admission Success!",
                 id: "SLC-" + Math.floor(1000 + Math.random() * 9000),
                 photo: photoUrl
             });
 
         } catch (error) {
-            console.error("Upload Error:", error);
-            return res.status(500).json({ success: false, message: "Cloudinary Error: " + error.message });
+            console.error("Server Error:", error);
+            return res.status(500).json({ success: false, message: "Error: " + error.message });
         }
     });
 };
