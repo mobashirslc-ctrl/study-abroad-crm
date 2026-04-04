@@ -519,6 +519,56 @@ app.post(['/api/login', '/api/auth/login'], async (req, res) => {
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// --- 📚 New Course Model ---
+const CourseSchema = new mongoose.Schema({
+    name: { type: String, required: true, unique: true },
+    fee: { type: Number, required: true },
+    agentCommission: { type: Number, default: 0 }, // প্রতি ভর্তিতে এজেন্টের লাভ
+    status: { type: String, default: 'active' }
+}, { collection: 'courses' });
+
+const Course = mongoose.models.Course || mongoose.model('Course', CourseSchema);
+
+// --- 🛠️ Admin APIs for Courses ---
+
+// ১. নতুন কোর্স অ্যাড করা
+app.post('/api/admin/add-course', async (req, res) => {
+    try {
+        await connectDB();
+        const { name, fee, agentCommission } = req.body;
+        const newCourse = new Course({ name, fee, agentCommission });
+        await newCourse.save();
+        res.status(201).json({ success: true, message: "Course added successfully!" });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
+// ২. সব কোর্সের লিস্ট দেখা (Enrollment Form এর জন্য)
+app.get('/api/courses', async (req, res) => {
+    try {
+        await connectDB();
+        const courses = await Course.find({ status: 'active' });
+        res.json(courses);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// ৩. কোর্স ডিলিট করা
+app.delete('/api/admin/courses/:id', async (req, res) => {
+    try {
+        await connectDB();
+        await Course.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Course deleted!" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- 🔗 Merchant/Hub Service Link ---
+// নিশ্চিত করুন এই লাইনটি আপনার index.js এর নিচে আছে
+const merchantService = require('./merchant-service'); 
+app.use('/api/merchant', merchantService);
+
 // --- 🔍 Public Tracking Route ---
 app.get('/api/track-status', async (req, res) => {
     await connectDB();
