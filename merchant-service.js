@@ -2,19 +2,16 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-/** * ১. মডেলগুলো সরাসরি Mongoose থেকে কল করা হচ্ছে। 
- * যেহেতু index.js-এ এগুলো অলরেডি ডিফাইন করা আছে, 
- * তাই নতুন করে require বা model ডিক্লেয়ার করার দরকার নেই।
- */
+// মডেলগুলো কানেক্ট করা (Overwrite Error এড়াতে এই পদ্ধতি শ্রেষ্ঠ)
 const Application = mongoose.models.Application || mongoose.model('Application');
 const User = mongoose.models.User || mongoose.model('User');
+const Course = mongoose.models.Course || mongoose.model('Course');
 
-// ২. মার্চেন্ট মডেল (এটি আপনার নতুন কালেকশন, তাই সেফভাবে ডিফাইন করা হলো)
+// মার্চেন্ট ডাটাবেস স্কিমা
 const MerchantSchema = new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
     shopName: String,
     ownerName: String,
-    phone: String,
     leadsCount: { type: Number, default: 0 },
     walletBalance: { type: Number, default: 0 },
     timestamp: { type: Date, default: Date.now }
@@ -22,89 +19,65 @@ const MerchantSchema = new mongoose.Schema({
 
 const Merchant = mongoose.models.Merchant || mongoose.model('Merchant', MerchantSchema);
 
-/**
- * ৩. কিউআর স্ক্যান থেকে লিড সাবমিশন এপিআই
- */
+// --- 🚀 APIs ---
+
+// ১. স্টুডেন্ট ভর্তি এবং এজেন্টের ওয়ালেট আপডেট
 router.post('/submit-scan-lead', async (req, res) => {
     try {
-        const { name, phone, passport, degree, country, uni, lang, gpa, refSource } = req.body;
+        const { name, phone, course, fee, batch, refSource } = req.body;
 
-        // আপনার Application Schema-তে এই নতুন ফিল্ডগুলো না থাকলেও মঙ্গুস এরর দিবে না, 
-        // তবে ডাটাবেজে শুধু সেগুলোই সেভ হবে যা Schema-তে আছে।
+        // ওই কোর্সের ডায়নামিক কমিশন খুঁজে বের করা
+        const courseData = await Course.findOne({ name: course });
+        const commission = courseData ? courseData.agentCommission : 0;
+
+        // নতুন স্টুডেন্ট এনরোলমেন্ট সেভ
         const newStudent = new Application({
             studentName: name,
-            contactNo: phone, 
-            passportNo: passport || "N/A", 
-            expectedDegree: degree,        
-            expectedCountry: country,      
-            preferredUni: uni || "N/A",    
-            languageScore: lang,           
-            gpa: gpa,
-            status: 'PENDING', 
-            referredBy: refSource, 
-            handledBy: 'QR-Merchant',
+            contactNo: phone,
+            university: course, // কোর্সের নাম এখানে সেভ হবে
+            pendingAmount: fee, // ভর্তি ফি
+            batchTime: batch,   // নতুন ফিল্ড (যদি স্কিমাতে থাকে)
+            referredBy: refSource,
+            status: 'ENROLLED',
             timestamp: new Date()
         });
-
         await newStudent.save();
 
+        // যদি কোনো মার্চেন্টের মাধ্যমে আসে, তবে তার প্রোফাইল আপডেট করা
         if (refSource && refSource !== 'Direct') {
             await Merchant.findOneAndUpdate(
                 { merchantId: refSource },
-                { $inc: { leadsCount: 1 } }
+                { 
+                    $inc: { 
+                        leadsCount: 1, 
+                        walletBalance: Number(commission) // অটোমেটিক টাকা যোগ হবে
+                    } 
+                },
+                { upsert: true } // মার্চেন্ট না থাকলে তৈরি করবে
             );
         }
 
-        res.json({ success: true, message: "Assessment submitted successfully!" });
+        res.status(201).json({ success: true, message: "Enrollment complete!" });
     } catch (err) {
-        console.error("Lead Submission Error:", err);
+        console.error(err);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-/**
- * ৪. মার্চেন্ট আইডি ও স্ট্যাটাস আপডেট রাউট
- */
-router.patch('/update-id/:id', async (req, res) => {
+// ২. মার্চেন্ট ড্যাশবোর্ড স্ট্যাটাস দেখা
+router.get('/stats/:mId', async (req, res) => {
     try {
-        const { merchantId, status } = req.body;
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id, 
-            { merchantId: merchantId, status: status || 'active' }, 
-            { new: true }
-        );
-
-        if (!updatedUser) return res.status(404).json({ success: false, error: "Not found" });
-
-        await Merchant.findOneAndUpdate(
-            { merchantId: merchantId },
-            { 
-                shopName: updatedUser.orgName, 
-                ownerName: updatedUser.fullName,
-                phone: updatedUser.contact 
-            },
-            { upsert: true, new: true }
-        );
-
-        res.json({ success: true, message: "Merchant Activated!" });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+        const stats = await Merchant.findOne({ merchantId: req.params.mId });
+        if (!stats) return res.json({ leadsCount: 0, walletBalance: 0 });
+        res.json(stats);
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ৫. মার্চেন্ট লিড হিস্ট্রি
+// ৩. মার্চেন্টের নিজস্ব স্টুডেন্ট লিস্ট দেখা
 router.get('/leads/:mId', async (req, res) => {
     try {
         const leads = await Application.find({ referredBy: req.params.mId }).sort({ timestamp: -1 });
         res.json(leads);
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// ৬. ড্যাশবোর্ড স্ট্যাটাস
-router.get('/stats/:id', async (req, res) => {
-    try {
-        const stats = await Merchant.findOne({ merchantId: req.params.id });
-        res.json(stats || { leadsCount: 0, walletBalance: 0 });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
