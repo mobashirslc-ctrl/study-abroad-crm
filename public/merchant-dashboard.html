@@ -3,101 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merchant Dashboard | SCC</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Partner Dashboard | SCC Learning Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-    :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; }
-    body { background: var(--deep); color: white; font-family: sans-serif; padding: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    .card { background: var(--dark); padding: 25px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-    table { width: 100%; margin-top: 20px; border-collapse: collapse; text-align: left; }
-    th, td { padding: 12px; border-bottom: 1px solid #333; font-size: 14px; }
-    .qr-area { background: white; padding: 20px; border-radius: 10px; display: inline-block; margin-top: 15px; border: 2px solid #000; }
-    
-    /* --- প্রিন্ট ফিক্স --- */
-    @media print { 
-        .no-print { display: none !important; } 
-        body { background: white !important; color: black !important; padding: 0; margin: 0; }
-        .grid { display: block !important; } /* গ্রিড বন্ধ করা */
+        :root { --primary: #2ecc71; --dark: #0f0c29; --gold: #f1c40f; }
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; color: #333; }
         
-        .card { 
-            background: transparent !important; 
-            border: none !important; 
-            width: 100% !important; 
-            margin-top: 50px !important; 
-            display: block !important;
+        /* Header */
+        .header { background: var(--dark); color: white; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
+        .stat-card h3 { margin: 0; font-size: 14px; color: #777; text-transform: uppercase; }
+        .stat-card p { margin: 10px 0 0; font-size: 28px; font-weight: 600; color: var(--dark); }
+
+        /* QR Section */
+        .qr-container { background: white; padding: 30px; border-radius: 15px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #qrcode { display: inline-block; padding: 15px; background: white; border: 1px solid #eee; border-radius: 10px; margin: 15px 0; }
+        .btn-print { background: var(--dark); color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+        /* Table Section */
+        .table-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; background: #f9f9f9; padding: 12px; color: #555; font-size: 14px; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .status-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printable-area, #printable-area * { visibility: visible; }
+            #printable-area { position: absolute; left: 0; top: 0; width: 100%; text-align: center; }
+            .btn-print { display: none; }
         }
-
-        /* শুধু কিউআর কোড ছাড়া বাকি সব কার্ড হাইড করা */
-        div.card:not(#printableQR) { display: none !important; }
-
-        .qr-area { 
-            border: 1px solid #ccc !important; 
-            padding: 30px !important;
-        }
-        
-        h3 { font-size: 24px !important; color: black !important; }
-        #mIdDisplay { font-size: 20px !important; }
-    }
-</style>
-
+    </style>
 </head>
 <body>
 
-<div class="no-print" style="text-align:center; margin-bottom: 30px;">
-    <h2>Merchant Partner Portal</h2>
-    <p id="welcome">Loading shop details...</p>
+<div class="header">
+    <h2 id="shopNameDisplay">Partner Dashboard</h2>
+    <p style="margin:0; font-size: 13px; opacity: 0.8;">SCC Learning Hub Network</p>
 </div>
 
-<div class="grid">
-    <div class="card" id="printableQR">
-        <h3>Official Desk QR</h3>
-        <div class="qr-area">
-            <img id="mQR" src="" style="width: 180px;">
-            <div id="mIdDisplay" style="color: black; font-weight: bold; margin-top: 5px;">ID: ---</div>
+<div class="container">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Students</h3>
+            <p id="studentCount">0</p>
         </div>
-        <br>
-        <button class="no-print" onclick="window.print()" style="margin-top:15px; padding:10px; cursor:pointer;">Print for Table</button>
+        <div class="stat-card" style="border-color: var(--gold);">
+            <h3>Total Earnings</h3>
+            <p id="walletBalance">৳ 0</p>
+        </div>
     </div>
 
-    <div class="card" style="grid-column: span 2;">
-        <h3><i class="fas fa-history"></i> Recent Scans from Your Shop</h3>
+    <div class="qr-container">
+        <div id="printable-area">
+            <h3 style="margin-bottom: 5px;">Admission Point QR</h3>
+            <p style="font-size: 12px; color: #666; margin-top: 0;">Scan to Enroll in English Courses</p>
+            <div id="qrcode"></div>
+            <p style="font-weight: bold; color: var(--dark);" id="merchantIdLabel"></p>
+        </div>
+        <button class="btn-print" onclick="window.print()">Print Admission Kit</button>
+    </div>
+
+    <div class="table-card">
+        <h3 style="margin-top: 0;">Recent Admissions</h3>
         <table>
             <thead>
-                <tr><th>Student Name</th><th>Phone</th><th>Status</th><th>Date</th></tr>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Course</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
             </thead>
-            <tbody id="historyBody"></tbody>
+            <tbody id="studentList">
+                </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    async function init() {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if(!user) return window.location.href = "/auth.html";
+    // ১. ইউজার ডাটা লোড করা (LocalStorage থেকে অথবা API থেকে)
+    const merchantId = localStorage.getItem('mId') || 'DEMO-101'; // আপনার লগইন সিস্টেম অনুযায়ী আইডি নিবেন
 
-        const mId = user.merchantId || "M101"; 
-        document.getElementById('welcome').innerText = `Welcome, ${user.orgName}`;
-        document.getElementById('mIdDisplay').innerText = `ID: ${mId}`;
+    async function loadDashboardData() {
+        try {
+            // মার্চেন্ট স্ট্যাটাস (Stats) আনা
+            const statsRes = await fetch(`/api/merchant/stats/${merchantId}`);
+            const stats = await statsRes.json();
+            
+            document.getElementById('studentCount').innerText = stats.leadsCount || 0;
+            document.getElementById('walletBalance').innerText = `৳ ${stats.walletBalance || 0}`;
+            document.getElementById('merchantIdLabel').innerText = `ID: ${merchantId}`;
 
-        // QR Generate
-        const link = `${window.location.origin}/scan-apply.html?ref=${mId}`;
-        document.getElementById('mQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+            // স্টুডেন্ট লিস্ট আনা
+            const listRes = await fetch(`/api/merchant/leads/${merchantId}`);
+            const students = await listRes.json();
+            const listBody = document.getElementById('studentList');
+            listBody.innerHTML = '';
 
-        // Load History
-        const res = await fetch(`/api/merchant/leads/${mId}`);
-        const leads = await res.json();
-        const tbody = document.getElementById('historyBody');
-        tbody.innerHTML = leads.map(l => `
-            <tr>
-                <td>${l.studentName}</td>
-                <td>${l.contactNo}</td>
-                <td><b style="color:var(--gold)">${l.status}</b></td>
-                <td>${new Date(l.timestamp).toLocaleDateString()}</td>
-            </tr>
-        `).join('');
+            students.forEach(stu => {
+                const row = `<tr>
+                    <td><b>${stu.studentName}</b><br><small>${stu.contactNo}</small></td>
+                    <td>${stu.university}</td>
+                    <td>${new Date(stu.timestamp).toLocaleDateString()}</td>
+                    <td><span class="status-badge">Enrolled</span></td>
+                </tr>`;
+                listBody.innerHTML += row;
+            });
+
+            // QR Code জেনারেট করা
+            const enrollLink = `https://study-abroad-crm-nine.vercel.app/apply-scan.html?ref=${merchantId}`;
+            new QRCode(document.getElementById("qrcode"), {
+                text: enrollLink,
+                width: 180,
+                height: 180
+            });
+
+        } catch (err) {
+            console.error("Dashboard Load Error:", err);
+        }
     }
-    init();
+
+    loadDashboardData();
 </script>
+
 </body>
 </html>
