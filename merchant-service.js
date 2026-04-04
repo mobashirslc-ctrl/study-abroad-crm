@@ -2,19 +2,14 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// --- ১. মডেল ইমপোর্ট (Safe Loading) ---
-// ফাইলগুলো সরাসরি রুট ফোল্ডারে থাকায় require করা হচ্ছে
-const Application = require('./Application'); 
+/** * ১. মডেলগুলো সরাসরি Mongoose থেকে কল করা হচ্ছে। 
+ * যেহেতু index.js-এ এগুলো অলরেডি ডিফাইন করা আছে, 
+ * তাই নতুন করে require বা model ডিক্লেয়ার করার দরকার নেই।
+ */
+const Application = mongoose.models.Application || mongoose.model('Application');
+const User = mongoose.models.User || mongoose.model('User');
 
-// User মডেল সরাসরি require করলে অনেক সময় ওভাররাইট এরর দেয়, তাই এভাবে চেক করা ভালো
-let User;
-try {
-    User = mongoose.model('User');
-} catch (e) {
-    User = require('./index'); 
-}
-
-// ২. মার্চেন্ট মডেল (OverwriteModelError প্রতিরোধের জন্য Safe Check)
+// ২. মার্চেন্ট মডেল (এটি আপনার নতুন কালেকশন, তাই সেফভাবে ডিফাইন করা হলো)
 const MerchantSchema = new mongoose.Schema({
     merchantId: { type: String, required: true, unique: true },
     shopName: String,
@@ -34,6 +29,8 @@ router.post('/submit-scan-lead', async (req, res) => {
     try {
         const { name, phone, passport, degree, country, uni, lang, gpa, refSource } = req.body;
 
+        // আপনার Application Schema-তে এই নতুন ফিল্ডগুলো না থাকলেও মঙ্গুস এরর দিবে না, 
+        // তবে ডাটাবেজে শুধু সেগুলোই সেভ হবে যা Schema-তে আছে।
         const newStudent = new Application({
             studentName: name,
             contactNo: phone, 
@@ -66,22 +63,18 @@ router.post('/submit-scan-lead', async (req, res) => {
 });
 
 /**
- * ৪. মার্চেন্ট আইডি ও স্ট্যাটাস আপডেট রাউট (Admin Panel এর জন্য)
+ * ৪. মার্চেন্ট আইডি ও স্ট্যাটাস আপডেট রাউট
  */
 router.patch('/update-id/:id', async (req, res) => {
     try {
         const { merchantId, status } = req.body;
-        const userId = req.params.id;
-
         const updatedUser = await User.findByIdAndUpdate(
-            userId, 
+            req.params.id, 
             { merchantId: merchantId, status: status || 'active' }, 
             { new: true }
         );
 
-        if (!updatedUser) {
-            return res.status(404).json({ success: false, error: "Merchant not found" });
-        }
+        if (!updatedUser) return res.status(404).json({ success: false, error: "Not found" });
 
         await Merchant.findOneAndUpdate(
             { merchantId: merchantId },
@@ -99,24 +92,20 @@ router.patch('/update-id/:id', async (req, res) => {
     }
 });
 
-// ৫. মার্চেন্টের লিড হিস্ট্রি
+// ৫. মার্চেন্ট লিড হিস্ট্রি
 router.get('/leads/:mId', async (req, res) => {
     try {
         const leads = await Application.find({ referredBy: req.params.mId }).sort({ timestamp: -1 });
         res.json(leads);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ৬. ড্যাশবোর্ড স্ট্যাটাস ডাটা
+// ৬. ড্যাশবোর্ড স্ট্যাটাস
 router.get('/stats/:id', async (req, res) => {
     try {
         const stats = await Merchant.findOne({ merchantId: req.params.id });
         res.json(stats || { leadsCount: 0, walletBalance: 0 });
-    } catch (e) { 
-        res.status(500).json({ error: e.message }); 
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 module.exports = router;
