@@ -281,29 +281,112 @@
                     <td><button class="action-btn" onclick="updateWallet('${app._id}')">Wallet</button></td>
                 </tr>`).join('');
         } catch(e) { console.log(e); }
-    };
+<script type="module">
+    // ১. সাইডবার নেভিগেশন (ট্যাব সিস্টেম) - এটি লক সমস্যার সমাধান করবে
+    window.showTab = function(event, tabId) {
+        // সব ট্যাব কন্টেন্ট লুকিয়ে ফেলা
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(content => {
+            content.style.display = 'none';
+        });
 
-    window.updateWallet = async (id) => {
-        const amount = prompt("Amount (৳):");
-        if(amount) {
-            await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pendingAmount: Number(amount) }) });
-            fetchTracking();
+        // সব সাইডবার মেনু থেকে 'active' ক্লাস সরানো
+        const listItems = document.querySelectorAll('.sidebar ul li');
+        listItems.forEach(li => {
+            li.classList.remove('active');
+        });
+
+        // ক্লিক করা ট্যাবটি দেখানো
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+            targetTab.style.display = 'block';
+            // ক্লিক করা মেনু আইটেমটিকে গোল্ডেন কালার করা
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        } else {
+            console.error("Tab ID not found:", tabId);
         }
     };
 
-    // ৬. ইনিশিয়াল লোড
+    // ২. ডাটা ফেচ করার সব ফাংশন (একত্রে)
+    window.loadAllAdminData = async () => {
+        try {
+            // ইউনিভার্সিটি ডাটা
+            const uniRes = await fetch('/api/universities');
+            const unis = await uniRes.json();
+            document.getElementById('adminUniTable').innerHTML = unis.map(u => `
+                <tr>
+                    <td><b>${u.universityName}</b></td>
+                    <td>GPA: ${u.minGPA}</td>
+                    <td>${u.uCurrency} ${u.totalTuitionFee}</td>
+                    <td><button class="action-btn" style="background:var(--gold)">EDIT</button></td>
+                </tr>`).join('');
+
+            // ইউজার ও মার্চেন্ট ডাটা
+            const userRes = await fetch('/api/admin/users');
+            const users = await userRes.json();
+            
+            // পার্টনার টেবিল
+            document.getElementById('adminUserTable').innerHTML = users.filter(u => u.role !== 'merchant').map(user => `
+                <tr>
+                    <td><b>${user.fullName}</b></td>
+                    <td>${user.email}</td>
+                    <td><span class="badge status-${user.status}">${user.status}</span></td>
+                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
+                </tr>`).join('');
+
+            // মার্চেন্ট টেবিল
+            document.getElementById('adminMerchantTable').innerHTML = users.filter(u => u.role === 'merchant').map(m => `
+                <tr>
+                    <td><b>${m.orgName}</b></td>
+                    <td><input type="text" id="mid_${m._id}" value="${m.merchantId || ''}" style="width:80px;"></td>
+                    <td><button class="action-btn" onclick="approveMerchant('${m._id}')">OK</button></td>
+                </tr>`).join('');
+
+        } catch (err) {
+            console.error("Data Load Error:", err);
+        }
+    };
+
+    // ৩. স্ট্যাটাস আপডেট ও অন্যান্য অ্যাকশন
+    window.updateStatus = async (id, status) => {
+        await fetch(`/api/admin/users/${id}/status`, { 
+            method: 'PATCH', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ status }) 
+        });
+        loadAllAdminData();
+    };
+
+    window.approveMerchant = async (id) => {
+        const mid = document.getElementById(`mid_${id}`).value;
+        if(!mid) return alert("Merchant ID input please");
+        await fetch(`/api/merchant/update-id/${id}`, { 
+            method: 'PATCH', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ merchantId: mid, status: 'active' }) 
+        });
+        alert("Merchant Activated!");
+        loadAllAdminData();
+    };
+
+    // ৪. পেজ লোড হলে যা ঘটবে
     window.onload = () => {
-        fetchUniversities();
-        fetchData();
-        fetchAdmissions();
-        fetchTracking();
+        loadAllAdminData();
+        // নিশ্চিত করা যেন প্রথম ট্যাবটি ডিফল্টভাবে খোলা থাকে
+        const firstTab = document.getElementById('uni-manage');
+        if(firstTab) firstTab.style.display = 'block';
     };
 
     window.logout = () => {
-        localStorage.clear();
-        location.href = 'auth.html';
+        if(confirm("Logout?")) {
+            localStorage.clear();
+            location.href = 'auth.html';
+        }
     };
 </script>
+
 
 </body>
 </html>
