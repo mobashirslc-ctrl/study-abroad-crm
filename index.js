@@ -16,7 +16,10 @@ app.use(express.json());
 const publicPath = path.join(__dirname, 'public'); 
 
 // ২. স্ট্যাটিক ফাইল মিডলওয়্যার
+// index.js (Line 23-24 এর আশেপাশে)
 app.use(express.static(publicPath));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // এটি নতুন যোগ করুন
+
 
 // ৩. রুট পাথ এ সরাসরি index.html পাঠানো
 app.get('/', (req, res) => {
@@ -81,6 +84,30 @@ const Application = mongoose.models.Application || mongoose.model('Application',
     lockUntil: { type: Date, default: null }, 
     timestamp: { type: Date, default: Date.now }
 }, { collection: 'applications' }));
+// Application Model এ এই ফিল্ডগুলো রিপ্লেস বা অ্যাড করুন
+const Application = mongoose.models.Application || mongoose.model('Application', new mongoose.Schema({
+    studentName: String, 
+    passportNo: String, 
+    contactNo: String,        // নতুন
+    guardianContact: String,   // নতুন
+    occupation: String,        // নতুন
+    instituteName: String,     // নতুন
+    district: String,          // নতুন (Address)
+    thana: String,             // নতুন (Address)
+    fullAddress: String,       // নতুন (Address)
+    partnerEmail: String, 
+    university: String,
+    batchTime: String,         // নতুন
+    photoUrl: String,          // নতুন (Image Path)
+    nidUrl: String,            // নতুন (Image Path)
+    commissionBDT: Number, 
+    pdf1: String, pdf2: String, pdf3: String, pdf4: String,
+    status: { type: String, default: 'PENDING' }, 
+    referredBy: String,        // নতুন (Merchant ID)
+    pendingAmount: { type: Number, default: 0 },
+    timestamp: { type: Date, default: Date.now }
+}, { collection: 'applications' }));
+
 
 const Withdrawal = mongoose.models.Withdrawal || mongoose.model('Withdrawal', new mongoose.Schema({
     partnerEmail: { type: String, required: true },
