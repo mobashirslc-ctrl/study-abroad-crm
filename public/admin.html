@@ -50,6 +50,10 @@
         <li onclick="logout()">
             <i class="fas fa-sign-out-alt"></i> Logout
         </li>
+        <li onclick="showTab(event, 'admission-manage')">
+    <i class="fas fa-user-graduate"></i> Admission Requests
+</li>
+
     </ul>
 </div>
  <div class="main-content">
@@ -162,6 +166,29 @@
         </table>
     </div>
 </div>
+    <div id="admission-manage" class="tab-content">
+    <div class="card">
+        <h3><i class="fas fa-file-invoice-dollar" style="color:var(--gold)"></i> Pending Admissions</h3>
+        <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">
+            স্টুডেন্টের Transaction ID ভেরিফাই করুন এবং Approve বাটনে ক্লিক করে কনফার্মেশন SMS পাঠান।
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Info</th>
+                    <th>Course & Fee</th>
+                    <th>Transaction ID</th>
+                    <th>Documents</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminAdmissionTable">
+                </tbody>
+        </table>
+    </div>
+</div>
+
 
     <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
         <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
@@ -393,6 +420,78 @@ window.approveStudent = async function(phone, name, course) {
         alert("❌ Server Connection Failed!");
     }
 };
+     // ১. পেন্ডিং অ্যাডমিশন লিস্ট নিয়ে আসা
+window.fetchAdmissions = async () => {
+    try {
+        const res = await fetch('/api/get-pending'); // এই এপিআই-টি আপনাকে তৈরি করতে হবে (নিচে দেওয়া আছে)
+        const result = await res.json();
+        const admissions = result.data || [];
+
+        const tableBody = document.getElementById('adminAdmissionTable');
+        if (admissions.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No pending admissions found.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = admissions.map(adm => `
+            <tr>
+                <td>
+                    <b>${adm.name}</b><br>
+                    <small>${adm.phone}</small>
+                </td>
+                <td>
+                    <b>${adm.course}</b><br>
+                    <small>Fee: ৳${adm.fee}</small>
+                </td>
+                <td style="color:var(--gold); font-weight:bold;">${adm.transactionId || 'N/A'}</td>
+                <td>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${adm.photoUrl}', '_blank')">Photo</button>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${adm.nidUrl}', '_blank')">NID</button>
+                </td>
+                <td>
+                    <button class="action-btn" style="background:var(--green); color:white;" 
+                        onclick="approveStudentAction('${adm._id}', '${adm.phone}', '${adm.name}', '${adm.course}')">
+                        <i class="fas fa-check"></i> APPROVE & SMS
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Error fetching admissions:", err);
+    }
+};
+
+// ২. এপ্রুভ বাটন ফাংশন যা আপনার approve.js কল করবে
+window.approveStudentAction = async (id, phone, name, course) => {
+    if(!confirm(`Approve ${name} and send confirmation SMS?`)) return;
+
+    try {
+        const res = await fetch('/api/approve', { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ 
+                id: id,
+                studentPhone: phone,
+                studentName: name,
+                courseName: course
+            }) 
+        });
+
+        const result = await res.json();
+        if(res.ok && result.success) {
+            alert("✅ Student Approved & SMS Sent!");
+            fetchAdmissions(); // টেবিল রিফ্রেশ
+        } else {
+            alert("❌ Error: " + result.message);
+        }
+    } catch (err) {
+        alert("❌ Server Error!");
+    }
+};
+
+// আপনার window.onload এ এটি যোগ করতে ভুলবেন না:
+// window.onload = () => { ... fetchAdmissions(); };
+   
 
         window.openWalletBox = async (id) => {
             const amount = prompt("Enter Wallet Amount:");
@@ -402,7 +501,7 @@ window.approveStudent = async function(phone, name, course) {
             }
         };
 
-        window.onload = () => { fetchUniversities(); fetchUsers(); fetchTracking(); fetchMerchants();};
+        window.onload = () => { fetchUniversities(); fetchUsers(); fetchTracking(); fetchMerchants();fetchAdmissions()};
         window.logout = () => { localStorage.clear(); location.href = 'login.html'; };
     </script>
 </body>
