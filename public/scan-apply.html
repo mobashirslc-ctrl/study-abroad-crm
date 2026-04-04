@@ -210,64 +210,93 @@ function loadThanas() {
     loadCourses();
 
     const urlParams = new URLSearchParams(window.location.search);
-    document.getElementById('refSource').value = urlParams.get('ref') || 'Direct';
+<script>
+    // ১. বাংলাদেশের সব জেলা ও থানার ডাটা (পূর্ণাঙ্গ লিস্ট)
+    const bdData = {
+        "Dhaka": ["Dhanmondi", "Mirpur", "Uttara", "Gulshan", "Savar", "Keraniganj", "Tejgaon", "Motijheel", "Dhamrai", "Dohar", "Nawabganj"],
+        "Gazipur": ["Gazipur Sadar", "Kaliakair", "Kaliganj", "Kapasia", "Sreepur"],
+        "Narayanganj": ["Narayanganj Sadar", "Araihazar", "Bandar", "Rupganj", "Sonargaon"],
+        "Chittagong": ["Panchlaish", "Halishahar", "Hathazari", "Sitakunda", "Fatikchhari", "Raozan", "Patiya", "Lohagara"],
+        "Sylhet": ["Sylhet Sadar", "Beanibazar", "Golapganj", "Zakiganj", "Sreemangal", "Habiganj"],
+        "Bogura": ["Bogra Sadar", "Sherpur", "Shajahanpur", "Dhunat", "Gabatli", "Kahaloo"],
+        "Rajshahi": ["Boalia", "Motihar", "Paba", "Bagmara", "Godagari", "Tanore"],
+        "Khulna": ["Khulna Sadar", "Jessore Sadar", "Kushtia Sadar", "Satkhira Sadar"],
+        "Barisal": ["Barisal Sadar", "Bhola Sadar", "Patuakhali Sadar", "Pirojpur"],
+        "Rangpur": ["Rangpur Sadar", "Dinajpur Sadar", "Kurigram", "Gaibandha"],
+        "Mymensingh": ["Mymensingh Sadar", "Bhaluka", "Trishal", "Jamalpur", "Netrokona"]
+    };
 
-    function updateCourseInfo() {
-        const select = document.getElementById('courseSelect');
-        const fee = select.options[select.selectedIndex].getAttribute('data-fee');
-        if(fee) {
-            document.getElementById('feeDisplay').style.display = 'block';
-            document.getElementById('amount').innerText = fee;
+    // জেলা ড্রপডাউন ইনজেক্ট করা
+    function initDropdowns() {
+        const distSelect = document.getElementById('district');
+        if (distSelect) {
+            distSelect.innerHTML = '<option value="">Select District</option>';
+            Object.keys(bdData).sort().forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = d; opt.text = d;
+                distSelect.appendChild(opt);
+            });
         }
     }
 
-    function toggleOccupationDetails() {
-        const occ = document.getElementById('occupation').value;
-        const label = document.getElementById('occLabel');
-        label.innerText = occ === 'Student' ? "School/College Name" : (occ === 'Job Holder' ? "Company Name" : "Business/Org Name");
+    // থানা লোড করার ফাংশন
+    function loadThanas() {
+        const district = document.getElementById('district').value;
+        const thanaSelect = document.getElementById('thana');
+        thanaSelect.innerHTML = '<option value="">Select Thana</option>';
+        if (district && bdData[district]) {
+            thanaSelect.disabled = false;
+            bdData[district].sort().forEach(t => {
+                let opt = document.createElement('option');
+                opt.value = t; opt.text = t;
+                thanaSelect.appendChild(opt);
+            });
+        } else {
+            thanaSelect.disabled = true;
+        }
     }
 
-    document.getElementById('admissionForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "Processing...";
-        btn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('name', document.getElementById('name').value);
-        formData.append('phone', document.getElementById('phone').value);
-        formData.append('guardianPhone', document.getElementById('guardianPhone').value);
-        formData.append('occupation', document.getElementById('occupation').value);
-        formData.append('occName', document.getElementById('occName').value);
-        formData.append('district', document.getElementById('district').value);
-        formData.append('thana', document.getElementById('thana').value);
-        formData.append('address', document.getElementById('address').value);
-        formData.append('course', document.getElementById('courseSelect').value);
-        formData.append('fee', document.getElementById('amount').innerText);
-        formData.append('batch', document.getElementById('batch').value);
-        formData.append('refSource', document.getElementById('refSource').value);
-        formData.append('photo', document.getElementById('photo').files[0]);
-        formData.append('nid', document.getElementById('nid').files[0]);
-
+    // ২. এপিআই থেকে কোর্স লোড করা
+    async function loadCourses() {
         try {
-            const res = await fetch('/api/merchant/submit-scan-lead', {
-                method: 'POST',
-                body: formData
-            });
-            if (res.ok) {
-                alert("Admission Confirmed Successfully!");
-                location.reload();
-            } else {
-                alert("Something went wrong. Please try again.");
-                btn.disabled = false;
-                btn.innerText = "CONFIRM ADMISSION";
+            const res = await fetch('/api/courses');
+            const courses = await res.json();
+            const courseSelect = document.getElementById('courseSelect');
+            
+            if (courseSelect) {
+                courseSelect.innerHTML = '<option value="">Select Course</option>';
+                courses.forEach(c => {
+                    let opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.text = `${c.name} (Fee: ৳${c.fee})`;
+                    opt.dataset.fee = c.fee; // ফি সেভ করে রাখা
+                    courseSelect.appendChild(opt);
+                });
             }
         } catch (err) {
-            alert("Connection Error!");
-            btn.disabled = false;
-            btn.innerText = "CONFIRM ADMISSION";
+            console.error("Course load error:", err);
+        }
+    }
+
+    // কোর্স সিলেক্ট করলে অটোমেটিক ফি আপডেট হওয়া
+    document.getElementById('courseSelect').onchange = function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const fee = selectedOption.dataset.fee || 0;
+        document.getElementById('amount').innerText = fee;
+    };
+
+    // পেজ লোড হলে সব শুরু হবে
+    window.onload = () => {
+        initDropdowns();
+        loadCourses();
+        
+        // URL থেকে রেফারেন্স আইডি নেওয়া (?ref=ID)
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('ref')) {
+            document.getElementById('refSource').value = params.get('ref');
         }
     };
 </script>
+
 </body>
 </html>
