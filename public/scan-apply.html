@@ -3,194 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Assessment | SCC Group</title>
+    <title>Admission Enrollment | SCC Learning Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --gold: #f1c40f; --white: rgba(255, 255, 255, 0.1); }
+        :root { --accent: #2ecc71; --gold: #f1c40f; }
         body {
-            margin: 0; padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
-            background-attachment: fixed;
-            color: white;
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            margin: 0; font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
-        /* Glassmorphism Card */
-        .glass-card {
+        .enroll-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            padding: 30px; border-radius: 20px;
+            width: 90%; max-width: 400px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 40px;
-            width: 90%; max-width: 500px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
         }
-        h2 { color: var(--gold); margin-bottom: 25px; font-weight: 600; }
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { display: block; font-size: 13px; margin-bottom: 5px; color: #ccc; }
+        h2 { color: var(--accent); margin-bottom: 5px; }
+        p { font-size: 13px; color: #bbb; margin-bottom: 25px; }
+        
         input, select {
-            width: 100%; padding: 12px;
+            width: 100%; padding: 12px; margin-bottom: 15px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px; color: white;
-            box-sizing: border-box; outline: none;
-            transition: 0.3s;
+            border-radius: 8px; color: white; outline: none; box-sizing: border-box;
         }
-        input:focus { border-color: var(--gold); background: rgba(255, 255, 255, 0.2); }
-        .btn-submit {
-            background: var(--gold); color: #000; border: none;
-            padding: 15px; width: 100%; border-radius: 8px;
-            font-weight: bold; cursor: pointer; font-size: 16px;
-            transition: 0.3s; margin-top: 10px;
-        }
-        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4); }
         
-        /* Result Card Area */
-        #resultArea { display: none; margin-top: 20px; }
-        .slc-promo {
-            background: rgba(241, 196, 15, 0.1);
-            border: 1px dashed var(--gold);
-            padding: 15px; border-radius: 10px; margin-top: 15px;
+        .fee-box {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid var(--accent);
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            display: none; /* শুরুতে লুকানো থাকবে */
         }
-        #qrcode-container { display: flex; flex-direction: column; align-items: center; margin-top: 20px; }
-        #qrcode { background: white; padding: 10px; border-radius: 10px; }
+        .fee-box span { font-size: 22px; font-weight: bold; color: var(--accent); }
+
+        .btn-submit {
+            background: var(--accent); color: white; border: none;
+            padding: 15px; width: 100%; border-radius: 8px;
+            font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s;
+        }
+        .btn-submit:hover { background: #27ae60; transform: scale(1.02); }
+        
+        #successMsg { display: none; }
     </style>
 </head>
 <body>
 
-<div class="glass-card" id="mainCard">
-    <div id="formSection">
-        <h2>Study Abroad Assessment</h2>
-        <form id="assessmentForm">
-            <div class="input-group">
-                <input type="text" id="name" placeholder="Student Full Name" required>
+<div class="enroll-card">
+    <div id="formArea">
+        <h2>SCC Learning Hub</h2>
+        <p>ভর্তি ফর্মটি নির্ভুলভাবে পূরণ করুন</p>
+        
+        <form id="enrollForm">
+            <input type="text" id="stuName" placeholder="শিক্ষার্থীর পূর্ণ নাম" required>
+            <input type="text" id="stuPhone" placeholder="মোবাইল নম্বর" required>
+            
+            <select id="courseSelect" onchange="updatePrice()" required>
+                <option value="">কোর্স পছন্দ করুন</option>
+            </select>
+
+            <div id="feeBox" class="fee-box">
+                <small style="color: #ccc;">ভর্তি ফি:</small><br>
+                ৳ <span id="displayAmount">0</span>
             </div>
-            <div class="input-group">
-                <input type="text" id="phone" placeholder="Contact Number" required>
-            </div>
-            <div class="input-group">
-                <input type="text" id="passport" placeholder="Passport Number (Optional)">
-            </div>
-            <div class="input-group">
-                <select id="degree">
-                    <option value="">Expected Degree</option>
-                    <option value="Bachelor">Bachelor</option>
-                    <option value="Master">Master</option>
-                    <option value="Diploma">Diploma</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <input type="text" id="country" placeholder="Expected Country">
-            </div>
-            <div class="input-group">
-                <input type="text" id="uni" placeholder="Preferred University (If any)">
-            </div>
-            <div class="input-group">
-                <select id="langScore" onchange="checkLanguage()">
-                    <option value="">Language Proficiency</option>
-                    <option value="IELTS">IELTS</option>
-                    <option value="Duolingo">Duolingo</option>
-                    <option value="MOI">MOI</option>
-                    <option value="PREP">Preparation nibe (Need Training)</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <input type="text" id="academic" placeholder="Last Academic Score (GPA)">
-            </div>
-            <button type="submit" class="btn-submit">Submit Assessment</button>
+
+            <select id="batch" required>
+                <option value="">ব্যাচ সময় নির্বাচন করুন</option>
+                <option value="Morning">সকাল (১০টা - ১২টা)</option>
+                <option value="Afternoon">বিকাল (৩টা - ৫টা)</option>
+                <option value="Evening">সন্ধ্যা (৬টা - ৮টা)</option>
+            </select>
+
+            <button type="submit" class="btn-submit" id="submitBtn">ভর্তি নিশ্চিত করুন</button>
         </form>
     </div>
 
-    <div id="resultArea">
-        <h2 style="color: #2ecc71;">Application Submitted!</h2>
-        <p style="font-size: 14px;">আমাদের টিম খুব দ্রুত আপনার প্রোফাইলটি যাচাই করে রেজাল্ট প্রদান করবে।</p>
-        
-        <div id="slcContact" class="slc-promo" style="display: none;">
-            <h4 style="margin:0; color: var(--gold);">Need Language Training?</h4>
-            <p style="font-size: 12px; margin: 5px 0;"><b>Name:</b> Student Language Consultant (SLC)</p>
-            <p style="font-size: 12px; margin: 5px 0;"><b>Web:</b> <a href="https://slc.education/" style="color:white;">slc.education</a></p>
-            <p style="font-size: 12px; margin: 5px 0;"><b>Contact:</b> +8801703-523861</p>
-        </div>
-
-        <div id="qrcode-container">
-            <p style="font-size: 13px; margin-bottom: 10px; color: var(--gold);">Live Tracking QR Code:</p>
-            <div id="qrcode"></div>
-            <p style="font-size: 11px; margin-top: 10px; opacity: 0.7;">স্ক্যান করে আপনার ফাইল আপডেট দেখুন</p>
-        </div>
+    <div id="successMsg">
+        <h2 style="color: var(--gold);">অভিনন্দন!</h2>
+        <p>আপনার ভর্তি আবেদনটি সফলভাবে গৃহীত হয়েছে। আমাদের ট্রেইনার খুব শীঘ্রই আপনার সাথে যোগাযোগ করবেন।</p>
+        <button onclick="location.reload()" style="background:none; color:white; border:1px solid white; padding:10px; border-radius:5px; cursor:pointer;">আরেকটি ভর্তি করুন</button>
     </div>
 </div>
 
 <script>
-    function checkLanguage() {
-        const score = document.getElementById('langScore').value;
-        const slcDiv = document.getElementById('slcContact');
-        slcDiv.style.display = (score === "PREP") ? "block" : "none";
-    }
-
-    document.getElementById('assessmentForm').onsubmit = async (e) => {
-    e.preventDefault();
-    
-    // বাটন ডিজেবল করা যাতে বারবার ক্লিক না হয়
-    const submitBtn = e.target.querySelector('button');
-    submitBtn.innerText = "Submitting...";
-    submitBtn.disabled = true;
-
-    const formData = {
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        passport: document.getElementById('passport').value,
-        degree: document.getElementById('degree').value,
-        country: document.getElementById('country').value,
-        uni: document.getElementById('uni').value,
-        lang: document.getElementById('langScore').value,
-        gpa: document.getElementById('academic').value,
-        refSource: new URLSearchParams(window.location.search).get('ref') || 'Direct'
-    };
-
-    try {
-        // আপনার ব্যাকএন্ড রাউটটি নিশ্চিত করুন (index.js এ যা আছে)
-        const res = await fetch('/api/merchant/submit-scan-lead', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(formData)
-        });
-
-        const result = await res.json();
-
-        if(res.ok) {
-            document.getElementById('formSection').style.display = 'none';
-            document.getElementById('resultArea').style.display = 'block';
+    // ১. ব্যাকএন্ড থেকে ডায়নামিক কোর্স লিস্ট লোড করা
+    async function fetchCourses() {
+        try {
+            const res = await fetch('/api/courses'); // আপনার index.js এর API
+            const courses = await res.json();
+            const select = document.getElementById('courseSelect');
             
-            // QR Code জেনারেট করার সেফ মেথড
-            const qrContainer = document.getElementById("qrcode");
-            const trackLink = `https://study-abroad-crm-nine.vercel.app/track.html?passport=${formData.passport}`;
-            
-            if (typeof QRCode !== "undefined") {
-                new QRCode(qrContainer, {
-                    text: trackLink,
-                    width: 150,
-                    height: 150
-                });
-            } else {
-                // যদি লাইব্রেরি কাজ না করে তবে ইমেজ এপিআই ব্যবহার করবে
-                qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(trackLink)}" />`;
-            }
-        } else {
-            alert("Error: " + (result.error || "Submission failed"));
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Submit Assessment";
+            courses.forEach(course => {
+                const opt = document.createElement('option');
+                opt.value = course.name;
+                opt.text = course.name;
+                opt.setAttribute('data-fee', course.fee);
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error("Course load error:", err);
         }
-    } catch (err) {
-        console.error(err);
-        alert("Network Error! সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।");
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Submit Assessment";
     }
-};
+    fetchCourses();
 
+    // ২. কোর্স সিলেক্ট করলে ফি আপডেট করা
+    function updatePrice() {
+        const select = document.getElementById('courseSelect');
+        const selectedOption = select.options[select.selectedIndex];
+        const fee = selectedOption.getAttribute('data-fee');
+        const feeBox = document.getElementById('feeBox');
+        
+        if (fee) {
+            feeBox.style.display = 'block';
+            document.getElementById('displayAmount').innerText = fee;
+        } else {
+            feeBox.style.display = 'none';
+        }
+    }
+
+    // ৩. ভর্তি ফর্ম সাবমিট করা
+    document.getElementById('enrollForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerText = "Processing...";
+        submitBtn.disabled = true;
+
+        const refId = new URLSearchParams(window.location.search).get('ref') || 'Direct';
+        
+        const payload = {
+            name: document.getElementById('stuName').value,
+            phone: document.getElementById('stuPhone').value,
+            course: document.getElementById('courseSelect').value,
+            fee: document.getElementById('displayAmount').innerText,
+            batch: document.getElementById('batch').value,
+            refSource: refId
+        };
+
+        try {
+            const res = await fetch('/api/merchant/submit-scan-lead', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                document.getElementById('formArea').style.display = 'none';
+                document.getElementById('successMsg').style.display = 'block';
+            } else {
+                alert("ভর্তি ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "ভর্তি নিশ্চিত করুন";
+            }
+        } catch (err) {
+            alert("Network Error!");
+            submitBtn.disabled = false;
+        }
+    };
 </script>
 
 </body>
