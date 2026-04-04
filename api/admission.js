@@ -1,10 +1,12 @@
 const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
 
+const cloudinary = require('cloudinary').v2;
+
 cloudinary.config({
-  cloud_name: 'dqriueu9r',
-  api_key: '698924766176623',
-  api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Vercel Serverless Config
