@@ -2,11 +2,11 @@ const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
 const mongoose = require('mongoose');
 
-// ১. Cloudinary কনফিগারেশন
+// ১. Cloudinary কনফিগারেশন (সরাসরি ভ্যালু দিয়ে দেওয়া হলো যাতে এনভায়রনমেন্টের ঝামেলা না থাকে)
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  cloud_name: 'dqriueu9r',
+  api_key: '698924766176623',
+  api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
 });
 
 // ২. MongoDB কানেকশন ফাংশন
@@ -48,8 +48,8 @@ module.exports = async (req, res) => {
             let photoUrl = null;
             let nidUrl = null;
 
-            // ৩. ফটো আপলোড (Logic Cleaned)
-            if (files.studentPhoto) {
+            // ৩. ফটো আপলোড
+            if (files.studentPhoto && files.studentPhoto.filepath) {
                 const resPhoto = await cloudinary.uploader.upload(files.studentPhoto.filepath, {
                     folder: 'slc_language_hub/photos',
                     resource_type: "auto"
@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
             }
 
             // ৪. NID আপলোড
-            if (files.nidFile) {
+            if (files.nidFile && files.nidFile.filepath) {
                 const resNid = await cloudinary.uploader.upload(files.nidFile.filepath, {
                     folder: 'slc_language_hub/documents',
                     resource_type: "auto"
@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
                 nidUrl = resNid.secure_url;
             }
 
-            // ৫. ডেটা অবজেক্ট তৈরি
+            // ৫. ডেটা অবজেক্ট
             const admissionData = {
                 name: fields.name,
                 phone: fields.phone,
@@ -83,8 +83,7 @@ module.exports = async (req, res) => {
                 submittedAt: new Date()
             };
 
-            // কনসোলে চেক করা (Vercel logs এ দেখা যাবে)
-            console.log("Submission Success:", admissionData.name);
+            console.log("Submission Success:", fields.name);
 
             return res.status(200).json({ 
                 success: true, 
