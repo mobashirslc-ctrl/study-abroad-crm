@@ -269,3 +269,6 @@ app.get('*', (req, res) => {
 });
 
 module.exports = app;
+// index.js এর ভেতরে
+const languageRoutes = require('./routes/language-admission'); 
+app.use('/api/merchant', languageRoutes);
