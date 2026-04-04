@@ -30,6 +30,35 @@
         .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
+
+    <script>
+        // ১. সাইডবার লজিক (সবার আগে ডিফাইন করা হলো যাতে লক না হয়)
+        function showTab(event, tabId) {
+            // সব ট্যাব হাইড করা
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(t => t.style.display = 'none');
+
+            // সব মেনু আইটেম থেকে একটিভ ক্লাস রিমুভ করা
+            const listItems = document.querySelectorAll('.sidebar ul li');
+            listItems.forEach(li => li.classList.remove('active'));
+
+            // নির্দিষ্ট ট্যাব দেখানো
+            const target = document.getElementById(tabId);
+            if (target) {
+                target.style.display = 'block';
+                if (event && event.currentTarget) {
+                    event.currentTarget.classList.add('active');
+                }
+            }
+        }
+
+        function logout() {
+            if(confirm("Logout from Admin Panel?")) {
+                localStorage.clear();
+                location.href = 'auth.html';
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -63,258 +92,51 @@
 
     <div id="uni-manage" class="tab-content" style="display: block;">
         <div class="card">
-            <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+            <h3>Add New University</h3>
             <div class="input-group">
                 <input type="text" id="uName" placeholder="University Name">
                 <input type="text" id="uCountry" placeholder="Country">
-                <input type="text" id="uCity" placeholder="City/Location"> 
-            </div>
-            <div class="input-group">
-                <select id="uDegree">
-                    <option value="Bachelor">Bachelor</option>
-                    <option value="Master">Master</option>
-                    <option value="Foundation">Foundation/Diploma</option>
-                </select>
-                <input type="text" id="uCourse" placeholder="Popular Course Name">
-                <input type="text" id="uIntake" placeholder="Intake"> 
-            </div>
-            <div class="input-group">
-                <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
-                <input type="number" id="uDeposit" placeholder="Initial Deposit"> 
-                <input type="number" id="uScholarship" placeholder="Max Scholarship">
-            </div>
-            <div class="input-group">
-                <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA">
-                <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS">
-                <input type="number" id="uGap" placeholder="Max Gap">
-            </div>
-            <div class="input-group">
-                <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
-                <select id="uCurrency">
-                    <option value="USD">USD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="EUR">EUR (€)</option>
-                </select>
-                <input type="number" id="uCommFixed" placeholder="Partner Comm (BDT)">
+                <input type="text" id="uCity" placeholder="City">
             </div>
             <button class="btn-gold" onclick="saveUniversity()">Add University</button>
         </div>
         <table>
-            <thead><tr><th>University</th><th>Requirements</th><th>Fee & Profit</th><th>Action</th></tr></thead>
+            <thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Action</th></tr></thead>
             <tbody id="adminUniTable"></tbody>
         </table>
     </div>
 
     <div id="user-manage" class="tab-content">
-        <div class="card">
-            <h3>Partner & Compliance</h3>
-            <table>
-                <thead><tr><th>Name & Org</th><th>Contact</th><th>Docs</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody id="adminUserTable"></tbody>
-            </table>
+        <div class="card"><h3>Partner Management</h3>
+            <tbody id="adminUserTable"></tbody>
         </div>
     </div>
 
     <div id="merchant-manage" class="tab-content">
-        <div class="card">
-            <h3>Merchant Partner Management</h3>
-            <table>
-                <thead><tr><th>Shop</th><th>Contact</th><th>Docs</th><th>Status</th><th>Assign ID</th><th>Action</th></tr></thead>
-                <tbody id="adminMerchantTable"></tbody>
-            </table>
+        <div class="card"><h3>Merchant Management</h3>
+            <tbody id="adminMerchantTable"></tbody>
         </div>
     </div>
 
     <div id="tracking-manage" class="tab-content">
-        <div class="card">
-            <h3>Student Tracking & Wallet</h3>
-            <table>
-                <thead><tr><th>Student</th><th>Partner</th><th>Status</th><th>Wallet (৳)</th><th>Action</th></tr></thead>
-                <tbody id="adminTrackingTable"></tbody>
-            </table>
+        <div class="card"><h3>Tracking & Wallet</h3>
+            <tbody id="adminTrackingTable"></tbody>
         </div>
     </div>
 
     <div id="admission-manage" class="tab-content">
-        <div class="card">
-            <h3>Pending Admissions</h3>
-            <table>
-                <thead><tr><th>Student</th><th>Course</th><th>Trx ID</th><th>Docs</th><th>Action</th></tr></thead>
-                <tbody id="adminAdmissionTable"></tbody>
-            </table>
+        <div class="card"><h3>Admission Requests</h3>
+            <tbody id="adminAdmissionTable"></tbody>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // ১. সাইডবার নেভিগেশন
-    window.showTab = (event, tabId) => {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        const target = document.getElementById(tabId);
-        if(target) {
-            target.style.display = 'block';
-            if(event) event.currentTarget.classList.add('active');
-        }
-    };
-
-    // ২. ইউনিভার্সিটি সেভ ও ফেচ
-    window.saveUniversity = async () => {
-        const data = {
-            universityName: document.getElementById('uName').value,
-            country: document.getElementById('uCountry').value,
-            location: document.getElementById('uCity').value,
-            degree: document.getElementById('uDegree').value,
-            popularCourse: document.getElementById('uCourse').value,
-            intake: document.getElementById('uIntake').value,
-            totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
-            uDeposit: Number(document.getElementById('uDeposit').value) || 0,
-            uScholarship: Number(document.getElementById('uScholarship').value) || 0,
-            uCurrency: document.getElementById('uCurrency').value,
-            minGPA: Number(document.getElementById('uGpa').value) || 0,
-            ieltsReq: Number(document.getElementById('uIelts').value) || 0,
-            gapAllowed: document.getElementById('uGap').value,
-            commFixed: Number(document.getElementById('uCommFixed').value) || 0,
-            visaRate: Number(document.getElementById('uVisaRate').value) || 85
-        };
-        const res = await fetch('/api/add-university', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        if(res.ok) { alert("Added!"); fetchUniversities(); }
-    };
-
-    window.fetchUniversities = async () => {
+    // ২. ডাটা ফেচিং লজিক (API কলগুলো এখানে থাকবে)
+    async function fetchAll() {
         try {
             const res = await fetch('/api/universities');
             const unis = await res.json();
-            document.getElementById('adminUniTable').innerHTML = unis.map(u => `
-                <tr>
-                    <td><b>${u.universityName}</b></td>
-                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
-                    <td>${u.uCurrency} ${u.totalTuitionFee}</td>
-                    <td><button class="action-btn" style="background:var(--gold)" onclick="alert('Edit logic goes here')">EDIT</button></td>
-                </tr>`).join('');
-        } catch(e) { console.log(e); }
-    };
-
-    // ৩. ইউজার/পার্টনার ও মার্চেন্ট ম্যানেজমেন্ট (একই API থেকে ফিল্টার করা)
-    window.fetchData = async () => {
-        try {
-            const res = await fetch('/api/admin/users');
-            const users = await res.json();
-
-            // পার্টনার টেবিল
-            document.getElementById('adminUserTable').innerHTML = users.filter(u => u.role !== 'merchant').map(user => `
-                <tr>
-                    <td><b>${user.fullName}</b><br><small>${user.orgName || ''}</small></td>
-                    <td>${user.email}</td>
-                    <td><button class="action-btn" onclick="window.open('${user.tradeLicense}')">VIEW</button></td>
-                    <td><span class="badge status-${user.status}">${user.status}</span></td>
-                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
-                </tr>`).join('');
-
-            // মার্চেন্ট টেবিল
-            document.getElementById('adminMerchantTable').innerHTML = users.filter(u => u.role === 'merchant').map(m => `
-                <tr>
-                    <td><b>${m.orgName}</b></td>
-                    <td>${m.email}</td>
-                    <td><button class="action-btn" onclick="window.open('${m.nidPdf}')">NID</button></td>
-                    <td><span class="badge">${m.status}</span></td>
-                    <td><input type="text" id="mid_${m._id}" value="${m.merchantId || ''}" style="width:80px;"></td>
-                    <td><button class="action-btn" onclick="approveMerchant('${m._id}')">OK</button></td>
-                </tr>`).join('');
-        } catch(e) { console.log(e); }
-    };
-
-    window.updateStatus = async (id, status) => {
-        await fetch(`/api/admin/users/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
-        fetchData();
-    };
-
-    window.approveMerchant = async (id) => {
-        const mid = document.getElementById(`mid_${id}`).value;
-        if(!mid) return alert("ID Required");
-        const res = await fetch(`/api/merchant/update-id/${id}`, { 
-            method: 'PATCH', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ merchantId: mid, status: 'active' }) 
-        });
-        if(res.ok) { alert("Merchant Active!"); fetchData(); }
-    };
-
-    // ৪. অ্যাডমিশন লজিক
-    window.fetchAdmissions = async () => {
-        try {
-            const res = await fetch('/api/get-pending');
-            const data = await res.json();
-            const ads = data.data || data;
-            document.getElementById('adminAdmissionTable').innerHTML = ads.map(adm => `
-                <tr>
-                    <td>${adm.name}</td>
-                    <td>${adm.course}</td>
-                    <td>${adm.transactionId}</td>
-                    <td><button class="action-btn" onclick="window.open('${adm.photoUrl}')">Photo</button></td>
-                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="approveStudent('${adm._id}', '${adm.phone}', '${adm.name}', '${adm.course}')">Approve</button></td>
-                </tr>`).join('');
-        } catch(e) { console.log(e); }
-    };
-
-    window.approveStudent = async (id, phone, name, course) => {
-        if(!confirm("Approve Student?")) return;
-        const res = await fetch('/api/approve', { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ id, studentPhone: phone, studentName: name, courseName: course }) 
-        });
-        if(res.ok) { alert("Approved!"); fetchAdmissions(); }
-    };
-
-    // ৫. ট্র্যাকিং লজিক
-    window.fetchTracking = async () => {
-        try {
-            const res = await fetch('/api/applications');
-            const apps = await res.json();
-            document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
-                <tr>
-                    <td>${app.studentName}</td>
-                    <td>${app.partnerEmail}</td>
-                    <td>${app.status}</td>
-                    <td>৳${app.pendingAmount || 0}</td>
-                    <td><button class="action-btn" onclick="updateWallet('${app._id}')">Wallet</button></td>
-                </tr>`).join('');
-        } catch(e) { console.log(e); }
-<script type="module">
-    // ১. সাইডবার নেভিগেশন (ট্যাব সিস্টেম) - এটি লক সমস্যার সমাধান করবে
-    window.showTab = function(event, tabId) {
-        // সব ট্যাব কন্টেন্ট লুকিয়ে ফেলা
-        const contents = document.querySelectorAll('.tab-content');
-        contents.forEach(content => {
-            content.style.display = 'none';
-        });
-
-        // সব সাইডবার মেনু থেকে 'active' ক্লাস সরানো
-        const listItems = document.querySelectorAll('.sidebar ul li');
-        listItems.forEach(li => {
-            li.classList.remove('active');
-        });
-
-        // ক্লিক করা ট্যাবটি দেখানো
-        const targetTab = document.getElementById(tabId);
-        if (targetTab) {
-            targetTab.style.display = 'block';
-            // ক্লিক করা মেনু আইটেমটিকে গোল্ডেন কালার করা
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            }
-        } else {
-            console.error("Tab ID not found:", tabId);
-        }
-    };
-
-    // ২. ডাটা ফেচ করার সব ফাংশন (একত্রে)
-    window.loadAllAdminData = async () => {
-        try {
-            // ইউনিভার্সিটি ডাটা
-            const uniRes = await fetch('/api/universities');
-            const unis = await uniRes.json();
             document.getElementById('adminUniTable').innerHTML = unis.map(u => `
                 <tr>
                     <td><b>${u.universityName}</b></td>
@@ -322,71 +144,19 @@
                     <td>${u.uCurrency} ${u.totalTuitionFee}</td>
                     <td><button class="action-btn" style="background:var(--gold)">EDIT</button></td>
                 </tr>`).join('');
-
-            // ইউজার ও মার্চেন্ট ডাটা
-            const userRes = await fetch('/api/admin/users');
-            const users = await userRes.json();
             
-            // পার্টনার টেবিল
-            document.getElementById('adminUserTable').innerHTML = users.filter(u => u.role !== 'merchant').map(user => `
-                <tr>
-                    <td><b>${user.fullName}</b></td>
-                    <td>${user.email}</td>
-                    <td><span class="badge status-${user.status}">${user.status}</span></td>
-                    <td><button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button></td>
-                </tr>`).join('');
+            // অন্যান্য ফেচ কল এখানে এড করুন (User, Merchant, etc.)
+        } catch(e) { console.error("Loading Error:", e); }
+    }
 
-            // মার্চেন্ট টেবিল
-            document.getElementById('adminMerchantTable').innerHTML = users.filter(u => u.role === 'merchant').map(m => `
-                <tr>
-                    <td><b>${m.orgName}</b></td>
-                    <td><input type="text" id="mid_${m._id}" value="${m.merchantId || ''}" style="width:80px;"></td>
-                    <td><button class="action-btn" onclick="approveMerchant('${m._id}')">OK</button></td>
-                </tr>`).join('');
-
-        } catch (err) {
-            console.error("Data Load Error:", err);
-        }
+    window.saveUniversity = async () => {
+        const data = { universityName: document.getElementById('uName').value, country: document.getElementById('uCountry').value };
+        await fetch('/api/add-university', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        fetchAll();
     };
 
-    // ৩. স্ট্যাটাস আপডেট ও অন্যান্য অ্যাকশন
-    window.updateStatus = async (id, status) => {
-        await fetch(`/api/admin/users/${id}/status`, { 
-            method: 'PATCH', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ status }) 
-        });
-        loadAllAdminData();
-    };
-
-    window.approveMerchant = async (id) => {
-        const mid = document.getElementById(`mid_${id}`).value;
-        if(!mid) return alert("Merchant ID input please");
-        await fetch(`/api/merchant/update-id/${id}`, { 
-            method: 'PATCH', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify({ merchantId: mid, status: 'active' }) 
-        });
-        alert("Merchant Activated!");
-        loadAllAdminData();
-    };
-
-    // ৪. পেজ লোড হলে যা ঘটবে
-    window.onload = () => {
-        loadAllAdminData();
-        // নিশ্চিত করা যেন প্রথম ট্যাবটি ডিফল্টভাবে খোলা থাকে
-        const firstTab = document.getElementById('uni-manage');
-        if(firstTab) firstTab.style.display = 'block';
-    };
-
-    window.logout = () => {
-        if(confirm("Logout?")) {
-            localStorage.clear();
-            location.href = 'auth.html';
-        }
-    };
+    window.onload = fetchAll;
 </script>
-
 
 </body>
 </html>
