@@ -1,118 +1,492 @@
-const cloudinary = require('cloudinary').v2;
-const formidable = require('formidable');
-const mongoose = require('mongoose');
+admin last pro:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin | SCC Group</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; border-radius: 8px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
+        .sidebar ul li i { margin-right: 12px; width: 20px; }
+        
+        /* Main Content */
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
+        
+        /* Cards & Forms */
+        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
+        th { background: #252545; color: var(--gold); }
+        
+        input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
 
-// ১. Cloudinary কনফিগারেশন (সরাসরি ভ্যালু দিয়ে দেওয়া হলো যাতে এনভায়রনমেন্টের ঝামেলা না থাকে)
-cloudinary.config({
-  cloud_name: 'dqriueu9r',
-  api_key: '698924766176623',
-  api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
-});
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status-active { background: var(--green); color: white; }
+        .status-pending { background: var(--gold); color: black; }
+        .status-expired { background: var(--red); color: white; }
 
-// ২. MongoDB কানেকশন ফাংশন
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log("MongoDB Connected Successfully");
-    } catch (err) {
-        console.error("MongoDB Connection Error:", err);
-    }
-};
+        .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
 
-// Vercel Serverless Config
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
 
-module.exports = async (req, res) => {
-    // CORS Headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    <div class="sidebar">
+        <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
+        <ul>
+            <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Manage Universities</li>
+            <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partner & Compliance</li>
+            <li onclick="showTab(event, 'tracking-manage')"><i class="fas fa-tasks"></i> Tracking & Wallet</li>
+            <li onclick="showTab(event, 'payment-manage')"><i class="fas fa-money-bill-wave"></i> Payment Adjust</li>
+            <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        </ul>
+    </div>
 
-    if (req.method === 'OPTIONS') return res.status(200).end();
-    if (req.method !== 'POST') return res.status(405).json({ message: "Only POST allowed" });
+    <div class="main-content">
+        <h2 style="margin-bottom: 25px;">Admin <span style="color:var(--gold);">Control Center</span></h2>
 
-    // ডাটাবেস কানেক্ট করুন
-    await connectDB();
+        <div id="uni-manage" class="tab-content" style="display: block;">
+            <div class="card">
+                <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+                <div class="input-group">
+                    <input type="text" id="uName" placeholder="University Name">
+                    <input type="text" id="uCountry" placeholder="Country">
+                    <input type="text" id="uCity" placeholder="City/Location"> 
+                </div>
+                <div class="input-group">
+                    <select id="uDegree">
+                        <option value="Bachelor">Bachelor</option>
+                        <option value="Master">Master</option>
+                        <option value="Foundation">Foundation/Diploma</option>
+                    </select>
+                    <input type="text" id="uCourse" placeholder="Popular Course Name">
+                    <input type="text" id="uIntake" placeholder="Intake (e.g. Sept 2026)"> 
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
+                    <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
+                    <input type="number" id="uScholarship" placeholder="Max Scholarship">
+                </div>
+                <div class="input-group">
+                    <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
+                    <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
+                    <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
+                    <input type="text" id="uProcTime" placeholder="Processing Time (e.g. 10 Days)">
+                    <select id="uCurrency" style="background: #252545; color: var(--gold); font-weight: bold;">
+                        <option value="USD">USD ($)</option>
+                        <option value="AUD">AUD (A$)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="CAD">CAD (C$)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uCommPerc" placeholder="Partner Commission (%)" value="10">
+                    <input type="text" id="uScholarshipName" placeholder="Scholarship Name (e.g. Merit Based)">
+                </div>
+                <div class="input-group">
+    <input type="number" id="uAppFee" placeholder="Application Fee (Currency)">
+    <input type="number" id="uInsurance" placeholder="Insurance Fee (Optional)">
+    <input type="number" id="uLivingCost" placeholder="Monthly Living Cost">
+</div>
 
-    const form = new formidable.IncomingForm();
+<div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
+    <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
+        <i class="fas fa-hand-holding-usd"></i> Partner Commission Settings
+    </p>
+    <div>
+        <label style="font-size: 11px; color: #ccc;">Commission (%)</label>
+        <input type="number" id="uCommPercent" placeholder="e.g. 10">
+    </div>
+    <div>
+        <label style="font-size: 11px; color: #ccc;">Fixed Amount (BDT)</label>
+        <input type="number" id="uCommFixed" placeholder="e.g. 5000">
+    </div>
+    <div>
+        <label style="font-size: 11px; color: #ccc;">Payment Note</label>
+        <input type="text" id="uCommNote" placeholder="e.g. After Visa / On Enrollment">
+    </div>
+</div>
+                <button class="btn-gold" onclick="saveUniversity()">Add University to System</button>
+            </div>
+            <h3>Existing Universities</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>University & Location</th>
+                        <th>Requirements (GPA/IELTS/Gap)</th>
+                        <th>Fee & Comm</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="adminUniTable"></tbody>
+            </table>
+        </div>
 
-    form.parse(req, async (err, fields, files) => {
-        if (err) return res.status(500).json({ success: false, message: "Error parsing form" });
+        <div id="user-manage" class="tab-content">
+    <h3>User Management (Approval & Subscription)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name & Org</th>
+                <th>Type</th>
+                <th>Contact</th>
+                <th>Documents</th> <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="adminUserTable"></tbody>
+    </table>
+</div>
 
+<div id="tracking-manage" class="tab-content">
+    <h3>Student File Tracking & Wallet Generation</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Student Name</th>
+                <th>Partner Agency</th>
+                <th>Current Status</th>
+                <th>Final Wallet (৳)</th>
+                <th>Action Control</th>
+            </tr>
+        </thead>
+        <tbody id="adminTrackingTable">
+            </tbody>
+    </table>
+</div>
+
+<script type="module">
+    window.fetchTracking = async () => {
         try {
-            let photoUrl = null;
-            let nidUrl = null;
+            console.log("Fetching tracking data...");
+            const res = await fetch('/api/applications'); // আপনার API এন্ডপয়েন্ট
+            const apps = await res.json();
+            
+            const tbody = document.getElementById('adminTrackingTable');
+            if (!tbody) return;
 
-            // ৩. ফটো আপলোড
-            if (files.studentPhoto && files.studentPhoto.filepath) {
-                const resPhoto = await cloudinary.uploader.upload(files.studentPhoto.filepath, {
-                    folder: 'slc_language_hub/photos',
-                    resource_type: "auto"
-                });
-                photoUrl = resPhoto.secure_url;
-            }
-
-            // ৪. NID আপলোড
-            if (files.nidFile && files.nidFile.filepath) {
-                const resNid = await cloudinary.uploader.upload(files.nidFile.filepath, {
-                    folder: 'slc_language_hub/documents',
-                    resource_type: "auto"
-                });
-                nidUrl = resNid.secure_url;
-            }
-
-            // ৫. ডেটা অবজেক্ট
-            const admissionData = {
-                name: fields.name,
-                phone: fields.phone,
-                guardianPhone: fields.guardianPhone,
-                occupation: fields.occupation,
-                district: fields.district,
-                thana: fields.thana,
-                course: fields.course,
-                batch: fields.batch,
-                fee: fields.fee,
-                refSource: fields.refSource,
-                photoUrl: photoUrl,
-                nidUrl: nidUrl,
-                submittedAt: new Date()
-            };
-
-            console.log("Submission Success:", fields.name);
-
-            return res.status(200).json({ 
-                success: true, 
-                message: "Admission Success!",
-                id: "SLC-" + Math.floor(1000 + Math.random() * 9000),
-                photo: photoUrl
-            });
-
-        } catch (error) {
-            console.error("Server Error:", error);
-            return res.status(500).json({ success: false, message: "Error: " + error.message });
+            tbody.innerHTML = apps.map(app => `
+                <tr>
+                    <td><b>${app.studentName}</b></td>
+                    <td>${app.partnerEmail || 'Direct'}</td>
+                    <td><span class="badge status-pending">${app.status}</span></td>
+                    <td>৳${app.pendingAmount || 0}</td>
+                    <td>
+                        <button class="action-btn" style="background:var(--gold); color:black;" onclick="openWalletBox('${app._id}')">
+                            <i class="fas fa-wallet"></i> Set Wallet
+                        </button>
+                        <button class="action-btn" style="background:#2ecc71" onclick="printAdmissionSlip('${app._id}')">
+                            <i class="fas fa-print"></i> Slip
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            console.error("Tracking Fetch Error:", e);
         }
-    });
-};
-router.get('/applications', async (req, res) => {
-    try {
-        const apps = await Application.find().sort({ createdAt: -1 });
-        res.json(apps);
-    } catch (err) {
-        res.status(500).json({ error: "Cannot fetch applications" });
-    }
-});
+    };
 
-// ২. ইউজার ম্যানেজমেন্ট ডাটা
-router.get('/admin/users', async (req, res) => {
-    try {
-        const users = await User.find();
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: "Cannot fetch users" });
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 500px; max-width: 90%;">
+            <h3 style="color:var(--gold);">Edit University</h3>
+            <input type="hidden" id="editId">
+            <div class="input-group">
+                <input type="text" id="editName" placeholder="University Name">
+                <input type="text" id="editCountry" placeholder="Country">
+            </div>
+            <div class="input-group">
+                <input type="number" id="editTotalFee" placeholder="Tuition Fee">
+                <input type="number" id="editComm" placeholder="Commission (%)">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-gold" onclick="updateUniversity()">Update Data</button>
+                <button class="btn-gold" style="background:#444; color:white;" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <th>Documents</th>
+
+<td>
+    <button class="action-btn" style="background:#673ab7" onclick="viewDocuments('${user.tradeLicense}', '${user.nidFront}')">
+        <i class="fas fa-file-pdf"></i> View Docs
+    </button>
+</td>
+<button class="action-btn" style="background:#2ecc71; color:white;" onclick="printAdmissionSlip('${app._id}')">
+    <i class="fas fa-print"></i> Print Slip
+</button>
+    <script type="module">
+        // --- ১. ট্যাব নেভিগেশন ---
+       <script type="module">
+    // --- ১. ট্যাব নেভিগেশন ---
+    window.showTab = (event, tabId) => {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+        document.getElementById(tabId).style.display = 'block';
+        if(event) event.currentTarget.classList.add('active');
+    };
+
+    // --- ২. ইউনিভার্সিটি সেভ ও ডিলিট ---
+    window.saveUniversity = async () => {
+        const data = {
+            universityName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            location: document.getElementById('uCity').value,
+            degree: document.getElementById('uDegree').value,
+            popularCourse: document.getElementById('uCourse').value,
+            intake: document.getElementById('uIntake').value,
+            totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
+            initialDeposit: Number(document.getElementById('uDeposit').value) || 0,
+            maxScholarship: Number(document.getElementById('uScholarship').value) || 0,
+            minGPA: Number(document.getElementById('uGpa').value) || 0,
+            ieltsReq: Number(document.getElementById('uIelts').value) || 0,
+            gapAllowed: Number(document.getElementById('uGap').value) || 0,
+            visaRate: Number(document.getElementById('uVisaRate').value) || 85,
+            processingTime: document.getElementById('uProcTime').value,
+            uCurrency: document.getElementById('uCurrency').value,
+            applicationFee: Number(document.getElementById('uAppFee').value) || 0,
+            insuranceFee: Number(document.getElementById('uInsurance').value) || 0,
+            livingCost: Number(document.getElementById('uLivingCost').value) || 0,
+            commPercent: Number(document.getElementById('uCommPercent').value) || 0,
+            commFixedBDT: Number(document.getElementById('uCommFixed').value) || 0,
+            commNote: document.getElementById('uCommNote').value
+        };
+
+        if(!data.universityName) return alert("Please enter University Name");
+
+        const res = await fetch('/api/add-university', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if(res.ok) {
+            alert("University Data Synced to Cloud!");
+            fetchUniversities();
+        }
+    };
+
+    window.fetchUniversities = async () => {
+        try {
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            const tbody = document.getElementById('adminUniTable');
+            if (!tbody) return;
+
+            tbody.innerHTML = unis.map(u => `
+                <tr>
+                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
+                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq} | Gap: ${u.gapAllowed}y</td>
+                    <td>${u.uCurrency || 'USD'} ${u.totalTuitionFee}<br><small style="color:var(--green);">Comm: ${u.commPercent}% + ৳${u.commFixedBDT}</small></td>
+                    <td>
+                        <button class="action-btn" style="background:#3498db" onclick="editUni('${u._id}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn" style="background:#e74c3c" onclick="deleteUni('${u._id}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error("Fetch Error:", e); }
+    };
+// --- DELETE FUNCTION ---
+window.deleteUni = async (id) => {
+    if(confirm("Are you sure you want to delete this university?")) {
+        try {
+            const res = await fetch(`/api/universities/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                alert("University Deleted!");
+                fetchUniversities(); // লিস্ট রিফ্রেশ হবে
+            }
+        } catch (e) { console.error(e); }
     }
+};
+        // --- ৫. ইউজার ম্যানেজমেন্ট ---
+        window.fetchUsers = async () => {
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        const tbody = document.getElementById('adminUserTable');
+        tbody.innerHTML = users.map(user => `
+            <tr>
+                <td>${user.fullName}<br><small>${user.orgName || ''}</small></td>
+                <td><span class="badge" style="background:#444">${user.role}</span></td>
+                <td>${user.email}</td>
+                <td>
+                    <button class="action-btn" style="background:#673ab7" onclick="viewDocuments('${user.tradeLicense}', '${user.nidFront}')">View Docs</button>
+                </td>
+                <td><input type="date" value="${user.expiryDate ? user.expiryDate.split('T')[0] : ''}" onchange="updateExpiry('${user._id}', this.value)"></td>
+                <td><span class="badge status-${user.status}">${user.status}</span></td>
+                <td>
+                    <button class="action-btn" style="background:var(--green)" onclick="updateStatus('${user._id}', 'active')">Approve</button>
+                </td>
+            </tr>
+        `).join('');
+    };
+        window.updateExpiry = async (userId, date) => {
+            await fetch(`/api/admin/users/${userId}/expiry`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ expiryDate: date })
+            });
+            fetchUsers();
+        };
+
+        window.updateStatus = async (userId, newStatus) => {
+            await fetch(`/api/admin/users/${userId}/status`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: newStatus })
+            });
+            fetchUsers();
+        };
+        window.viewDocuments = (doc1, doc2) => {
+    // যদি আপনার ক্লাউডিনারি লিঙ্কে সরাসরি ফাইল থাকে
+    if(!doc1 && !doc2) return alert("No documents uploaded!");
+    
+    const docHtml = `
+        <div style="display:flex; flex-direction:column; gap:20px; padding:20px;">
+            ${doc1 ? `<div><p>Trade License:</p><iframe src="${doc1}" width="100%" height="400px"></iframe></div>` : ''}
+            ${doc2 ? `<div><p>NID/Passport:</p><iframe src="${doc2}" width="100%" height="400px"></iframe></div>` : ''}
+            <button class="btn-gold" onclick="closeDocModal()">Close</button>
+        </div>
+    `;
+    
+    const modal = document.createElement('div');
+    modal.id = "docModal";
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; overflow-y:auto;";
+    modal.innerHTML = docHtml;
+    document.body.appendChild(modal);
+};
+
+window.closeDocModal = () => document.getElementById('docModal').remove();
+window.printAdmissionSlip = async (appId) => {
+        const res = await fetch(`/api/applications/${appId}`);
+        const data = await res.json();
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head><style>body{font-family:sans-serif; padding:50px; border:10px solid #f1c40f;} h2{color:#1a1a2e;}</style></head>
+                <body onload="window.print()">
+                    <center><h2>STUDENT CAREER CONSULTANCY</h2><p>Official Admission Processing Slip</p></center>
+                    <hr>
+                    <p><strong>Student Name:</strong> ${data.studentName}</p>
+                    <p><strong>Passport:</strong> ${data.passportNo || 'N/A'}</p>
+                    <p><strong>Applied University:</strong> ${data.appliedUniversity}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                    <br><br>
+                    <p style="font-size:12px;">* This is a computer-generated slip from IHP Portal v3.</p>
+                </body>
+            </html>
+        `);
+    };
+window.printAdmissionSlip = async (appId) => {
+    const res = await fetch(`/api/applications/${appId}`);
+    const data = await res.json();
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <body onload="window.print()">
+                <h2>SCC GROUP | ADMISSION SLIP</h2>
+                <hr>
+                <p><strong>Student Name:</strong> ${data.studentName}</p>
+                <p><strong>University:</strong> ${data.appliedUniversity}</p>
+                <p><strong>Status:</strong> ${data.status}</p>
+                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            </body>
+        </html>
+    `);
+};
+
+        // --- ৬. ট্র্যাকিং এবং উইথড্রয়ালস ---
+       window.fetchWithdrawals = async () => {
+        try {
+            const res = await fetch('/api/withdrawals');
+            const data = await res.json();
+            const tbody = document.getElementById('adminWithdrawTable');
+            tbody.innerHTML = data.map(w => `
+                <tr>
+                    <td>${w.partnerEmail}</td>
+                    <td>৳${w.amount}</td>
+                    <td>${new Date(w.createdAt).toLocaleDateString()}</td>
+                    <td><span class="badge status-pending">${w.status}</span></td>
+                    <td><button class="action-btn" style="background:var(--green)" onclick="approveWithdraw('${w._id}', '${w.partnerEmail}', ${w.amount})">Mark PAID</button></td>
+                </tr>
+            `).join('');
+        } catch (e) { console.log("No withdrawals found"); }
+    };
+        window.openWalletBox = async (appId) => {
+            const amount = prompt("Enter Final Wallet Amount (BDT):");
+            if (amount) {
+                await fetch(`/api/applications/${appId}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ pendingAmount: Number(amount), status: 'VERIFIED' })
+                });
+                fetchTracking();
+            }
+        };
+
+        window.approveWithdraw = async (id, email, amount) => {
+    if(confirm(`Confirm payment of ৳${amount} to ${email}?`)) {
+        try {
+            const res = await fetch(`/api/withdrawals/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status: 'PAID' })
+            });
+            if(res.ok) {
+                alert("Payment Confirmed!");
+                fetchWithdrawals();
+            }
+        } catch (e) { alert("Update failed!"); }
+    }
+};
+
+        // --- ৭. ইনিশিয়ালাইজেশন ---
+        window.onload = () => {
+        if(typeof fetchUniversities === 'function') fetchUniversities();
+        if(typeof fetchUsers === 'function') fetchUsers();
+        window.fetchTracking(); 
+    };
+</script>
+       window.onload = () => {
+        fetchUniversities();
+        fetchUsers();
+        fetchWithdrawals(); 
+        // fetchTracking() call করার আগে ওটি ডিফাইন থাকতে হবে
+    };
+
+    window.logout = () => {
+        localStorage.clear();
+        location.href = 'login.html';
+    };
+        // Sidebar Toggle Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const menuLinks = document.querySelectorAll('.sidebar-nav a'); // আপনার সাইডবার ক্লাসের সাথে মিলিয়ে নিন
+    menuLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            // আপনার পেজ সেকশন নেভিগেশন লজিক এখানে থাকবে
+            console.log("Navigating to:", link.innerText);
+        });
+    });
 });
+    </script>
+</body>
+</html>
