@@ -7,107 +7,217 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; --blue: #3498db; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; }
-        .sidebar { width: 250px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; }
-        .sidebar ul { list-style: none; padding: 0; margin-top: 20px; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; color: #ccc; font-size: 14px; }
-        .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
-        .main-content { margin-left: 250px; flex: 1; padding: 30px; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; border-radius: 8px; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
-        .card { background: var(--dark); padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; background: var(--dark); }
+        .card { background: var(--dark); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+        input, select { background: #252545; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 15px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #252545; color: var(--gold); }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; }
-        .action-btn { padding: 5px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; margin: 2px; color: white; }
-        .badge { padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        .action-btn { padding: 5px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; margin: 2px; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .bg-green { background: var(--green); color: white; }
+        .bg-red { background: var(--red); color: white; }
+        .bg-blue { background: var(--blue); color: white; }
+        .status-active { color: var(--green); font-weight: bold; }
+        .status-suspended { color: var(--red); font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div style="text-align:center; padding:20px;"><img src="logo.jpeg" alt="SCC" style="width:120px;"></div>
+    <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
     <ul>
-        <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Universities</li>
-        <li onclick="showTab(event, 'admission-requests')"><i class="fas fa-file-import"></i> New Admissions</li>
-        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Users & Staff</li>
-        <li onclick="showTab(event, 'wallet-tracking')"><i class="fas fa-wallet"></i> Wallet</li>
+        <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> University Mgmt</li>
+        <li onclick="showTab(event, 'admission-requests')"><i class="fas fa-file-import"></i> Today's Admissions</li>
+        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partner & Compliance</li>
+        <li onclick="showTab(event, 'wallet-tracking')"><i class="fas fa-wallet"></i> Wallet & Tracking</li>
+        <li onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Logout</li>
     </ul>
 </div>
 
 <div class="main-content">
     <div id="uni-manage" class="tab-content" style="display: block;">
-        <h3>University Management</h3>
-        <table><thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Action</th></tr></thead><tbody id="uniTableBody"></tbody></table>
+        <div class="card">
+            <h3 style="color:var(--gold);">Add New University</h3>
+            <div class="input-group">
+                <input type="text" id="uName" placeholder="University Name">
+                <input type="text" id="uCountry" placeholder="Country">
+                <select id="uDegree"><option value="Bachelor">Bachelor</option><option value="Master">Master</option><option value="Diploma">Diploma</option></select>
+            </div>
+            <div class="input-group">
+                <input type="number" id="uTotalFee" placeholder="Total Fee">
+                <input type="number" step="0.1" id="uGpa" placeholder="Min GPA">
+                <input type="number" step="0.1" id="uIelts" placeholder="Min IELTS">
+            </div>
+            <button class="btn-gold" onclick="saveUniversity()">Save University</button>
+        </div>
+        <table>
+            <thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Action</th></tr></thead>
+            <tbody id="uniTableBody"></tbody>
+        </table>
     </div>
 
     <div id="admission-requests" class="tab-content">
-        <h3>Verification Requests (Student & Merchant Details)</h3>
-        <div id="admissionGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;"></div>
+        <h3>Pending Payment Verification (Today)</h3>
+        <div id="admissionGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;"></div>
+        
+        <h3 style="margin-top: 40px;">All Applications</h3>
+        <table>
+            <thead><tr><th>Student</th><th>University</th><th>Phone</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="admissionTableBody"></tbody>
+        </table>
     </div>
 
     <div id="user-manage" class="tab-content">
-        <h3>User Management (Partners/Staff)</h3>
-        <table><thead><tr><th>Name/Role</th><th>Contact</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userListTable"></tbody></table>
+        <h3>Partners & Compliance Staff</h3>
+        <table>
+            <thead><tr><th>Name & Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="userListTable"></tbody>
+        </table>
     </div>
 
     <div id="wallet-tracking" class="tab-content">
-        <h3>Wallet Tracking</h3>
-        <table><thead><tr><th>Student</th><th>Merchant</th><th>Pending</th><th>Available</th><th>Action</th></tr></thead><tbody id="walletTableBody"></tbody></table>
+        <div class="card">
+            <h3>Wallet & Payment Tracking</h3>
+            <table>
+                <thead><tr><th>Student</th><th>Partner</th><th>Pending</th><th>Available</th><th>Transfer</th></tr></thead>
+                <tbody id="walletTableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    const showTab = (e, id) => {
+    function showTab(event, tabId) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar li').forEach(l => l.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        e.currentTarget.classList.add('active');
-    };
+        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+        document.getElementById(tabId).style.display = 'block';
+        if(event) event.currentTarget.classList.add('active');
+    }
 
     window.loadAdminData = async () => {
         try {
-            const [uR, aR, usR] = await Promise.all([fetch('/api/universities'), fetch('/api/admin/admissions'), fetch('/api/admin/users')]);
-            const [unis, adms, users] = await Promise.all([uR.json(), aR.json(), usR.json()]);
-
-            // Universities
-            document.getElementById('uniTableBody').innerHTML = unis.map(u => `<tr><td><b>${u.universityName}</b></td><td>GPA: ${u.minGPA}</td><td>${u.totalTuitionFee}</td><td><button class="action-btn" style="background:var(--red)" onclick="deleteUni('${u._id}')">Delete</button></td></tr>`).join('');
-
-            // Admissions Grid (Detailed)
-            document.getElementById('admissionGrid').innerHTML = adms.map(ad => `
-                <div class="card" style="border-top: 3px solid var(--gold);">
-                    <p><b>Student:</b> ${ad.name} (${ad.phone || 'N/A'})</p>
-                    <p><b>Course:</b> <span class="badge" style="background:var(--blue)">${ad.course || 'N/A'}</span></p>
-                    <p><b>TrxID:</b> <span style="color:var(--gold)">${ad.transactionId}</span> | <b>Amt:</b> ৳${ad.fee}</p>
-                    <hr style="border:0.5px solid #333;">
-                    <p style="font-size:11px; color:#aaa;"><b>Merchant:</b> ${ad.merchantName || 'Direct'} <br> <b>Merchant Contact:</b> ${ad.merchantPhone || 'N/A'}</p>
-                    <button class="btn-gold" onclick="approveAdmission('${ad._id}')">Verify & Approve</button>
-                </div>`).join('') || "No pending data.";
-
-            // Users Table
-            document.getElementById('userListTable').innerHTML = users.map(u => `
+            // Load Universities
+            const uRes = await fetch('/api/universities');
+            const unis = await uRes.json();
+            document.getElementById('uniTableBody').innerHTML = unis.map(u => `
                 <tr>
-                    <td><b>${u.fullName || u.orgName}</b><br><small>${u.role}</small></td>
-                    <td>${u.email}<br>${u.phone || ''}</td>
-                    <td><span class="badge ${u.isSuspended ? 'bg-red' : 'bg-green'}">${u.isSuspended ? 'Suspended' : 'Active'}</span></td>
+                    <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
+                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
+                    <td>${u.totalTuitionFee}</td>
+                    <td><button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button></td>
+                </tr>`).join('');
+
+            // Load All Applications
+            const appRes = await fetch('/api/applications');
+            const apps = await appRes.json();
+            document.getElementById('admissionTableBody').innerHTML = apps.map(a => `
+                <tr>
+                    <td>${a.studentName}</td>
+                    <td>${a.appliedUniversity || 'N/A'}</td>
+                    <td>${a.studentPhone}</td>
+                    <td>${new Date(a.createdAt).toLocaleDateString()}</td>
+                    <td><button class="action-btn bg-blue" onclick="updateAppStatus('${a._id}', 'PROCESSING')">Accept</button></td>
+                </tr>`).join('');
+
+            // Wallet Data
+            document.getElementById('walletTableBody').innerHTML = apps.map(a => `
+                <tr>
+                    <td>${a.studentName}</td>
+                    <td>${a.partnerEmail || 'Direct'}</td>
+                    <td style="color:var(--gold)">৳${a.pendingAmount || 0}</td>
+                    <td style="color:var(--green)">৳${a.availableAmount || 0}</td>
                     <td>
-                        ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateStatus('${u._id}','active')">Approve</button>` : ''}
-                        <button class="action-btn" style="background:#555" onclick="toggleSuspend('${u._id}',${u.isSuspended})">${u.isSuspended ? 'Unsuspend' : 'Suspend'}</button>
-                    </td></tr>`).join('');
+                        <input type="number" id="amt_${a._id}" style="width:60px;">
+                        <button class="action-btn bg-green" onclick="processTransfer('${a._id}', ${a.pendingAmount || 0}, ${a.availableAmount || 0})">Pay</button>
+                    </td>
+                </tr>`).join('');
+
+            loadAdmissionRequests();
+            loadUsers();
         } catch (e) { console.error(e); }
     };
 
-    const toggleSuspend = async (id, curr) => {
-        if(confirm("Confirm action?")) {
-            await fetch(`/api/admin/users/toggle-status/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({isSuspended: !curr}) });
+    // Admission Details Fix (Student + Merchant info)
+    async function loadAdmissionRequests() {
+        const res = await fetch('/api/admin/admissions');
+        const data = await res.json();
+        document.getElementById('admissionGrid').innerHTML = data.map(ad => `
+            <div class="card" style="border-top: 4px solid var(--gold);">
+                <p><b>Student:</b> ${ad.name} | ${ad.phone}</p>
+                <p><b>Course:</b> <span class="badge bg-blue">${ad.course || 'N/A'}</span></p>
+                <p><b>Payment:</b> ৳${ad.fee} | <b>TrxID:</b> <span style="color:var(--gold)">${ad.transactionId}</span></p>
+                <hr style="border:0.1px solid #333">
+                <p style="font-size:11px; color:#aaa;">Merchant: ${ad.merchantName || 'Direct'} (${ad.merchantPhone || 'N/A'})</p>
+                <button class="btn-gold" onclick="approveAdmission('${ad._id}')">Verify & Approve</button>
+            </div>`).join('') || "No pending requests found.";
+    }
+
+    // User Manage Fix (Approve & Suspend)
+    async function loadUsers() {
+        const res = await fetch('/api/admin/users');
+        const users = await res.json();
+        document.getElementById('userListTable').innerHTML = users.map(u => `
+            <tr>
+                <td><b>${u.fullName || u.orgName}</b><br><small class="badge bg-blue">${u.role}</small></td>
+                <td>${u.email}<br>${u.phone || ''}</td>
+                <td class="${u.isSuspended ? 'status-suspended' : 'status-active'}">${u.isSuspended ? 'Suspended' : 'Active'}</td>
+                <td>
+                    ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateUserStatus('${u._id}', 'active')">Approve</button>` : ''}
+                    <button class="action-btn" style="background:#555; color:white;" onclick="toggleUserStatus('${u._id}', ${u.isSuspended})">
+                        ${u.isSuspended ? 'Activate' : 'Suspend'}
+                    </button>
+                </td>
+            </tr>`).join('');
+    }
+
+    // Action functions (All intact)
+    window.saveUniversity = async () => {
+        const data = {
+            universityName: document.getElementById('uName').value,
+            country: document.getElementById('uCountry').value,
+            degree: document.getElementById('uDegree').value,
+            totalTuitionFee: document.getElementById('uTotalFee').value,
+            minGPA: document.getElementById('uGpa').value,
+            ieltsReq: document.getElementById('uIelts').value
+        };
+        await fetch('/api/universities', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+        loadAdminData();
+    };
+
+    window.toggleUserStatus = async (id, current) => {
+        if(!confirm("Are you sure?")) return;
+        await fetch(`/api/admin/users/toggle-status/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ isSuspended: !current }) });
+        loadAdminData();
+    };
+
+    window.updateUserStatus = async (id, status) => {
+        await fetch(`/api/admin/users/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
+        loadAdminData();
+    };
+
+    window.approveAdmission = async (id) => {
+        if(confirm("Confirm Payment & Approve?")) {
+            await fetch(`/api/admin/admissions/approve/${id}`, { method: 'POST' });
             loadAdminData();
         }
     };
 
-    const approveAdmission = async (id) => {
-        if(confirm("Approve this admission?")) {
-            await fetch(`/api/admin/admissions/approve/${id}`, { method:'POST' });
+    window.processTransfer = async (id, pend, avail) => {
+        const amt = Number(document.getElementById(`amt_${id}`).value);
+        if(amt > 0 && amt <= pend) {
+            await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pendingAmount: pend - amt, availableAmount: (avail || 0) + amt }) });
             loadAdminData();
         }
     };
