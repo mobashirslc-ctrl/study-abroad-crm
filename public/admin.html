@@ -11,7 +11,7 @@
         .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; z-index: 1000; }
         .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; }
         .sidebar ul { list-style: none; padding: 0; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; transition: 0.3s; }
         .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
         .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
@@ -23,8 +23,9 @@
         .bg-green { background: var(--green); color: white; }
         .bg-red { background: var(--red); color: white; }
         .bg-blue { background: var(--blue); color: white; }
-        input { background: #0f0f1b; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; margin-bottom: 10px; }
-        .list-item { display: flex; justify-content: space-between; background: #1a1a2e; padding: 8px; margin-bottom: 5px; border-radius: 4px; border: 1px solid #333; }
+        input { background: #0f0f1b; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .setting-list { max-height: 200px; overflow-y: auto; margin-top: 10px; background: #000; padding: 10px; border-radius: 5px; }
+        .item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 13px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -44,20 +45,20 @@
     
     <div id="uni-manage" class="tab-content" style="display: block;">
         <div class="card">
-            <h3 style="color:var(--gold);">Add University</h3>
-            <input type="text" id="uName" placeholder="Name">
+            <h3>Add University</h3>
+            <input type="text" id="uName" placeholder="University Name">
             <input type="text" id="uCountry" placeholder="Country">
-            <input type="number" id="uFee" placeholder="Fee">
-            <button class="bg-green action-btn" onclick="saveUniversity()">Save University</button>
+            <input type="number" id="uFee" placeholder="Total Tuition Fee">
+            <button class="bg-green action-btn" onclick="saveUniversity()">Save</button>
         </div>
-        <table id="uniTable">
+        <table>
             <thead><tr><th>University</th><th>Country</th><th>Fee</th><th>Action</th></tr></thead>
             <tbody id="uniTableBody"></tbody>
         </table>
     </div>
 
     <div id="admission-requests" class="tab-content">
-        <h3>Today's Admissions</h3>
+        <h3>Today's Admissions & Payment Verification</h3>
         <div style="overflow-x: auto;">
             <table>
                 <thead>
@@ -87,28 +88,25 @@
     </div>
 
     <div id="form-settings" class="tab-content">
-        <h3>Form Settings (Add & Remove)</h3>
-        
+        <h3>Form Settings (Dynamic Dropdowns)</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
             <div class="card">
                 <h4>Courses</h4>
-                <input type="text" id="courseInp" placeholder="Course Name">
+                <input type="text" id="courseInp" placeholder="New Course Name">
                 <button class="bg-green action-btn" onclick="addItem('course')">Add</button>
-                <div id="courseList" style="margin-top:15px;"></div>
+                <div class="setting-list" id="courseList"></div>
             </div>
-
             <div class="card">
                 <h4>Districts</h4>
                 <input type="text" id="distInp" placeholder="District Name">
                 <button class="bg-blue action-btn" onclick="addItem('district')">Add</button>
-                <div id="distList" style="margin-top:15px;"></div>
+                <div class="setting-list" id="distList"></div>
             </div>
-
             <div class="card">
                 <h4>Thanas</h4>
                 <input type="text" id="thanaInp" placeholder="Thana Name">
                 <button class="bg-blue action-btn" onclick="addItem('thana')">Add</button>
-                <div id="thanaList" style="margin-top:15px;"></div>
+                <div class="setting-list" id="thanaList"></div>
             </div>
         </div>
     </div>
@@ -125,25 +123,31 @@
     // --- DATA LOADING ---
     window.loadAdminData = async () => {
         try {
-            // 1. Load Admissions
             const admRes = await fetch('/api/admin/admissions');
+            const userRes = await fetch('/api/admin/users');
+            const uniRes = await fetch('/api/universities');
+            const setRes = await fetch('/api/admin/settings'); // Make sure this endpoint exists
+
             const adms = await admRes.json();
+            const users = await userRes.json();
+            const unis = await uniRes.json();
+            const settings = await setRes.json();
+
+            // Admissions
             document.getElementById('admissionTableBody').innerHTML = adms.map(ad => `
                 <tr>
-                    <td>${ad.name || 'N/A'}</td>
-                    <td>${ad.phone || 'N/A'}</td>
+                    <td>${ad.name || ad.studentName || ''}</td>
+                    <td>${ad.phone || ad.studentPhone || ''}</td>
                     <td>${ad.paymentMethod || 'bKash'}</td>
-                    <td style="color:var(--gold)">${ad.transactionId || 'N/A'}</td>
-                    <td>৳${ad.fee || 0}</td>
+                    <td style="color:var(--gold)">${ad.transactionId || ''}</td>
+                    <td>৳${ad.fee || ad.amount || 0}</td>
                     <td>${ad.course || 'N/A'}</td>
                     <td>${ad.merchantName || 'Direct'}</td>
                     <td>${ad.merchantPhone || 'N/A'}</td>
                     <td><button class="action-btn bg-green" onclick="approveAdmission('${ad._id}')">Release</button></td>
-                </tr>`).join('') || "<tr><td colspan='9'>No data found</td></tr>";
+                </tr>`).join('') || "<tr><td colspan='9'>No Admissions Today</td></tr>";
 
-            // 2. Load Users
-            const userRes = await fetch('/api/admin/users');
-            const users = await userRes.json();
+            // Users
             document.getElementById('userListTable').innerHTML = users.map(u => `
                 <tr>
                     <td><b>${u.fullName || u.orgName}</b><br><small>${u.role}</small></td>
@@ -151,42 +155,41 @@
                     <td><span class="badge ${u.isSuspended ? 'bg-red' : 'bg-green'}">${u.isSuspended ? 'Suspended' : 'Active'}</span></td>
                     <td>
                         ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateUserStatus('${u._id}', 'active')">Approve</button>` : ''}
-                        <button class="action-btn bg-red" onclick="toggleSuspend('${u._id}', ${u.isSuspended})">${u.isSuspended ? 'Activate' : 'Suspend'}</button>
+                        <button class="action-btn bg-red" onclick="toggleSuspend('${u._id}', ${u.isSuspended})">${u.isSuspended ? 'Unsuspend' : 'Suspend'}</button>
                     </td>
                 </tr>`).join('');
 
-            // 3. Load Settings (Courses, Districts, etc)
-            loadSettings();
+            // Universities
+            document.getElementById('uniTableBody').innerHTML = unis.map(u => `
+                <tr><td>${u.universityName}</td><td>${u.country}</td><td>${u.totalTuitionFee}</td>
+                <td><button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button></td></tr>`).join('');
 
-        } catch (err) { console.error("Connection Error:", err); }
+            // Settings Lists (Remove Access Included)
+            const renderSet = (id, items, type) => {
+                document.getElementById(id).innerHTML = items.map(item => `
+                    <div class="item">
+                        <span>${item}</span>
+                        <i class="fas fa-trash-alt text-red" style="cursor:pointer; color:var(--red);" onclick="removeItem('${type}', '${item}')"></i>
+                    </div>`).join('');
+            };
+            renderSet('courseList', settings.courses || [], 'course');
+            renderSet('distList', settings.districts || [], 'district');
+            renderSet('thanaList', settings.thanas || [], 'thana');
+
+        } catch (err) { console.error("Error loading data:", err); }
     };
 
-    // --- SETTINGS (ADD/REMOVE) ---
-    async function loadSettings() {
-        const res = await fetch('/api/admin/settings'); // আপনার ব্যাকএন্ডে এই রুট থাকতে হবে
-        const settings = await res.json();
-        
-        const renderList = (id, items, type) => {
-            document.getElementById(id).innerHTML = items.map(item => `
-                <div class="list-item">
-                    <span>${item}</span>
-                    <i class="fas fa-trash bg-red" style="padding:5px; cursor:pointer; border-radius:3px;" onclick="removeItem('${type}', '${item}')"></i>
-                </div>`).join('');
-        };
-
-        renderList('courseList', settings.courses || [], 'course');
-        renderList('distList', settings.districts || [], 'district');
-        renderList('thanaList', settings.thanas || [], 'thana');
-    }
-
+    // --- SETTINGS ACTIONS ---
     window.addItem = async (type) => {
-        const val = document.getElementById(type === 'course' ? 'courseInp' : type === 'district' ? 'distInp' : 'thanaInp').value;
+        const inputId = type === 'course' ? 'courseInp' : type === 'district' ? 'distInp' : 'thanaInp';
+        const val = document.getElementById(inputId).value;
         if(!val) return;
         await fetch('/api/admin/settings/add', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ type, value: val })
         });
+        document.getElementById(inputId).value = '';
         loadAdminData();
     };
 
@@ -200,7 +203,7 @@
         loadAdminData();
     };
 
-    // --- ACTIONS ---
+    // --- OTHER ACTIONS ---
     window.toggleSuspend = async (id, status) => {
         await fetch(`/api/admin/users/toggle-status/${id}`, {
             method: 'PATCH',
@@ -216,6 +219,12 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ status })
         });
+        loadAdminData();
+    };
+
+    window.approveAdmission = async (id) => {
+        if(!confirm("Approve and release commission?")) return;
+        await fetch(`/api/admin/admissions/approve/${id}`, { method: 'POST' });
         loadAdminData();
     };
 
