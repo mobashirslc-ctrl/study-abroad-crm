@@ -37,7 +37,7 @@ window.onload = async () => {
     await searchUni(); 
 };
 
-// --- 2. DASHBOARD & WALLET SYNC ---
+// --- 2. DASHBOARD & WALLET SYNC (FIXED VERSION) ---
 async function initRealtimeData() {
     if (!partnerEmail) return;
     try {
@@ -47,6 +47,7 @@ async function initRealtimeData() {
         ]);
 
         const allUsers = await userRes.json();
+        // অ্যাডমিন প্যানেল থেকে ইউজারের (পার্টনারের) লেটেস্ট ওয়ালেট ব্যালেন্স নেওয়া
         const me = allUsers.find(u => (u.email || "").toLowerCase().trim() === partnerEmail);
         currentAvailableBalance = me ? (Number(me.walletBalance) || 0) : 0;
 
@@ -56,43 +57,46 @@ async function initRealtimeData() {
         let pendingTotal = 0;
         let tableHtml = "";
 
-myApps.forEach(data => {
-    const status = (data.status || 'PENDING').toUpperCase();
-    const comm = Number(data.commissionBDT || 0);
+        myApps.forEach(data => {
+            const status = (data.status || 'PENDING').toUpperCase();
+            
+            // ফিক্স: সরাসরি ডাটাবেসের pendingAmount রিড করা, কমিশন নয়। 
+            // কারণ অ্যাডমিন টাকা দিলে pendingAmount কমে যায়, কিন্তু commissionBDT ফিক্সড থাকে।
+            const currentPendingOfThisApp = Number(data.pendingAmount !== undefined ? data.pendingAmount : data.commissionBDT);
 
-    // শুধু 'DOCS_VERIFIED' হলে পেন্ডিং টোটাল এ যোগ হবে
-    if(status === 'DOCS_VERIFIED') {
-        pendingTotal += comm;
-    }
-    tableHtml += `
-        <tr>
-            <td><b>${data.studentName}</b></td>
-            <td>${data.passportNo}</td>
-            <td>${data.university || 'Direct Entry'}</td>
-            <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
-            <td>
-    <button class="btn-slip-small" onclick="handleSlipView('${data.passportNo}')">
-        <i class="fas fa-file-invoice"></i> View Slip
-    </button>
-</td>
-        </tr>`;
-});
+            // অ্যাডমিন যদি পার্শিয়াল পেমেন্ট করে, তবে pendingAmount ই হবে আসল পেন্ডিং
+            pendingTotal += currentPendingOfThisApp;
+
+            tableHtml += `
+                <tr>
+                    <td><b>${data.studentName}</b></td>
+                    <td>${data.passportNo}</td>
+                    <td>${data.university || 'Direct Entry'}</td>
+                    <td><span class="status-pill ${status.toLowerCase()}">${status.replace(/_/g, ' ')}</span></td>
+                    <td>
+                        <div style="font-size:11px; color:#aaa;">Pending: ৳${currentPendingOfThisApp}</div>
+                        <button class="btn-slip-small" onclick="handleSlipView('${data.passportNo}')">
+                            <i class="fas fa-file-invoice"></i> View Slip
+                        </button>
+                    </td>
+                </tr>`;
+        });
+
         const setEl = (id, val) => {
             const el = document.getElementById(id);
             if(el) el.innerText = val;
         };
 
+        // UI আপডেট
         setEl('topPending', `৳${pendingTotal.toLocaleString()}`);
         setEl('topFinal', `৳${currentAvailableBalance.toLocaleString()}`);
         setEl('topPendingE', `৳${pendingTotal.toLocaleString()}`);
         setEl('withdrawableBal', `৳${currentAvailableBalance.toLocaleString()}`);
-        setEl('availableWithdrawBalance', currentAvailableBalance.toLocaleString());
         setEl('totalStudents', myApps.length);
 
         if(document.getElementById('homeTrackingBody')) document.getElementById('homeTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
-        if(document.getElementById('quickStatsBody')) document.getElementById('quickStatsBody').innerHTML = tableHtml || "<tr><td colspan='5'>No records found</td></tr>";
-        if(document.getElementById('fullTrackingBody')) document.getElementById('fullTrackingBody').innerHTML = tableHtml || "<tr><td colspan='5'>No history found</td></tr>";
-
+        
+        // উইথড্র বাটন কন্ট্রোল
         const withdrawInput = document.getElementById('withdrawAmount');
         if(withdrawInput) {
             withdrawInput.disabled = (currentAvailableBalance < 500);
@@ -100,7 +104,6 @@ myApps.forEach(data => {
         }
     } catch (e) { console.error("Sync Error:", e); }
 }
-
 // --- 3. MEGA SEARCH & ELIGIBILITY ---
 async function searchUni() {
     const country = document.getElementById('fCountry').value.toLowerCase();
@@ -146,7 +149,29 @@ async function searchUni() {
         document.getElementById('uniListContainer').innerHTML = html || "<tr><td colspan='5'>No matches found</td></tr>";
     } catch (e) { console.error("Search Error:", e); }
 }
-
+// এটি ফাইলের শেষে যোগ করুন
+async function downloadAssessmentPDF(uniId) {
+    try {
+        const res = await fetch('/api/universities');
+        const unis = await res.json();
+        const uni = unis.find(u => u._id === uniId);
+        
+        if(uni) {
+            // আপনার তৈরি করা generateAssessmentPDF ফাংশনটিকে কল করা হচ্ছে
+            generateAssessmentPDF({
+                name: uni.universityName,
+                country: uni.country,
+                tuition: uni.totalTuitionFee,
+                minGPA: uni.minGPA,
+                minScore: uni.ieltsReq,
+                scholarship: "Up to 30%" // অথবা আপনার ডাটাবেসের ফিল্ড
+            });
+        }
+    } catch (e) {
+        alert("Could not generate report.");
+    }
+}
+window.downloadAssessmentPDF = downloadAssessmentPDF;
 // --- 4. FILE UPLOAD & SUBMISSION ---
 async function uploadFile(file) {
     if(!file) return "";
@@ -341,41 +366,7 @@ function printSlip() {
     }, 1000);
 }
 window.printSlip = printSlip;
-// ম্যানুয়াল অ্যাপ্লাই বাটন লজিক
-window.openManualApply = () => {
-    // ইউজারের কাছ থেকে শুধু ইউনিভার্সিটির নাম নেওয়া (বাকিগুলো ফর্ম থেকে আসবে)
-    const uniName = prompt("Enter University Name:", "Direct Admission");
-    if (!uniName) return;
 
-    selectedUniversity = uniName;
-    currentUniCommission = 5000; // আপনার ফিক্সড কমিশন
-
-    // মডাল টাইটেল আপডেট
-    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
-    
-    // ফর্ম ক্লিয়ার করা (যাতে আগের স্টুডেন্টের নাম না থাকে)
-    document.getElementById('sName').value = "";
-    document.getElementById('sPassport').value = "";
-
-    document.getElementById('applyModal').style.display = 'flex';
-};
-
-    // ফাইলের একদম শেষে এই অংশটুকু রিপ্লেস করুন
-window.openManualApply = () => {
-    const uniName = prompt("Enter University Name:", "Direct Admission");
-    if (!uniName) return;
-
-    selectedUniversity = uniName;
-    currentUniCommission = 5000; 
-
-    document.getElementById('modalTitle').innerText = "Manual: " + uniName;
-    document.getElementById('sName').value = "";
-    document.getElementById('sPassport').value = "";
-    document.getElementById('applyModal').style.display = 'flex';
-
-    console.log("Manual Mode Activated:", uniName, "Comm: 5000");
-};
-// --- আপনার বর্তমান কোডের শেষ অংশ ---
 window.openManualApply = () => {
     const uniName = prompt("Enter University Name:", "Direct Admission");
     if (!uniName) return;

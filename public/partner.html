@@ -185,7 +185,7 @@
     </div>
 
     <footer style="margin-top: auto; padding: 20px; text-align: center; border-top: 1px solid #333; font-size: 12px; color: #777;">
-        2026 @ Rights and Reserved Gorun Ltd. | <span class="text-gold">Powered by SCC IHP Portal</span>
+        2026 @ Rights and Reserved Gorun Ltd. | <span class="text-gold">Powered by IHP Portal</span>
     </footer>
 </div>
 
@@ -366,14 +366,27 @@
         if(menuIcon) {
             menuIcon.classList.add('active');
         }
+
+        // --- সংশোধিত অংশ: আইডি চেক করে ডাটা আপডেট ---
+        // আপনার HTML এ আইডি হলো 'topPending' এবং 'topFinal'
+        const pendingEl = document.getElementById('topPending');
+        const finalEl = document.getElementById('topFinal');
         
+        if(pendingEl && window.app) { 
+            pendingEl.innerText = `৳${app.pendingAmount || 0}`;
+        }
+        if(finalEl && window.app) {
+            finalEl.innerText = `৳${app.availableAmount || 0}`;
+        }
+
         // ড্যাশবোর্ড বা ট্র্যাকিং ট্যাব হলে ডাটা রিফ্রেশ করা
         if(id === 'dashboard' || id === 'tracking') {
             if(typeof initRealtimeData === 'function') {
                 initRealtimeData();
             } else {
                 console.log("Waiting for partner-logic.js to load...");
-                setTimeout(initRealtimeData, 500);
+                // একবারে না পেলে ০.৫ সেকেন্ড পর আবার চেষ্টা করবে
+                setTimeout(() => { if(typeof initRealtimeData === 'function') initRealtimeData(); }, 500);
             }
         }
 
@@ -393,13 +406,13 @@
     }
     
     function logout() {
-        if(confirm("Logout from SCC IHP Portal?")) {
+        if(confirm("Logout from IHP Portal?")) {
             localStorage.clear();
             window.location.href = 'auth.html';
         }
     }
 
-    // পেজ লোড হওয়ার সময় ডিফল্ট ট্যাব দেখানো
+    // পেজ লোড হওয়ার সময় ডিফল্ট ট্যাব দেখানো
     window.onload = function() {
         showTab('dashboard');
     };
