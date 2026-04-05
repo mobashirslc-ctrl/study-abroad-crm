@@ -8,59 +8,55 @@
     <style>
         :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; --blue: #3498db; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
-        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
-        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
-        .logo-container img { max-width: 180px; border-radius: 8px; }
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; }
         .sidebar ul { list-style: none; padding: 0; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
-        .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
-        .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
-        .card { background: var(--dark); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
-        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
-        input, select { background: #252545; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; width: 100%; }
-        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
-        th { background: #252545; color: var(--gold); }
-        .btn-gold { background: var(--gold); color: black; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-        .action-btn { padding: 5px 8px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; margin: 2px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .card { background: var(--dark); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        input, select { background: #0f0f1b; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #222; }
+        th { background: #252545; color: var(--gold); position: sticky; top: 0; }
+        .action-btn { padding: 5px 8px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 10px; }
         .bg-green { background: var(--green); color: white; }
         .bg-red { background: var(--red); color: white; }
         .bg-blue { background: var(--blue); color: white; }
-        .status-active { color: var(--green); font-weight: bold; }
-        .status-suspended { color: var(--red); font-weight: bold; }
+        .badge { padding: 2px 5px; border-radius: 3px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
+    <div class="logo-container"><img src="logo.jpeg" alt="SCC" style="max-width:150px;"></div>
     <ul>
-        <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> University Mgmt</li>
-        <li onclick="showTab(event, 'admission-requests')"><i class="fas fa-file-import"></i> Today's Admissions</li>
-        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partner & Compliance</li>
-        <li onclick="showTab(event, 'wallet-tracking')"><i class="fas fa-wallet"></i> Wallet & Tracking</li>
-        <li onclick="location.href='login.html'"><i class="fas fa-sign-out-alt"></i> Logout</li>
+        <li class="active" onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Universities</li>
+        <li onclick="showTab(event, 'admission-requests')"><i class="fas fa-list"></i> Today's Admissions</li>
+        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> User Management</li>
+        <li onclick="showTab(event, 'form-settings')"><i class="fas fa-cogs"></i> Form Settings</li>
+        <li onclick="showTab(event, 'wallet-tracking')"><i class="fas fa-wallet"></i> Wallet</li>
     </ul>
 </div>
 
 <div class="main-content">
+    
     <div id="uni-manage" class="tab-content" style="display: block;">
         <div class="card">
             <h3 style="color:var(--gold);">Add New University</h3>
             <div class="input-group">
                 <input type="text" id="uName" placeholder="University Name">
                 <input type="text" id="uCountry" placeholder="Country">
-                <select id="uDegree"><option value="Bachelor">Bachelor</option><option value="Master">Master</option><option value="Diploma">Diploma</option></select>
+                <input type="number" id="uFee" placeholder="Total Fee">
             </div>
             <div class="input-group">
-                <input type="number" id="uTotalFee" placeholder="Total Fee">
                 <input type="number" step="0.1" id="uGpa" placeholder="Min GPA">
                 <input type="number" step="0.1" id="uIelts" placeholder="Min IELTS">
+                <button class="bg-green" onclick="saveUniversity()" style="border:none; border-radius:5px; cursor:pointer;">Save</button>
             </div>
-            <button class="btn-gold" onclick="saveUniversity()">Save University</button>
         </div>
         <table>
             <thead><tr><th>University</th><th>Requirements</th><th>Fee</th><th>Action</th></tr></thead>
@@ -69,48 +65,94 @@
     </div>
 
     <div id="admission-requests" class="tab-content">
-        <h3>Pending Payment Verification (Today)</h3>
-        <div id="admissionGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;"></div>
-        
-        <h3 style="margin-top: 40px;">All Applications</h3>
-        <table>
-            <thead><tr><th>Student</th><th>University</th><th>Phone</th><th>Date</th><th>Action</th></tr></thead>
-            <tbody id="admissionTableBody"></tbody>
-        </table>
+        <h3>Today's Admissions & Payment Verification</h3>
+        <div style="overflow-x: auto; background: var(--dark); border-radius: 8px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Contact No</th>
+                        <th>Payment Method</th>
+                        <th>Transaction ID</th>
+                        <th>Amount</th>
+                        <th>Course Name</th>
+                        <th>Merchant Name</th>
+                        <th>M. Contact</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admissionTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="user-manage" class="tab-content">
-        <h3>Partners & Compliance Staff</h3>
+        <h3>Partner & Compliance Management</h3>
         <table>
-            <thead><tr><th>Name & Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Name/Role</th>
+                    <th>Email/Contact</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
             <tbody id="userListTable"></tbody>
         </table>
     </div>
 
-    <div id="wallet-tracking" class="tab-content">
+    <div id="form-settings" class="tab-content">
+        <h3>Admission Form Settings</h3>
         <div class="card">
-            <h3>Wallet & Payment Tracking</h3>
-            <table>
-                <thead><tr><th>Student</th><th>Partner</th><th>Pending</th><th>Available</th><th>Transfer</th></tr></thead>
-                <tbody id="walletTableBody"></tbody>
-            </table>
+            <h4>Manage Courses</h4>
+            <div class="input-group">
+                <input type="text" id="setCourseName" placeholder="Course Name">
+                <input type="number" id="setCourseFee" placeholder="Course Fee">
+                <button class="bg-green" onclick="updateFormSettings('course')">Add Course</button>
+            </div>
+        </div>
+        <div class="card">
+            <h4>Manage Locations</h4>
+            <div class="input-group">
+                <input type="text" id="setDistrict" placeholder="District Name">
+                <button class="bg-blue" onclick="updateFormSettings('district')">Add District</button>
+                <input type="text" id="setThana" placeholder="Thana Name">
+                <button class="bg-blue" onclick="updateFormSettings('thana')">Add Thana</button>
+            </div>
         </div>
     </div>
+
+    <div id="wallet-tracking" class="tab-content">
+        <h3>Wallet & Commission Tracking</h3>
+        <table>
+            <thead><tr><th>Student</th><th>Merchant</th><th>Pending</th><th>Available</th><th>Action</th></tr></thead>
+            <tbody id="walletTableBody"></tbody>
+        </table>
+    </div>
+
 </div>
 
 <script>
-    function showTab(event, tabId) {
+    function showTab(e, id) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
-        document.getElementById(tabId).style.display = 'block';
-        if(event) event.currentTarget.classList.add('active');
+        document.querySelectorAll('.sidebar li').forEach(l => l.classList.remove('active'));
+        document.getElementById(id).style.display = 'block';
+        if(e) e.currentTarget.classList.add('active');
     }
 
     window.loadAdminData = async () => {
         try {
-            // Load Universities
-            const uRes = await fetch('/api/universities');
-            const unis = await uRes.json();
+            const [uniRes, admRes, userRes] = await Promise.all([
+                fetch('/api/universities'),
+                fetch('/api/admin/admissions'),
+                fetch('/api/admin/users')
+            ]);
+
+            const unis = await uniRes.json();
+            const adms = await admRes.json();
+            const users = await userRes.json();
+
+            // Universities Table
             document.getElementById('uniTableBody').innerHTML = unis.map(u => `
                 <tr>
                     <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
@@ -119,76 +161,73 @@
                     <td><button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button></td>
                 </tr>`).join('');
 
-            // Load All Applications
-            const appRes = await fetch('/api/applications');
-            const apps = await appRes.json();
-            document.getElementById('admissionTableBody').innerHTML = apps.map(a => `
+            // Admissions Table (Detailed)
+            document.getElementById('admissionTableBody').innerHTML = adms.map(ad => `
                 <tr>
-                    <td>${a.studentName}</td>
-                    <td>${a.appliedUniversity || 'N/A'}</td>
-                    <td>${a.studentPhone}</td>
-                    <td>${new Date(a.createdAt).toLocaleDateString()}</td>
-                    <td><button class="action-btn bg-blue" onclick="updateAppStatus('${a._id}', 'PROCESSING')">Accept</button></td>
+                    <td>${ad.name}</td>
+                    <td>${ad.phone}</td>
+                    <td><span class="badge bg-blue">${ad.paymentMethod || 'bKash'}</span></td>
+                    <td style="color:var(--gold)">${ad.transactionId}</td>
+                    <td>৳${ad.fee}</td>
+                    <td>${ad.course || 'N/A'}</td>
+                    <td>${ad.merchantName || 'Direct'}</td>
+                    <td>${ad.merchantPhone || 'N/A'}</td>
+                    <td><button class="action-btn bg-green" onclick="approveAdmission('${ad._id}')">Release Commission</button></td>
                 </tr>`).join('');
 
-            // Wallet Data
-            document.getElementById('walletTableBody').innerHTML = apps.map(a => `
+            // User Management
+            document.getElementById('userListTable').innerHTML = users.map(u => `
                 <tr>
-                    <td>${a.studentName}</td>
-                    <td>${a.partnerEmail || 'Direct'}</td>
-                    <td style="color:var(--gold)">৳${a.pendingAmount || 0}</td>
-                    <td style="color:var(--green)">৳${a.availableAmount || 0}</td>
+                    <td><b>${u.fullName || u.orgName}</b><br><small>${u.role}</small></td>
+                    <td>${u.email}<br>${u.phone || ''}</td>
+                    <td><span class="badge ${u.isSuspended ? 'bg-red' : 'bg-green'}">${u.isSuspended ? 'Suspended' : 'Active'}</span></td>
                     <td>
-                        <input type="number" id="amt_${a._id}" style="width:60px;">
-                        <button class="action-btn bg-green" onclick="processTransfer('${a._id}', ${a.pendingAmount || 0}, ${a.availableAmount || 0})">Pay</button>
+                        ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateUserStatus('${u._id}', 'active')">Approve</button>` : ''}
+                        <button class="action-btn" style="background:#555; color:white;" onclick="toggleSuspend('${u._id}', ${u.isSuspended})">
+                            ${u.isSuspended ? 'Unsuspend' : 'Suspend'}
+                        </button>
                     </td>
                 </tr>`).join('');
 
-            loadAdmissionRequests();
-            loadUsers();
-        } catch (e) { console.error(e); }
+            // Wallet Table
+            document.getElementById('walletTableBody').innerHTML = adms.map(a => `
+                <tr>
+                    <td>${a.name}</td>
+                    <td>${a.merchantName || 'Direct'}</td>
+                    <td style="color:var(--gold)">৳${a.pendingCommission || 0}</td>
+                    <td style="color:var(--green)">৳${a.availableCommission || 0}</td>
+                    <td><button class="action-btn bg-blue">Details</button></td>
+                </tr>`).join('');
+
+        } catch (err) { console.error("Error:", err); }
     };
 
-    // Admission Details Fix (Student + Merchant info)
-    async function loadAdmissionRequests() {
-        const res = await fetch('/api/admin/admissions');
-        const data = await res.json();
-        document.getElementById('admissionGrid').innerHTML = data.map(ad => `
-            <div class="card" style="border-top: 4px solid var(--gold);">
-                <p><b>Student:</b> ${ad.name} | ${ad.phone}</p>
-                <p><b>Course:</b> <span class="badge bg-blue">${ad.course || 'N/A'}</span></p>
-                <p><b>Payment:</b> ৳${ad.fee} | <b>TrxID:</b> <span style="color:var(--gold)">${ad.transactionId}</span></p>
-                <hr style="border:0.1px solid #333">
-                <p style="font-size:11px; color:#aaa;">Merchant: ${ad.merchantName || 'Direct'} (${ad.merchantPhone || 'N/A'})</p>
-                <button class="btn-gold" onclick="approveAdmission('${ad._id}')">Verify & Approve</button>
-            </div>`).join('') || "No pending requests found.";
-    }
+    // User Functions
+    window.toggleSuspend = async (id, status) => {
+        if(!confirm("Confirm status change?")) return;
+        await fetch(`/api/admin/users/toggle-status/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ isSuspended: !status })
+        });
+        loadAdminData();
+    };
 
-    // User Manage Fix (Approve & Suspend)
-    async function loadUsers() {
-        const res = await fetch('/api/admin/users');
-        const users = await res.json();
-        document.getElementById('userListTable').innerHTML = users.map(u => `
-            <tr>
-                <td><b>${u.fullName || u.orgName}</b><br><small class="badge bg-blue">${u.role}</small></td>
-                <td>${u.email}<br>${u.phone || ''}</td>
-                <td class="${u.isSuspended ? 'status-suspended' : 'status-active'}">${u.isSuspended ? 'Suspended' : 'Active'}</td>
-                <td>
-                    ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateUserStatus('${u._id}', 'active')">Approve</button>` : ''}
-                    <button class="action-btn" style="background:#555; color:white;" onclick="toggleUserStatus('${u._id}', ${u.isSuspended})">
-                        ${u.isSuspended ? 'Activate' : 'Suspend'}
-                    </button>
-                </td>
-            </tr>`).join('');
-    }
+    window.updateUserStatus = async (id, status) => {
+        await fetch(`/api/admin/users/${id}/status`, {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ status })
+        });
+        loadAdminData();
+    };
 
-    // Action functions (All intact)
+    // University Save
     window.saveUniversity = async () => {
         const data = {
             universityName: document.getElementById('uName').value,
             country: document.getElementById('uCountry').value,
-            degree: document.getElementById('uDegree').value,
-            totalTuitionFee: document.getElementById('uTotalFee').value,
+            totalTuitionFee: document.getElementById('uFee').value,
             minGPA: document.getElementById('uGpa').value,
             ieltsReq: document.getElementById('uIelts').value
         };
@@ -196,30 +235,16 @@
         loadAdminData();
     };
 
-    window.toggleUserStatus = async (id, current) => {
-        if(!confirm("Are you sure?")) return;
-        await fetch(`/api/admin/users/toggle-status/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ isSuspended: !current }) });
-        loadAdminData();
-    };
-
-    window.updateUserStatus = async (id, status) => {
-        await fetch(`/api/admin/users/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
-        loadAdminData();
-    };
-
+    // Admission Approve
     window.approveAdmission = async (id) => {
-        if(confirm("Confirm Payment & Approve?")) {
-            await fetch(`/api/admin/admissions/approve/${id}`, { method: 'POST' });
-            loadAdminData();
-        }
+        if(!confirm("Release Commission?")) return;
+        const res = await fetch(`/api/admin/admissions/approve/${id}`, { method: 'POST' });
+        if(res.ok) loadAdminData();
     };
 
-    window.processTransfer = async (id, pend, avail) => {
-        const amt = Number(document.getElementById(`amt_${id}`).value);
-        if(amt > 0 && amt <= pend) {
-            await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pendingAmount: pend - amt, availableAmount: (avail || 0) + amt }) });
-            loadAdminData();
-        }
+    // Settings (Placeholder for logic)
+    window.updateFormSettings = (type) => {
+        alert(type + " setting updated!");
     };
 
     window.onload = loadAdminData;
