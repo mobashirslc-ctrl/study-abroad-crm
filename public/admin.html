@@ -217,6 +217,31 @@
         }
     }
 };
+async function executeTransfer(passport, amount, pEmail) {
+    if (!confirm(`Transfer ৳${amount} for this student?`)) return;
+
+    try {
+        const response = await fetch('/api/admin/transfer-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentPassport: passport,
+                transferAmount: amount,
+                partnerEmail: pEmail
+            })
+        });
+
+        if (response.ok) {
+            alert("Transfer Successful! Partner's wallet updated.");
+            location.reload(); // ডাটা রিফ্রেশ করার জন্য
+        } else {
+            const err = await response.text();
+            alert("Error: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+    }
+}
     window.saveUniversity = async () => {
         const data = {
             universityName: document.getElementById('uName').value,

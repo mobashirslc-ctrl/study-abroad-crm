@@ -86,6 +86,7 @@ async function initRealtimeData() {
             const el = document.getElementById(id);
             if(el) el.innerText = val;
         };
+     
 
         // UI আপডেট
         setEl('topPending', `৳${pendingTotal.toLocaleString()}`);
@@ -159,13 +160,13 @@ async function downloadAssessmentPDF(uniId) {
         if(uni) {
             // আপনার তৈরি করা generateAssessmentPDF ফাংশনটিকে কল করা হচ্ছে
             generateAssessmentPDF({
-                name: uni.universityName,
-                country: uni.country,
-                tuition: uni.totalTuitionFee,
-                minGPA: uni.minGPA,
-                minScore: uni.ieltsReq,
-                scholarship: "Up to 30%" // অথবা আপনার ডাটাবেসের ফিল্ড
-            });
+    name: uni.universityName,
+    country: uni.country,
+    tuition: `${uni.totalTuitionFee.toLocaleString()} USD`, // সুন্দর ফরম্যাটিং
+    minGPA: uni.minGPA,
+    minScore: uni.ieltsReq,
+    scholarship: "Up to 30%" 
+});
         }
     } catch (e) {
         alert("Could not generate report.");

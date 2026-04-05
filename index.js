@@ -246,7 +246,45 @@ app.post(['/api/login', '/api/auth/login'], async (req, res) => {
         }});
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// /api/admin/transfer-payment
+app.post('/api/admin/transfer-payment', async (req, res) => {
+    const { studentPassport, transferAmount, partnerEmail } = req.body;
 
+    try {
+        // ১. স্টুডেন্টের অ্যাপ্লিকেশন আপডেট (Pending Amount কমানো)
+        // আমরা ধরি স্টুডেন্টের পাসপোর্ট ইউনিক আইডি হিসেবে কাজ করছে
+        const application = await Application.findOne({ passportNo: studentPassport });
+        
+        if (!application) return res.status(404).send("Application not found");
+
+        const currentPending = Number(application.pendingAmount || application.commissionBDT);
+        
+        if (transferAmount > currentPending) {
+            return res.status(400).send("Transfer amount exceeds pending amount");
+        }
+
+        // নতুন পেন্ডিং অ্যামাউন্ট সেট করা
+        application.pendingAmount = currentPending - Number(transferAmount);
+        await application.save();
+
+        // ২. পার্টনারের ওয়ালেট আপডেট (Available Balance বাড়ানো)
+        const partner = await User.findOne({ email: partnerEmail.toLowerCase().trim() });
+        
+        if (partner) {
+            partner.walletBalance = (Number(partner.walletBalance) || 0) + Number(transferAmount);
+            await partner.save();
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Payment transferred successfully",
+            remainingPending: application.pendingAmount 
+        });
+
+    } catch (error) {
+        res.status(500).send("Server Error");
+    }
+});
 // Global Application Search
 app.get('/api/applications', async (req, res) => {
     await connectDB();
