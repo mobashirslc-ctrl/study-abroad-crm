@@ -121,6 +121,9 @@
 </div>
 
 <script>
+    // ১. আপনার ব্যাকএন্ড পোর্ট অনুযায়ী এখানে পরিবর্তন করুন
+    const API_BASE_URL = 'http://localhost:5000'; 
+
     // --- TAB SYSTEM ---
     function showTab(e, id) {
         document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
@@ -129,14 +132,15 @@
         if(e) e.currentTarget.classList.add('active');
     }
 
-    // --- LOAD ALL DATA (Combined Old Logic + New Logic) ---
+    // --- LOAD ALL DATA (Unified Function) ---
     window.loadAdminData = async () => {
         try {
+            console.log("Fetching all admin data...");
             const [admRes, uniRes, userRes, setRes] = await Promise.all([
-                fetch('/api/applications'),
-                fetch('/api/universities'),
-                fetch('/api/admin/users'),
-                fetch('/api/admin/settings')
+                fetch(`${API_BASE_URL}/api/applications`),
+                fetch(`${API_BASE_URL}/api/universities`),
+                fetch(`${API_BASE_URL}/api/admin/users`),
+                fetch(`${API_BASE_URL}/api/admin/settings`)
             ]);
 
             const apps = await admRes.json();
@@ -144,43 +148,48 @@
             const users = await userRes.json();
             const settings = await setRes.json();
 
-            // 1. Admission Table (Using your original keys: studentName, pendingAmount)
+            // ১. Admission Table
             document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
                 <tr>
                     <td><b>${app.studentName}</b></td>
                     <td>${app.partnerEmail || 'Direct'}</td>
-                    <td>${app.paymentMethod || 'bKash'}<br><small>${app.transactionId || ''}</small></td>
+                    <td>${app.paymentMethod || 'N/A'}<br><small>${app.transactionId || ''}</small></td>
                     <td>৳${app.pendingAmount || 0}</td>
                     <td>${app.appliedUniversity || 'N/A'}<br><small>${app.courseName || ''}</small></td>
-                    <td><span class="badge bg-gold" style="padding:4px;">${app.status}</span></td>
+                    <td><span class="badge bg-gold" style="padding:4px; border-radius:4px;">${app.status}</span></td>
                     <td>
                         <button class="action-btn bg-green" onclick="printSlip('${app._id}')">Slip</button>
-                        <button class="action-btn bg-gold" onclick="setWallet('${app._id}')">Wallet</button>
+                        <button class="action-btn bg-gold" onclick="openWalletBox('${app._id}')">Wallet</button>
                     </td>
                 </tr>`).join('');
 
-            // 2. University Table
+            // ২. University Table
             document.getElementById('adminUniTable').innerHTML = unis.map(u => `
                 <tr>
-                    <td><b>${u.universityName}</b><br><small>${u.country}</small></td>
+                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
                     <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
-                    <td>${u.uCurrency} ${u.totalTuitionFee}</td>
-                    <td><button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button></td>
+                    <td>${u.uCurrency || 'USD'} ${u.totalTuitionFee}</td>
+                    <td>
+                        <button class="action-btn" style="background:#3498db; color:white;" onclick="editUni('${u._id}')">Edit</button>
+                        <button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button>
+                    </td>
                 </tr>`).join('');
 
-            // 3. User Management
+            // ৩. User Management
             document.getElementById('adminUserTable').innerHTML = users.map(u => `
                 <tr>
                     <td><b>${u.fullName}</b><br><small>${u.orgName || ''}</small></td>
                     <td>${u.email}</td>
                     <td><input type="date" value="${u.expiryDate ? u.expiryDate.split('T')[0] : ''}" onchange="updateExpiry('${u._id}', this.value)"></td>
-                    <td><span class="badge ${u.status === 'active' ? 'bg-green' : 'bg-red'}">${u.status}</span></td>
+                    <td><span class="badge ${u.status === 'active' ? 'bg-green' : 'bg-red'}" style="padding:4px; border-radius:4px;">${u.status}</span></td>
                     <td><button class="action-btn bg-green" onclick="updateStatus('${u._id}', 'active')">Approve</button></td>
                 </tr>`).join('');
 
-            // 4. Form Settings (Add/Remove)
+            // ৪. Form Settings
             const renderSet = (el, data, type) => {
-                document.getElementById(el).innerHTML = (data || []).map(item => `
+                const listEl = document.getElementById(el);
+                if(!listEl) return;
+                listEl.innerHTML = (data || []).map(item => `
                     <div class="list-item">
                         <span>${typeof item === 'object' ? `${item.name} (৳${item.fee})` : item}</span>
                         <i class="fas fa-trash-alt" onclick="deleteSetting('${type}', '${typeof item === 'object' ? item.name : item}')"></i>
@@ -190,16 +199,20 @@
             renderSet('distList', settings.districts, 'district');
             renderSet('thanaList', settings.thanas, 'thana');
 
-        } catch (e) { console.error("Data Load Error:", e); }
+        } catch (e) { 
+            console.error("Data Load Error:", e);
+            // যদি ডাটা না আসে তবে ইউজারকে অ্যালার্ট দিন
+            // alert("Failed to load data from server. Check if backend is running on " + API_BASE_URL);
+        }
     };
 
-    // --- NEW SETTINGS ACTIONS (ADD/REMOVE) ---
+    // --- ACTIONS ---
     window.addSetting = async (type) => {
         const value = document.getElementById(type === 'course' ? 'courseInp' : type === 'district' ? 'distInp' : 'thanaInp').value;
         const fee = type === 'course' ? document.getElementById('feeInp').value : null;
         if(!value) return alert("Enter value");
 
-        await fetch('/api/admin/settings/add', {
+        await fetch(`${API_BASE_URL}/api/admin/settings/add`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ type, value, fee })
@@ -207,19 +220,20 @@
         loadAdminData();
     };
 
-    window.deleteSetting = async (type, value) => {
-        if(!confirm("Delete this?")) return;
-        await fetch('/api/admin/settings/remove', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ type, value })
-        });
-        loadAdminData();
+    window.openWalletBox = async (appId) => {
+        const amount = prompt("Enter Final Wallet Amount (BDT):");
+        if (amount) {
+            await fetch(`${API_BASE_URL}/api/applications/${appId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pendingAmount: Number(amount), status: 'VERIFIED' })
+            });
+            loadAdminData();
+        }
     };
 
-    // --- OTHER ORIGINAL ACTIONS ---
     window.updateStatus = async (id, status) => {
-        await fetch(`/api/admin/users/${id}/status`, {
+        await fetch(`${API_BASE_URL}/api/admin/users/${id}/status`, {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ status })
@@ -227,8 +241,9 @@
         loadAdminData();
     };
 
-    window.printSlip = (id) => window.open(`/api/applications/${id}/slip`, '_blank');
+    window.printSlip = (id) => window.open(`${API_BASE_URL}/api/applications/${id}/slip`, '_blank');
 
+    // পেজ লোড হওয়ার সাথে সাথে ডেটা কল হবে
     window.onload = loadAdminData;
 </script>
 </body>
