@@ -1,12 +1,24 @@
 const cloudinary = require('cloudinary').v2;
 const formidable = require('formidable');
+const mongoose = require('mongoose');
 
-// Cloudinary কনফিগারেশন (আপনার দেওয়া কি ব্যবহার করা হয়েছে)
+// ১. Cloudinary কনফিগারেশন (সরাসরি ভ্যালু দিয়ে দেওয়া হলো যাতে এনভায়রনমেন্টের ঝামেলা না থাকে)
 cloudinary.config({
   cloud_name: 'dqriueu9r',
   api_key: '698924766176623',
   api_secret: '2KKz-mDmFLlav5wHeXtjMTn40Vs'
 });
+
+// ২. MongoDB কানেকশন ফাংশন
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log("MongoDB Connected Successfully");
+    } catch (err) {
+        console.error("MongoDB Connection Error:", err);
+    }
+};
 
 // Vercel Serverless Config
 export const config = {
@@ -24,6 +36,9 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ message: "Only POST allowed" });
 
+    // ডাটাবেস কানেক্ট করুন
+    await connectDB();
+
     const form = new formidable.IncomingForm();
 
     form.parse(req, async (err, fields, files) => {
@@ -33,23 +48,25 @@ module.exports = async (req, res) => {
             let photoUrl = null;
             let nidUrl = null;
 
-            // ১. ফটো আপলোড
-            if (files.studentPhoto) {
+            // ৩. ফটো আপলোড
+            if (files.studentPhoto && files.studentPhoto.filepath) {
                 const resPhoto = await cloudinary.uploader.upload(files.studentPhoto.filepath, {
-                    folder: 'slc_language_hub/photos'
+                    folder: 'slc_language_hub/photos',
+                    resource_type: "auto"
                 });
                 photoUrl = resPhoto.secure_url;
             }
 
-            // ২. NID আপলোড
-            if (files.nidFile) {
+            // ৪. NID আপলোড
+            if (files.nidFile && files.nidFile.filepath) {
                 const resNid = await cloudinary.uploader.upload(files.nidFile.filepath, {
-                    folder: 'slc_language_hub/documents'
+                    folder: 'slc_language_hub/documents',
+                    resource_type: "auto"
                 });
                 nidUrl = resNid.secure_url;
             }
 
-            // ৩. ডাটাবেসের জন্য অবজেক্ট তৈরি
+            // ৫. ডেটা অবজেক্ট
             const admissionData = {
                 name: fields.name,
                 phone: fields.phone,
@@ -66,19 +83,18 @@ module.exports = async (req, res) => {
                 submittedAt: new Date()
             };
 
-            console.log("Success! Data received:", admissionData);
+            console.log("Submission Success:", fields.name);
 
-            // সফল রেসপন্স
             return res.status(200).json({ 
                 success: true, 
-                message: "Admission Success! Files are safe in Cloudinary.",
+                message: "Admission Success!",
                 id: "SLC-" + Math.floor(1000 + Math.random() * 9000),
                 photo: photoUrl
             });
 
         } catch (error) {
-            console.error("Upload Error:", error);
-            return res.status(500).json({ success: false, message: "Cloudinary Error: " + error.message });
+            console.error("Server Error:", error);
+            return res.status(500).json({ success: false, message: "Error: " + error.message });
         }
     });
 };
