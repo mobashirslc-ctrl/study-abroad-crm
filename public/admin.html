@@ -179,29 +179,52 @@
     };
 
     // Manual Transfer Logic (Minus from Pending, Add to Available)
-    window.processTransfer = async (id, currentPending, currentAvailable) => {
-        const transferAmt = Number(document.getElementById(`amt_${id}`).value);
-        
-        if(!transferAmt || transferAmt <= 0) return alert("অ্যামাউন্ট লিখুন!");
-        if(transferAmt > currentPending) return alert("পেন্ডিং এর চেয়ে বেশি টাকা ট্রান্সফার করা যাবে না!");
+    window.processTransfer = async (appId, currentPending, currentAvailable) => {
+    const amountInput = document.getElementById(`amt_${appId}`);
+    const transferAmount = Number(amountInput.value);
 
-        if(confirm(`৳${transferAmt} ট্রান্সফার করতে চান?`)) {
-            const newPending = currentPending - transferAmt;
-            const newAvailable = currentAvailable + transferAmt;
+    // ১. প্রাথমিক ভ্যালিডেশন
+    if (!transferAmount || transferAmount <= 0) {
+        return alert("দয়া করে সঠিক অ্যামাউন্ট লিখুন।");
+    }
+    if (transferAmount > currentPending) {
+        return alert("পেন্ডিং অ্যামাউন্টের চেয়ে বেশি টাকা ট্রান্সফার করা সম্ভব নয়!");
+    }
 
-            await fetch(`/api/applications/${id}`, {
+    // ২. কনফার্মেশন মেসেজ
+    const confirmMsg = `আপনি কি ৳${transferAmount} ট্রান্সফার করতে চান?\n\nএটি অ্যাডমিন ও পার্টনারের পেন্ডিং থেকে মাইনাস হবে এবং পার্টনারের এভেইলএবল ওয়ালেটে যোগ হবে।`;
+    
+    if (confirm(confirmMsg)) {
+        try {
+            // ৩. নতুন ব্যালেন্স ক্যালকুলেশন (অঙ্ক করে বের করা)
+            const newPending = currentPending - transferAmount;
+            const newAvailable = currentAvailable + transferAmount;
+
+            // ৪. ব্যাকএন্ডে আপডেট পাঠানো
+            const res = await fetch(`/api/applications/${appId}`, {
                 method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    pendingAmount: newPending,
-                    availableAmount: newAvailable,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pendingAmount: newPending,      // এটি কমবে (Minus)
+                    availableAmount: newAvailable,  // এটি বাড়বে (Plus)
+                    // যদি সব টাকা পেমেন্ট হয়ে যায় তবে স্ট্যাটাস চেঞ্জ হবে
                     status: newPending === 0 ? 'PAID' : 'PARTIALLY_PAID'
                 })
             });
-            alert("Transfer Successful!");
-            loadAdminData();
+
+            if (res.ok) {
+                alert(`৳${transferAmount} সফলভাবে ট্রান্সফার হয়েছে!\nবাকি পেন্ডিং: ৳${newPending}`);
+                amountInput.value = ""; // ইনপুট বক্স খালি করা
+                if(window.loadAdminData) window.loadAdminData(); // টেবিল রিফ্রেশ করা
+            } else {
+                alert("সার্ভার এরর! পেমেন্ট আপডেট হয়নি।");
+            }
+        } catch (error) {
+            console.error("Transfer Error:", error);
+            alert("পেমেন্ট প্রসেস করার সময় নেটওয়ার্ক এরর হয়েছে।");
         }
-    };
+    }
+};
 
     window.saveUniversity = async () => {
         const data = {
