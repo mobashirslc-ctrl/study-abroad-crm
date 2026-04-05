@@ -2,249 +2,408 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"
     <title>Master Admin | SCC Group</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --gold: #f1c40f; --dark: #1a1a2e; --deep: #0f0f1b; --green: #2ecc71; --red: #ff4757; --blue: #3498db; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--deep); color: white; display: flex; overflow-x: hidden; }
-        
-        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; border-right: 1px solid #333; z-index: 1000; }
-        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; }
+        .sidebar { width: 260px; background: var(--dark); height: 100vh; position: fixed; padding-top: 10px; border-right: 1px solid #333; z-index: 1000; }
+        .logo-container { text-align: center; padding: 20px; border-bottom: 1px solid #222; margin-bottom: 15px; }
+        .logo-container img { max-width: 180px; border-radius: 8px; }
         .sidebar ul { list-style: none; padding: 0; }
-        .sidebar ul li { padding: 15px 25px; cursor: pointer; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; transition: 0.3s; }
-        .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
-        
-        .main-content { margin-left: 260px; flex: 1; padding: 30px; min-height: 100vh; }
+        .sidebar ul li { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-bottom: 1px solid #222; font-size: 14px; color: #ccc; }
+        .sidebar ul li:hover, .sidebar ul li.active { background: #252545; color: var(--gold); border-left: 4px solid var(--gold); }
+        .sidebar ul li i { margin-right: 12px; width: 20px; }
+        .main-content { margin-left: 260px; flex: 1; padding: 30px; box-sizing: border-box; min-height: 100vh; }
         .tab-content { display: none; animation: fadeIn 0.4s ease-in; }
-        .card { background: var(--dark); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; background: #111; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; }
+        .card { background: var(--dark); padding: 25px; border-radius: 12px; border: 1px solid #333; margin-bottom: 25px; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; background: var(--dark); margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; font-size: 13px; }
         th { background: #252545; color: var(--gold); }
-        
-        input, select { background: #0f0f1b; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-        .action-btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 11px; margin: 2px; }
-        .bg-green { background: var(--green); color: white; }
-        .bg-red { background: var(--red); color: white; }
-        .bg-gold { background: var(--gold); color: black; }
-        
-        .setting-list { background: #000; padding: 10px; border-radius: 8px; max-height: 200px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222; }
-        .list-item i { color: var(--red); cursor: pointer; }
-
+        input, select, textarea { background: #252545; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; }
+        .btn-gold { background: var(--gold); color: black; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s; width: 100%; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status-active { background: var(--green); color: white; }
+        .status-pending { background: var(--gold); color: black; }
+        .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body>
-
-<div class="sidebar">
-    <div class="logo-container"><img src="logo.jpeg" alt="SCC" style="max-width:150px;"></div>
+<body><div class="sidebar">
+    <div class="logo-container"><img src="logo.jpeg" alt="SCC Admin"></div>
     <ul>
-        <li class="active" onclick="showTab(event, 'admission-tracking')"><i class="fas fa-list"></i> Today's Admissions</li>
-        <li onclick="showTab(event, 'uni-manage')"><i class="fas fa-university"></i> Universities</li>
-        <li onclick="showTab(event, 'user-manage')"><i class="fas fa-users-cog"></i> Partners & Users</li>
-        <li onclick="showTab(event, 'form-settings')"><i class="fas fa-cogs"></i> Form Settings</li>
+        <li class="active" onclick="showTab(event, 'uni-manage')">
+            <i class="fas fa-university"></i> Manage Universities
+        </li>
+        <li onclick="showTab(event, 'user-manage')">
+            <i class="fas fa-users-cog"></i> Partner & Compliance
+        </li>
+        <li onclick="showTab(event, 'merchant-manage')">
+            <i class="fas fa-store"></i> Merchant Partners
+        </li>
+        <li onclick="showTab(event, 'tracking-manage')">
+            <i class="fas fa-tasks"></i> Tracking & Wallet
+        </li>
+        <hr style="border: 0.5px solid #222; margin: 10px 20px;">
+        <li onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </li>
     </ul>
 </div>
+ <div class="main-content">
+        <h2>Admin <span style="color:var(--gold);">Control Center</span></h2>
 
-<div class="main-content">
-    
-    <div id="admission-tracking" class="tab-content" style="display: block;">
-        <h3>Today's Admissions & Tracking</h3>
-        <div style="overflow-x: auto;">
+        <div id="uni-manage" class="tab-content" style="display: block;">
+            <div class="card">
+                <h3 style="color:var(--gold); margin-top:0;">Add New University</h3>
+                <div class="input-group">
+                    <input type="
+                        " id="uName" placeholder="University Name">
+                    <input type="text" id="uCountry" placeholder="Country">
+                    <input type="text" id="uCity" placeholder="City/Location"> 
+                </div>
+                <div class="input-group">
+                    <select id="uDegree">
+                        <option value="Bachelor">Bachelor</option>
+                        <option value="Master">Master</option>
+                        <option value="Foundation">Foundation/Diploma</option>
+                    </select>
+                    <input type="text" id="uCourse" placeholder="Popular Course Name">
+                    <input type="text" id="uIntake" placeholder="Intake (e.g. Jan 2026)"> 
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uTotalFee" placeholder="Total Tuition Fee">
+                    <input type="number" id="uDeposit" placeholder="Initial Deposit/Fly Fee"> 
+                    <input type="number" id="uScholarship" placeholder="Max Scholarship">
+                </div>
+                <div class="input-group">
+                    <input type="number" step="0.01" id="uGpa" placeholder="Min. GPA Required">
+                    <input type="number" step="0.1" id="uIelts" placeholder="Min. IELTS Score">
+                    <input type="number" id="uGap" placeholder="Max Gap Allowed (Years)">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="uLivingCost" placeholder="Approx. Living Cost (e.g. $800/mo)"> 
+                    <input type="text" id="uDeadline" placeholder="Application Deadline">
+                    <input type="text" id="uInterview" placeholder="Interview Time (e.g. 15-20 Mins)">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="uVisaRate" placeholder="Visa Success Rate (%)" value="85">
+                    <input type="text" id="uProcTime" placeholder="Processing Time">
+                    <select id="uCurrency">
+                        <option value="USD">USD ($)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="EUR">EUR (€)</option>
+                    </select>
+                </div>
+                <div class="input-group" style="border: 1px dashed var(--gold); padding: 15px; border-radius: 8px; margin-top: 10px;">
+                    <p style="grid-column: 1/-1; margin: 0 0 10px 0; font-size: 13px; color: var(--gold); font-weight: bold;">
+                        <i class="fas fa-hand-holding-usd"></i> Partner Commission Settings
+                    </p>
+                    <div><label style="font-size: 11px; color: #ccc;">Commission (%)</label><input type="number" id="uCommPercent" placeholder="e.g. 10"></div>
+                    <div><label style="font-size: 11px; color: #ccc;">Fixed Amount (BDT)</label><input type="number" id="uCommFixed" placeholder="e.g. 50000"></div>
+                    <div><label style="font-size: 11px; color: #ccc;">Payment Note</label><input type="text" id="uCommNote" placeholder="e.g. After Visa"></div>
+                </div>
+                <button class="btn-gold" onclick="saveUniversity()" style="margin-top:15px;">Add University to System</button>
+            </div>
             <table>
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Agency/Partner</th>
-                        <th>TrxID/Method</th>
-                        <th>Amount</th>
-                        <th>University/Course</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="adminTrackingTable"></tbody>
+                <thead><tr><th>University</th><th>Requirements</th><th>Fee & Profit</th><th>Action</th></tr></thead>
+                <tbody id="adminUniTable"></tbody>
             </table>
         </div>
-    </div>
 
-    <div id="uni-manage" class="tab-content">
-        <h3>University Management</h3>
-        <div class="card">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-                <input type="text" id="uName" placeholder="University Name">
-                <input type="text" id="uCountry" placeholder="Country">
-                <input type="number" id="uTotalFee" placeholder="Tuition Fee">
-            </div>
-            <button class="bg-gold action-btn" onclick="saveUniversity()" style="width: 100%; padding: 12px;">Add University to System</button>
-        </div>
-        <table>
-            <thead><tr><th>University</th><th>Requirements</th><th>Fee/Comm</th><th>Action</th></tr></thead>
-            <tbody id="adminUniTable"></tbody>
-        </table>
-    </div>
-
-    <div id="user-manage" class="tab-content">
-        <h3>Partner & Compliance Management</h3>
-        <table>
-            <thead><tr><th>Name/Org</th><th>Contact</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody id="adminUserTable"></tbody>
-        </table>
-    </div>
-
-    <div id="form-settings" class="tab-content">
-        <h3>Manage Admission Form Fields</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <div id="user-manage" class="tab-content">
             <div class="card">
-                <h4>Courses & Admission Fees</h4>
-                <input type="text" id="courseInp" placeholder="Course Name">
-                <input type="number" id="feeInp" placeholder="Admission Fee">
-                <button class="bg-green action-btn" onclick="addSetting('course')">Add Course</button>
-                <div class="setting-list" id="courseList"></div>
-            </div>
-            <div class="card">
-                <h4>Districts</h4>
-                <input type="text" id="distInp" placeholder="District Name">
-                <button class="bg-blue action-btn" style="background:var(--blue); color:white;" onclick="addSetting('district')">Add District</button>
-                <div class="setting-list" id="distList"></div>
-            </div>
-            <div class="card">
-                <h4>Thanas</h4>
-                <input type="text" id="thanaInp" placeholder="Thana Name">
-                <button class="bg-blue action-btn" style="background:var(--blue); color:white;" onclick="addSetting('thana')">Add Thana</button>
-                <div class="setting-list" id="thanaList"></div>
+                <h3>Partner & Compliance Management</h3>
+                <table>
+                    <thead>
+                        <tr><th>Name & Org</th><th>Contact</th><th>Documents</th><th>Status</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="adminUserTable"></tbody>
+                </table>
             </div>
         </div>
+
+        <div id="tracking-manage" class="tab-content">
+            <div class="card">
+                <h3>Student File Tracking & Wallet</h3>
+                <table>
+                    <thead>
+                        <tr><th>Student Name</th><th>Partner Agency</th><th>Status</th><th>Wallet (৳)</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="adminTrackingTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+<div id="merchant-manage" class="tab-content">
+    <div class="card">
+        <h3><i class="fas fa-store" style="color:var(--gold)"></i> Merchant Partner Management</h3>
+        <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">
+            নতুন মার্চেন্টদের ডকুমেন্টস চেক করুন এবং একটি ইউনিক ID দিয়ে Active করুন। 
+            ID দেওয়ার সাথে সাথে তাদের কিউআর কোড অটো-জেনারেট হয়ে যাবে।
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Shop & Owner</th>
+                    <th>Contact & Address</th>
+                    <th>Documents</th>
+                    <th>Status</th>
+                    <th>Assign Merchant ID</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="adminMerchantTable">
+                </tbody>
+        </table>
     </div>
 </div>
 
-<script>
-    // ১. আপনার ব্যাকএন্ড পোর্ট অনুযায়ী এখানে পরিবর্তন করুন
-    const API_BASE_URL = 'http://localhost:5000'; 
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; align-items:center; justify-content:center;">
+        <div class="card" style="width: 700px; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color:var(--gold);">Edit University</h3>
+            <input type="hidden" id="editId">
+            <div class="input-group">
+                <input type="text" id="editName" placeholder="Uni Name">
+                <input type="text" id="editCountry" placeholder="Country">
+                <input type="text" id="editCity" placeholder="City">
+            </div>
+            <div class="input-group">
+                <input type="number" id="editTotalFee" placeholder="Fee">
+                <input type="number" id="editDeposit" placeholder="Deposit">
+                <input type="number" id="editScholarship" placeholder="Scholarship">
+            </div>
+            <div class="input-group">
+                <input type="number" step="0.01" id="editGpa" placeholder="GPA">
+                <input type="number" step="0.1" id="editIelts" placeholder="IELTS">
+                <input type="number" id="editGap" placeholder="Gap">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-gold" onclick="updateUniversity()">Update University</button>
+                <button class="btn-gold" style="background:#444; color:white;" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
 
-    // --- TAB SYSTEM ---
-    function showTab(e, id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-        document.querySelectorAll('.sidebar li').forEach(l => l.classList.remove('active'));
-        document.getElementById(id).style.display = 'block';
-        if(e) e.currentTarget.classList.add('active');
-    }
+    <script type="module">
+        // Sidebar Navigation
+        window.showTab = (event, tabId) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.sidebar ul li').forEach(li => li.classList.remove('active'));
+            const target = document.getElementById(tabId);
+            if(target) {
+                target.style.display = 'block';
+                if(event) event.currentTarget.classList.add('active');
+            }
+        };
 
-    // --- LOAD ALL DATA (Unified Function) ---
-    window.loadAdminData = async () => {
-        try {
-            console.log("Fetching all admin data...");
-            const [admRes, uniRes, userRes, setRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/api/applications`),
-                fetch(`${API_BASE_URL}/api/universities`),
-                fetch(`${API_BASE_URL}/api/admin/users`),
-                fetch(`${API_BASE_URL}/api/admin/settings`)
-            ]);
+        // University Logic
+        window.saveUniversity = async () => {
+            const data = {
+                universityName: document.getElementById('uName').value,
+                country: document.getElementById('uCountry').value,
+                location: document.getElementById('uCity').value,
+                degree: document.getElementById('uDegree').value,
+                popularCourse: document.getElementById('uCourse').value,
+                intake: document.getElementById('uIntake').value,
+                totalTuitionFee: Number(document.getElementById('uTotalFee').value) || 0,
+                uDeposit: Number(document.getElementById('uDeposit').value) || 0,
+                uScholarship: Number(document.getElementById('uScholarship').value) || 0,
+                uCurrency: document.getElementById('uCurrency').value,
+                minGPA: Number(document.getElementById('uGpa').value) || 0,
+                ieltsReq: Number(document.getElementById('uIelts').value) || 0,
+                gapAllowed: document.getElementById('uGap').value,
+                livingCost: document.getElementById('uLivingCost').value,
+                deadline: document.getElementById('uDeadline').value,
+                interviewTime: document.getElementById('uInterview').value,
+                commFixed: Number(document.getElementById('uCommFixed').value) || 0,
+                visaRate: Number(document.getElementById('uVisaRate').value) || 85,
+                processingTime: document.getElementById('uProcTime').value,
+                commNote: document.getElementById('uCommNote').value
+            };
+            const res = await fetch('/api/add-university', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) { alert("University Added!"); fetchUniversities(); }
+        };
 
-            const apps = await admRes.json();
-            const unis = await uniRes.json();
-            const users = await userRes.json();
-            const settings = await setRes.json();
+        window.fetchUniversities = async () => {
+            const res = await fetch('/api/universities');
+            const unis = await res.json();
+            document.getElementById('adminUniTable').innerHTML = unis.map(u => `
+                <tr>
+                    <td><b>${u.universityName}</b><br><small>${u.location}</small></td>
+                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
+                    <td>${u.uCurrency} ${u.totalTuitionFee}<br><small style="color:var(--green)">Comm: ৳${u.commFixed}</small></td>
+                    <td>
+                        <button class="action-btn" style="background:var(--gold)" onclick="openEditModal('${u._id}')">EDIT</button>
+                    </td>
+                </tr>`).join('');
+        };
 
-            // ১. Admission Table
+        // User Management Logic
+        window.fetchUsers = async () => {
+            const res = await fetch('/api/admin/users');
+            const users = await res.json();
+            document.getElementById('adminUserTable').innerHTML = users.map(user => `
+                <tr>
+                    <td><b>${user.fullName}</b><br><small>${user.orgName || ''}</small></td>
+                    <td>${user.email}</td>
+                    <td><button class="action-btn" style="background:#3498db; color:white;" onclick="window.open('${user.tradeLicense}')">VIEW</button></td>
+                    <td><span class="badge status-${user.status}">${user.status}</span></td>
+                    <td>
+                        <button class="action-btn" style="background:var(--green); color:white;" onclick="updateStatus('${user._id}', 'active')">Approve</button>
+                    </td>
+                </tr>`).join('');
+        };
+
+        window.updateStatus = async (id, status) => {
+            await fetch(`/api/admin/users/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status }) });
+            fetchUsers();
+        };
+
+        // Tracking Logic
+        window.fetchTracking = async () => {
+            const res = await fetch('/api/applications');
+            const apps = await res.json();
             document.getElementById('adminTrackingTable').innerHTML = apps.map(app => `
                 <tr>
                     <td><b>${app.studentName}</b></td>
-                    <td>${app.partnerEmail || 'Direct'}</td>
-                    <td>${app.paymentMethod || 'N/A'}<br><small>${app.transactionId || ''}</small></td>
+                    <td>${app.partnerEmail}</td>
+                    <td><span class="badge status-pending">${app.status}</span></td>
                     <td>৳${app.pendingAmount || 0}</td>
-                    <td>${app.appliedUniversity || 'N/A'}<br><small>${app.courseName || ''}</small></td>
-                    <td><span class="badge bg-gold" style="padding:4px; border-radius:4px;">${app.status}</span></td>
-                    <td>
-                        <button class="action-btn bg-green" onclick="printSlip('${app._id}')">Slip</button>
-                        <button class="action-btn bg-gold" onclick="openWalletBox('${app._id}')">Wallet</button>
-                    </td>
+                    <td><button class="action-btn" onclick="openWalletBox('${app._id}')">Wallet</button></td>
                 </tr>`).join('');
+        };
+        
+// ১. সব মার্চেন্ট ডাটা সার্ভার থেকে নিয়ে আসা এবং টেবিলে দেখানো
+window.fetchMerchants = async () => {
+    try {
+        const res = await fetch('/api/admin/users'); // আপনার ইউজার লিস্ট এপিআই
+        const users = await res.json();
+        
+        // শুধু যাদের রোল 'merchant' তাদের ফিল্টার করা
+        const merchants = users.filter(u => u.role === 'merchant');
 
-            // ২. University Table
-            document.getElementById('adminUniTable').innerHTML = unis.map(u => `
-                <tr>
-                    <td><b>${u.universityName}</b><br><small>${u.location}, ${u.country}</small></td>
-                    <td>GPA: ${u.minGPA} | IELTS: ${u.ieltsReq}</td>
-                    <td>${u.uCurrency || 'USD'} ${u.totalTuitionFee}</td>
-                    <td>
-                        <button class="action-btn" style="background:#3498db; color:white;" onclick="editUni('${u._id}')">Edit</button>
-                        <button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button>
-                    </td>
-                </tr>`).join('');
-
-            // ৩. User Management
-            document.getElementById('adminUserTable').innerHTML = users.map(u => `
-                <tr>
-                    <td><b>${u.fullName}</b><br><small>${u.orgName || ''}</small></td>
-                    <td>${u.email}</td>
-                    <td><input type="date" value="${u.expiryDate ? u.expiryDate.split('T')[0] : ''}" onchange="updateExpiry('${u._id}', this.value)"></td>
-                    <td><span class="badge ${u.status === 'active' ? 'bg-green' : 'bg-red'}" style="padding:4px; border-radius:4px;">${u.status}</span></td>
-                    <td><button class="action-btn bg-green" onclick="updateStatus('${u._id}', 'active')">Approve</button></td>
-                </tr>`).join('');
-
-            // ৪. Form Settings
-            const renderSet = (el, data, type) => {
-                const listEl = document.getElementById(el);
-                if(!listEl) return;
-                listEl.innerHTML = (data || []).map(item => `
-                    <div class="list-item">
-                        <span>${typeof item === 'object' ? `${item.name} (৳${item.fee})` : item}</span>
-                        <i class="fas fa-trash-alt" onclick="deleteSetting('${type}', '${typeof item === 'object' ? item.name : item}')"></i>
-                    </div>`).join('');
-            };
-            renderSet('courseList', settings.courses, 'course');
-            renderSet('distList', settings.districts, 'district');
-            renderSet('thanaList', settings.thanas, 'thana');
-
-        } catch (e) { 
-            console.error("Data Load Error:", e);
-            // যদি ডাটা না আসে তবে ইউজারকে অ্যালার্ট দিন
-            // alert("Failed to load data from server. Check if backend is running on " + API_BASE_URL);
+        const tableBody = document.getElementById('adminMerchantTable');
+        
+        if (merchants.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No merchant applications found.</td></tr>';
+            return;
         }
-    };
 
-    // --- ACTIONS ---
-    window.addSetting = async (type) => {
-        const value = document.getElementById(type === 'course' ? 'courseInp' : type === 'district' ? 'distInp' : 'thanaInp').value;
-        const fee = type === 'course' ? document.getElementById('feeInp').value : null;
-        if(!value) return alert("Enter value");
+        tableBody.innerHTML = merchants.map(m => `
+            <tr>
+                <td>
+                    <b>${m.orgName || 'N/A'}</b><br>
+                    <small>${m.fullName}</small>
+                </td>
+                <td>
+                    <small>${m.email}</small><br>
+                    <small>${m.contact}</small>
+                </td>
+                <td>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${m.nidPdf}', '_blank')">NID</button>
+                    <button class="action-btn" style="background:#3498db" onclick="window.open('${m.tradeLicensePdf}', '_blank')">TRADE</button>
+                </td>
+                <td>
+                    <span class="badge ${m.status === 'active' ? 'status-active' : 'status-pending'}">
+                        ${m.status.toUpperCase()}
+                    </span>
+                </td>
+                <td>
+                    <input type="text" id="mid_${m._id}" placeholder="e.g. SCC-M101" 
+                    value="${m.merchantId || ''}" 
+                    style="width:120px; border: 1px solid var(--gold); padding: 5px; font-size: 12px;">
+                </td>
+                <td>
+                    <button class="action-btn" style="background:var(--green); color:white;" 
+                        onclick="approveAndAssignID('${m._id}')">
+                        <i class="fas fa-check"></i> APPROVE
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Error fetching merchants:", err);
+    }
+};
 
-        await fetch(`${API_BASE_URL}/api/admin/settings/add`, {
+// ২. মার্চেন্ট এপ্রুভ এবং আইডি সেভ করার ফাংশন
+// এই ফাংশনটি আপনার Admin Panel এর স্ক্রিপ্টে আপডেট করুন
+// ২. মার্চেন্ট এপ্রুভ এবং আইডি সেভ করার ফাংশন
+window.approveAndAssignID = async (id) => {
+    const assignedId = document.getElementById(`mid_${id}`).value;
+    
+    if(!assignedId) {
+        alert("দয়া করে একটি Merchant ID দিন (যেমন: M101)");
+        return;
+    }
+
+    try {
+        // URL টি আপনার index.js এর app.use('/api/merchant', ...) এর সাথে মিল রেখে করা
+        const res = await fetch(`/api/merchant/update-id/${id}`, { 
+            method: 'PATCH', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({ 
+                merchantId: assignedId,
+                status: 'active' 
+            }) 
+        });
+
+        const result = await res.json();
+
+        if(res.ok && result.success) {
+            alert("Merchant Activated successfully!");
+            if(typeof fetchMerchants === 'function') fetchMerchants(); // টেবিল রিফ্রেশ
+        } else {
+            alert("Failed: " + (result.error || result.message || "Unknown error"));
+        }
+    } catch (err) {
+        console.error("Update error:", err);
+        alert("Network Error! সার্ভার রেসপন্স করছে না।");
+    }
+}; // এই ব্র্যাকেটটি ক্লোজ করা খুব জরুরি ছিল
+window.approveStudent = async function(phone, name, course) {
+    // কনফার্মেশন বক্স (ভুল করে বাটন চাপ দিলে যেন এসএমএস না যায়)
+    if (!confirm(`Are you sure you want to approve ${name}? This will send a confirmation SMS.`)) return;
+
+    try {
+        const response = await fetch('/api/approve', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ type, value, fee })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentPhone: phone,
+                studentName: name,
+                courseName: course
+            })
         });
-        loadAdminData();
-    };
 
-    window.openWalletBox = async (appId) => {
-        const amount = prompt("Enter Final Wallet Amount (BDT):");
-        if (amount) {
-            await fetch(`${API_BASE_URL}/api/applications/${appId}`, {
-                method: 'PATCH',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pendingAmount: Number(amount), status: 'VERIFIED' })
-            });
-            loadAdminData();
+        const result = await response.json();
+        if(result.success) {
+            alert("✅ Approved! Confirmation SMS has been sent to the student.");
+            location.reload(); 
+        } else {
+            alert("❌ Failed to approve: " + (result.message || "Unknown error"));
         }
-    };
+    } catch (err) {
+        console.error("Approval Error:", err);
+        alert("❌ Server Connection Failed!");
+    }
+};
 
-    window.updateStatus = async (id, status) => {
-        await fetch(`${API_BASE_URL}/api/admin/users/${id}/status`, {
-            method: 'PATCH',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ status })
-        });
-        loadAdminData();
-    };
+        window.openWalletBox = async (id) => {
+            const amount = prompt("Enter Wallet Amount:");
+            if(amount) {
+                await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ pendingAmount: Number(amount) }) });
+                fetchTracking();
+            }
+        };
 
-    window.printSlip = (id) => window.open(`${API_BASE_URL}/api/applications/${id}/slip`, '_blank');
-
-    // পেজ লোড হওয়ার সাথে সাথে ডেটা কল হবে
-    window.onload = loadAdminData;
-</script>
+        window.onload = () => { fetchUniversities(); fetchUsers(); fetchTracking(); fetchMerchants();};
+        window.logout = () => { localStorage.clear(); location.href = 'login.html'; };
+    </script>
 </body>
 </html>
