@@ -19,13 +19,19 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; background: #111; }
         th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #222; }
         th { background: #252545; color: var(--gold); }
-        .action-btn { padding: 5px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 10px; margin: 2px; }
+        .action-btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; font-size: 10px; margin: 2px; }
         .bg-green { background: var(--green); color: white; }
         .bg-red { background: var(--red); color: white; }
         .bg-blue { background: var(--blue); color: white; }
-        input { background: #0f0f1b; border: 1px solid #444; color: white; padding: 8px; border-radius: 5px; margin-bottom: 5px; width: 100%; box-sizing: border-box; }
-        .setting-list { max-height: 200px; overflow-y: auto; margin-top: 10px; background: #000; padding: 10px; border-radius: 5px; }
-        .item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #222; font-size: 13px; }
+        input { background: #0f0f1b; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        
+        /* Settings List Style */
+        .setting-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .setting-list { background: #000; border-radius: 8px; padding: 10px; max-height: 300px; overflow-y: auto; border: 1px solid #222; margin-top: 10px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #222; font-size: 13px; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item i { color: var(--red); cursor: pointer; transition: 0.3s; }
+        .list-item i:hover { transform: scale(1.2); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
@@ -43,21 +49,7 @@
 
 <div class="main-content">
     
-    <div id="uni-manage" class="tab-content" style="display: block;">
-        <div class="card">
-            <h3>Add University</h3>
-            <input type="text" id="uName" placeholder="University Name">
-            <input type="text" id="uCountry" placeholder="Country">
-            <input type="number" id="uFee" placeholder="Total Tuition Fee">
-            <button class="bg-green action-btn" onclick="saveUniversity()">Save</button>
-        </div>
-        <table>
-            <thead><tr><th>University</th><th>Country</th><th>Fee</th><th>Action</th></tr></thead>
-            <tbody id="uniTableBody"></tbody>
-        </table>
-    </div>
-
-    <div id="admission-requests" class="tab-content">
+    <div id="admission-requests" class="tab-content" style="display: none;">
         <h3>Today's Admissions & Payment Verification</h3>
         <div style="overflow-x: auto;">
             <table>
@@ -82,30 +74,35 @@
     <div id="user-manage" class="tab-content">
         <h3>User Management</h3>
         <table>
-            <thead><tr><th>Name/Role</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name/Role</th><th>Email/Phone</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="userListTable"></tbody>
         </table>
     </div>
 
     <div id="form-settings" class="tab-content">
-        <h3>Form Settings (Dynamic Dropdowns)</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+        <h3>Form Settings (Manage Dropdowns)</h3>
+        <div class="setting-container">
             <div class="card">
-                <h4>Courses</h4>
-                <input type="text" id="courseInp" placeholder="New Course Name">
-                <button class="bg-green action-btn" onclick="addItem('course')">Add</button>
+                <h4>Courses & Fee Management</h4>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="courseInp" placeholder="Course Name">
+                    <input type="number" id="feeInp" placeholder="Fee" style="width: 100px;">
+                </div>
+                <button class="bg-green action-btn" onclick="addSetting('course')">Add Course</button>
                 <div class="setting-list" id="courseList"></div>
             </div>
+
             <div class="card">
-                <h4>Districts</h4>
+                <h4>District Management</h4>
                 <input type="text" id="distInp" placeholder="District Name">
-                <button class="bg-blue action-btn" onclick="addItem('district')">Add</button>
+                <button class="bg-blue action-btn" onclick="addSetting('district')">Add District</button>
                 <div class="setting-list" id="distList"></div>
             </div>
+
             <div class="card">
-                <h4>Thanas</h4>
+                <h4>Thana Management</h4>
                 <input type="text" id="thanaInp" placeholder="Thana Name">
-                <button class="bg-blue action-btn" onclick="addItem('thana')">Add</button>
+                <button class="bg-blue action-btn" onclick="addSetting('thana')">Add Thana</button>
                 <div class="setting-list" id="thanaList"></div>
             </div>
         </div>
@@ -120,81 +117,89 @@
         if(e) e.currentTarget.classList.add('active');
     }
 
-    // --- DATA LOADING ---
+    // --- LOAD ALL DATA ---
     window.loadAdminData = async () => {
         try {
-            const admRes = await fetch('/api/admin/admissions');
-            const userRes = await fetch('/api/admin/users');
-            const uniRes = await fetch('/api/universities');
-            const setRes = await fetch('/api/admin/settings'); // Make sure this endpoint exists
+            const [admRes, userRes, setRes] = await Promise.all([
+                fetch('/api/admin/admissions'),
+                fetch('/api/admin/users'),
+                fetch('/api/admin/settings')
+            ]);
 
             const adms = await admRes.json();
             const users = await userRes.json();
-            const unis = await uniRes.json();
             const settings = await setRes.json();
 
-            // Admissions
+            // Admissions Data (Flexible keys to prevent blank fields)
             document.getElementById('admissionTableBody').innerHTML = adms.map(ad => `
                 <tr>
-                    <td>${ad.name || ad.studentName || ''}</td>
-                    <td>${ad.phone || ad.studentPhone || ''}</td>
-                    <td>${ad.paymentMethod || 'bKash'}</td>
-                    <td style="color:var(--gold)">${ad.transactionId || ''}</td>
+                    <td>${ad.name || ad.studentName || 'N/A'}</td>
+                    <td>${ad.phone || ad.studentPhone || 'N/A'}</td>
+                    <td><span class="badge bg-blue">${ad.paymentMethod || 'bKash'}</span></td>
+                    <td style="color:var(--gold)">${ad.transactionId || 'N/A'}</td>
                     <td>৳${ad.fee || ad.amount || 0}</td>
-                    <td>${ad.course || 'N/A'}</td>
+                    <td>${ad.course || ad.courseName || 'N/A'}</td>
                     <td>${ad.merchantName || 'Direct'}</td>
                     <td>${ad.merchantPhone || 'N/A'}</td>
-                    <td><button class="action-btn bg-green" onclick="approveAdmission('${ad._id}')">Release</button></td>
-                </tr>`).join('') || "<tr><td colspan='9'>No Admissions Today</td></tr>";
+                    <td><button class="action-btn bg-green" onclick="releaseComm('${ad._id}')">Release</button></td>
+                </tr>`).join('') || "<tr><td colspan='9'>No Data Found</td></tr>";
 
-            // Users
+            // User Management
             document.getElementById('userListTable').innerHTML = users.map(u => `
                 <tr>
                     <td><b>${u.fullName || u.orgName}</b><br><small>${u.role}</small></td>
-                    <td>${u.email}</td>
+                    <td>${u.email}<br>${u.phone || ''}</td>
                     <td><span class="badge ${u.isSuspended ? 'bg-red' : 'bg-green'}">${u.isSuspended ? 'Suspended' : 'Active'}</span></td>
                     <td>
                         ${u.status === 'pending' ? `<button class="action-btn bg-green" onclick="updateUserStatus('${u._id}', 'active')">Approve</button>` : ''}
-                        <button class="action-btn bg-red" onclick="toggleSuspend('${u._id}', ${u.isSuspended})">${u.isSuspended ? 'Unsuspend' : 'Suspend'}</button>
+                        <button class="action-btn" style="background:#555; color:white;" onclick="toggleSuspend('${u._id}', ${u.isSuspended})">
+                            ${u.isSuspended ? 'Unsuspend' : 'Suspend'}
+                        </button>
                     </td>
                 </tr>`).join('');
 
-            // Universities
-            document.getElementById('uniTableBody').innerHTML = unis.map(u => `
-                <tr><td>${u.universityName}</td><td>${u.country}</td><td>${u.totalTuitionFee}</td>
-                <td><button class="action-btn bg-red" onclick="deleteUni('${u._id}')">Delete</button></td></tr>`).join('');
+            // Settings (Courses, Districts, Thanas)
+            renderSettings(settings);
 
-            // Settings Lists (Remove Access Included)
-            const renderSet = (id, items, type) => {
-                document.getElementById(id).innerHTML = items.map(item => `
-                    <div class="item">
-                        <span>${item}</span>
-                        <i class="fas fa-trash-alt text-red" style="cursor:pointer; color:var(--red);" onclick="removeItem('${type}', '${item}')"></i>
-                    </div>`).join('');
-            };
-            renderSet('courseList', settings.courses || [], 'course');
-            renderSet('distList', settings.districts || [], 'district');
-            renderSet('thanaList', settings.thanas || [], 'thana');
-
-        } catch (err) { console.error("Error loading data:", err); }
+        } catch (err) { console.error("Load Error:", err); }
     };
 
-    // --- SETTINGS ACTIONS ---
-    window.addItem = async (type) => {
-        const inputId = type === 'course' ? 'courseInp' : type === 'district' ? 'distInp' : 'thanaInp';
-        const val = document.getElementById(inputId).value;
-        if(!val) return;
+    // --- SETTINGS LOGIC ---
+    function renderSettings(data) {
+        const createList = (items, type) => items.map(item => `
+            <div class="list-item">
+                <span>${typeof item === 'object' ? `${item.name} (৳${item.fee})` : item}</span>
+                <i class="fas fa-trash-alt" onclick="deleteSetting('${type}', '${typeof item === 'object' ? item.name : item}')"></i>
+            </div>`).join('');
+
+        document.getElementById('courseList').innerHTML = createList(data.courses || [], 'course');
+        document.getElementById('distList').innerHTML = createList(data.districts || [], 'district');
+        document.getElementById('thanaList').innerHTML = createList(data.thanas || [], 'thana');
+    }
+
+    window.addSetting = async (type) => {
+        let payload = { type };
+        if(type === 'course') {
+            payload.name = document.getElementById('courseInp').value;
+            payload.fee = document.getElementById('feeInp').value;
+        } else if(type === 'district') {
+            payload.value = document.getElementById('distInp').value;
+        } else {
+            payload.value = document.getElementById('thanaInp').value;
+        }
+
+        if(!payload.name && !payload.value) return alert("Input required!");
+
         await fetch('/api/admin/settings/add', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ type, value: val })
+            body: JSON.stringify(payload)
         });
-        document.getElementById(inputId).value = '';
-        loadAdminData();
+        loadAdminData(); // Refresh lists
     };
 
-    window.removeItem = async (type, value) => {
-        if(!confirm(`Remove ${value}?`)) return;
+    window.deleteSetting = async (type, value) => {
+        if(!confirm(`Are you sure you want to delete ${value}?`)) return;
         await fetch('/api/admin/settings/remove', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -203,7 +208,7 @@
         loadAdminData();
     };
 
-    // --- OTHER ACTIONS ---
+    // --- USER STATUS ACTIONS ---
     window.toggleSuspend = async (id, status) => {
         await fetch(`/api/admin/users/toggle-status/${id}`, {
             method: 'PATCH',
@@ -219,12 +224,6 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ status })
         });
-        loadAdminData();
-    };
-
-    window.approveAdmission = async (id) => {
-        if(!confirm("Approve and release commission?")) return;
-        await fetch(`/api/admin/admissions/approve/${id}`, { method: 'POST' });
         loadAdminData();
     };
 
