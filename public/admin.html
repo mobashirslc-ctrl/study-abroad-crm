@@ -46,6 +46,9 @@
         <li onclick="showTab(event, 'tracking-manage')">
             <i class="fas fa-tasks"></i> Tracking & Wallet
         </li>
+        <li onclick="showTab(event, 'wallet-tracking')">
+    <i class="fas fa-wallet"></i> Wallet & Tracking
+</li>
         <hr style="border: 0.5px solid #222; margin: 10px 20px;">
         <li onclick="logout()">
             <i class="fas fa-sign-out-alt"></i> Logout
@@ -124,6 +127,30 @@
                 </table>
             </div>
         </div>
+        <div id="wallet-tracking" class="tab-content" style="display: none;">
+    <div class="card">
+        <h3 style="color:var(--gold); margin-top:0;">
+            <i class="fas fa-wallet"></i> Wallet & Payment Control
+        </h3>
+        <p style="font-size: 13px; color: #aaa; margin-bottom: 20px;">
+            পেন্ডিং ওয়ালেট থেকে এভেইলএবল ওয়ালেটে ম্যানুয়ালি পেমেন্ট ট্রান্সফার করুন।
+        </p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Partner Agency</th>
+                    <th>Pending Wallet (৳)</th>
+                    <th>Available Wallet (৳)</th>
+                    <th style="width: 250px;">Action (Manual Pay)</th>
+                </tr>
+            </thead>
+            <tbody id="walletTableBody">
+                </tbody>
+        </table>
+    </div>
+</div>
 
         <div id="tracking-manage" class="tab-content">
             <div class="card">
@@ -392,6 +419,81 @@ window.approveStudent = async function(phone, name, course) {
         console.error("Approval Error:", err);
         alert("❌ Server Connection Failed!");
     }
+};
+// ১. ওয়ালেট ডাটা লোড করার ফাংশন
+window.loadWalletData = async () => {
+    try {
+        const res = await fetch('/api/applications');
+        const apps = await res.json();
+        const tbody = document.getElementById('walletTableBody');
+        
+        tbody.innerHTML = apps.map(app => `
+            <tr>
+                <td><b>${app.studentName}</b></td>
+                <td>${app.partnerEmail || 'Direct'}</td>
+                <td style="color:var(--gold); font-weight:bold;">৳${app.pendingAmount || 0}</td>
+                <td style="color:var(--green); font-weight:bold;">৳${app.availableAmount || 0}</td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="pay_${app._id}" placeholder="Amount" 
+                               style="width:100px; padding:6px; background:#252545; border:1px solid #444; color:white;">
+                        <button class="action-btn" style="background:var(--green); color:white; padding: 6px 12px;" 
+                                onclick="processTransfer('${app._id}', ${app.pendingAmount || 0}, ${app.availableAmount || 0})">
+                            Transfer
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        console.error("Wallet Load Error:", err);
+    }
+};
+
+// ২. পেমেন্ট ট্রান্সফার লজিক (Pending Minus -> Available Plus)
+window.processTransfer = async (appId, currentPending, currentAvailable) => {
+    const amountInput = document.getElementById(`pay_${appId}`);
+    const transferAmount = Number(amountInput.value);
+
+    if (!transferAmount || transferAmount <= 0) {
+        return alert("সঠিক পেমেন্ট অ্যামাউন্ট লিখুন।");
+    }
+    if (transferAmount > currentPending) {
+        return alert("পেন্ডিং অ্যামাউন্টের চেয়ে বেশি ট্রান্সফার সম্ভব নয়!");
+    }
+
+    if (confirm(`৳${transferAmount} ট্রান্সফার করতে চান? এটি অ্যাডমিন পেন্ডিং থেকে কমবে এবং পার্টনারে যোগ হবে।`)) {
+        try {
+            const updatedPending = currentPending - transferAmount;
+            const updatedAvailable = currentAvailable + transferAmount;
+
+            const res = await fetch(`/api/applications/${appId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    pendingAmount: updatedPending,
+                    availableAmount: updatedAvailable,
+                    status: updatedPending === 0 ? 'PAID' : 'PARTIALLY_PAID'
+                })
+            });
+
+            if (res.ok) {
+                alert("পেমেন্ট ট্রান্সফার সফল হয়েছে!");
+                window.loadWalletData(); // টেবিল রিফ্রেশ
+            } else {
+                alert("সার্ভার এরর! আবার চেষ্টা করুন।");
+            }
+        } catch (error) {
+            alert("পেমেন্ট প্রসেস করা সম্ভব হয়নি।");
+        }
+    }
+};
+
+// ৩. পেজ লোড হওয়ার সময় ওয়ালেট ডাটা কল করা
+const originalOnload = window.onload;
+window.onload = () => {
+    if (originalOnload) originalOnload();
+    window.loadWalletData();
 };
 
         window.openWalletBox = async (id) => {
