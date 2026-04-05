@@ -98,3 +98,21 @@ module.exports = async (req, res) => {
         }
     });
 };
+router.get('/applications', async (req, res) => {
+    try {
+        const apps = await Application.find().sort({ createdAt: -1 });
+        res.json(apps);
+    } catch (err) {
+        res.status(500).json({ error: "Cannot fetch applications" });
+    }
+});
+
+// ২. ইউজার ম্যানেজমেন্ট ডাটা
+router.get('/admin/users', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: "Cannot fetch users" });
+    }
+});
